@@ -1,0 +1,25 @@
+{
+  "name": "@hello/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --env-file=../../.env --watch src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "bun --env-file=../../.env src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "latest",
+    "@hello/shared": "workspace:*",
+    "drizzle-orm": "latest",
+    "elysia": "latest",
+    "postgres": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "drizzle-kit": "latest",
+    "bun-types": "latest",
+    "vitest": "latest",
+    "typescript": "latest"
+  }
+}

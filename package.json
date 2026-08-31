@@ -1,0 +1,24 @@
+{
+  "name": "job-tracker",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"bun --cwd apps/api dev\" \"bun --cwd apps/web dev\"",
+    "test": "bun run --cwd packages/shared test && bun run --cwd apps/api test",
+    "test:e2e": "playwright test",
+    "typecheck": "bun run --cwd packages/shared typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/web typecheck",
+    "build": "bun run --cwd apps/web build && bun run --cwd apps/api typecheck",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d postgres",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:migrate": "bun run --cwd apps/api db:migrate"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "concurrently": "latest",
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}

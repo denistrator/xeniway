@@ -1,4 +1,4 @@
-# Hello World Full-Stack Skeleton Design
+# Job Tracker Full-Stack Skeleton Design
 
 ## Goal
 
@@ -24,7 +24,7 @@ The app will be a Bun workspace containing a React/Vite frontend, a Bun/Elysia A
 - PostgreSQL via Docker Compose
 - GitHub Actions CI
 
-Redis and S3/R2 are intentionally deferred because this hello-world demo has no use case for either. The README will document them as future extension points.
+Redis and S3/R2 are intentionally deferred because this job-tracker demo has no use case for either. The README will document them as future extension points.
 
 ## Architecture
 
