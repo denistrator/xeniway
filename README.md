@@ -1,68 +1,79 @@
 # Job Tracker
 
-A small full-stack playground demonstrating the requested libraries in one request flow:
+Job Tracker helps job candidates keep a reliable record of conversations and progress with potential employers. Each application belongs to the signed-in user and moves through six workflow statuses: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.
 
-```text
-React + Vite + TypeScript
-Redux Toolkit + TanStack Query + React Router
-Tailwind CSS + shadcn/ui-style primitives
-Vitest + Playwright
-        ↓
-Bun + Elysia + Zod + Drizzle ORM
-        ↓
-PostgreSQL via Docker Compose
-```
+The application is a Bun workspace with a React SPA, a typed Elysia API, shared Zod contracts, Drizzle ORM, and PostgreSQL.
 
-## Prerequisites
+## Features
 
-- Bun
-- Docker Desktop or OrbStack with Docker Compose
-- Playwright Chromium (`bunx playwright install chromium`)
+- Registration, login, logout, and session restoration.
+- Argon2id password hashing, secure HttpOnly sessions, and CSRF protection.
+- Create, read, update, and archive job applications.
+- Search, status filtering, sorting, and native drag-and-drop status changes.
+- Archive restore and permanent deletion with confirmation.
+- Light, dark, and system themes with a persisted browser preference.
+- Per-user ownership isolation for all application operations.
+- Development seed accounts and 36 deterministic fixture applications.
 
-## Run locally
+## Stack
+
+| Layer | Technology |
+| --- | --- |
+| Web | React, TypeScript, Vite, React Router |
+| Client state | TanStack Query for server state, Redux Toolkit for UI state |
+| UI | Tailwind CSS and local shadcn/ui-style primitives |
+| API | Bun, Elysia, Zod |
+| Persistence | Drizzle ORM and PostgreSQL |
+| Tests | Vitest and Playwright |
+| Local infrastructure | Docker Compose |
+
+## Local setup
+
+Prerequisites: Bun, Docker Compose, and a Playwright Chromium installation for browser tests.
 
 ```bash
 cp .env.example .env
 bun install
 bun run db:up
 bun run db:migrate
+bun run db:seed       # optional development fixtures
 bun run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The API is available at [http://localhost:3000](http://localhost:3000).
+Open the web app at [http://localhost:5173](http://localhost:5173). The API listens at [http://localhost:3000](http://localhost:3000). The Vite development server proxies `/api` requests to the API.
 
-The local Compose database is PostgreSQL with database/user `job_tracker` and volume `job_tracker_postgres_data`.
+Seed credentials are `admin@example.com` / `password` and `test_user@example.com` / `password`. Seed data is development-only and is not created by migrations.
 
-## Scripts
+## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `bun run dev` | Start the API and Vite frontend together |
-| `bun run db:up` | Start PostgreSQL in Docker |
-| `bun run db:down` | Stop the local PostgreSQL container |
-| `bun run db:migrate` | Apply the initial Drizzle SQL migration |
+| `bun run dev` | Start the API and Vite web app |
+| `bun run db:up` | Start local PostgreSQL |
+| `bun run db:down` | Stop local PostgreSQL |
+| `bun run db:migrate` | Apply checked-in SQL migrations |
+| `bun run db:seed` | Idempotently recreate development accounts and fixtures |
 | `bun run typecheck` | Typecheck shared, API, and web packages |
-| `bun run test` | Run shared contract and API tests with Vitest |
-| `bun run test:e2e` | Run the Playwright browser smoke test |
-| `bun run build` | Create the Vite production bundle and typecheck the API |
+| `bun run test` | Run all Vitest suites |
+| `bun run build` | Build the web bundle and typecheck the API |
+| `bun run test:e2e` | Run the Playwright browser workflow |
+| `bun run format` | Format supported source files with Biome |
+| `bun run lint` | Check formatting, imports, and lint rules with Biome |
 
-## Workspace map
+For E2E testing, start PostgreSQL, apply migrations, seed the database, and install Chromium with `bunx playwright install chromium`.
 
-- `apps/web` — React/Vite UI, Redux store, TanStack Query calls, routes, Tailwind styling, and shadcn/ui-style primitives.
-- `apps/api` — Elysia routes, Bun entrypoint, Zod request validation, Drizzle schema/repository, and migration runner.
-- `packages/shared` — shared Zod message input schema and response types.
-- `infra/docker-compose.yml` — local PostgreSQL service.
-- `.github/workflows/ci.yml` — PostgreSQL-backed typecheck, tests, build, and Playwright verification.
+## Repository map
 
-## API routes
+- `apps/web` — React routes, components, Redux UI state, TanStack Query hooks, and typed API client.
+- `apps/api` — Elysia app factory, authentication, repositories, Drizzle schema, migration runner, and seed command.
+- `packages/shared` — shared Zod request schemas and TypeScript response contracts.
+- `apps/api/drizzle` — checked-in PostgreSQL migrations.
+- `infra/docker-compose.yml` — local PostgreSQL service and persistent volume.
+- `tests/e2e` — Playwright browser workflows.
+- `docs` — architecture, API, database, operations, testing, and migration notes.
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `GET` | `/api/health` | Checks API/database availability |
-| `GET` | `/api/hello` | Returns the Bun/Elysia greeting |
-| `GET` | `/api/messages` | Lists saved messages |
-| `POST` | `/api/messages` | Validates and saves `{ "text": "..." }` |
+See [API documentation](docs/api.md), [database documentation](docs/database.md), [operations documentation](docs/operations.md), and [testing documentation](docs/testing.md) for details.
 
-The browser uses TanStack Query for API-backed state and invalidates the messages query after a successful mutation. The counter uses Redux Toolkit to demonstrate local state independently from the server cache. React Router provides the dashboard and about pages.
+## Scope and deferred work
 
-Redis and S3/R2 are intentionally not included: this demo has no cache or object-storage use case. They can be added later behind the same API boundary when the product needs them.
+This repository intentionally contains only the candidate job-tracking workflow. New product features, integrations, external authentication, caching, object storage, and deployment systems are deferred until separately approved.

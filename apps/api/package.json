@@ -1,16 +1,17 @@
 {
-  "name": "@hello/api",
+  "name": "@job-tracker/api",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "bun --env-file=../../.env --watch src/server.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "bun --env-file=../../.env src/db/migrate.ts"
+    "db:migrate": "bun --env-file=../../.env src/db/migrate.ts",
+    "db:seed": "bun --env-file=../../.env src/db/seed.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "latest",
-    "@hello/shared": "workspace:*",
+    "@job-tracker/shared": "workspace:*",
     "drizzle-orm": "latest",
     "elysia": "latest",
     "postgres": "latest",

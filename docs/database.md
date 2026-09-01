@@ -1,0 +1,48 @@
+# Database
+
+## PostgreSQL
+
+Local development uses PostgreSQL 16 from `infra/docker-compose.yml`:
+
+- database: `job_tracker`
+- user: `job_tracker`
+- password: `job_tracker`
+- port: `5432`
+
+Configure the connection through `DATABASE_URL`; do not commit `.env`.
+
+## Tables
+
+### `users`
+
+Stores normalized unique email addresses, Argon2id password hashes, optional first/last names, and creation time. Password hashes are never returned by the API.
+
+### `sessions`
+
+Stores the random session ID, optional owning user ID, server-side CSRF token, and expiration time. Anonymous rows support CSRF acquisition before login. User deletion cascades to sessions.
+
+### `job_applications`
+
+Stores the owning user, company, position, optional job details, one of the six PostgreSQL `job_status` enum values, timestamps, and nullable `archived_at`. User deletion cascades to applications. Indexes support user/status and user/archive list queries.
+
+`seed_key` is nullable and unique. It is used only by the development seed command to make fixture replacement idempotent; normal application-created rows leave it null.
+
+## Migrations
+
+Checked-in SQL migrations live in `apps/api/drizzle`. The migration runner records applied IDs in `schema_migrations`, supports incremental migrations, and can safely be rerun. Apply them with:
+
+```bash
+bun run db:up
+bun run db:migrate
+```
+
+Migrations create schema only and do not insert users or applications. Existing data from the former application is intentionally not migrated.
+
+## Development seed
+
+Run `bun run db:seed` after migrations. It upserts:
+
+- `admin@example.com` / `password`
+- `test_user@example.com` / `password`
+
+It creates 36 applications: three per status for each account. Re-running the command replaces only rows identified by its development seed keys.

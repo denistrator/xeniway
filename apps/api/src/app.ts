@@ -1,62 +1,65 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
-import {
-  messageInputSchema,
-  type ApiError,
-  type HealthResponse,
-  type HelloResponse,
-} from "@hello/shared";
-import type { MessageRepository } from "./db/repository";
+import { applicationArchiveRoute } from "./routes/application-archive";
+import { applicationCreateRoute } from "./routes/application-create";
+import { applicationDeleteRoute } from "./routes/application-delete";
+import { applicationDetailRoute } from "./routes/application-detail";
+import { applicationRestoreRoute } from "./routes/application-restore";
+import { applicationUpdateRoute } from "./routes/application-update";
+import { applicationsArchiveRoute } from "./routes/applications-archive";
+import { applicationsListRoute } from "./routes/applications-list";
+import { authCsrfRoute } from "./routes/auth-csrf";
+import { authLoginRoute } from "./routes/auth-login";
+import { authLogoutRoute } from "./routes/auth-logout";
+import { authMeRoute } from "./routes/auth-me";
+import { authRegisterRoute } from "./routes/auth-register";
+import { healthRoute } from "./routes/health";
+import { CSRF_HEADER, errorResponse } from "./routes/support";
+import type { AppDependencies, RouteDependencies } from "./routes/types";
+import { AuthService } from "./services/auth";
+import { SlidingWindowRateLimiter } from "./services/rate-limit";
 
-export function createApp(repository: MessageRepository) {
+export type { AppDependencies } from "./routes/types";
+
+export function createApp(dependencies: AppDependencies) {
+  const auth = new AuthService(dependencies.users, dependencies.sessions, dependencies.passwordHasher);
+  const authRateLimiter =
+    dependencies.authRateLimiter ?? new SlidingWindowRateLimiter({ limit: 5, windowMs: 15 * 60 * 1000 });
+  const routeDependencies: RouteDependencies = {
+    applications: dependencies.applications,
+    auth,
+    authRateLimiter,
+    databaseHealth: dependencies.health ?? (async () => true),
+  };
+
   return new Elysia()
-    .use(cors())
-    .get("/api/health", async ({ set }) => {
-      try {
-        if (await repository.health()) {
-          const response: HealthResponse = { status: "ok", database: "up" };
-          return response;
-        }
-      } catch {
-        // Return the same service error for repository exceptions and false health checks.
+    .use(
+      cors({
+        origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+        credentials: true,
+        allowedHeaders: ["content-type", CSRF_HEADER],
+      }),
+    )
+    .onError(({ code, set }) => {
+      if (code === "NOT_FOUND") {
+        set.status = 404;
+        return errorResponse("NOT_FOUND", "Route not found");
       }
-
-      set.status = 503;
-      return errorResponse("DATABASE_UNAVAILABLE", "Database is unavailable");
+      set.status = 500;
+      return errorResponse("INTERNAL_ERROR", "Internal server error");
     })
-    .get("/api/hello", () => {
-      const response: HelloResponse = {
-        message: "Hello from Bun + Elysia!",
-        runtime: "bun",
-        timestamp: new Date().toISOString(),
-      };
-      return response;
-    })
-    .get("/api/messages", async ({ set }) => {
-      try {
-        return await repository.list();
-      } catch {
-        set.status = 500;
-        return errorResponse("PERSISTENCE_ERROR", "Unable to load messages");
-      }
-    })
-    .post("/api/messages", async ({ body, set }) => {
-      const parsed = messageInputSchema.safeParse(body as unknown);
-
-      if (!parsed.success) {
-        set.status = 400;
-        return errorResponse("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Invalid message");
-      }
-
-      try {
-        return await repository.create(parsed.data);
-      } catch {
-        set.status = 500;
-        return errorResponse("PERSISTENCE_ERROR", "Unable to store message");
-      }
-    });
-}
-
-function errorResponse(code: string, message: string): ApiError {
-  return { error: { code, message } };
+    .use(healthRoute(routeDependencies))
+    .use(authCsrfRoute(routeDependencies))
+    .use(authRegisterRoute(routeDependencies))
+    .use(authLoginRoute(routeDependencies))
+    .use(authLogoutRoute(routeDependencies))
+    .use(authMeRoute(routeDependencies))
+    .use(applicationsArchiveRoute(routeDependencies))
+    .use(applicationsListRoute(routeDependencies))
+    .use(applicationDetailRoute(routeDependencies))
+    .use(applicationCreateRoute(routeDependencies))
+    .use(applicationUpdateRoute(routeDependencies))
+    .use(applicationArchiveRoute(routeDependencies))
+    .use(applicationRestoreRoute(routeDependencies))
+    .use(applicationDeleteRoute(routeDependencies));
 }

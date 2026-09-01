@@ -7,10 +7,44 @@ if (!databaseUrl) {
 }
 
 const client = createPostgresClient(databaseUrl);
-const migration = Bun.file(new URL("../../drizzle/0000_create_messages.sql", import.meta.url));
+const migrations = [
+  { id: "0000_create_job_tracker", file: "0000_create_job_tracker.sql" },
+  { id: "0001_applied_at_date", file: "0001_applied_at_date.sql" },
+];
 
 try {
-  await client.unsafe(await migration.text());
+  await client.unsafe(`
+    CREATE TABLE IF NOT EXISTS "schema_migrations" (
+      "id" varchar(120) PRIMARY KEY NOT NULL,
+      "applied_at" timestamp with time zone DEFAULT now() NOT NULL
+    )
+  `);
+
+  const [existingSchema] = await client<{ users: string | null }[]>`
+    SELECT to_regclass('public.users') AS users
+  `;
+  if (existingSchema?.users) {
+    await client`
+      INSERT INTO "schema_migrations" ("id")
+      VALUES ('0000_create_job_tracker')
+      ON CONFLICT ("id") DO NOTHING
+    `;
+  }
+
+  for (const migration of migrations) {
+    const [applied] = await client<{ id: string }[]>`
+      SELECT "id" FROM "schema_migrations" WHERE "id" = ${migration.id}
+    `;
+    if (applied) continue;
+
+    const sql = await Bun.file(new URL(`../../drizzle/${migration.file}`, import.meta.url)).text();
+    await client.begin(async (transaction) => {
+      await transaction.unsafe(sql);
+      await transaction`
+        INSERT INTO "schema_migrations" ("id") VALUES (${migration.id})
+      `;
+    });
+  }
 } finally {
   await client.end();
 }

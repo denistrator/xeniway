@@ -18,3 +18,33 @@ button,
 input {
   font: inherit;
 }
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  background: #0f172a;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .bg-slate-50 {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .bg-white {
+  background: #1e293b;
+}
+
+[data-theme="dark"] .text-slate-950,
+[data-theme="dark"] .text-slate-900 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .text-slate-700,
+[data-theme="dark"] .text-slate-600 {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-slate-300 {
+  border-color: #475569;
+}

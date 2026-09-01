@@ -12,7 +12,14 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "PATH=/Users/denis/.bun/bin:$PATH DATABASE_URL=postgres://job_tracker:job_tracker@localhost:5432/job_tracker PORT=3100 API_PORT=3100 VITE_PORT=4173 bun run dev",
+    command: "bun run dev",
+    env: {
+      DATABASE_URL: "postgres://job_tracker:job_tracker@localhost:5432/job_tracker",
+      PORT: "3100",
+      API_PORT: "3100",
+      VITE_PORT: "4173",
+      CORS_ORIGIN: "http://127.0.0.1:4173",
+    },
     url: "http://127.0.0.1:4173",
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,

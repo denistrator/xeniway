@@ -1,169 +1,114 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { CreateApplicationInput, JobStatus } from "@job-tracker/shared";
 import { useDispatch, useSelector } from "react-redux";
-import { messageInputSchema, type HealthResponse, type HelloResponse, type Message, type MessageInput } from "@hello/shared";
-import { Badge } from "../components/ui/badge";
+import { JobBoard } from "../components/job-board";
+import { JobDrawer } from "../components/job-drawer";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { requestJson } from "../lib/api";
-import { decrement, increment, type RootState } from "../store";
-
-function QueryState({ loading, error, children }: { loading: boolean; error: Error | null; children: ReactNode }) {
-  if (loading) return <p className="text-sm text-slate-500">Loading…</p>;
-  if (error) return <p className="text-sm text-rose-600">Unable to load: {error.message}</p>;
-  return children;
-}
+import { useApplicationMutations, useApplications } from "../lib/queries";
+import { closeDrawer, type RootState, setSearch, setSort, setStatusFilter } from "../store";
 
 export function HomePage() {
   const dispatch = useDispatch();
-  const count = useSelector((state: RootState) => state.counter.value);
-  const queryClient = useQueryClient();
-  const [text, setText] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const drawer = useSelector((state: RootState) => state.ui.drawer);
+  const filters = useSelector((state: RootState) => state.ui);
+  const applications = useApplications();
+  const mutations = useApplicationMutations();
+  const selectedJob = applications.data?.find((job) => job.id === drawer.jobId);
+  const pending = mutations.create.isPending || mutations.update.isPending;
 
-  const healthQuery = useQuery({
-    queryKey: ["health"],
-    queryFn: () => requestJson<HealthResponse>("/api/health"),
-  });
-  const helloQuery = useQuery({
-    queryKey: ["hello"],
-    queryFn: () => requestJson<HelloResponse>("/api/hello"),
-  });
-  const messagesQuery = useQuery({
-    queryKey: ["messages"],
-    queryFn: () => requestJson<Message[]>("/api/messages"),
-  });
-  const messageMutation = useMutation({
-    mutationFn: (input: MessageInput) =>
-      requestJson<Message>("/api/messages", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(input),
-      }),
-    onSuccess: async () => {
-      setText("");
-      setValidationError(null);
-      await queryClient.invalidateQueries({ queryKey: ["messages"] });
-    },
-  });
+  async function handleSave(input: CreateApplicationInput) {
+    if (drawer.mode === "create") await mutations.create.mutateAsync(input);
+    else if (drawer.jobId !== null) await mutations.update.mutateAsync({ id: drawer.jobId, input });
+    dispatch(closeDrawer());
+  }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = messageInputSchema.safeParse({ text });
-    if (!parsed.success) {
-      setValidationError(parsed.error.issues[0]?.message ?? "Enter a message");
-      return;
+  async function handleStatusChange(id: number, status: JobStatus) {
+    await mutations.update.mutateAsync({ id, input: { status } });
+  }
+
+  async function handleArchive() {
+    if (drawer.jobId !== null) {
+      await mutations.archive.mutateAsync(drawer.jobId);
+      dispatch(closeDrawer());
     }
-    setValidationError(null);
-    messageMutation.mutate(parsed.data);
   }
 
   return (
-    <div className="space-y-8">
-      <section className="max-w-3xl space-y-3">
-        <div className="flex items-center gap-2">
-          <Badge variant="success">Runnable playground</Badge>
-          <span className="text-sm text-slate-500">Small pieces, connected end to end</span>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">Your search, organized</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Applications</h1>
+          <p className="mt-2 text-slate-500">Track every conversation from first contact to outcome.</p>
         </div>
-        <h1 className="text-4xl font-bold tracking-tight text-slate-950">Job Tracker</h1>
-        <p className="text-lg leading-8 text-slate-600">
-          A tiny full-stack app showing how the selected frontend and backend libraries fit together.
+      </div>
+      <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <input
+          aria-label="Search applications"
+          className="h-10 min-w-64 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-sky-500"
+          placeholder="Search company, position, location…"
+          value={filters.search}
+          onChange={(event) => dispatch(setSearch(event.target.value))}
+        />
+        <select
+          aria-label="Filter status"
+          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+          value={filters.statusFilter}
+          onChange={(event) => dispatch(setStatusFilter(event.target.value as RootState["ui"]["statusFilter"]))}
+        >
+          <option value="all">All statuses</option>
+          {["saved", "applied", "interview", "offer", "rejected", "withdrawn"].map((status) => (
+            <option key={status} value={status}>
+              {status[0].toUpperCase() + status.slice(1)}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Sort applications"
+          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+          value={`${filters.sortField}-${filters.sortDirection}`}
+          onChange={(event) => {
+            const [field, direction] = event.target.value.split("-") as [
+              RootState["ui"]["sortField"],
+              RootState["ui"]["sortDirection"],
+            ];
+            dispatch(setSort({ field, direction }));
+          }}
+        >
+          <option value="createdAt-desc">Newest first</option>
+          <option value="createdAt-asc">Oldest first</option>
+          <option value="appliedAt-desc">Applied date, newest</option>
+          <option value="appliedAt-asc">Applied date, oldest</option>
+        </select>
+        <Button variant="outline" onClick={() => dispatch(setSearch(""))}>
+          Clear search
+        </Button>
+      </div>
+      {applications.isPending && <p className="py-8 text-center text-sm text-slate-500">Loading applications…</p>}
+      {applications.error && (
+        <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+          Unable to load applications: {applications.error.message}
         </p>
-      </section>
-
-      <section className="grid gap-5 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>API greeting</CardTitle>
-            <CardDescription>TanStack Query → Elysia → Bun</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <QueryState loading={helloQuery.isLoading} error={helloQuery.error}>
-              <p className="text-2xl font-semibold text-slate-950">{helloQuery.data?.message}</p>
-              <p className="mt-2 text-sm text-slate-500">Fetched at {helloQuery.data?.timestamp}</p>
-            </QueryState>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Service health</CardTitle>
-            <CardDescription>TanStack Query → PostgreSQL check</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <QueryState loading={healthQuery.isLoading} error={healthQuery.error}>
-              <div className="flex items-center gap-2">
-                <Badge variant="success">{healthQuery.data?.status}</Badge>
-                <span className="text-sm text-slate-600">database: {healthQuery.data?.database}</span>
-              </div>
-            </QueryState>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Redux counter</CardTitle>
-            <CardDescription>Local state stays separate from server state</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" aria-label="Decrease" onClick={() => dispatch(decrement())}>
-                −
-              </Button>
-              <span className="min-w-8 text-center text-2xl font-semibold text-slate-950">{count}</span>
-              <Button size="icon" aria-label="Increase" onClick={() => dispatch(increment())}>
-                +
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Persist a message</CardTitle>
-            <CardDescription>Zod validation → Drizzle → PostgreSQL</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-3" onSubmit={handleSubmit}>
-              <label className="sr-only" htmlFor="message">
-                Message
-              </label>
-              <div className="flex gap-2">
-                <Input id="message" value={text} onChange={(event) => setText(event.target.value)} placeholder="Say hello…" maxLength={240} />
-                <Button type="submit" disabled={messageMutation.isPending}>
-                  {messageMutation.isPending ? "Saving…" : "Save"}
-                </Button>
-              </div>
-              {validationError && <p className="text-sm text-rose-600">{validationError}</p>}
-              {messageMutation.error && <p className="text-sm text-rose-600">Unable to save: {messageMutation.error.message}</p>}
-            </form>
-          </CardContent>
-        </Card>
-      </section>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved messages</CardTitle>
-          <CardDescription>Loaded with TanStack Query after each mutation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <QueryState loading={messagesQuery.isLoading} error={messagesQuery.error}>
-            {messagesQuery.data?.length ? (
-              <ul className="space-y-3">
-                {messagesQuery.data.map((message) => (
-                  <li key={message.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-                    <span className="text-sm text-slate-800">{message.text}</span>
-                    <span className="text-xs text-slate-400">{new Date(message.createdAt).toLocaleString()}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-slate-500">No messages yet. Add the first one above.</p>
-            )}
-          </QueryState>
-        </CardContent>
-      </Card>
+      )}
+      {applications.data && !applications.data.length && (
+        <p className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+          No applications yet. Add your first opportunity to get started.
+        </p>
+      )}
+      {applications.data && applications.data.length > 0 && (
+        <JobBoard jobs={applications.data} onStatusChange={handleStatusChange} />
+      )}
+      <JobDrawer
+        job={selectedJob}
+        submitting={pending}
+        onSave={handleSave}
+        onArchive={handleArchive}
+        onClose={() => dispatch(closeDrawer())}
+      />
+      {(mutations.create.error || mutations.update.error || mutations.archive.error) && (
+        <p className="text-sm text-rose-600">
+          {(mutations.create.error || mutations.update.error || mutations.archive.error)?.message}
+        </p>
+      )}
     </div>
   );
 }

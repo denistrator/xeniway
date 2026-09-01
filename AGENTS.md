@@ -1,41 +1,56 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+## Purpose
 
-This is a Bun workspace monorepo:
+Job Tracker is a candidate-facing application for recording employer conversations and application progress. Preserve the six-status workflow, authenticated ownership boundary, archive semantics, and shared API contracts when changing the code.
 
-- `apps/web` contains the React/Vite UI, routes, Redux store, TanStack Query integration, Tailwind styles, and reusable UI primitives.
-- `apps/api` contains the Bun/Elysia server, Zod validation, Drizzle schema/repository code, and database migrations in `apps/api/drizzle`.
-- `packages/shared` contains types and Zod schemas shared by the frontend and API.
-- `tests/e2e` contains Playwright browser tests; package-level tests live beside source files as `*.test.ts`.
-- `infra/docker-compose.yml` defines the local PostgreSQL service. Keep secrets in `.env`, using `.env.example` as the template.
+## Structure
 
-## Build, Test, and Development Commands
+- `apps/web` contains the React/Vite SPA, routes, Redux Toolkit UI state, TanStack Query hooks, API client, Tailwind styles, and reusable primitives.
+- `apps/api` contains the Bun/Elysia server, authentication and CSRF services, repositories, Drizzle schema, migrations, and development seed command.
+- `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
+- `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.
+- `docs` contains human and AI-facing architecture, API, database, operations, testing, and migration documentation.
+- `infra/docker-compose.yml` defines the local PostgreSQL service.
 
-Run `bun install` after cloning. Common workflows:
+## Development commands
 
-- `bun run db:up` / `bun run db:down` — start or stop local PostgreSQL.
-- `bun run db:migrate` — apply Drizzle SQL migrations.
-- `bun run dev` — run the API and Vite frontend together.
-- `bun run typecheck` — typecheck shared, API, and web workspaces.
-- `bun run test` — run Vitest tests for shared contracts and the API.
-- `bun run test:e2e` — run the Chromium Playwright smoke test.
-- `bun run build` — build the web bundle and typecheck the API.
+Run `bun install` after cloning, copy `.env.example` to `.env`, then use:
 
-For local E2E runs, start PostgreSQL, migrate it, and install Chromium with `bunx playwright install chromium` first.
+- `bun run db:up` and `bun run db:down` to manage local PostgreSQL.
+- `bun run db:migrate` to apply migrations.
+- `bun run db:seed` to create or refresh development fixtures.
+- `bun run dev` to run the API and web app together.
+- `bun run typecheck`, `bun run test`, `bun run build`, and `bun run test:e2e` for verification.
 
-## Coding Style & Naming Conventions
+The E2E workflow expects PostgreSQL to be migrated and seeded. Install Chromium with `bunx playwright install chromium` when needed.
 
-Use TypeScript with two-space indentation, double-quoted imports/strings, semicolons, and trailing commas consistent with existing files. Use `camelCase` for variables/functions, `PascalCase` for React components and types, and kebab-case for route/page filenames (for example, `home-page.tsx`). No lint or formatter script is currently configured; preserve the surrounding style when editing.
+## Coding conventions
 
-## Testing Guidelines
+Use TypeScript with two-space indentation, double-quoted imports and strings, semicolons, and trailing commas consistent with the existing source. Use `camelCase` for values and functions, `PascalCase` for React components and types, and kebab-case for route/page filenames. Keep API JSON camelCase and wrapped in the documented `data` or `error` envelope. Prefer the shared Zod schemas at all browser/API boundaries.
 
-Use Vitest for unit and API behavior tests, with descriptive behavior-oriented test names such as `rejects invalid messages`. Use Playwright for user-flow or cross-layer changes. There is no configured coverage threshold; every new route, schema rule, or user-visible flow should include focused regression coverage.
+Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for the supported TypeScript and TSX files.
 
-## Commit & Pull Request Guidelines
+Keep server state in TanStack Query and local presentation state in Redux Toolkit. Keep database access behind typed repositories. Every application repository operation must be scoped by authenticated user ID. Mutating authenticated requests require the session CSRF token.
 
-Recent commits use short, lowercase summaries (for example, `init project skeleton`); keep commits concise and focused. Pull requests should explain the change, mention validation commands run, call out schema/migration or environment changes, and include screenshots for UI changes. Ensure CI-equivalent checks pass: typecheck, Vitest, build, and Playwright.
+## Testing expectations
 
-## Security & Configuration Tips
+Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, and user-visible workflows require focused regression coverage.
 
-Never commit `.env` or credentials. Use the local PostgreSQL values documented in `README.md` and update `.env.example` when introducing a required configuration variable.
+Before claiming a change is complete, run the checks relevant to the change. For a full change, run:
+
+```bash
+bun run typecheck
+bun run test
+bun run build
+bun run db:seed
+bun run test:e2e
+```
+
+## Security and configuration
+
+Never commit `.env`, passwords, session IDs, or generated test artifacts. Use `.env.example` as the configuration template. Passwords are hashed with Argon2id; session IDs are stored in HttpOnly cookies; CSRF tokens are stored server-side and sent in `x-csrf-token`. Do not weaken ownership checks or cookie settings to make tests pass.
+
+## Change boundaries
+
+Do not add new product features, pages, integrations, external authentication, caching, object storage, or deployment systems without explicit approval. If a requested change conflicts with the API contract or requires data migration outside the current empty-migration policy, stop and ask for direction.

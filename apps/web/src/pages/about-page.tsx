@@ -1,38 +1,51 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-
-const libraryNotes = [
-  ["React + Vite", "Render the interface and serve it during development."],
-  ["TanStack Query", "Fetch, cache, and invalidate server data."],
-  ["Redux Toolkit", "Keep the counter as predictable local client state."],
-  ["Elysia + Bun", "Expose a small typed HTTP API on the Bun runtime."],
-  ["Zod", "Validate the message at the shared client/server boundary."],
-  ["Drizzle + PostgreSQL", "Persist and query messages with a relational database."],
-  ["Tailwind + shadcn/ui", "Compose the visual layer from utility classes and primitives."],
-];
+import { Link } from "react-router-dom";
 
 export function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <section className="space-y-3">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-950">About this demo</h1>
-        <p className="text-lg leading-8 text-slate-600">Each library owns one small, visible piece of the job-tracker flow.</p>
-      </section>
-      <Card>
-        <CardHeader>
-          <CardTitle>What is demonstrated?</CardTitle>
-          <CardDescription>Follow the request from the browser to the database and back.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="divide-y divide-slate-100">
-            {libraryNotes.map(([name, description]) => (
-              <li key={name} className="grid gap-1 py-4 sm:grid-cols-[180px_1fr]">
-                <span className="font-semibold text-slate-950">{name}</span>
-                <span className="text-sm leading-6 text-slate-600">{description}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
+    <main className="min-h-screen bg-slate-50 px-6 py-8 text-slate-900">
+      <div className="mx-auto flex max-w-3xl flex-col gap-16">
+        <header className="flex items-center justify-between">
+          <Link to="/about" className="text-lg font-bold tracking-tight text-slate-950">
+            Job Tracker
+          </Link>
+          <nav className="flex items-center gap-2" aria-label="About navigation">
+            <Link to="/login" className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:text-slate-950">
+              Sign in
+            </Link>
+            <Link
+              to="/register"
+              className="rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            >
+              Create an account
+            </Link>
+          </nav>
+        </header>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-sky-600">For focused job searches</p>
+          <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
+            Keep your job search moving
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+            Job Tracker gives candidates one clear place to follow every application, conversation, and next step with a
+            potential employer.
+          </p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <Feature title="See the full picture" text="Keep opportunities organized across six simple stages." />
+            <Feature title="Stay ready" text="Capture contacts, notes, dates, and follow-up reminders." />
+            <Feature title="Learn from the search" text="Archive old applications without losing your history." />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function Feature({ title, text }: { title: string; text: string }) {
+  return (
+    <article className="rounded-2xl bg-slate-50 p-5">
+      <h2 className="font-semibold text-slate-950">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
+    </article>
   );
 }
