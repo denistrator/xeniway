@@ -17,7 +17,7 @@ export function ArchivePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-6">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">Past opportunities</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Archive</h1>

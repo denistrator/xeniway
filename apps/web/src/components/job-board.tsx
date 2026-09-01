@@ -43,48 +43,50 @@ export function JobBoard({
   }, [jobs, search, sortDirection, sortField, statusFilter]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {jobStatuses.map((status) => {
-        const columnJobs = filteredJobs.filter((job) => job.status === status);
-        return (
-          <section
-            key={status}
-            aria-label={`${statusLabels[status]} applications`}
-            className="min-h-64 rounded-2xl border border-slate-200 bg-slate-100/70 p-3"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              const transferId = Number(event.dataTransfer.getData("text/plain"));
-              const id = Number.isInteger(transferId) && transferId > 0 ? transferId : draggedIdRef.current;
-              if (id !== null) onStatusChange(id, status);
-              draggedIdRef.current = null;
-            }}
-          >
-            <div className="mb-3 flex items-center justify-between px-1">
-              <h2 className="text-sm font-semibold text-slate-700">{statusLabels[status]}</h2>
-              <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500">{columnJobs.length}</span>
-            </div>
-            <div className="space-y-3">
-              {columnJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  onOpen={() => dispatch(openEditDrawer(job.id))}
-                  onDragStart={(event: DragEvent<HTMLButtonElement>) => {
-                    event.dataTransfer.setData("text/plain", String(job.id));
-                    draggedIdRef.current = job.id;
-                  }}
-                />
-              ))}
-              {!columnJobs.length && (
-                <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-400">
-                  Drop applications here
-                </p>
-              )}
-            </div>
-          </section>
-        );
-      })}
+      <div className="job-board-scroll overflow-x-auto w-full">
+        <div className="grid md:grid-flow-col grid-cols-1 gap-4 px-6 md:grid-cols-[minmax(256px,1fr)]">
+          {jobStatuses.map((status) => {
+            const columnJobs = filteredJobs.filter((job) => job.status === status);
+            return (
+              <section
+                key={status}
+                aria-label={`${statusLabels[status]} applications`}
+                className="job-board-column min-h-64 rounded-2xl border border-slate-200 bg-slate-100/70 p-3 md:min-w-64"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const transferId = Number(event.dataTransfer.getData("text/plain"));
+                  const id = Number.isInteger(transferId) && transferId > 0 ? transferId : draggedIdRef.current;
+                  if (id !== null) onStatusChange(id, status);
+                  draggedIdRef.current = null;
+                }}
+              >
+                <div className="mb-3 flex items-center justify-between px-1">
+                  <h2 className="text-sm font-semibold text-slate-700">{statusLabels[status]}</h2>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500">{columnJobs.length}</span>
+                </div>
+                <div className="space-y-3">
+                  {columnJobs.map((job) => (
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      onOpen={() => dispatch(openEditDrawer(job.id))}
+                      onDragStart={(event: DragEvent<HTMLButtonElement>) => {
+                        event.dataTransfer.setData("text/plain", String(job.id));
+                        draggedIdRef.current = job.id;
+                      }}
+                    />
+                  ))}
+                  {!columnJobs.length && (
+                    <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-400">
+                      Drop applications here
+                    </p>
+                  )}
+                </div>
+              </section>
+            );
+          })}
+        </div>
     </div>
   );
 }
