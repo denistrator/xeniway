@@ -5,6 +5,7 @@
 - `packages/shared/src/index.test.ts` verifies shared schemas and public contract assumptions.
 - `apps/api/src/*.test.ts` covers authentication, expiration, CSRF, row mapping, seed invariants, validation, CRUD, status filtering, archive transitions, error status codes, and ownership isolation using focused in-memory dependencies.
 - `apps/web/src/lib/api.test.ts` covers client error parsing and query-key separation.
+- `apps/web/src/components/job-status.test.ts` protects the shared six-status display order and labels used by the board, filters, and form.
 - `tests/e2e/job-tracker.spec.ts` logs in with development seed credentials and exercises the board, six statuses, search, create, native drag-and-drop, archive, and permanent deletion.
 
 ## Commands
@@ -24,6 +25,6 @@ The root `test` command runs all Vitest workspaces. E2E requires a migrated and 
 
 ## Test design rules
 
-Add focused tests when changing a shared schema, API route, repository rule, authentication behavior, ownership boundary, archive transition, or visible workflow. Keep migrations data-empty and test seed idempotency separately. Use stable accessible labels and roles in browser tests.
+Add focused tests when changing a shared schema, API route, repository rule, authentication behavior, ownership boundary, archive transition, visible workflow, or accessibility behavior. Keep migrations data-empty and test seed idempotency separately. Use stable accessible labels and roles in browser tests. For UI changes, verify keyboard access, focus behavior, live announcements, mobile layout, theme behavior, and reduced-motion behavior as applicable.
 
 The suite has no coverage threshold. Quality is enforced through type safety, focused behavior tests, a real database-backed browser flow, and the complete CI command sequence.

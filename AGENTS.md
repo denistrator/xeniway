@@ -13,6 +13,8 @@ Job Tracker is a candidate-facing application for recording employer conversatio
 - `docs` contains human and AI-facing architecture, API, database, operations, testing, and migration documentation.
 - `infra/docker-compose.yml` defines the local PostgreSQL service.
 
+The web UI is an accessibility-sensitive product surface. Preserve semantic HTML, keyboard access, visible focus indicators, dialog focus management, accessible names, live announcements for async states, responsive touch targets, and reduced-motion behavior.
+
 ## Development commands
 
 Run `bun install` after cloning, copy `.env.example` to `.env`, then use:
@@ -33,9 +35,11 @@ Run `bun run format` after source edits and `bun run lint` before committing. Bi
 
 Keep server state in TanStack Query and local presentation state in Redux Toolkit. Keep database access behind typed repositories. Every application repository operation must be scoped by authenticated user ID. Mutating authenticated requests require the session CSRF token.
 
+For frontend work, prefer semantic controls over ARIA recreation, associate every form control with a label, provide `name` and appropriate `autocomplete`, keep icon-only actions labeled, use `:focus-visible`, maintain keyboard alternatives for drag-and-drop, and preserve accessible modal/drawer behavior. Use `…` for loading copy and announce asynchronous status changes with an appropriate live region.
+
 ## Testing expectations
 
-Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, and user-visible workflows require focused regression coverage.
+Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, user-visible workflows, and accessibility behavior require focused regression coverage where practical. Exercise keyboard navigation and responsive states for changed UI.
 
 Before claiming a change is complete, run the checks relevant to the change. For a full change, run:
 

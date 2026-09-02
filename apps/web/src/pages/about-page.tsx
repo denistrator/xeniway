@@ -2,7 +2,11 @@ import { Link } from "react-router-dom";
 
 export function AboutPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-slate-50 px-6 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100"
+    >
       <div className="mx-auto flex max-w-3xl flex-col gap-16">
         <header className="flex items-center justify-between">
           <Link to="/about" className="text-lg font-bold tracking-tight text-slate-950 dark:text-white">
@@ -25,7 +29,7 @@ export function AboutPage() {
         </header>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-12">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-sky-600">For focused job searches</p>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-sky-700">For focused job searches</p>
           <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl">
             Keep your job search moving
           </h1>

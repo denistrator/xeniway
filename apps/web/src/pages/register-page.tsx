@@ -1,5 +1,5 @@
 import { registerInputSchema } from "@job-tracker/shared";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -12,6 +12,10 @@ export function RegisterPage() {
   const { register } = useAuthMutations();
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" });
   const [validationError, setValidationError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (validationError || register.error) errorRef.current?.focus();
+  }, [register.error, validationError]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -43,20 +47,40 @@ export function RegisterPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block space-y-1 text-sm font-medium">
             First name
-            <Input value={form.firstName} onChange={(event) => update("firstName", event.target.value)} />
+            <Input
+              name="firstName"
+              autoComplete="given-name"
+              value={form.firstName}
+              onChange={(event) => update("firstName", event.target.value)}
+            />
           </label>
           <label className="block space-y-1 text-sm font-medium">
             Last name
-            <Input value={form.lastName} onChange={(event) => update("lastName", event.target.value)} />
+            <Input
+              name="lastName"
+              autoComplete="family-name"
+              value={form.lastName}
+              onChange={(event) => update("lastName", event.target.value)}
+            />
           </label>
         </div>
         <label className="block space-y-1 text-sm font-medium">
           Email
-          <Input required type="email" value={form.email} onChange={(event) => update("email", event.target.value)} />
+          <Input
+            name="email"
+            autoComplete="email"
+            spellCheck={false}
+            required
+            type="email"
+            value={form.email}
+            onChange={(event) => update("email", event.target.value)}
+          />
         </label>
         <label className="block space-y-1 text-sm font-medium">
           Password
           <Input
+            name="password"
+            autoComplete="new-password"
             required
             type="password"
             value={form.password}
@@ -66,6 +90,8 @@ export function RegisterPage() {
         <label className="block space-y-1 text-sm font-medium">
           Confirm password
           <Input
+            name="confirmPassword"
+            autoComplete="new-password"
             required
             type="password"
             value={form.confirmPassword}
@@ -73,7 +99,15 @@ export function RegisterPage() {
           />
         </label>
         {(validationError || register.error) && (
-          <p className="text-sm text-rose-600 dark:text-rose-400">{validationError ?? register.error?.message}</p>
+          <p
+            ref={errorRef}
+            role="alert"
+            aria-live="assertive"
+            tabIndex={-1}
+            className="text-sm text-rose-600 dark:text-rose-400"
+          >
+            {validationError ?? register.error?.message}
+          </p>
         )}
         <Button className="w-full" type="submit" disabled={csrf.isPending || register.isPending}>
           {register.isPending ? "Creating account…" : "Create account"}

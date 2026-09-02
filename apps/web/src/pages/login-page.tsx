@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -12,6 +12,10 @@ export function LoginPage() {
   const { login } = useAuthMutations();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (login.error) errorRef.current?.focus();
+  }, [login.error]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,13 +29,38 @@ export function LoginPage() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label className="block space-y-1 text-sm font-medium">
           Email
-          <Input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+          <Input
+            name="email"
+            autoComplete="email"
+            spellCheck={false}
+            required
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         </label>
         <label className="block space-y-1 text-sm font-medium">
           Password
-          <Input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+          <Input
+            name="password"
+            autoComplete="current-password"
+            required
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
         </label>
-        {login.error && <p className="text-sm text-rose-600 dark:text-rose-400">{login.error.message}</p>}
+        {login.error && (
+          <p
+            ref={errorRef}
+            role="alert"
+            aria-live="assertive"
+            tabIndex={-1}
+            className="text-sm text-rose-600 dark:text-rose-400"
+          >
+            {login.error.message}
+          </p>
+        )}
         <Button className="w-full" type="submit" disabled={csrf.isPending || login.isPending}>
           {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
@@ -56,7 +85,11 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center bg-slate-50 dark:bg-slate-950">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="mx-auto flex min-h-[70vh] max-w-md items-center bg-slate-50 dark:bg-slate-950"
+    >
       <Card className="w-full">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
@@ -64,6 +97,6 @@ export function AuthCard({
         </CardHeader>
         <CardContent>{children}</CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

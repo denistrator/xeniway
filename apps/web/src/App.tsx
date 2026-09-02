@@ -14,6 +14,12 @@ import { RegisterPage } from "./pages/register-page";
 export function App() {
   return (
     <>
+      <a
+        href="#main-content"
+        className="skip-link fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0 dark:bg-white dark:text-slate-950"
+      >
+        Skip to main content
+      </a>
       <ThemeSync />
       <AuthFailureHandler />
       <Routes>

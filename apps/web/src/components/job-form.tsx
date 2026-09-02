@@ -1,9 +1,8 @@
 import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@job-tracker/shared";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import { jobStatuses, statusLabels } from "./job-status";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-
-const statuses = ["saved", "applied", "interview", "offer", "rejected", "withdrawn"] as const;
 
 type FormState = {
   company: string;
@@ -58,8 +57,12 @@ export function JobForm({
 }) {
   const [form, setForm] = useState<FormState>(() => toForm(job));
   const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => setForm(toForm(job)), [job]);
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   function update(field: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -85,54 +88,82 @@ export function JobForm({
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form
+      className="space-y-4"
+      onSubmit={handleSubmit}
+      aria-describedby={error ? "application-form-error" : undefined}
+      autoComplete="off"
+    >
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1 text-sm font-medium">
-          Company *<Input required value={form.company} onChange={(event) => update("company", event.target.value)} />
+          Company *
+          <Input
+            name="company"
+            required
+            value={form.company}
+            onChange={(event) => update("company", event.target.value)}
+          />
         </label>
         <label className="space-y-1 text-sm font-medium">
           Position *
-          <Input required value={form.position} onChange={(event) => update("position", event.target.value)} />
+          <Input
+            name="position"
+            required
+            value={form.position}
+            onChange={(event) => update("position", event.target.value)}
+          />
         </label>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1 text-sm font-medium">
           Location
-          <Input value={form.location} onChange={(event) => update("location", event.target.value)} />
+          <Input name="location" value={form.location} onChange={(event) => update("location", event.target.value)} />
         </label>
         <label className="space-y-1 text-sm font-medium">
           Salary
-          <Input value={form.salary} onChange={(event) => update("salary", event.target.value)} />
+          <Input name="salary" value={form.salary} onChange={(event) => update("salary", event.target.value)} />
         </label>
       </div>
       <label className="block space-y-1 text-sm font-medium">
         Job URL
-        <Input type="url" value={form.jobUrl} onChange={(event) => update("jobUrl", event.target.value)} />
+        <Input
+          name="jobUrl"
+          type="url"
+          value={form.jobUrl}
+          onChange={(event) => update("jobUrl", event.target.value)}
+        />
       </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1 text-sm font-medium">
           Status
           <select
             className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            name="status"
             value={form.status}
-            onChange={(event) => update("status", event.target.value)}
+            onChange={(event) => update("status", event.target.value as FormState["status"])}
           >
-            {statuses.map((status) => (
+            {jobStatuses.map((status) => (
               <option key={status} value={status}>
-                {status[0].toUpperCase() + status.slice(1)}
+                {statusLabels[status]}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-1 text-sm font-medium">
           Applied date
-          <Input type="date" value={form.appliedAt} onChange={(event) => update("appliedAt", event.target.value)} />
+          <Input
+            name="appliedAt"
+            type="date"
+            value={form.appliedAt}
+            onChange={(event) => update("appliedAt", event.target.value)}
+          />
         </label>
       </div>
       <label className="block space-y-1 text-sm font-medium">
         Description
         <textarea
           className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          name="description"
           value={form.description}
           onChange={(event) => update("description", event.target.value)}
         />
@@ -141,11 +172,23 @@ export function JobForm({
         Notes
         <textarea
           className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          name="notes"
           value={form.notes}
           onChange={(event) => update("notes", event.target.value)}
         />
       </label>
-      {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+      {error && (
+        <p
+          ref={errorRef}
+          id="application-form-error"
+          role="alert"
+          aria-live="assertive"
+          tabIndex={-1}
+          className="text-sm text-rose-600 dark:text-rose-400"
+        >
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel

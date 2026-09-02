@@ -64,7 +64,7 @@ export function Layout() {
           </Button>
         </div>
       </header>
-      <main className="w-full py-8">
+      <main id="main-content" tabIndex={-1} className="w-full py-8">
         <Outlet />
       </main>
     </div>

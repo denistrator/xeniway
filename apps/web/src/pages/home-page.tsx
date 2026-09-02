@@ -42,7 +42,7 @@ export function HomePage() {
       <div className="mx-auto max-w-7xl space-y-6 px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">Your search, organized</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Your search, organized</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Applications</h1>
             <p className="mt-2 text-slate-500 dark:text-slate-400">
               Track every conversation from first contact to outcome.
@@ -52,6 +52,8 @@ export function HomePage() {
         <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <input
             aria-label="Search applications"
+            name="search"
+            autoComplete="off"
             className="h-10 min-w-64 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             placeholder="Search company, position, location…"
             value={filters.search}
@@ -63,7 +65,9 @@ export function HomePage() {
           </Button>
         </div>
         {applications.isPending && (
-          <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading applications…</p>
+          <p role="status" aria-live="polite" className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            Loading applications…
+          </p>
         )}
         {applications.error && (
           <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">

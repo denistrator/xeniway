@@ -19,12 +19,14 @@ export function ArchivePage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">Past opportunities</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Past opportunities</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Archive</h1>
         <p className="mt-2 text-slate-500 dark:text-slate-400">Restore an application or remove it permanently.</p>
       </div>
       {archived.isPending && (
-        <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">Loading archive…</p>
+        <p role="status" aria-live="polite" className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+          Loading archive…
+        </p>
       )}
       {archived.error && (
         <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
@@ -44,9 +46,12 @@ export function ArchivePage() {
                 <div>
                   <h2 className="font-semibold text-slate-950 dark:text-white">{job.company}</h2>
                   <p className="text-sm text-slate-600 dark:text-slate-300">{job.position}</p>
-                  {job.location && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{job.location}</p>}
-                  <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                    Archived {job.archivedAt ? new Date(job.archivedAt).toLocaleDateString() : "—"}
+                  {job.location && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{job.location}</p>}
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Archived{" "}
+                    {job.archivedAt
+                      ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(job.archivedAt))
+                      : "—"}
                   </p>
                 </div>
                 <div className="flex gap-2">

@@ -10,6 +10,8 @@ export function ThemeSync() {
     const apply = () => {
       const dark = preference === "dark" || (preference === "system" && media.matches);
       document.documentElement.dataset.theme = dark ? "dark" : "light";
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#020617" : "#f8fafc");
       document.documentElement.style.removeProperty("background-color");
     };
     apply();

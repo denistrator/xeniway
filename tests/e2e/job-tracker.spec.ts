@@ -1,4 +1,7 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+
+test.describe.configure({ mode: "serial" });
 
 test("shows the about page without authentication", async ({ page }) => {
   await page.goto("/about");
@@ -9,6 +12,53 @@ test("shows the about page without authentication", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
 });
 
+test("has no automated accessibility violations across key workflows", async ({ page }) => {
+  await page.goto("/about");
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+  await page.getByRole("button", { name: /Filter statuses/ }).click();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test("provides a keyboard skip link to the main content", async ({ page }) => {
+  await page.goto("/about");
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#main-content")).toBeFocused();
+});
+
+test("manages focus and escape behavior for the job form dialog", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  const addJob = page.getByRole("button", { name: "+ Add job" });
+  await addJob.click();
+  const closeButton = page.getByRole("button", { name: "Close", exact: true });
+  await expect(closeButton).toBeFocused();
+
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(closeButton).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(closeButton).toHaveCount(0);
+  await expect(addJob).toBeFocused();
+});
+
 test("shows only the statuses selected in the filter menu", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");
@@ -17,7 +67,7 @@ test("shows only the statuses selected in the filter menu", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
   await page.getByRole("button", { name: /Filter statuses/ }).click();
-  const menu = page.getByRole("menu", { name: "Filter statuses" });
+  const menu = page.locator("#status-filter-options");
   await expect(menu).toBeVisible();
   await menu.locator("label").filter({ hasText: "Offer" }).locator("input").uncheck();
   await expect(page.getByRole("region", { name: "Offer applications" })).toHaveCount(0);
@@ -29,6 +79,8 @@ test("shows only the statuses selected in the filter menu", async ({ page }) => 
   await expect(page.getByRole("region", { name: "Saved applications" })).toHaveCount(0);
   await menu.locator("input").first().check();
   await expect(page.getByRole("region", { name: "Saved applications" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: /Filter statuses/ })).toBeFocused();
 });
 
 test("persists drag-and-drop ordering within a status", async ({ page }) => {
@@ -55,9 +107,50 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   ).toContainText(secondCompany);
 });
 
-test("switches and persists the job form presentation mode", async ({ page }) => {
+test("supports keyboard reordering within a status", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  const savedColumn = page.getByRole("region", { name: "Saved applications" });
+  const cards = savedColumn.locator('button[draggable="true"]');
+  await expect(cards.nth(1)).toBeVisible();
+  const secondCompany = await cards.nth(1).locator("p").first().textContent();
+  if (!secondCompany) throw new Error("Unable to locate the second saved application");
+
+  await cards.nth(1).focus();
+  await page.keyboard.press("ArrowUp");
+  await expect(cards.first()).toContainText(secondCompany);
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Saved applications" }).locator('button[draggable="true"]').first(),
+  ).toContainText(secondCompany);
+});
+
+test("focuses and announces application form validation errors", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByLabel("Company *").fill(" ");
+  await page.getByLabel("Position *").fill("Engineer");
+  await page.getByRole("button", { name: "Save application" }).click();
+
+  const error = page.getByRole("alert");
+  await expect(error).toBeVisible();
+  await expect(error).toBeFocused();
+});
+
+test("switches and persists the job form presentation mode", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@example.com");
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();

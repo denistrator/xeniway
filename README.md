@@ -9,9 +9,10 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 - Registration, login, logout, and session restoration.
 - Argon2id password hashing, secure HttpOnly sessions, and CSRF protection.
 - Create, read, update, and archive job applications.
-- Search, status filtering, sorting, and native drag-and-drop status changes.
+- Search, status filtering, and native drag-and-drop status changes with keyboard alternatives.
 - Archive restore and permanent deletion with confirmation.
 - Light, dark, and system themes with a persisted browser preference.
+- Accessible UI with semantic controls, visible focus states, keyboard navigation, live status updates, and reduced-motion support.
 - Per-user ownership isolation for all application operations.
 - Development seed accounts and 36 deterministic fixture applications.
 
@@ -73,6 +74,10 @@ For E2E testing, start PostgreSQL, apply migrations, seed the database, and inst
 - `docs` — architecture, API, database, operations, testing, and migration notes.
 
 See [API documentation](docs/api.md), [database documentation](docs/database.md), [operations documentation](docs/operations.md), and [testing documentation](docs/testing.md) for details.
+
+## Accessibility
+
+Accessibility is a first-class UI goal. Preserve semantic HTML, associated form labels and autocomplete metadata, visible `:focus-visible` states, keyboard alternatives for drag-and-drop interactions, focus management for dialogs, polite announcements for asynchronous states, responsive touch targets, and `prefers-reduced-motion` support. Verify user-visible changes with keyboard navigation and the accessible roles and names used by Playwright tests.
 
 ## Scope and deferred work
 

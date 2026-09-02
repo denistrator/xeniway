@@ -8,6 +8,7 @@ The current repository is the React/Bun implementation of Job Tracker. The previ
 - Bun/Elysia replaced the former backend runtime.
 - PostgreSQL/Drizzle now stores users, sessions, and owned job applications.
 - The public workflow is authenticated candidate tracking, not a library demonstration.
+- The React UI is maintained as an accessible, keyboard-operable candidate workflow with responsive and reduced-motion behavior.
 - Existing source data is intentionally not migrated. The new database starts from schema-only migrations, with optional development fixtures from `bun run db:seed`.
 
 ## Compatibility boundary

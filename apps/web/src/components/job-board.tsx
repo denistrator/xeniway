@@ -4,16 +4,9 @@ import { useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openEditDrawer, type RootState } from "../store";
 import { JobCard } from "./job-card";
+import { jobStatuses, statusLabels } from "./job-status";
 
-export const jobStatuses: JobStatus[] = ["saved", "applied", "interview", "offer", "rejected", "withdrawn"];
-const statusLabels: Record<JobStatus, string> = {
-  saved: "Saved",
-  applied: "Applied",
-  interview: "Interview",
-  offer: "Offer",
-  rejected: "Rejected",
-  withdrawn: "Withdrawn",
-};
+export { jobStatuses } from "./job-status";
 
 export function JobBoard({
   jobs,
@@ -38,6 +31,34 @@ export function JobBoard({
           [job.company, job.position, job.location ?? ""].some((value) => value.toLowerCase().includes(query)),
       );
   }, [jobs, search, visibleStatuses]);
+
+  function reorderWithinStatus(status: JobStatus, id: number, direction: "up" | "down" | "first" | "last") {
+    const applicationIds = jobs
+      .filter((job) => job.status === status)
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((job) => job.id);
+    const currentIndex = applicationIds.indexOf(id);
+    if (currentIndex === -1) return;
+    const targetIndex =
+      direction === "up"
+        ? currentIndex - 1
+        : direction === "down"
+          ? currentIndex + 1
+          : direction === "first"
+            ? 0
+            : applicationIds.length - 1;
+    if (targetIndex === currentIndex || targetIndex < 0 || targetIndex >= applicationIds.length) return;
+    const [movedId] = applicationIds.splice(currentIndex, 1);
+    applicationIds.splice(targetIndex, 0, movedId);
+    onReorder(status, applicationIds);
+  }
+
+  function moveToAdjacentStatus(id: number, status: JobStatus, direction: "previousStatus" | "nextStatus") {
+    const visibleStatusIndex = visibleStatuses.indexOf(status);
+    const targetIndex = direction === "previousStatus" ? visibleStatusIndex - 1 : visibleStatusIndex + 1;
+    const targetStatus = visibleStatuses[targetIndex];
+    if (targetStatus) onStatusChange(id, targetStatus);
+  }
 
   return (
     <div className="job-board-scroll w-full">
@@ -97,7 +118,14 @@ export function JobBoard({
                     >
                       <JobCard
                         job={job}
+                        position={columnJobs.findIndex((candidate) => candidate.id === job.id) + 1}
+                        total={columnJobs.length}
                         onOpen={() => dispatch(openEditDrawer(job.id))}
+                        onKeyboardMove={(direction) => {
+                          if (direction === "previousStatus" || direction === "nextStatus")
+                            moveToAdjacentStatus(job.id, status, direction);
+                          else reorderWithinStatus(status, job.id, direction);
+                        }}
                         onDragStart={(event: DragEvent<HTMLButtonElement>) => {
                           event.dataTransfer.setData("text/plain", String(job.id));
                           draggedIdRef.current = job.id;
@@ -107,7 +135,7 @@ export function JobBoard({
                   ))}
                   {!columnJobs.length && (
                     <li>
-                      <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-400 dark:border-slate-600 dark:text-slate-500">
+                      <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
                         Drop applications here
                       </p>
                     </li>
@@ -117,6 +145,15 @@ export function JobBoard({
             );
           })}
       </div>
+      {!filteredJobs.length && (
+        <p
+          role="status"
+          aria-live="polite"
+          className="px-6 pt-4 text-center text-sm text-slate-500 dark:text-slate-400"
+        >
+          No applications match the current search and status filters.
+        </p>
+      )}
     </div>
   );
 }

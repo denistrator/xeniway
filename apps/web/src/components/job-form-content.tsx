@@ -1,5 +1,6 @@
 import type { CreateApplicationInput, JobApplication } from "@job-tracker/shared";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import type { RefObject } from "react";
 import type { JobFormPresentation } from "../store";
 import { JobForm } from "./job-form";
 import { Button } from "./ui/button";
@@ -15,6 +16,10 @@ export type JobFormContentProps = {
   onSwitchPresentation: () => void;
 };
 
+export type JobFormDialogProps = JobFormContentProps & {
+  dialogRef: RefObject<HTMLElement | null>;
+};
+
 export function JobFormContent({
   presentation,
   mode,
@@ -28,7 +33,9 @@ export function JobFormContent({
   return (
     <>
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold">{mode === "create" ? "Add application" : "Edit application"}</h2>
+        <h2 id="job-form-title" className="text-xl font-bold">
+          {mode === "create" ? "Add application" : "Edit application"}
+        </h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -39,7 +46,7 @@ export function JobFormContent({
           >
             {presentation === "drawer" ? <PanelRightOpen aria-hidden="true" /> : <PanelRightClose aria-hidden="true" />}
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
+          <Button variant="ghost" size="icon" aria-label="Close" data-dialog-initial-focus onClick={onClose}>
             ×
           </Button>
         </div>

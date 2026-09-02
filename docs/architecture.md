@@ -7,7 +7,7 @@ The browser runs a React/Vite single-page application. In development, Vite prox
 ```text
 React + React Router
         │
-        ├── Redux Toolkit: filters, sorting, drawer, theme
+        ├── Redux Toolkit: filters, drawer, theme
         └── TanStack Query: authenticated server data and mutations
                 │ fetch with credentials + CSRF header
                 ▼
@@ -25,6 +25,8 @@ React + React Router
 `apps/api/src/app.ts` is an injectable Elysia app factory. Its dependencies are typed repository interfaces, which allows route behavior to be tested with in-memory implementations. `apps/api/src/server.ts` wires the production Drizzle repositories and database health check.
 
 `apps/web/src/lib/api.ts` provides the typed HTTP client. `apps/web/src/lib/queries.ts` owns TanStack Query keys, authentication queries, CSRF acquisition, mutations, and cache invalidation. Redux contains only local UI preferences and controls.
+
+The UI follows an accessibility-first baseline: semantic controls and labels, keyboard-operable workflows including a keyboard alternative to drag-and-drop, visible focus indicators, managed focus within dialogs and drawers, live regions for asynchronous feedback, responsive layouts, and reduced-motion support. The document theme is initialized before React starts to avoid a flash of the wrong theme.
 
 ## Request lifecycle
 
