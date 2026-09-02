@@ -61,7 +61,7 @@ export function JobBoard({
   }
 
   return (
-    <div className="job-board-scroll w-full">
+    <div className="job-board-scroll overflow-x-auto w-full">
       <div className="grid grid-cols-1 gap-4 px-6 md:grid-flow-col md:grid-cols-[1fr_minmax(256px,1fr)]">
         {jobStatuses
           .filter((status) => visibleStatuses.includes(status))
