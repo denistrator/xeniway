@@ -4,7 +4,7 @@ import { useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openEditDrawer, type RootState } from "../store";
 import { JobCard } from "./job-card";
-import { jobStatuses, statusAccentClasses, statusLabels } from "./job-status";
+import { jobStatuses, statusLabels, statusStyles } from "./job-status";
 
 export { jobStatuses } from "./job-status";
 
@@ -71,7 +71,7 @@ export function JobBoard({
               <section
                 key={status}
                 aria-label={`${statusLabels[status]} applications`}
-                className={`job-board-column min-h-64 rounded-2xl border border-line border-t-4 bg-surface-tint p-3 md:min-w-64 ${statusAccentClasses[status]}`}
+                className={`job-board-column min-h-64 rounded-2xl border border-line border-t-4 bg-surface-tint p-3 md:min-w-64 ${statusStyles[status].column}`}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
