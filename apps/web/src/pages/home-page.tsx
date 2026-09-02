@@ -1,7 +1,7 @@
 import type { CreateApplicationInput, JobStatus } from "@job-tracker/shared";
 import { useDispatch, useSelector } from "react-redux";
 import { JobBoard } from "../components/job-board";
-import { JobDrawer } from "../components/job-drawer";
+import { JobManager } from "../components/job-manager";
 import { StatusFilter } from "../components/status-filter";
 import { Button } from "../components/ui/button";
 import { useApplicationMutations, useApplications } from "../lib/queries";
@@ -80,7 +80,7 @@ export function HomePage() {
         <JobBoard jobs={applications.data} onStatusChange={handleStatusChange} onReorder={handleReorder} />
       )}
       <div className="mx-auto max-w-7xl px-6">
-        <JobDrawer
+        <JobManager
           job={selectedJob}
           submitting={pending}
           onSave={handleSave}

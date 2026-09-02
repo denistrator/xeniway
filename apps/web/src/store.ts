@@ -2,9 +2,12 @@ import type { JobStatus } from "@job-tracker/shared";
 import { configureStore, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type ThemePreference = "light" | "dark" | "system";
+export type JobFormPresentation = "drawer" | "modal";
+export const jobFormPresentationStorageKey = "job-tracker-form-presentation";
 
 type UiState = {
   theme: ThemePreference;
+  jobFormPresentation: JobFormPresentation;
   search: string;
   visibleStatuses: JobStatus[];
   drawer: { open: boolean; mode: "create" | "edit"; jobId: number | null };
@@ -16,6 +19,10 @@ const initialState: UiState = {
     ["light", "dark", "system"].includes(localStorage.getItem("job-tracker-theme") ?? "")
       ? (localStorage.getItem("job-tracker-theme") as ThemePreference)
       : "system",
+  jobFormPresentation:
+    typeof window !== "undefined" && localStorage.getItem(jobFormPresentationStorageKey) === "modal"
+      ? "modal"
+      : "drawer",
   search: "",
   visibleStatuses: ["saved", "applied", "interview", "offer", "rejected", "withdrawn"],
   drawer: { open: false, mode: "create", jobId: null },
@@ -27,6 +34,9 @@ const uiSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<ThemePreference>) => {
       state.theme = action.payload;
+    },
+    setJobFormPresentation: (state, action: PayloadAction<JobFormPresentation>) => {
+      state.jobFormPresentation = action.payload;
     },
     setSearch: (state, action: PayloadAction<string>) => {
       state.search = action.payload;
@@ -51,8 +61,16 @@ const uiSlice = createSlice({
   },
 });
 
-export const { setTheme, setSearch, toggleStatus, setAllStatuses, openCreateDrawer, openEditDrawer, closeDrawer } =
-  uiSlice.actions;
+export const {
+  setTheme,
+  setJobFormPresentation,
+  setSearch,
+  toggleStatus,
+  setAllStatuses,
+  openCreateDrawer,
+  openEditDrawer,
+  closeDrawer,
+} = uiSlice.actions;
 
 export const store = configureStore({ reducer: { ui: uiSlice.reducer } });
 export type RootState = ReturnType<typeof store.getState>;

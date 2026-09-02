@@ -55,6 +55,24 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   ).toContainText(secondCompany);
 });
 
+test("switches and persists the job form presentation mode", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  await expect(page.getByRole("button", { name: "Switch to modal" })).toBeVisible();
+  await page.getByRole("button", { name: "Switch to modal" }).click();
+  await expect(page.locator(".job-modal")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Switch to drawer" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  await expect(page.locator(".job-modal")).toBeVisible();
+});
+
 test("logs out and returns to login", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");
