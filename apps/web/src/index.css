@@ -2,11 +2,52 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
+  --theme-canvas: #f5f3ee;
+  --theme-surface: #fffdf8;
+  --theme-ink: #172033;
+  --theme-muted: #667085;
+  --theme-line: #d8d4cb;
+  --theme-accent: #1f6d67;
+  --theme-accent-warm: #a45f3d;
+  --theme-accent-soft: color-mix(in srgb, var(--theme-accent) 12%, transparent);
+  --theme-accent-hover: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  --theme-surface-tint: color-mix(in srgb, var(--theme-surface) 82%, var(--theme-canvas));
+  --theme-overlay: color-mix(in srgb, var(--theme-ink) 35%, transparent);
+  --theme-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  color: #172033;
-  background: #f8fafc;
+  color: var(--theme-ink);
+  background: var(--theme-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+}
+
+html[data-theme="dark"] {
+  --theme-canvas: #020618;
+  --theme-surface: #182335;
+  --theme-ink: #f7f4eb;
+  --theme-muted: #aeb8c9;
+  --theme-line: #3c4659;
+  --theme-accent: #84c5b8;
+  --theme-accent-warm: #e19a73;
+}
+
+@theme inline {
+  --color-canvas: var(--theme-canvas);
+  --color-surface: var(--theme-surface);
+  --color-ink: var(--theme-ink);
+  --color-muted: var(--theme-muted);
+  --color-line: var(--theme-line);
+  --color-accent: var(--theme-accent);
+  --color-accent-warm: var(--theme-accent-warm);
+  --color-accent-soft: var(--theme-accent-soft);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-surface-tint: var(--theme-surface-tint);
+  --color-overlay: var(--theme-overlay);
+  --font-display: var(--theme-font-display);
+}
+
+@utility font-display {
+  text-wrap: balance;
 }
 
 html {
@@ -21,6 +62,13 @@ html[data-theme="light"] {
   color-scheme: light;
 }
 
+/* Keep theme changes smooth without using transition: all, which can animate layout. */
+:where(html, html *) {
+  transition-property: color, background-color, border-color, box-shadow, fill, stroke, transform, opacity;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+
 :where(a, button, input, select, textarea):focus-visible {
   outline: 2px solid #0284c7;
   outline-offset: 2px;
@@ -31,6 +79,8 @@ html[data-theme="light"] {
 }
 
 body {
+  background: var(--theme-canvas);
+  color: var(--theme-ink);
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
@@ -103,6 +153,14 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .job-board-scroll {
     scroll-snap-type: none;
   }

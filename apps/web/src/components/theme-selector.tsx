@@ -13,7 +13,7 @@ export function ThemeSelector() {
   return (
     <select
       aria-label="Theme"
-      className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+      className="h-9 rounded-lg border border-line bg-surface px-2 text-xs text-ink"
       value={theme}
       onChange={(event) => dispatch(setTheme(event.target.value as ThemePreference))}
     >

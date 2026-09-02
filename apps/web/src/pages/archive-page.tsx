@@ -19,12 +19,12 @@ export function ArchivePage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Past opportunities</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Archive</h1>
-        <p className="mt-2 text-slate-500 dark:text-slate-400">Restore an application or remove it permanently.</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Past opportunities</p>
+        <h1 className="font-display mt-2 text-4xl font-bold tracking-tight text-ink">Archive</h1>
+        <p className="mt-2 text-muted">Restore an application or remove it permanently.</p>
       </div>
       {archived.isPending && (
-        <p role="status" aria-live="polite" className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p role="status" aria-live="polite" className="py-10 text-center text-sm text-muted">
           Loading archive…
         </p>
       )}
@@ -34,7 +34,7 @@ export function ArchivePage() {
         </p>
       )}
       {archived.data && !archived.data.length && (
-        <p className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
           Your archive is empty.
         </p>
       )}
@@ -44,10 +44,10 @@ export function ArchivePage() {
             <Card key={job.id}>
               <CardContent className="space-y-4 p-5">
                 <div>
-                  <h2 className="font-semibold text-slate-950 dark:text-white">{job.company}</h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">{job.position}</p>
-                  {job.location && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{job.location}</p>}
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  <h2 className="font-semibold text-ink">{job.company}</h2>
+                  <p className="text-sm text-muted">{job.position}</p>
+                  {job.location && <p className="mt-1 text-xs text-muted">{job.location}</p>}
+                  <p className="mt-2 text-xs text-muted">
                     Archived{" "}
                     {job.archivedAt
                       ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(job.archivedAt))

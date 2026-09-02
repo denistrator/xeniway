@@ -49,17 +49,17 @@ export function StatusFilter() {
         onClick={() => setOpen((current) => !current)}
       >
         Filter statuses
-        <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+        <span className="ml-2 text-xs text-muted">
           {allSelected ? "All" : `${visibleStatuses.length}/${jobStatuses.length}`}
         </span>
       </Button>
       {open && (
         <fieldset
           id="status-filter-options"
-          className="absolute left-0 top-full z-20 mt-2 w-full min-w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900 sm:w-64"
+          className="absolute left-0 top-full z-20 mt-2 w-full min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg sm:w-64"
         >
           <legend className="sr-only">Filter statuses</legend>
-          <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-accent-hover">
             <input
               ref={selectAllRef}
               type="checkbox"
@@ -68,11 +68,11 @@ export function StatusFilter() {
             />
             Select all statuses
           </label>
-          <div className="my-1 border-t border-slate-200 dark:border-slate-700" />
+          <div className="my-1 border-t border-line" />
           {jobStatuses.map((status) => (
             <label
               key={status}
-              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent-hover"
             >
               <input
                 type="checkbox"

@@ -11,7 +11,7 @@ export function ThemeSync() {
       const dark = preference === "dark" || (preference === "system" && media.matches);
       document.documentElement.dataset.theme = dark ? "dark" : "light";
       document.documentElement.style.colorScheme = dark ? "dark" : "light";
-      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#020617" : "#f8fafc");
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#020618" : "#f5f3ee");
       document.documentElement.style.removeProperty("background-color");
     };
     apply();

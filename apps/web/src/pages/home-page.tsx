@@ -42,19 +42,17 @@ export function HomePage() {
       <div className="mx-auto max-w-7xl space-y-6 px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Your search, organized</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Applications</h1>
-            <p className="mt-2 text-slate-500 dark:text-slate-400">
-              Track every conversation from first contact to outcome.
-            </p>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Your search, organized</p>
+            <h1 className="font-display mt-2 text-4xl font-bold tracking-tight text-ink">Applications</h1>
+            <p className="mt-2 text-muted">Track every conversation from first contact to outcome.</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
           <input
             aria-label="Search applications"
             name="search"
             autoComplete="off"
-            className="h-10 min-w-64 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="h-10 min-w-64 flex-1 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent"
             placeholder="Search company, position, location…"
             value={filters.search}
             onChange={(event) => dispatch(setSearch(event.target.value))}
@@ -65,7 +63,7 @@ export function HomePage() {
           </Button>
         </div>
         {applications.isPending && (
-          <p role="status" aria-live="polite" className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p role="status" aria-live="polite" className="py-8 text-center text-sm text-muted">
             Loading applications…
           </p>
         )}
@@ -75,7 +73,7 @@ export function HomePage() {
           </p>
         )}
         {applications.data && !applications.data.length && (
-          <p className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
             No applications yet. Add your first opportunity to get started.
           </p>
         )}

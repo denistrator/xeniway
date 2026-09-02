@@ -4,4 +4,5 @@ node_modules
 dist
 playwright-report
 test-results
+.superpowers
 .DS_Store

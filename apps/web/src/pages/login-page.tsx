@@ -65,9 +65,9 @@ export function LoginPage() {
           {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-5 text-center text-sm text-muted">
         New here?{" "}
-        <Link className="font-semibold text-slate-950 dark:text-white" to="/register">
+        <Link className="font-semibold text-ink" to="/register">
           Create an account
         </Link>
       </p>
@@ -85,11 +85,7 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <main
-      id="main-content"
-      tabIndex={-1}
-      className="mx-auto flex min-h-[70vh] max-w-md items-center bg-slate-50 dark:bg-slate-950"
-    >
+    <main id="main-content" tabIndex={-1} className="mx-auto flex min-h-[70vh] max-w-md items-center bg-canvas">
       <Card className="w-full">
         <CardHeader>
           <CardTitle>{title}</CardTitle>

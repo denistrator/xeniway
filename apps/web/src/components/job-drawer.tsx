@@ -12,7 +12,7 @@ export function JobDrawer({
   dialogRef,
 }: JobFormDialogProps) {
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/30 dark:bg-black/60">
+    <div className="fixed inset-0 z-50 bg-overlay">
       <button
         type="button"
         aria-label="Close dialog"
@@ -27,7 +27,7 @@ export function JobDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="job-form-title"
-        className="relative ml-auto flex h-full w-full max-w-xl flex-col overscroll-contain overflow-y-auto bg-white p-6 shadow-2xl dark:bg-slate-900"
+        className="relative ml-auto flex h-full w-full max-w-xl flex-col overscroll-contain overflow-y-auto border-l border-line bg-surface p-6 shadow-2xl"
       >
         <JobFormContent
           presentation={presentation}

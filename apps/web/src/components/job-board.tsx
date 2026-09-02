@@ -4,7 +4,7 @@ import { useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openEditDrawer, type RootState } from "../store";
 import { JobCard } from "./job-card";
-import { jobStatuses, statusLabels } from "./job-status";
+import { jobStatuses, statusAccentClasses, statusLabels } from "./job-status";
 
 export { jobStatuses } from "./job-status";
 
@@ -71,7 +71,7 @@ export function JobBoard({
               <section
                 key={status}
                 aria-label={`${statusLabels[status]} applications`}
-                className="job-board-column min-h-64 rounded-2xl border border-slate-200 bg-slate-100/70 p-3 dark:border-slate-700 dark:bg-slate-800/70 md:min-w-64"
+                className={`job-board-column min-h-64 rounded-2xl border border-line border-t-4 bg-surface-tint p-3 md:min-w-64 ${statusAccentClasses[status]}`}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
@@ -86,8 +86,8 @@ export function JobBoard({
                 }}
               >
                 <div className="mb-3 flex items-center justify-between px-1">
-                  <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{statusLabels[status]}</h2>
-                  <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                  <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ink">{statusLabels[status]}</h2>
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold tabular-nums text-accent">
                     {columnJobs.length}
                   </span>
                 </div>
@@ -135,7 +135,7 @@ export function JobBoard({
                   ))}
                   {!columnJobs.length && (
                     <li>
-                      <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                      <p className="rounded-xl border border-dashed border-line px-3 py-8 text-center text-xs text-muted">
                         Drop applications here
                       </p>
                     </li>
@@ -146,11 +146,7 @@ export function JobBoard({
           })}
       </div>
       {!filteredJobs.length && (
-        <p
-          role="status"
-          aria-live="polite"
-          className="px-6 pt-4 text-center text-sm text-slate-500 dark:text-slate-400"
-        >
+        <p role="status" aria-live="polite" className="px-6 pt-4 text-center text-sm text-muted">
           No applications match the current search and status filters.
         </p>
       )}

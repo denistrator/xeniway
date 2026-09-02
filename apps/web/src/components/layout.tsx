@@ -19,10 +19,10 @@ export function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+    <div className="min-h-screen bg-canvas text-ink">
+      <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-6 py-4">
-          <Link to="/" className="mr-auto text-lg font-bold tracking-tight text-slate-950 dark:text-white">
+          <Link to="/" className="font-display mr-auto text-xl font-bold tracking-tight text-ink">
             Job Tracker
           </Link>
           <nav className="flex items-center gap-1" aria-label="Main navigation">
@@ -31,10 +31,8 @@ export function Layout() {
               end
               className={({ isActive }) =>
                 cn(
-                  "rounded-lg px-3 py-2 text-sm",
-                  isActive
-                    ? "bg-slate-100 font-semibold dark:bg-slate-800"
-                    : "text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white",
+                  "rounded-lg px-3 py-2 text-sm transition-colors",
+                  isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
                 )
               }
             >
@@ -44,17 +42,15 @@ export function Layout() {
               to="/archive"
               className={({ isActive }) =>
                 cn(
-                  "rounded-lg px-3 py-2 text-sm",
-                  isActive
-                    ? "bg-slate-100 font-semibold dark:bg-slate-800"
-                    : "text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white",
+                  "rounded-lg px-3 py-2 text-sm transition-colors",
+                  isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
                 )
               }
             >
               Archive
             </NavLink>
           </nav>
-          <span className="hidden text-sm text-slate-500 dark:text-slate-400 sm:block">{user.data?.email}</span>
+          <span className="hidden text-sm text-muted sm:block">{user.data?.email}</span>
           <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
             + Add job
           </Button>

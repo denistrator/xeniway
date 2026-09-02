@@ -33,7 +33,7 @@ export function JobFormContent({
   return (
     <>
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 id="job-form-title" className="text-xl font-bold">
+        <h2 id="job-form-title" className="font-display text-2xl font-bold tracking-tight text-ink">
           {mode === "create" ? "Add application" : "Edit application"}
         </h2>
         <div className="flex items-center gap-1">
@@ -53,7 +53,7 @@ export function JobFormContent({
       </div>
       <JobForm job={job} submitting={submitting} onSubmit={onSave} onCancel={onClose} />
       {mode === "edit" && (
-        <div className="mt-auto border-t border-slate-200 pt-5 dark:border-slate-700">
+        <div className="mt-auto border-t border-line pt-5">
           <Button variant="outline" className="w-full" onClick={onArchive}>
             Archive application
           </Button>

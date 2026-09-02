@@ -137,7 +137,7 @@ export function JobForm({
         <label className="space-y-1 text-sm font-medium">
           Status
           <select
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
             name="status"
             value={form.status}
             onChange={(event) => update("status", event.target.value as FormState["status"])}
@@ -162,7 +162,7 @@ export function JobForm({
       <label className="block space-y-1 text-sm font-medium">
         Description
         <textarea
-          className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="min-h-24 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
           name="description"
           value={form.description}
           onChange={(event) => update("description", event.target.value)}
@@ -171,7 +171,7 @@ export function JobForm({
       <label className="block space-y-1 text-sm font-medium">
         Notes
         <textarea
-          className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className="min-h-24 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
           name="notes"
           value={form.notes}
           onChange={(event) => update("notes", event.target.value)}
