@@ -8,6 +8,7 @@ import { applicationRestoreRoute } from "./routes/application-restore";
 import { applicationUpdateRoute } from "./routes/application-update";
 import { applicationsArchiveRoute } from "./routes/applications-archive";
 import { applicationsListRoute } from "./routes/applications-list";
+import { applicationsReorderRoute } from "./routes/applications-reorder";
 import { authCsrfRoute } from "./routes/auth-csrf";
 import { authLoginRoute } from "./routes/auth-login";
 import { authLogoutRoute } from "./routes/auth-logout";
@@ -56,6 +57,7 @@ export function createApp(dependencies: AppDependencies) {
     .use(authMeRoute(routeDependencies))
     .use(applicationsArchiveRoute(routeDependencies))
     .use(applicationsListRoute(routeDependencies))
+    .use(applicationsReorderRoute(routeDependencies))
     .use(applicationDetailRoute(routeDependencies))
     .use(applicationCreateRoute(routeDependencies))
     .use(applicationUpdateRoute(routeDependencies))

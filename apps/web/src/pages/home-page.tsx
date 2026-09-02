@@ -26,6 +26,10 @@ export function HomePage() {
     await mutations.update.mutateAsync({ id, input: { status } });
   }
 
+  async function handleReorder(status: JobStatus, applicationIds: number[]) {
+    await mutations.reorder.mutateAsync({ status, applicationIds });
+  }
+
   async function handleArchive() {
     if (drawer.jobId !== null) {
       await mutations.archive.mutateAsync(drawer.jobId);
@@ -73,7 +77,7 @@ export function HomePage() {
         )}
       </div>
       {applications.data && applications.data.length > 0 && (
-        <JobBoard jobs={applications.data} onStatusChange={handleStatusChange} />
+        <JobBoard jobs={applications.data} onStatusChange={handleStatusChange} onReorder={handleReorder} />
       )}
       <div className="mx-auto max-w-7xl px-6">
         <JobDrawer

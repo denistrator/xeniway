@@ -1,6 +1,7 @@
 import type {
   CreateApplicationInput,
   CurrentUserResponse,
+  JobApplication,
   LoginInput,
   RegisterInput,
   UpdateApplicationInput,
@@ -18,6 +19,7 @@ import {
   login,
   logout,
   register,
+  reorderApplications,
   restoreApplication,
   updateApplication,
 } from "./api";
@@ -110,6 +112,13 @@ export function useApplicationMutations() {
       mutationFn: ({ id, input }: { id: number; input: UpdateApplicationInput }) =>
         updateApplication(id, input, csrfToken),
       onSuccess: invalidate,
+    }),
+    reorder: useMutation({
+      mutationFn: (input: { status: JobApplication["status"]; applicationIds: number[] }) =>
+        reorderApplications(input, csrfToken),
+      onSuccess: (response) => {
+        queryClient.setQueryData(applicationKeys.list("active"), response);
+      },
     }),
     archive: useMutation({
       mutationFn: (id: number) => archiveApplication(id, csrfToken),

@@ -51,6 +51,7 @@ export const jobApplications = pgTable(
     jobUrl: varchar("job_url", { length: 500 }),
     description: text("description"),
     status: jobStatus("status").default("saved").notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
     appliedAt: date("applied_at", { mode: "string" }),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

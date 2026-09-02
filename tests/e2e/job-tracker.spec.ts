@@ -31,6 +31,30 @@ test("shows only the statuses selected in the filter menu", async ({ page }) => 
   await expect(page.getByRole("region", { name: "Saved applications" })).toBeVisible();
 });
 
+test("persists drag-and-drop ordering within a status", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  const savedColumn = page.getByRole("region", { name: "Saved applications" });
+  const cards = savedColumn.locator('button[draggable="true"]');
+  await expect(cards.nth(1)).toBeVisible();
+  expect(await cards.count()).toBeGreaterThanOrEqual(2);
+  const secondCompany = await cards.nth(1).locator("p").first().textContent();
+  if (!secondCompany) throw new Error("Unable to locate the second saved application");
+
+  await cards.nth(1).dragTo(cards.nth(0));
+  await expect(savedColumn.locator('button[draggable="true"]').first()).toContainText(secondCompany);
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Saved applications" }).locator('button[draggable="true"]').first(),
+  ).toContainText(secondCompany);
+});
+
 test("logs out and returns to login", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");

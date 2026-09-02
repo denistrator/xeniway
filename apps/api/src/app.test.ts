@@ -53,14 +53,16 @@ function createDependencies(): AppDependencies {
 
   const applicationRepository: ApplicationRepository = {
     async list(userId, options = {}) {
-      return applications.filter(
-        (application) =>
-          application.id > 0 &&
-          (options.archived ? application.archivedAt : !application.archivedAt) &&
-          (!options.status || application.status === options.status) &&
-          applications.find((candidate) => candidate.id === application.id)?.id === application.id &&
-          applicationUserIds.get(application.id) === userId,
-      );
+      return applications
+        .filter(
+          (application) =>
+            application.id > 0 &&
+            (options.archived ? application.archivedAt : !application.archivedAt) &&
+            (!options.status || application.status === options.status) &&
+            applications.find((candidate) => candidate.id === application.id)?.id === application.id &&
+            applicationUserIds.get(application.id) === userId,
+        )
+        .sort((left, right) => left.sortOrder - right.sortOrder);
     },
     async findById(userId, id, options = {}) {
       return (
@@ -83,6 +85,7 @@ function createDependencies(): AppDependencies {
         jobUrl: input.jobUrl ?? null,
         description: input.description ?? null,
         status: input.status,
+        sortOrder: applications.filter((candidate) => candidate.status === input.status).length,
         appliedAt: input.appliedAt ?? null,
         notes: input.notes ?? null,
         createdAt: now,
@@ -92,6 +95,22 @@ function createDependencies(): AppDependencies {
       applications.push(application);
       applicationUserIds.set(application.id, userId);
       return application;
+    },
+    async reorder(userId, status, applicationIds) {
+      const owned = applications.filter(
+        (application) =>
+          application.status === status && !application.archivedAt && applicationUserIds.get(application.id) === userId,
+      );
+      if (
+        owned.length !== applicationIds.length ||
+        !owned.every((application) => applicationIds.includes(application.id))
+      )
+        return false;
+      for (const [sortOrder, id] of applicationIds.entries()) {
+        const application = owned.find((candidate) => candidate.id === id);
+        if (application) application.sortOrder = sortOrder;
+      }
+      return true;
     },
     async update(userId, id, input) {
       const application = await this.findById(userId, id);
@@ -218,6 +237,60 @@ describe("application API", () => {
     );
     expect(applicationResponse.status).toBe(201);
     expect(((await applicationResponse.json()) as ApplicationResponse).data.application.company).toBe("Acme");
+  });
+
+  it("reorders owned applications within a status", async () => {
+    const app = createApp(createDependencies());
+    const account = await register(app, "candidate@example.com");
+    const ids: number[] = [];
+    for (const company of ["First", "Second"]) {
+      const response = await app.handle(
+        jsonRequest(
+          "http://localhost/api/applications",
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ company, position: "Engineer", status: "saved" }),
+          },
+          account.sessionId,
+          account.payload.data.csrfToken,
+        ),
+      );
+      ids.push(((await response.json()) as ApplicationResponse).data.application.id);
+    }
+    const otherStatusResponse = await app.handle(
+      jsonRequest(
+        "http://localhost/api/applications",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ company: "Other status", position: "Engineer", status: "applied" }),
+        },
+        account.sessionId,
+        account.payload.data.csrfToken,
+      ),
+    );
+    const otherStatusId = ((await otherStatusResponse.json()) as ApplicationResponse).data.application.id;
+
+    const response = await app.handle(
+      jsonRequest(
+        "http://localhost/api/applications/reorder",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ status: "saved", applicationIds: [ids[1], ids[0]] }),
+        },
+        account.sessionId,
+        account.payload.data.csrfToken,
+      ),
+    );
+    expect(response.status).toBe(200);
+    const reorderedApplications = ((await response.json()) as { data: { applications: JobApplication[] } }).data
+      .applications;
+    expect(reorderedApplications.map((job) => job.id)).toEqual(expect.arrayContaining([...ids, otherStatusId]));
+    expect(reorderedApplications.findIndex((job) => job.id === ids[1])).toBeLessThan(
+      reorderedApplications.findIndex((job) => job.id === ids[0]),
+    );
   });
 
   it("rejects invalid CSRF and request payloads with stable errors", async () => {

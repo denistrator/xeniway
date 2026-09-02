@@ -10,6 +10,7 @@ const client = createPostgresClient(databaseUrl);
 const migrations = [
   { id: "0000_create_job_tracker", file: "0000_create_job_tracker.sql" },
   { id: "0001_applied_at_date", file: "0001_applied_at_date.sql" },
+  { id: "0002_application_sort_order", file: "0002_application_sort_order.sql" },
 ];
 
 try {

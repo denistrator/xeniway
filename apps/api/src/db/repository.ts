@@ -5,7 +5,7 @@ import type {
   UpdateApplicationInput,
   User,
 } from "@job-tracker/shared";
-import { and, desc, eq, gt, isNotNull, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { createDatabase } from "./client";
 import { jobApplications, sessions, users } from "./schema";
 
@@ -36,6 +36,7 @@ export interface ApplicationRepository {
   findById(userId: number, id: number, options?: { archived?: boolean }): Promise<JobApplication | null>;
   create(userId: number, input: CreateApplicationInput): Promise<JobApplication>;
   update(userId: number, id: number, input: UpdateApplicationInput): Promise<JobApplication | null>;
+  reorder(userId: number, status: JobStatus, applicationIds: number[]): Promise<boolean>;
   archive(userId: number, id: number): Promise<boolean>;
   restore(userId: number, id: number): Promise<boolean>;
   permanentDelete(userId: number, id: number): Promise<boolean>;
@@ -103,7 +104,10 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       .select()
       .from(jobApplications)
       .where(and(...conditions))
-      .orderBy(desc(options.archived ? jobApplications.archivedAt : jobApplications.createdAt));
+      .orderBy(
+        asc(jobApplications.sortOrder),
+        desc(options.archived ? jobApplications.archivedAt : jobApplications.createdAt),
+      );
     return rows.map(toJobApplication);
   }
 
@@ -138,6 +142,30 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       .where(and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNull(jobApplications.archivedAt)))
       .returning();
     return row ? toJobApplication(row) : null;
+  }
+
+  async reorder(userId: number, status: JobStatus, applicationIds: number[]): Promise<boolean> {
+    return this.database.transaction(async (transaction) => {
+      const rows = await transaction
+        .select({ id: jobApplications.id })
+        .from(jobApplications)
+        .where(
+          and(
+            eq(jobApplications.userId, userId),
+            eq(jobApplications.status, status),
+            isNull(jobApplications.archivedAt),
+            inArray(jobApplications.id, applicationIds),
+          ),
+        );
+      if (rows.length !== applicationIds.length) return false;
+      for (const [sortOrder, id] of applicationIds.entries()) {
+        await transaction
+          .update(jobApplications)
+          .set({ sortOrder, updatedAt: new Date() })
+          .where(and(eq(jobApplications.userId, userId), eq(jobApplications.id, id)));
+      }
+      return true;
+    });
   }
 
   async archive(userId: number, id: number): Promise<boolean> {
@@ -188,6 +216,7 @@ export function toJobApplication(row: typeof jobApplications.$inferSelect): JobA
     jobUrl: row.jobUrl,
     description: row.description,
     status: row.status,
+    sortOrder: row.sortOrder,
     appliedAt: row.appliedAt,
     notes: row.notes,
     createdAt: row.createdAt.toISOString(),

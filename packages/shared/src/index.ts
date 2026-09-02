@@ -33,9 +33,14 @@ export const loginInputSchema = z.object({
 });
 
 export const statusFilterSchema = jobStatusSchema.optional();
+export const reorderApplicationsInputSchema = z.object({
+  status: jobStatusSchema,
+  applicationIds: z.array(z.number().int().positive()).min(1).max(100),
+});
 
 export type CreateApplicationInput = z.infer<typeof createApplicationInputSchema>;
 export type UpdateApplicationInput = z.infer<typeof updateApplicationInputSchema>;
+export type ReorderApplicationsInput = z.infer<typeof reorderApplicationsInputSchema>;
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 
@@ -56,6 +61,7 @@ export type JobApplication = {
   jobUrl: string | null;
   description: string | null;
   status: JobStatus;
+  sortOrder: number;
   appliedAt: string | null;
   notes: string | null;
   createdAt: string;

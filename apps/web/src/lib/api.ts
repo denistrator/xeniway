@@ -11,6 +11,7 @@ import type {
   LoginInput,
   MessageResponse,
   RegisterInput,
+  ReorderApplicationsInput,
   UpdateApplicationInput,
 } from "@job-tracker/shared";
 
@@ -124,6 +125,17 @@ export function updateApplication(
       method: "PUT",
       body: JSON.stringify(input),
     },
+    csrfToken,
+  );
+}
+
+export function reorderApplications(
+  input: ReorderApplicationsInput,
+  csrfToken: string,
+): Promise<ApplicationListResponse> {
+  return requestJson<ApplicationListResponse>(
+    "/api/applications/reorder",
+    { method: "POST", body: JSON.stringify(input) },
     csrfToken,
   );
 }

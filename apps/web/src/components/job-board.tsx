@@ -18,9 +18,11 @@ const statusLabels: Record<JobStatus, string> = {
 export function JobBoard({
   jobs,
   onStatusChange,
+  onReorder,
 }: {
   jobs: JobApplication[];
   onStatusChange: (id: number, status: JobStatus) => void;
+  onReorder: (status: JobStatus, applicationIds: number[]) => void;
 }) {
   const dispatch = useDispatch();
   const { search, visibleStatuses } = useSelector((state: RootState) => state.ui);
@@ -39,7 +41,7 @@ export function JobBoard({
 
   return (
     <div className="job-board-scroll w-full">
-      <div className="grid grid-cols-1 gap-4 px-6 md:grid-flow-col md:grid-cols-[minmax(256px,1fr)]">
+      <div className="grid grid-cols-1 gap-4 px-6 md:grid-flow-col md:grid-cols-[1fr_minmax(256px,1fr)]">
         {jobStatuses
           .filter((status) => visibleStatuses.includes(status))
           .map((status) => {
@@ -54,7 +56,11 @@ export function JobBoard({
                   event.preventDefault();
                   const transferId = Number(event.dataTransfer.getData("text/plain"));
                   const id = Number.isInteger(transferId) && transferId > 0 ? transferId : draggedIdRef.current;
-                  if (id !== null) onStatusChange(id, status);
+                  const source = id === null ? undefined : jobs.find((job) => job.id === id);
+                  if (source && source.status === status) {
+                    const applicationIds = columnJobs.filter((job) => job.id !== source.id).map((job) => job.id);
+                    onReorder(status, [...applicationIds, source.id]);
+                  } else if (id !== null) onStatusChange(id, status);
                   draggedIdRef.current = null;
                 }}
               >
@@ -64,24 +70,49 @@ export function JobBoard({
                     {columnJobs.length}
                   </span>
                 </div>
-                <div className="space-y-3">
+                <ul className="space-y-3 list-none p-0">
                   {columnJobs.map((job) => (
-                    <JobCard
+                    <li
                       key={job.id}
-                      job={job}
-                      onOpen={() => dispatch(openEditDrawer(job.id))}
-                      onDragStart={(event: DragEvent<HTMLButtonElement>) => {
-                        event.dataTransfer.setData("text/plain", String(job.id));
-                        draggedIdRef.current = job.id;
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const id = draggedIdRef.current;
+                        if (id === null || id === job.id) return;
+                        const source = jobs.find((candidate) => candidate.id === id);
+                        if (!source || source.status !== status) {
+                          if (source) onStatusChange(id, status);
+                          draggedIdRef.current = null;
+                          return;
+                        }
+                        const applicationIds = [
+                          ...columnJobs.filter((candidate) => candidate.id !== id).map((candidate) => candidate.id),
+                        ];
+                        const targetIndex = applicationIds.indexOf(job.id);
+                        applicationIds.splice(targetIndex, 0, id);
+                        onReorder(status, applicationIds);
+                        draggedIdRef.current = null;
                       }}
-                    />
+                    >
+                      <JobCard
+                        job={job}
+                        onOpen={() => dispatch(openEditDrawer(job.id))}
+                        onDragStart={(event: DragEvent<HTMLButtonElement>) => {
+                          event.dataTransfer.setData("text/plain", String(job.id));
+                          draggedIdRef.current = job.id;
+                        }}
+                      />
+                    </li>
                   ))}
                   {!columnJobs.length && (
-                    <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-400 dark:border-slate-600 dark:text-slate-500">
-                      Drop applications here
-                    </p>
+                    <li>
+                      <p className="rounded-xl border border-dashed border-slate-300 px-3 py-8 text-center text-xs text-slate-400 dark:border-slate-600 dark:text-slate-500">
+                        Drop applications here
+                      </p>
+                    </li>
                   )}
-                </div>
+                </ul>
               </section>
             );
           })}
