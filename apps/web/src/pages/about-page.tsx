@@ -1,26 +1,7 @@
-import { Link } from "react-router-dom";
-
 export function AboutPage() {
   return (
-    <main id="main-content" tabIndex={-1} className="min-h-screen bg-canvas px-6 py-8 text-ink">
+    <div className="px-6 text-ink">
       <div className="mx-auto flex max-w-3xl flex-col gap-16">
-        <header className="flex items-center justify-between">
-          <Link to="/about" className="font-display text-xl font-bold tracking-tight text-ink">
-            Job Tracker
-          </Link>
-          <nav className="flex items-center gap-2" aria-label="About navigation">
-            <Link to="/login" className="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:text-ink">
-              Sign in
-            </Link>
-            <Link
-              to="/register"
-              className="rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-canvas transition-colors hover:bg-accent"
-            >
-              Create an account
-            </Link>
-          </nav>
-        </header>
-
         <section className="rounded-3xl border border-line bg-surface p-8 shadow-sm sm:p-12">
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-accent">For focused job searches</p>
           <h1 className="font-display max-w-2xl text-4xl font-bold tracking-tight text-ink sm:text-5xl">
@@ -37,7 +18,7 @@ export function AboutPage() {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

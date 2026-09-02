@@ -85,7 +85,7 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <main id="main-content" tabIndex={-1} className="mx-auto flex min-h-[70vh] max-w-md items-center bg-canvas">
+    <div className="mx-auto flex min-h-[70vh] max-w-md items-center bg-canvas">
       <Card className="w-full">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
@@ -93,6 +93,6 @@ export function AuthCard({
         </CardHeader>
         <CardContent>{children}</CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

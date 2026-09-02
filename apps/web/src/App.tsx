@@ -23,16 +23,16 @@ export function App() {
       <ThemeSync />
       <AuthFailureHandler />
       <Routes>
-        <Route path="/about" element={<AboutPage />} />
-        <Route element={<RequireAuth />}>
-          <Route element={<Layout />}>
+        <Route element={<Layout />}>
+          <Route path="/about" element={<AboutPage />} />
+          <Route element={<RequireAuth />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/archive" element={<ArchivePage />} />
           </Route>
-        </Route>
-        <Route element={<GuestOnly />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route element={<GuestOnly />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
