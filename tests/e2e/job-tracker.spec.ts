@@ -9,6 +9,28 @@ test("shows the about page without authentication", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
 });
 
+test("shows only the statuses selected in the filter menu", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  await page.getByRole("button", { name: /Filter statuses/ }).click();
+  const menu = page.getByRole("menu", { name: "Filter statuses" });
+  await expect(menu).toBeVisible();
+  await menu.locator("label").filter({ hasText: "Offer" }).locator("input").uncheck();
+  await expect(page.getByRole("region", { name: "Offer applications" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Saved applications" })).toBeVisible();
+
+  await menu.locator("input").first().check();
+  await expect(page.getByRole("region", { name: "Offer applications" })).toBeVisible();
+  await menu.locator("input").first().uncheck();
+  await expect(page.getByRole("region", { name: "Saved applications" })).toHaveCount(0);
+  await menu.locator("input").first().check();
+  await expect(page.getByRole("region", { name: "Saved applications" })).toBeVisible();
+});
+
 test("logs out and returns to login", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");

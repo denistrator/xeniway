@@ -2,9 +2,10 @@ import type { CreateApplicationInput, JobStatus } from "@job-tracker/shared";
 import { useDispatch, useSelector } from "react-redux";
 import { JobBoard } from "../components/job-board";
 import { JobDrawer } from "../components/job-drawer";
+import { StatusFilter } from "../components/status-filter";
 import { Button } from "../components/ui/button";
 import { useApplicationMutations, useApplications } from "../lib/queries";
-import { closeDrawer, type RootState, setSearch, setSort, setStatusFilter } from "../store";
+import { closeDrawer, type RootState, setSearch } from "../store";
 
 export function HomePage() {
   const dispatch = useDispatch();
@@ -52,36 +53,7 @@ export function HomePage() {
             value={filters.search}
             onChange={(event) => dispatch(setSearch(event.target.value))}
           />
-          <select
-            aria-label="Filter status"
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            value={filters.statusFilter}
-            onChange={(event) => dispatch(setStatusFilter(event.target.value as RootState["ui"]["statusFilter"]))}
-          >
-            <option value="all">All statuses</option>
-            {["saved", "applied", "interview", "offer", "rejected", "withdrawn"].map((status) => (
-              <option key={status} value={status}>
-                {status[0].toUpperCase() + status.slice(1)}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Sort applications"
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            value={`${filters.sortField}-${filters.sortDirection}`}
-            onChange={(event) => {
-              const [field, direction] = event.target.value.split("-") as [
-                RootState["ui"]["sortField"],
-                RootState["ui"]["sortDirection"],
-              ];
-              dispatch(setSort({ field, direction }));
-            }}
-          >
-            <option value="createdAt-desc">Newest first</option>
-            <option value="createdAt-asc">Oldest first</option>
-            <option value="appliedAt-desc">Applied date, newest</option>
-            <option value="appliedAt-asc">Applied date, oldest</option>
-          </select>
+          <StatusFilter />
           <Button variant="outline" onClick={() => dispatch(setSearch(""))}>
             Clear search
           </Button>
