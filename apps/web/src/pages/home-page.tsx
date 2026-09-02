@@ -1,6 +1,7 @@
 import type { JobStatus } from "@job-tracker/shared";
 import { useDispatch, useSelector } from "react-redux";
 import { JobBoard } from "../components/job-board";
+import { PageIntro } from "../components/page-intro";
 import { StatusFilter } from "../components/status-filter";
 import { Button } from "../components/ui/button";
 import { useApplicationMutations, useApplications } from "../lib/queries";
@@ -23,11 +24,11 @@ export function HomePage() {
     <div className="space-y-6">
       <div className="mx-auto max-w-7xl space-y-6 px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Your search, organized</p>
-            <h1 className="font-display mt-2 text-4xl font-bold tracking-tight text-ink">Applications</h1>
-            <p className="mt-2 text-muted">Track every conversation from first contact to outcome.</p>
-          </div>
+          <PageIntro
+            eyebrow="Your search, organized"
+            title="Applications"
+            description="Track every conversation from first contact to outcome."
+          />
         </div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
           <input

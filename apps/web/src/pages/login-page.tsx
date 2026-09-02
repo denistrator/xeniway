@@ -1,7 +1,7 @@
-import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { useAuthMutations, useCsrfToken } from "../lib/queries";
 
@@ -72,27 +72,5 @@ export function LoginPage() {
         </Link>
       </p>
     </AuthCard>
-  );
-}
-
-export function AuthCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center bg-canvas">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>{children}</CardContent>
-      </Card>
-    </div>
   );
 }

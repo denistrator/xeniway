@@ -1,4 +1,5 @@
 import type { JobApplication } from "@job-tracker/shared";
+import { PageIntro } from "../components/page-intro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { useApplicationMutations, useArchivedApplications } from "../lib/queries";
@@ -18,11 +19,11 @@ export function ArchivePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Past opportunities</p>
-        <h1 className="font-display mt-2 text-4xl font-bold tracking-tight text-ink">Archive</h1>
-        <p className="mt-2 text-muted">Restore an application or remove it permanently.</p>
-      </div>
+      <PageIntro
+        eyebrow="Past opportunities"
+        title="Archive"
+        description="Restore an application or remove it permanently."
+      />
       {archived.isPending && (
         <p role="status" aria-live="polite" className="py-10 text-center text-sm text-muted">
           Loading archive…

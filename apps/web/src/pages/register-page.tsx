@@ -1,10 +1,10 @@
 import { registerInputSchema } from "@job-tracker/shared";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useAuthMutations, useCsrfToken } from "../lib/queries";
-import { AuthCard } from "./login-page";
 
 export function RegisterPage() {
   const navigate = useNavigate();
