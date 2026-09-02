@@ -38,21 +38,23 @@ export function HomePage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">Your search, organized</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Applications</h1>
-            <p className="mt-2 text-slate-500">Track every conversation from first contact to outcome.</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Applications</h1>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">
+              Track every conversation from first contact to outcome.
+            </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <input
             aria-label="Search applications"
-            className="h-10 min-w-64 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-sky-500"
+            className="h-10 min-w-64 flex-1 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             placeholder="Search company, position, location…"
             value={filters.search}
             onChange={(event) => dispatch(setSearch(event.target.value))}
           />
           <select
             aria-label="Filter status"
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             value={filters.statusFilter}
             onChange={(event) => dispatch(setStatusFilter(event.target.value as RootState["ui"]["statusFilter"]))}
           >
@@ -65,7 +67,7 @@ export function HomePage() {
           </select>
           <select
             aria-label="Sort applications"
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             value={`${filters.sortField}-${filters.sortDirection}`}
             onChange={(event) => {
               const [field, direction] = event.target.value.split("-") as [
@@ -84,14 +86,16 @@ export function HomePage() {
             Clear search
           </Button>
         </div>
-        {applications.isPending && <p className="py-8 text-center text-sm text-slate-500">Loading applications…</p>}
+        {applications.isPending && (
+          <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading applications…</p>
+        )}
         {applications.error && (
-          <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+          <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
             Unable to load applications: {applications.error.message}
           </p>
         )}
         {applications.data && !applications.data.length && (
-          <p className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500">
+          <p className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
             No applications yet. Add your first opportunity to get started.
           </p>
         )}
@@ -108,7 +112,7 @@ export function HomePage() {
           onClose={() => dispatch(closeDrawer())}
         />
         {(mutations.create.error || mutations.update.error || mutations.archive.error) && (
-          <p className="text-sm text-rose-600">
+          <p className="text-sm text-rose-600 dark:text-rose-400">
             {(mutations.create.error || mutations.update.error || mutations.archive.error)?.message}
           </p>
         )}

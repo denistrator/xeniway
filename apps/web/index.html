@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f8fafc" />
+    <script>
+      (() => {
+        const storedTheme = localStorage.getItem("job-tracker-theme");
+        const preference = ["light", "dark", "system"].includes(storedTheme ?? "") ? storedTheme : "system";
+        const isDark = preference === "dark" || (preference === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = isDark ? "dark" : "light";
+        // Keep #020618 synchronized with dark:bg-slate-950 in apps/web/src/components/layout.tsx.
+        document.documentElement.style.backgroundColor = isDark ? "#020618" : "#f8fafc";
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", isDark ? "#020617" : "#f8fafc");
+      })();
+    </script>
     <title>Job Tracker</title>
   </head>
   <body>

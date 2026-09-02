@@ -10,6 +10,7 @@ export function ThemeSync() {
     const apply = () => {
       const dark = preference === "dark" || (preference === "system" && media.matches);
       document.documentElement.dataset.theme = dark ? "dark" : "light";
+      document.documentElement.style.removeProperty("background-color");
     };
     apply();
     media.addEventListener("change", apply);

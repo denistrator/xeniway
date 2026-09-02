@@ -73,15 +73,15 @@ export function RegisterPage() {
           />
         </label>
         {(validationError || register.error) && (
-          <p className="text-sm text-rose-600">{validationError ?? register.error?.message}</p>
+          <p className="text-sm text-rose-600 dark:text-rose-400">{validationError ?? register.error?.message}</p>
         )}
         <Button className="w-full" type="submit" disabled={csrf.isPending || register.isPending}>
           {register.isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-slate-500">
+      <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
         Already registered?{" "}
-        <Link className="font-semibold text-slate-950" to="/login">
+        <Link className="font-semibold text-slate-950 dark:text-white" to="/login">
           Sign in
         </Link>
       </p>

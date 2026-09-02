@@ -31,14 +31,14 @@ export function LoginPage() {
           Password
           <Input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
         </label>
-        {login.error && <p className="text-sm text-rose-600">{login.error.message}</p>}
+        {login.error && <p className="text-sm text-rose-600 dark:text-rose-400">{login.error.message}</p>}
         <Button className="w-full" type="submit" disabled={csrf.isPending || login.isPending}>
           {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-slate-500">
+      <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
         New here?{" "}
-        <Link className="font-semibold text-slate-950" to="/register">
+        <Link className="font-semibold text-slate-950 dark:text-white" to="/register">
           Create an account
         </Link>
       </p>
@@ -56,7 +56,7 @@ export function AuthCard({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
+    <div className="mx-auto flex min-h-[70vh] max-w-md items-center bg-slate-50 dark:bg-slate-950">
       <Card className="w-full">
         <CardHeader>
           <CardTitle>{title}</CardTitle>

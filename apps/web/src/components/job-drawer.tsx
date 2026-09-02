@@ -21,7 +21,7 @@ export function JobDrawer({
   if (!drawer.open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/30">
+    <div className="fixed inset-0 z-50 bg-slate-950/30 dark:bg-black/60">
       <button
         type="button"
         aria-label="Close dialog"
@@ -31,7 +31,7 @@ export function JobDrawer({
       <aside
         role="dialog"
         aria-modal="true"
-        className="relative ml-auto flex h-full w-full max-w-xl flex-col overflow-y-auto bg-white p-6 shadow-2xl"
+        className="relative ml-auto flex h-full w-full max-w-xl flex-col overflow-y-auto bg-white p-6 shadow-2xl dark:bg-slate-900"
       >
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-bold">{drawer.mode === "create" ? "Add application" : "Edit application"}</h2>
@@ -41,7 +41,7 @@ export function JobDrawer({
         </div>
         <JobForm job={job} submitting={submitting} onSubmit={onSave} onCancel={onClose} />
         {drawer.mode === "edit" && (
-          <div className="mt-auto border-t border-slate-200 pt-5">
+          <div className="mt-auto border-t border-slate-200 pt-5 dark:border-slate-700">
             <Button variant="outline" className="w-full" onClick={onArchive}>
               Archive application
             </Button>

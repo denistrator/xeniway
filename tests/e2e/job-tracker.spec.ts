@@ -16,6 +16,12 @@ test("logs out and returns to login", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  await page.getByLabel("Theme").selectOption("dark");
+  await expect.poll(() => page.locator("html").getAttribute("data-theme")).toBe("dark");
+  await expect(page.locator("header")).toHaveClass(/dark:bg-slate-900/);
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("header")).toHaveClass(/dark:bg-slate-900/);
   await page.getByRole("button", { name: "Logout" }).click();
 
   await expect(page).toHaveURL(/\/login$/);

@@ -113,7 +113,7 @@ export function JobForm({
         <label className="space-y-1 text-sm font-medium">
           Status
           <select
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             value={form.status}
             onChange={(event) => update("status", event.target.value)}
           >
@@ -132,7 +132,7 @@ export function JobForm({
       <label className="block space-y-1 text-sm font-medium">
         Description
         <textarea
-          className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           value={form.description}
           onChange={(event) => update("description", event.target.value)}
         />
@@ -140,12 +140,12 @@ export function JobForm({
       <label className="block space-y-1 text-sm font-medium">
         Notes
         <textarea
-          className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           value={form.notes}
           onChange={(event) => update("notes", event.target.value)}
         />
       </label>
-      {error && <p className="text-sm text-rose-600">{error}</p>}
+      {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
