@@ -4,6 +4,8 @@ import { JobBoard } from "../components/job-board";
 import { PageIntro } from "../components/page-intro";
 import { StatusFilter } from "../components/status-filter";
 import { Button } from "../components/ui/button";
+import { FloatingLabel } from "../components/ui/floating-label";
+import { Input } from "../components/ui/input";
 import { useApplicationMutations, useApplications } from "../lib/queries";
 import { type RootState, setSearch } from "../store";
 
@@ -31,15 +33,17 @@ export function HomePage() {
           />
         </div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <input
-            aria-label="Search applications"
-            name="search"
-            autoComplete="off"
-            className="h-10 min-w-64 flex-1 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent"
-            placeholder="Search company, position, location…"
-            value={filters.search}
-            onChange={(event) => dispatch(setSearch(event.target.value))}
-          />
+          <FloatingLabel htmlFor="application-search" label="Search applications" className="min-w-64 flex-1">
+            <Input
+              id="application-search"
+              className="peer"
+              placeholder=" "
+              name="search"
+              autoComplete="off"
+              value={filters.search}
+              onChange={(event) => dispatch(setSearch(event.target.value))}
+            />
+          </FloatingLabel>
           <StatusFilter />
           <Button variant="outline" onClick={() => dispatch(setSearch(""))}>
             Clear search

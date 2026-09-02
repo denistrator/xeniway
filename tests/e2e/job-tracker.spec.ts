@@ -12,6 +12,19 @@ test("shows the about page without authentication", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
 });
 
+test("uses floating labels for authentication fields", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.locator(".floating-label > input")).toHaveCount(2);
+  await expect(page.getByLabel("Email")).toHaveAttribute("placeholder", " ");
+  await expect(page.getByLabel("Password")).toHaveAttribute("placeholder", " ");
+
+  await page.goto("/register");
+  await expect(page.locator(".floating-label > input")).toHaveCount(5);
+  for (const label of ["First name", "Last name", "Email", "Password", "Confirm password"]) {
+    await expect(page.getByLabel(label)).toHaveAttribute("placeholder", " ");
+  }
+});
+
 test("has no automated accessibility violations across key workflows", async ({ page }) => {
   await page.goto("/about");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -146,6 +159,36 @@ test("focuses and announces application form validation errors", async ({ page }
   const error = page.getByRole("alert");
   await expect(error).toBeVisible();
   await expect(error).toBeFocused();
+});
+
+test("uses floating labels for search and application fields", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  await expect(page.locator(".floating-label > input")).toHaveCount(1);
+  await expect(page.getByLabel("Search applications")).toHaveAttribute("placeholder", " ");
+
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator(".floating-label > input")).toHaveCount(6);
+  await expect(dialog.locator(".floating-label > textarea")).toHaveCount(2);
+  await expect(dialog.locator(".floating-label > select")).toHaveCount(1);
+  for (const label of [
+    "Company *",
+    "Position *",
+    "Location",
+    "Salary",
+    "Job URL",
+    "Status",
+    "Applied date",
+    "Description",
+    "Notes",
+  ]) {
+    await expect(dialog.getByLabel(label)).toBeVisible();
+  }
 });
 
 test("switches and persists the job form presentation mode", async ({ page }) => {

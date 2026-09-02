@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
+import { FloatingLabel } from "../components/ui/floating-label";
 import { Input } from "../components/ui/input";
 import { useAuthMutations, useCsrfToken } from "../lib/queries";
 
@@ -27,29 +28,33 @@ export function LoginPage() {
   return (
     <AuthCard title="Welcome back" description="Sign in to continue tracking your applications.">
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block space-y-1 text-sm font-medium">
-          Email
+        <FloatingLabel htmlFor="login-email" label="Email">
           <Input
+            id="login-email"
+            className="peer"
             name="email"
             autoComplete="email"
             spellCheck={false}
+            placeholder=" "
             required
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
-        </label>
-        <label className="block space-y-1 text-sm font-medium">
-          Password
+        </FloatingLabel>
+        <FloatingLabel htmlFor="login-password" label="Password">
           <Input
+            id="login-password"
+            className="peer"
             name="password"
             autoComplete="current-password"
+            placeholder=" "
             required
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-        </label>
+        </FloatingLabel>
         {login.error && (
           <p
             ref={errorRef}

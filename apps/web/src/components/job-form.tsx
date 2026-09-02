@@ -2,6 +2,7 @@ import { type CreateApplicationInput, createApplicationInputSchema, type JobAppl
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { jobStatuses, statusLabels } from "./job-status";
 import { Button } from "./ui/button";
+import { FloatingLabel } from "./ui/floating-label";
 import { Input } from "./ui/input";
 
 type FormState = {
@@ -95,49 +96,67 @@ export function JobForm({
       autoComplete="off"
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-1 text-sm font-medium">
-          Company *
+        <FloatingLabel htmlFor="job-company" label="Company *">
           <Input
+            id="job-company"
+            className="peer"
             name="company"
+            placeholder=" "
             required
             value={form.company}
             onChange={(event) => update("company", event.target.value)}
           />
-        </label>
-        <label className="space-y-1 text-sm font-medium">
-          Position *
+        </FloatingLabel>
+        <FloatingLabel htmlFor="job-position" label="Position *">
           <Input
+            id="job-position"
+            className="peer"
             name="position"
+            placeholder=" "
             required
             value={form.position}
             onChange={(event) => update("position", event.target.value)}
           />
-        </label>
+        </FloatingLabel>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-1 text-sm font-medium">
-          Location
-          <Input name="location" value={form.location} onChange={(event) => update("location", event.target.value)} />
-        </label>
-        <label className="space-y-1 text-sm font-medium">
-          Salary
-          <Input name="salary" value={form.salary} onChange={(event) => update("salary", event.target.value)} />
-        </label>
+        <FloatingLabel htmlFor="job-location" label="Location">
+          <Input
+            id="job-location"
+            className="peer"
+            name="location"
+            placeholder=" "
+            value={form.location}
+            onChange={(event) => update("location", event.target.value)}
+          />
+        </FloatingLabel>
+        <FloatingLabel htmlFor="job-salary" label="Salary">
+          <Input
+            id="job-salary"
+            className="peer"
+            name="salary"
+            placeholder=" "
+            value={form.salary}
+            onChange={(event) => update("salary", event.target.value)}
+          />
+        </FloatingLabel>
       </div>
-      <label className="block space-y-1 text-sm font-medium">
-        Job URL
+      <FloatingLabel htmlFor="job-url" label="Job URL">
         <Input
+          id="job-url"
+          className="peer"
           name="jobUrl"
+          placeholder=" "
           type="url"
           value={form.jobUrl}
           onChange={(event) => update("jobUrl", event.target.value)}
         />
-      </label>
+      </FloatingLabel>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-1 text-sm font-medium">
-          Status
+        <FloatingLabel htmlFor="job-status" label="Status">
           <select
-            className="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
+            id="job-status"
+            className="peer"
             name="status"
             value={form.status}
             onChange={(event) => update("status", event.target.value as FormState["status"])}
@@ -148,35 +167,39 @@ export function JobForm({
               </option>
             ))}
           </select>
-        </label>
-        <label className="space-y-1 text-sm font-medium">
-          Applied date
+        </FloatingLabel>
+        <FloatingLabel htmlFor="job-applied-at" label="Applied date">
           <Input
+            id="job-applied-at"
+            className="peer"
             name="appliedAt"
+            placeholder=" "
             type="date"
             value={form.appliedAt}
             onChange={(event) => update("appliedAt", event.target.value)}
           />
-        </label>
+        </FloatingLabel>
       </div>
-      <label className="block space-y-1 text-sm font-medium">
-        Description
+      <FloatingLabel htmlFor="job-description" label="Description">
         <textarea
-          className="min-h-24 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+          id="job-description"
+          className="peer min-h-24"
           name="description"
+          placeholder=" "
           value={form.description}
           onChange={(event) => update("description", event.target.value)}
         />
-      </label>
-      <label className="block space-y-1 text-sm font-medium">
-        Notes
+      </FloatingLabel>
+      <FloatingLabel htmlFor="job-notes" label="Notes">
         <textarea
-          className="min-h-24 w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+          id="job-notes"
+          className="peer min-h-24"
           name="notes"
+          placeholder=" "
           value={form.notes}
           onChange={(event) => update("notes", event.target.value)}
         />
-      </label>
+      </FloatingLabel>
       {error && (
         <p
           ref={errorRef}

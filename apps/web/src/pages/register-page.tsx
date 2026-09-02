@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
+import { FloatingLabel } from "../components/ui/floating-label";
 import { Input } from "../components/ui/input";
 import { useAuthMutations, useCsrfToken } from "../lib/queries";
 
@@ -45,59 +46,69 @@ export function RegisterPage() {
     <AuthCard title="Create your account" description="Keep your job search organized from first contact to offer.">
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block space-y-1 text-sm font-medium">
-            First name
+          <FloatingLabel htmlFor="register-first-name" label="First name">
             <Input
+              id="register-first-name"
+              className="peer"
               name="firstName"
               autoComplete="given-name"
+              placeholder=" "
               value={form.firstName}
               onChange={(event) => update("firstName", event.target.value)}
             />
-          </label>
-          <label className="block space-y-1 text-sm font-medium">
-            Last name
+          </FloatingLabel>
+          <FloatingLabel htmlFor="register-last-name" label="Last name">
             <Input
+              id="register-last-name"
+              className="peer"
               name="lastName"
               autoComplete="family-name"
+              placeholder=" "
               value={form.lastName}
               onChange={(event) => update("lastName", event.target.value)}
             />
-          </label>
+          </FloatingLabel>
         </div>
-        <label className="block space-y-1 text-sm font-medium">
-          Email
+        <FloatingLabel htmlFor="register-email" label="Email">
           <Input
+            id="register-email"
+            className="peer"
             name="email"
             autoComplete="email"
             spellCheck={false}
+            placeholder=" "
             required
             type="email"
             value={form.email}
             onChange={(event) => update("email", event.target.value)}
           />
-        </label>
-        <label className="block space-y-1 text-sm font-medium">
-          Password
+        </FloatingLabel>
+        <FloatingLabel htmlFor="register-password" label="Password">
           <Input
+            id="register-password"
+            className="peer"
             name="password"
             autoComplete="new-password"
+            placeholder=" "
             required
             type="password"
             value={form.password}
             onChange={(event) => update("password", event.target.value)}
           />
-        </label>
-        <label className="block space-y-1 text-sm font-medium">
-          Confirm password
+        </FloatingLabel>
+        <FloatingLabel htmlFor="register-confirm-password" label="Confirm password">
           <Input
+            id="register-confirm-password"
+            className="peer"
             name="confirmPassword"
             autoComplete="new-password"
+            placeholder=" "
             required
             type="password"
             value={form.confirmPassword}
             onChange={(event) => update("confirmPassword", event.target.value)}
           />
-        </label>
+        </FloatingLabel>
         {(validationError || register.error) && (
           <p
             ref={errorRef}
