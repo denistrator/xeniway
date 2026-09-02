@@ -19,6 +19,7 @@
   background: var(--theme-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  scrollbar-gutter: stable;
 }
 
 html[data-theme="dark"] {
