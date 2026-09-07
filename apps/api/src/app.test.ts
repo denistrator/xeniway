@@ -59,6 +59,7 @@ function createDependencies(): AppDependencies {
           (application) =>
             application.id > 0 &&
             (options.archived ? application.archivedAt : !application.archivedAt) &&
+            !application.blacklistedAt &&
             (!options.status || application.status === options.status) &&
             applications.find((candidate) => candidate.id === application.id)?.id === application.id &&
             applicationUserIds.get(application.id) === userId,
@@ -71,7 +72,8 @@ function createDependencies(): AppDependencies {
           (application) =>
             application.id === id &&
             applicationUserIds.get(id) === userId &&
-            (options.archived ? !!application.archivedAt : !application.archivedAt),
+            (options.archived ? !!application.archivedAt : !application.archivedAt) &&
+            !application.blacklistedAt,
         ) ?? null
       );
     },
@@ -92,6 +94,8 @@ function createDependencies(): AppDependencies {
         createdAt: now,
         updatedAt: now,
         archivedAt: null,
+        blacklistedAt: null,
+        blacklistReason: null,
       };
       applications.push(application);
       applicationUserIds.set(application.id, userId);
@@ -136,6 +140,33 @@ function createDependencies(): AppDependencies {
       if (!application) return false;
       applications.splice(applications.indexOf(application), 1);
       applicationUserIds.delete(id);
+      return true;
+    },
+    async listBlacklisted(userId) {
+      return applications
+        .filter((application) => applicationUserIds.get(application.id) === userId && !!application.blacklistedAt)
+        .sort((left, right) => (right.blacklistedAt ?? "").localeCompare(left.blacklistedAt ?? ""));
+    },
+    async blacklist(userId, id, reason) {
+      const application = applications.find(
+        (candidate) =>
+          candidate.id === id &&
+          applicationUserIds.get(id) === userId &&
+          !candidate.archivedAt &&
+          !candidate.blacklistedAt,
+      );
+      if (!application) return false;
+      application.blacklistedAt = new Date().toISOString();
+      application.blacklistReason = reason ?? null;
+      return true;
+    },
+    async unblacklist(userId, id) {
+      const application = applications.find(
+        (candidate) => candidate.id === id && applicationUserIds.get(id) === userId && !!candidate.blacklistedAt,
+      );
+      if (!application) return false;
+      application.blacklistedAt = null;
+      application.blacklistReason = null;
       return true;
     },
   };
@@ -577,5 +608,66 @@ describe("application API", () => {
 
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: { code: "REDIS_UNAVAILABLE", message: "Redis is unavailable" } });
+  });
+
+  it("blacklists and restores an owned application with an optional reason", async () => {
+    const app = createApp(createDependencies());
+    const account = await register(app, "candidate@example.com");
+    const created = await app.handle(
+      jsonRequest(
+        "http://localhost/api/applications",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ company: "Blocked Co", position: "Engineer", status: "saved" }),
+        },
+        account.sessionId,
+        account.payload.data.csrfToken,
+      ),
+    );
+    const application = ((await created.json()) as ApplicationResponse).data.application;
+
+    const blacklist = await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${application.id}/blacklist`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ reason: "Duplicate employer" }),
+        },
+        account.sessionId,
+        account.payload.data.csrfToken,
+      ),
+    );
+    expect(blacklist.status).toBe(200);
+
+    const active = await app.handle(
+      jsonRequest("http://localhost/api/applications", {}, account.sessionId, account.payload.data.csrfToken),
+    );
+    expect(((await active.json()) as { data: { applications: JobApplication[] } }).data.applications).toHaveLength(0);
+
+    const blacklisted = await app.handle(
+      jsonRequest("http://localhost/api/applications/blacklist", {}, account.sessionId, account.payload.data.csrfToken),
+    );
+    const blacklistedApplications = ((await blacklisted.json()) as { data: { applications: JobApplication[] } }).data
+      .applications;
+    expect(blacklistedApplications).toHaveLength(1);
+    expect(blacklistedApplications[0]).toMatchObject({ id: application.id, blacklistReason: "Duplicate employer" });
+
+    const unblacklist = await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${application.id}/unblacklist`,
+        { method: "POST" },
+        account.sessionId,
+        account.payload.data.csrfToken,
+      ),
+    );
+    expect(unblacklist.status).toBe(200);
+    const activeAfterRestore = await app.handle(
+      jsonRequest("http://localhost/api/applications", {}, account.sessionId, account.payload.data.csrfToken),
+    );
+    expect(
+      ((await activeAfterRestore.json()) as { data: { applications: JobApplication[] } }).data.applications,
+    ).toHaveLength(1);
   });
 });

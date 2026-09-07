@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  blacklistInputSchema,
   createApplicationInputSchema,
   loginInputSchema,
   registerInputSchema,
@@ -7,6 +8,14 @@ import {
 } from "./index";
 
 describe("application contracts", () => {
+  it("normalizes an optional blacklist reason and enforces its limit", () => {
+    expect(blacklistInputSchema.parse({ reason: "  Duplicate employer  " })).toEqual({
+      reason: "Duplicate employer",
+    });
+    expect(blacklistInputSchema.parse({})).toEqual({});
+    expect(blacklistInputSchema.safeParse({ reason: "x".repeat(1001) }).success).toBe(false);
+  });
+
   it("accepts a complete application and normalizes optional text", () => {
     expect(
       createApplicationInputSchema.parse({

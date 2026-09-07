@@ -4,6 +4,7 @@ import type {
   ApplicationListResponse,
   ApplicationResponse,
   AuthResponse,
+  BlacklistInput,
   CreateApplicationInput,
   CsrfResponse,
   CurrentUserResponse,
@@ -15,7 +16,7 @@ import type {
   UpdateApplicationInput,
 } from "@job-tracker/shared";
 
-export type ApplicationList = "active" | "archive";
+export type ApplicationList = "active" | "archive" | "blacklist";
 
 export const applicationKeys = {
   all: ["applications"] as const,
@@ -103,6 +104,10 @@ export function listArchivedApplications(): Promise<ApplicationListResponse> {
   return requestJson<ApplicationListResponse>("/api/applications/archive");
 }
 
+export function listBlacklistedApplications(): Promise<ApplicationListResponse> {
+  return requestJson<ApplicationListResponse>("/api/applications/blacklist");
+}
+
 export function createApplication(input: CreateApplicationInput, csrfToken: string): Promise<ApplicationResponse> {
   return requestJson<ApplicationResponse>(
     "/api/applications",
@@ -158,6 +163,26 @@ export function restoreApplication(id: number, csrfToken: string): Promise<ApiSu
 
 export function deleteApplication(id: number, csrfToken: string): Promise<ApiSuccess<MessageResponse["data"]>> {
   return requestJson<ApiSuccess<MessageResponse["data"]>>(`/api/applications/${id}`, { method: "DELETE" }, csrfToken);
+}
+
+export function blacklistApplication(
+  id: number,
+  input: BlacklistInput,
+  csrfToken: string,
+): Promise<ApiSuccess<MessageResponse["data"]>> {
+  return requestJson<ApiSuccess<MessageResponse["data"]>>(
+    `/api/applications/${id}/blacklist`,
+    { method: "POST", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function unblacklistApplication(id: number, csrfToken: string): Promise<ApiSuccess<MessageResponse["data"]>> {
+  return requestJson<ApiSuccess<MessageResponse["data"]>>(
+    `/api/applications/${id}/unblacklist`,
+    { method: "POST" },
+    csrfToken,
+  );
 }
 
 export type { JobApplication };

@@ -1,12 +1,15 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { applicationArchiveRoute } from "./routes/application-archive";
+import { applicationBlacklistRoute } from "./routes/application-blacklist";
 import { applicationCreateRoute } from "./routes/application-create";
 import { applicationDeleteRoute } from "./routes/application-delete";
 import { applicationDetailRoute } from "./routes/application-detail";
 import { applicationRestoreRoute } from "./routes/application-restore";
+import { applicationUnblacklistRoute } from "./routes/application-unblacklist";
 import { applicationUpdateRoute } from "./routes/application-update";
 import { applicationsArchiveRoute } from "./routes/applications-archive";
+import { applicationsBlacklistRoute } from "./routes/applications-blacklist";
 import { applicationsListRoute } from "./routes/applications-list";
 import { applicationsReorderRoute } from "./routes/applications-reorder";
 import { authCsrfRoute } from "./routes/auth-csrf";
@@ -57,12 +60,15 @@ export function createApp(dependencies: AppDependencies) {
     .use(authLogoutRoute(routeDependencies))
     .use(authMeRoute(routeDependencies))
     .use(applicationsArchiveRoute(routeDependencies))
+    .use(applicationsBlacklistRoute(routeDependencies))
     .use(applicationsListRoute(routeDependencies))
     .use(applicationsReorderRoute(routeDependencies))
     .use(applicationDetailRoute(routeDependencies))
     .use(applicationCreateRoute(routeDependencies))
     .use(applicationUpdateRoute(routeDependencies))
     .use(applicationArchiveRoute(routeDependencies))
+    .use(applicationBlacklistRoute(routeDependencies))
+    .use(applicationUnblacklistRoute(routeDependencies))
     .use(applicationRestoreRoute(routeDependencies))
     .use(applicationDeleteRoute(routeDependencies));
 }

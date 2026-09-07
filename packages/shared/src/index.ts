@@ -19,6 +19,9 @@ export const createApplicationInputSchema = z.object({
 });
 
 export const updateApplicationInputSchema = createApplicationInputSchema.partial();
+export const blacklistInputSchema = z.object({
+  reason: z.string().trim().max(1000).nullable().optional(),
+});
 
 export const registerInputSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(255),
@@ -40,6 +43,7 @@ export const reorderApplicationsInputSchema = z.object({
 
 export type CreateApplicationInput = z.infer<typeof createApplicationInputSchema>;
 export type UpdateApplicationInput = z.infer<typeof updateApplicationInputSchema>;
+export type BlacklistInput = z.infer<typeof blacklistInputSchema>;
 export type ReorderApplicationsInput = z.infer<typeof reorderApplicationsInputSchema>;
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
@@ -67,6 +71,8 @@ export type JobApplication = {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  blacklistedAt: string | null;
+  blacklistReason: string | null;
 };
 
 export type ApiSuccess<T> = { data: T };

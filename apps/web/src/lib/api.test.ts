@@ -12,6 +12,7 @@ describe("web API helpers", () => {
   it("creates isolated query keys for active and archived applications", () => {
     expect(applicationKeys.list("active")).toEqual(["applications", "list", "active"]);
     expect(applicationKeys.list("archive")).toEqual(["applications", "list", "archive"]);
+    expect(applicationKeys.list("blacklist")).toEqual(["applications", "list", "blacklist"]);
   });
 
   it("keeps API error identity and HTTP status together", () => {

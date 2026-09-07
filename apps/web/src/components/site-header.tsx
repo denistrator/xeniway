@@ -40,6 +40,17 @@ export function SiteHeader() {
                 Applications
               </NavLink>
               <NavLink
+                to="/blacklist"
+                className={({ isActive }) =>
+                  cn(
+                    "rounded-lg px-3 py-2 text-sm transition-colors",
+                    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
+                  )
+                }
+              >
+                Blacklist
+              </NavLink>
+              <NavLink
                 to="/archive"
                 className={({ isActive }) =>
                   cn(

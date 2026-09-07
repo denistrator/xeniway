@@ -41,7 +41,7 @@ Login and registration consume an atomic Redis counter with a fifteen-minute fix
 
 ## Data ownership
 
-Applications are never addressed without an authenticated owner in repository calls. Archive is a state transition represented by `archivedAt`; active and archive lists are separate queries. Permanent deletion is accepted only for an archived application.
+Applications are never addressed without an authenticated owner in repository calls. Archive is a state transition represented by `archivedAt`; blacklist is an independent exclusion state represented by `blacklistedAt` and `blacklistReason`. Active, archive, and blacklist lists are separate queries. Blacklisting preserves the six-status workflow and restores the job to its previous active status when removed from the blacklist. Permanent deletion is accepted only for an archived application.
 
 ## Deliberate non-goals
 

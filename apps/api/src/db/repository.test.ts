@@ -40,6 +40,8 @@ describe("database row mapping", () => {
       createdAt: new Date("2026-08-01T10:00:00.000Z"),
       updatedAt: new Date("2026-08-21T10:00:00.000Z"),
       archivedAt: null,
+      blacklistedAt: null,
+      blacklistReason: null,
       seedKey: null,
     };
 
@@ -58,6 +60,8 @@ describe("database row mapping", () => {
       createdAt: "2026-08-01T10:00:00.000Z",
       updatedAt: "2026-08-21T10:00:00.000Z",
       archivedAt: null,
+      blacklistedAt: null,
+      blacklistReason: null,
     });
   });
 });

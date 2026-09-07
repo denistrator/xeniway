@@ -10,12 +10,16 @@ export function JobManager({
   submitting,
   onSave,
   onArchive,
+  onBlacklist,
+  blacklisting,
   onClose,
 }: {
   job?: JobApplication;
   submitting: boolean;
   onSave: (input: CreateApplicationInput) => void;
   onArchive: () => void;
+  onBlacklist: (reason: string) => void;
+  blacklisting: boolean;
   onClose: () => void;
 }) {
   const dispatch = useDispatch();
@@ -84,6 +88,8 @@ export function JobManager({
     submitting,
     onSave,
     onArchive,
+    onBlacklist,
+    blacklisting,
     onClose,
     onSwitchPresentation: switchPresentation,
   };

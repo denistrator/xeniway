@@ -7,6 +7,7 @@ import { applicationKeys } from "./lib/api";
 import { authKeys, useCurrentUser } from "./lib/queries";
 import { AboutPage } from "./pages/about-page";
 import { ArchivePage } from "./pages/archive-page";
+import { BlacklistPage } from "./pages/blacklist-page";
 import { HomePage } from "./pages/home-page";
 import { LoginPage } from "./pages/login-page";
 import { NotFoundPage } from "./pages/not-found-page";
@@ -29,6 +30,7 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/blacklist" element={<BlacklistPage />} />
           </Route>
           <Route element={<GuestOnly />}>
             <Route path="/login" element={<LoginPage />} />

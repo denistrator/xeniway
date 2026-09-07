@@ -1,4 +1,5 @@
 import type {
+  BlacklistInput,
   CreateApplicationInput,
   CurrentUserResponse,
   JobApplication,
@@ -10,17 +11,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   applicationKeys,
   archiveApplication,
+  blacklistApplication,
   createApplication,
   deleteApplication,
   getCsrfToken,
   getCurrentUser,
   listApplications,
   listArchivedApplications,
+  listBlacklistedApplications,
   login,
   logout,
   register,
   reorderApplications,
   restoreApplication,
+  unblacklistApplication,
   updateApplication,
 } from "./api";
 
@@ -96,6 +100,15 @@ export function useArchivedApplications() {
   });
 }
 
+export function useBlacklistedApplications() {
+  return useQuery({
+    queryKey: applicationKeys.list("blacklist"),
+    queryFn: listBlacklistedApplications,
+    retry: false,
+    select: (response) => response.data.applications,
+  });
+}
+
 export function useApplicationMutations() {
   const queryClient = useQueryClient();
   const csrfToken = useCsrfToken().data ?? "";
@@ -130,6 +143,14 @@ export function useApplicationMutations() {
     }),
     remove: useMutation({
       mutationFn: (id: number) => deleteApplication(id, csrfToken),
+      onSuccess: invalidate,
+    }),
+    blacklist: useMutation({
+      mutationFn: ({ id, input }: { id: number; input: BlacklistInput }) => blacklistApplication(id, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    unblacklist: useMutation({
+      mutationFn: (id: number) => unblacklistApplication(id, csrfToken),
       onSuccess: invalidate,
     }),
   };

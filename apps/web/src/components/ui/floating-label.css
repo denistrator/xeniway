@@ -17,7 +17,7 @@
 }
 
 .floating-label-with-icon > .floating-label-icon {
-    @apply pointer-events-none absolute inset-s-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted transition-colors;
+    @apply pointer-events-none absolute inset-s-3 top-5 z-10 size-4 -translate-y-1/2 text-muted transition-colors;
 }
 
 .floating-label-with-icon > input,

@@ -1,4 +1,5 @@
 import type {
+  BlacklistInput,
   CreateApplicationInput,
   JobApplication,
   JobStatus,
@@ -40,6 +41,9 @@ export interface ApplicationRepository {
   archive(userId: number, id: number): Promise<boolean>;
   restore(userId: number, id: number): Promise<boolean>;
   permanentDelete(userId: number, id: number): Promise<boolean>;
+  listBlacklisted(userId: number): Promise<JobApplication[]>;
+  blacklist(userId: number, id: number, reason: BlacklistInput["reason"]): Promise<boolean>;
+  unblacklist(userId: number, id: number): Promise<boolean>;
 }
 
 export class DrizzleUserRepository implements UserRepository {
@@ -99,6 +103,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     const conditions = [eq(jobApplications.userId, userId)];
     if (options.status) conditions.push(eq(jobApplications.status, options.status));
     conditions.push(options.archived ? isNotNull(jobApplications.archivedAt) : isNull(jobApplications.archivedAt));
+    conditions.push(isNull(jobApplications.blacklistedAt));
 
     const rows = await this.database
       .select()
@@ -120,6 +125,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
           eq(jobApplications.userId, userId),
           eq(jobApplications.id, id),
           options.archived ? isNotNull(jobApplications.archivedAt) : isNull(jobApplications.archivedAt),
+          isNull(jobApplications.blacklistedAt),
         ),
       )
       .limit(1);
@@ -194,6 +200,40 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       );
     return result.count > 0;
   }
+
+  async listBlacklisted(userId: number): Promise<JobApplication[]> {
+    const rows = await this.database
+      .select()
+      .from(jobApplications)
+      .where(and(eq(jobApplications.userId, userId), isNotNull(jobApplications.blacklistedAt)))
+      .orderBy(desc(jobApplications.blacklistedAt), asc(jobApplications.sortOrder));
+    return rows.map(toJobApplication);
+  }
+
+  async blacklist(userId: number, id: number, reason: BlacklistInput["reason"]): Promise<boolean> {
+    const result = await this.database
+      .update(jobApplications)
+      .set({ blacklistedAt: new Date(), blacklistReason: reason ?? null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(jobApplications.userId, userId),
+          eq(jobApplications.id, id),
+          isNull(jobApplications.archivedAt),
+          isNull(jobApplications.blacklistedAt),
+        ),
+      );
+    return result.count > 0;
+  }
+
+  async unblacklist(userId: number, id: number): Promise<boolean> {
+    const result = await this.database
+      .update(jobApplications)
+      .set({ blacklistedAt: null, blacklistReason: null, updatedAt: new Date() })
+      .where(
+        and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNotNull(jobApplications.blacklistedAt)),
+      );
+    return result.count > 0;
+  }
 }
 
 export function toUser(row: UserRow): User {
@@ -222,5 +262,7 @@ export function toJobApplication(row: typeof jobApplications.$inferSelect): JobA
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     archivedAt: row.archivedAt?.toISOString() ?? null,
+    blacklistedAt: row.blacklistedAt?.toISOString() ?? null,
+    blacklistReason: row.blacklistReason,
   };
 }

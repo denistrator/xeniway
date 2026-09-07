@@ -37,11 +37,14 @@ Login body is `{ "email": "...", "password": "..." }`. Emails are trimmed and no
 | --- | --- | --- | --- |
 | `GET` | `/api/applications` | Session | Lists active applications; optional `?status=` filter |
 | `GET` | `/api/applications/archive` | Session | Lists the current user's archived applications |
+| `GET` | `/api/applications/blacklist` | Session | Lists the current user's blacklisted applications |
 | `GET` | `/api/applications/:id` | Session | Reads one active application |
 | `POST` | `/api/applications` | Session + CSRF | Creates an active application; returns `201` |
 | `PUT` | `/api/applications/:id` | Session + CSRF | Updates an active application |
 | `POST` | `/api/applications/:id/archive` | Session + CSRF | Archives an active application |
+| `POST` | `/api/applications/:id/blacklist` | Session + CSRF | Blacklists an active application with an optional reason |
 | `POST` | `/api/applications/:id/restore` | Session + CSRF | Restores an archived application |
+| `POST` | `/api/applications/:id/unblacklist` | Session + CSRF | Restores a blacklisted application to the active list |
 | `DELETE` | `/api/applications/:id` | Session + CSRF | Permanently deletes an archived application |
 
 Application create/update fields:
@@ -62,6 +65,8 @@ Application create/update fields:
 
 `company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date.
 
+Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
+
 ## Error behavior
 
-The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures are intentionally reported as not found rather than revealing another user's records. Repeated login and registration attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, login and registration fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.
+The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login and registration attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, login and registration fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.

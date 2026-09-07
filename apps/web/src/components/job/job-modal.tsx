@@ -7,6 +7,8 @@ export function JobModal({
   submitting,
   onSave,
   onArchive,
+  onBlacklist,
+  blacklisting,
   onClose,
   onSwitchPresentation,
   dialogRef,
@@ -36,6 +38,8 @@ export function JobModal({
           submitting={submitting}
           onSave={onSave}
           onArchive={onArchive}
+          onBlacklist={onBlacklist}
+          blacklisting={blacklisting}
           onClose={onClose}
           onSwitchPresentation={onSwitchPresentation}
         />

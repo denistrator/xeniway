@@ -61,14 +61,20 @@ export function JobForm({
   submitting,
   onSubmit,
   onCancel,
+  onBlacklist,
+  blacklisting = false,
 }: {
   job?: JobApplication | null;
   submitting: boolean;
   onSubmit: (input: CreateApplicationInput) => void;
   onCancel: () => void;
+  onBlacklist?: (reason: string) => void;
+  blacklisting?: boolean;
 }) {
   const [form, setForm] = useState<FormState>(() => toForm(job));
   const [error, setError] = useState<string | null>(null);
+  const [blacklistOpen, setBlacklistOpen] = useState(false);
+  const [blacklistReason, setBlacklistReason] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => setForm(toForm(job)), [job]);
@@ -211,6 +217,42 @@ export function JobForm({
           onChange={(event) => update("notes", event.target.value)}
         />
       </FloatingLabel>
+      {job && onBlacklist && (
+        <div className="border-t border-line pt-5">
+          {blacklistOpen ? (
+            <div className="space-y-3">
+              <FloatingLabel htmlFor="job-blacklist-reason" label="Reason" icon={StickyNote}>
+                <textarea
+                  id="job-blacklist-reason"
+                  className="peer min-h-24"
+                  name="blacklistReason"
+                  placeholder=" "
+                  maxLength={1000}
+                  value={blacklistReason}
+                  onChange={(event) => setBlacklistReason(event.target.value)}
+                />
+              </FloatingLabel>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setBlacklistOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onBlacklist(blacklistReason)}
+                  disabled={blacklisting}
+                >
+                  {blacklisting ? "Blacklisting…" : "Confirm blacklist"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" className="w-full" onClick={() => setBlacklistOpen(true)}>
+              Blacklist
+            </Button>
+          )}
+        </div>
+      )}
       {error && (
         <p
           ref={errorRef}

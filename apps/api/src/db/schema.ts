@@ -57,11 +57,14 @@ export const jobApplications = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
+    blacklistedAt: timestamp("blacklisted_at", { withTimezone: true }),
+    blacklistReason: text("blacklist_reason"),
     seedKey: varchar("seed_key", { length: 120 }),
   },
   (table) => [
     index("job_applications_user_status_idx").on(table.userId, table.status),
     index("job_applications_user_archive_idx").on(table.userId, table.archivedAt),
+    index("job_applications_user_blacklist_idx").on(table.userId, table.blacklistedAt),
     uniqueIndex("job_applications_seed_key_unique").on(table.seedKey),
   ],
 );

@@ -31,6 +31,13 @@ function AuthenticatedJobManager() {
     }
   }
 
+  async function handleBlacklist(reason: string) {
+    if (drawer.jobId !== null) {
+      await mutations.blacklist.mutateAsync({ id: drawer.jobId, input: { reason: reason.trim() || null } });
+      dispatch(closeDrawer());
+    }
+  }
+
   return (
     <>
       <JobManager
@@ -38,11 +45,16 @@ function AuthenticatedJobManager() {
         submitting={pending}
         onSave={handleSave}
         onArchive={handleArchive}
+        onBlacklist={handleBlacklist}
+        blacklisting={mutations.blacklist.isPending}
         onClose={() => dispatch(closeDrawer())}
       />
-      {(mutations.create.error || mutations.update.error || mutations.archive.error) && (
+      {(mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error) && (
         <p className="mx-auto max-w-7xl px-6 pb-6 text-sm text-rose-600 dark:text-rose-400">
-          {(mutations.create.error || mutations.update.error || mutations.archive.error)?.message}
+          {
+            (mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error)
+              ?.message
+          }
         </p>
       )}
     </>

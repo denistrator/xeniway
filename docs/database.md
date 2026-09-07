@@ -23,7 +23,7 @@ Stores the random session ID, optional owning user ID, server-side CSRF token, a
 
 ### `job_applications`
 
-Stores the owning user, company, position, optional job details, one of the six PostgreSQL `job_status` enum values, timestamps, and nullable `archived_at`. User deletion cascades to applications. Indexes support user/status and user/archive list queries.
+Stores the owning user, company, position, optional job details, one of the six PostgreSQL `job_status` enum values, timestamps, nullable `archived_at`, and independent blacklist state in `blacklisted_at` plus an optional `blacklist_reason`. User deletion cascades to applications. Active and archive queries exclude blacklisted rows; the blacklist page uses the user/blacklist index.
 
 `seed_key` is nullable and unique. It is used only by the development seed command to make fixture replacement idempotent; normal application-created rows leave it null.
 

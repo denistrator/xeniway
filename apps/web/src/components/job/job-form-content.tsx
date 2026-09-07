@@ -12,6 +12,8 @@ export type JobFormContentProps = {
   submitting: boolean;
   onSave: (input: CreateApplicationInput) => void;
   onArchive: () => void;
+  onBlacklist: (reason: string) => void;
+  blacklisting: boolean;
   onClose: () => void;
   onSwitchPresentation: () => void;
 };
@@ -27,6 +29,8 @@ export function JobFormContent({
   submitting,
   onSave,
   onArchive,
+  onBlacklist,
+  blacklisting,
   onClose,
   onSwitchPresentation,
 }: JobFormContentProps) {
@@ -51,7 +55,14 @@ export function JobFormContent({
           </Button>
         </div>
       </div>
-      <JobForm job={job} submitting={submitting} onSubmit={onSave} onCancel={onClose} />
+      <JobForm
+        job={job}
+        submitting={submitting}
+        onSubmit={onSave}
+        onCancel={onClose}
+        onBlacklist={mode === "edit" ? onBlacklist : undefined}
+        blacklisting={blacklisting}
+      />
       {mode === "edit" && (
         <div className="mt-auto border-t border-line pt-5">
           <Button variant="outline" className="w-full" onClick={onArchive}>

@@ -11,6 +11,7 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 - Create, read, update, and archive job applications.
 - Search, status filtering, and native drag-and-drop status changes with keyboard alternatives.
 - Archive restore and permanent deletion with confirmation.
+- Blacklist jobs with an optional reason and restore them from a dedicated blacklist page.
 - Light, dark, and system themes with a persisted browser preference.
 - Accessible UI with semantic controls, visible focus states, keyboard navigation, live status updates, and reduced-motion support.
 - Per-user ownership isolation for all application operations.

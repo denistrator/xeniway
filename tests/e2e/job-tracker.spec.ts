@@ -260,6 +260,21 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await page.getByRole("button", { name: "Save application" }).click();
   await expect(page.getByRole("button", { name: new RegExp(company) })).toBeVisible();
 
+  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("button", { name: "Blacklist" }).click();
+  await expect(page.getByLabel("Reason")).toBeVisible();
+  await page.getByLabel("Reason").fill("Duplicate employer");
+  await page.getByRole("button", { name: "Confirm blacklist" }).click();
+  await page.getByRole("link", { name: "Blacklist" }).click();
+  await expect(page).toHaveURL(/\/blacklist$/);
+  await expect(page.getByText(company, { exact: true })).toBeVisible();
+  await expect(page.getByText("Duplicate employer", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Remove from blacklist" }).click();
+  await expect(page.getByText(company, { exact: true })).toHaveCount(0);
+  await page.getByRole("link", { name: "Applications" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("button", { name: new RegExp(company) })).toBeVisible();
+
   await page.getByLabel("Search applications").fill(company);
   await expect(page.getByRole("button", { name: new RegExp(company) })).toHaveCount(1);
   await page.getByLabel("Search applications").fill("");
