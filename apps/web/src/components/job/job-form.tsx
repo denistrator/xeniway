@@ -1,4 +1,15 @@
 import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@job-tracker/shared";
+import {
+  Banknote,
+  BriefcaseBusiness,
+  Building2,
+  CalendarDays,
+  CircleDot,
+  FileText,
+  Link,
+  MapPin,
+  StickyNote,
+} from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { FloatingLabel } from "../ui/floating-label";
@@ -96,7 +107,7 @@ export function JobForm({
       autoComplete="off"
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-company" label="Company *">
+        <FloatingLabel htmlFor="job-company" label="Company *" icon={Building2}>
           <Input
             id="job-company"
             className="peer"
@@ -107,7 +118,7 @@ export function JobForm({
             onChange={(event) => update("company", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-position" label="Position *">
+        <FloatingLabel htmlFor="job-position" label="Position *" icon={BriefcaseBusiness}>
           <Input
             id="job-position"
             className="peer"
@@ -120,7 +131,7 @@ export function JobForm({
         </FloatingLabel>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-location" label="Location">
+        <FloatingLabel htmlFor="job-location" label="Location" icon={MapPin}>
           <Input
             id="job-location"
             className="peer"
@@ -130,7 +141,7 @@ export function JobForm({
             onChange={(event) => update("location", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-salary" label="Salary">
+        <FloatingLabel htmlFor="job-salary" label="Salary" icon={Banknote}>
           <Input
             id="job-salary"
             className="peer"
@@ -141,7 +152,7 @@ export function JobForm({
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="job-url" label="Job URL">
+      <FloatingLabel htmlFor="job-url" label="Job URL" icon={Link}>
         <Input
           id="job-url"
           className="peer"
@@ -153,7 +164,7 @@ export function JobForm({
         />
       </FloatingLabel>
       <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-status" label="Status">
+        <FloatingLabel htmlFor="job-status" label="Status" icon={CircleDot}>
           <select
             id="job-status"
             className="peer"
@@ -168,7 +179,7 @@ export function JobForm({
             ))}
           </select>
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-applied-at" label="Applied date">
+        <FloatingLabel htmlFor="job-applied-at" label="Applied date" icon={CalendarDays}>
           <Input
             id="job-applied-at"
             className="peer"
@@ -180,7 +191,7 @@ export function JobForm({
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="job-description" label="Description">
+      <FloatingLabel htmlFor="job-description" label="Description" icon={FileText}>
         <textarea
           id="job-description"
           className="peer min-h-24"
@@ -190,7 +201,7 @@ export function JobForm({
           onChange={(event) => update("description", event.target.value)}
         />
       </FloatingLabel>
-      <FloatingLabel htmlFor="job-notes" label="Notes">
+      <FloatingLabel htmlFor="job-notes" label="Notes" icon={StickyNote}>
         <textarea
           id="job-notes"
           className="peer min-h-24"

@@ -1,3 +1,4 @@
+import { LockKeyhole, Mail } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
@@ -28,7 +29,7 @@ export function LoginPage() {
   return (
     <AuthCard title="Welcome back" description="Sign in to continue tracking your applications.">
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <FloatingLabel htmlFor="login-email" label="Email">
+        <FloatingLabel htmlFor="login-email" label="Email" icon={Mail}>
           <Input
             id="login-email"
             className="peer"
@@ -42,7 +43,7 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="login-password" label="Password">
+        <FloatingLabel htmlFor="login-password" label="Password" icon={LockKeyhole}>
           <Input
             id="login-password"
             className="peer"

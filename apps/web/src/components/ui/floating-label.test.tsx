@@ -1,3 +1,4 @@
+import { Mail } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 import { FloatingLabel } from "./floating-label";
@@ -13,5 +14,17 @@ describe("FloatingLabel", () => {
     expect(markup).toContain('class="floating-label w-64"');
     expect(markup).toContain('<label for="email" class="floating-label-label text-xs">Email</label>');
     expect(markup.indexOf('<input id="email"')).toBeLessThan(markup.indexOf("<label"));
+  });
+
+  test("renders an optional decorative icon", () => {
+    const markup = renderToStaticMarkup(
+      <FloatingLabel htmlFor="email" label="Email" icon={Mail}>
+        <input id="email" className="peer" />
+      </FloatingLabel>,
+    );
+
+    expect(markup).toContain('aria-hidden="true"');
+    expect(markup).toContain('focusable="false"');
+    expect(markup).toContain("floating-label-with-icon");
   });
 });

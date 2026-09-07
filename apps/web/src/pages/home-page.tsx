@@ -1,4 +1,5 @@
 import type { JobStatus } from "@job-tracker/shared";
+import { Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { JobBoard } from "../components/job/job-board";
 import { PageIntro } from "../components/page-intro";
@@ -33,7 +34,12 @@ export function HomePage() {
           />
         </div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <FloatingLabel htmlFor="application-search" label="Search applications" className="min-w-64 flex-1">
+          <FloatingLabel
+            htmlFor="application-search"
+            label="Search applications"
+            icon={Search}
+            className="min-w-64 flex-1"
+          >
             <Input
               id="application-search"
               className="peer"

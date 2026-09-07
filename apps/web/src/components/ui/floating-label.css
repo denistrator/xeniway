@@ -16,6 +16,24 @@
     @apply pointer-events-none cursor-text absolute inset-s-1 top-2 -translate-y-4 scale-75 rounded-sm bg-surface px-2 text-sm text-muted duration-300 transition-[color,background,top,translate,scale];
 }
 
+.floating-label-with-icon > .floating-label-icon {
+    @apply pointer-events-none absolute inset-s-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted transition-colors;
+}
+
+.floating-label-with-icon > input,
+.floating-label-with-icon > select,
+.floating-label-with-icon > textarea {
+    @apply ps-10;
+}
+
+.floating-label-with-icon > .floating-label-label {
+    @apply inset-s-8;
+}
+
+.floating-label-with-icon:has(> .peer:focus) > .floating-label-icon {
+    @apply text-accent;
+}
+
 .floating-label > .peer:placeholder-shown ~ .floating-label-label {
     @apply top-[15px] -translate-y-1 scale-100;
 }

@@ -23,11 +23,13 @@ test("shows a public not found page for unknown routes", async ({ page }) => {
 test("uses floating labels for authentication fields", async ({ page }) => {
   await page.goto("/login");
   await expect(page.locator(".floating-label > input")).toHaveCount(2);
+  await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(2);
   await expect(page.getByLabel("Email")).toHaveAttribute("placeholder", " ");
   await expect(page.getByLabel("Password")).toHaveAttribute("placeholder", " ");
 
   await page.goto("/register");
   await expect(page.locator(".floating-label > input")).toHaveCount(5);
+  await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(5);
   for (const label of ["First name", "Last name", "Email", "Password", "Confirm password"]) {
     await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("placeholder", " ");
   }
@@ -177,6 +179,7 @@ test("uses floating labels for search and application fields", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
   await expect(page.locator(".floating-label > input")).toHaveCount(1);
+  await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(1);
   await expect(page.getByLabel("Search applications")).toHaveAttribute("placeholder", " ");
 
   await page.getByRole("button", { name: "+ Add job" }).click();
@@ -184,6 +187,7 @@ test("uses floating labels for search and application fields", async ({ page }) 
   await expect(dialog.locator(".floating-label > input")).toHaveCount(6);
   await expect(dialog.locator(".floating-label > textarea")).toHaveCount(2);
   await expect(dialog.locator(".floating-label > select")).toHaveCount(1);
+  await expect(dialog.locator(".floating-label-with-icon > svg")).toHaveCount(9);
   for (const label of [
     "Company *",
     "Position *",

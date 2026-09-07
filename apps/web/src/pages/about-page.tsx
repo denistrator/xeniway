@@ -26,7 +26,7 @@ function Feature({ title, text }: { title: string; text: string }) {
   return (
     <article className="rounded-2xl border border-line bg-accent-soft p-5">
       <h2 className="font-semibold text-ink">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-muted">{text}</p>
+      <p className="mt-2 text-sm leading-6 text-ink">{text}</p>
     </article>
   );
 }

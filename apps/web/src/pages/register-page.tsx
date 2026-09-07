@@ -1,4 +1,5 @@
 import { registerInputSchema } from "@job-tracker/shared";
+import { LockKeyhole, Mail, User } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
@@ -46,7 +47,7 @@ export function RegisterPage() {
     <AuthCard title="Create your account" description="Keep your job search organized from first contact to offer.">
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <FloatingLabel htmlFor="register-first-name" label="First name">
+          <FloatingLabel htmlFor="register-first-name" label="First name" icon={User}>
             <Input
               id="register-first-name"
               className="peer"
@@ -57,7 +58,7 @@ export function RegisterPage() {
               onChange={(event) => update("firstName", event.target.value)}
             />
           </FloatingLabel>
-          <FloatingLabel htmlFor="register-last-name" label="Last name">
+          <FloatingLabel htmlFor="register-last-name" label="Last name" icon={User}>
             <Input
               id="register-last-name"
               className="peer"
@@ -69,7 +70,7 @@ export function RegisterPage() {
             />
           </FloatingLabel>
         </div>
-        <FloatingLabel htmlFor="register-email" label="Email">
+        <FloatingLabel htmlFor="register-email" label="Email" icon={Mail}>
           <Input
             id="register-email"
             className="peer"
@@ -83,7 +84,7 @@ export function RegisterPage() {
             onChange={(event) => update("email", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="register-password" label="Password">
+        <FloatingLabel htmlFor="register-password" label="Password" icon={LockKeyhole}>
           <Input
             id="register-password"
             className="peer"
@@ -96,7 +97,7 @@ export function RegisterPage() {
             onChange={(event) => update("password", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="register-confirm-password" label="Confirm password">
+        <FloatingLabel htmlFor="register-confirm-password" label="Confirm password" icon={LockKeyhole}>
           <Input
             id="register-confirm-password"
             className="peer"
