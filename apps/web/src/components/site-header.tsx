@@ -6,6 +6,19 @@ import { closeDrawer, openCreateDrawer } from "../store";
 import { ThemeSelector } from "./theme-selector";
 import { Button } from "./ui/button";
 
+function navigationLinkClassName({ isActive }: { isActive: boolean }) {
+  return cn(
+    "rounded-lg px-3 py-2 text-sm transition-colors",
+    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
+  );
+}
+
+const navigationLinks = [
+  { to: "/", label: "Applications", end: true },
+  { to: "/blacklist", label: "Blacklist", end: false },
+  { to: "/archive", label: "Archive", end: false },
+] as const;
+
 export function SiteHeader() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -27,40 +40,11 @@ export function SiteHeader() {
         {user.data && (
           <>
             <nav className="flex items-center gap-1" aria-label="Main navigation">
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-lg px-3 py-2 text-sm transition-colors",
-                    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
-                  )
-                }
-              >
-                Applications
-              </NavLink>
-              <NavLink
-                to="/blacklist"
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-lg px-3 py-2 text-sm transition-colors",
-                    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
-                  )
-                }
-              >
-                Blacklist
-              </NavLink>
-              <NavLink
-                to="/archive"
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-lg px-3 py-2 text-sm transition-colors",
-                    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
-                  )
-                }
-              >
-                Archive
-              </NavLink>
+              {navigationLinks.map(({ to, label, end }) => (
+                <NavLink key={to} to={to} end={end} className={navigationLinkClassName}>
+                  {label}
+                </NavLink>
+              ))}
             </nav>
             <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
             <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
