@@ -31,6 +31,7 @@ export function createApp(dependencies: AppDependencies) {
     auth,
     authRateLimiter,
     databaseHealth: dependencies.health ?? (async () => true),
+    redisHealth: dependencies.redisHealth ?? (async () => true),
   };
 
   return new Elysia()

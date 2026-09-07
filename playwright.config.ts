@@ -15,6 +15,7 @@ export default defineConfig({
     command: "bun run dev",
     env: {
       DATABASE_URL: "postgres://job_tracker:job_tracker@localhost:5432/job_tracker",
+      REDIS_URL: "redis://localhost:6379",
       PORT: "3100",
       API_PORT: "3100",
       VITE_PORT: "4173",

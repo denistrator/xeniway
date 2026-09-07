@@ -2,7 +2,7 @@
 
 Job Tracker helps job candidates keep a reliable record of conversations and progress with potential employers. Each application belongs to the signed-in user and moves through six workflow statuses: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.
 
-The application is a Bun workspace with a React SPA, a typed Elysia API, shared Zod contracts, Drizzle ORM, and PostgreSQL.
+The application is a Bun workspace with a React SPA, a typed Elysia API, shared Zod contracts, Drizzle ORM, PostgreSQL, and Redis-backed authentication rate limiting.
 
 ## Features
 
@@ -25,6 +25,7 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 | UI | Tailwind CSS and local shadcn/ui-style primitives |
 | API | Bun, Elysia, Zod |
 | Persistence | Drizzle ORM and PostgreSQL |
+| Abuse protection | Redis-backed distributed login and registration rate limiting |
 | Tests | Vitest and Playwright |
 | Local infrastructure | Docker Compose |
 
@@ -36,6 +37,7 @@ Prerequisites: Bun, Docker Compose, and a Playwright Chromium installation for b
 cp .env.example .env
 bun install
 bun run db:up
+bun run redis:up
 bun run db:migrate
 bun run db:seed       # optional development fixtures
 bun run dev
@@ -52,6 +54,9 @@ Seed credentials are `admin@example.com` / `password` and `test_user@example.com
 | `bun run dev` | Start the API and Vite web app |
 | `bun run db:up` | Start local PostgreSQL |
 | `bun run db:down` | Stop local PostgreSQL |
+| `bun run redis:up` | Start local Redis |
+| `bun run redis:down` | Stop local Redis |
+| `bun run redis:check` | Check local Redis connectivity |
 | `bun run db:migrate` | Apply checked-in SQL migrations |
 | `bun run db:seed` | Idempotently recreate development accounts and fixtures |
 | `bun run typecheck` | Typecheck shared, API, and web packages |
@@ -61,7 +66,7 @@ Seed credentials are `admin@example.com` / `password` and `test_user@example.com
 | `bun run format` | Format supported source files with Biome |
 | `bun run lint` | Check formatting, imports, and lint rules with Biome |
 
-For E2E testing, start PostgreSQL, apply migrations, seed the database, and install Chromium with `bunx playwright install chromium`.
+For E2E testing, start PostgreSQL and Redis, apply migrations, seed the database, and install Chromium with `bunx playwright install chromium`.
 
 ## Repository map
 
@@ -69,7 +74,7 @@ For E2E testing, start PostgreSQL, apply migrations, seed the database, and inst
 - `apps/api` — Elysia app factory, authentication, repositories, Drizzle schema, migration runner, and seed command.
 - `packages/shared` — shared Zod request schemas and TypeScript response contracts.
 - `apps/api/drizzle` — checked-in PostgreSQL migrations.
-- `infra/docker-compose.yml` — local PostgreSQL service and persistent volume.
+- `infra/docker-compose.yml` — local PostgreSQL and Redis services with persistent volumes.
 - `tests/e2e` — Playwright browser workflows.
 - `docs` — architecture, API, database, operations, testing, and migration notes.
 

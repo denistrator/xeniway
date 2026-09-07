@@ -89,4 +89,5 @@ export type CsrfResponse = ApiSuccess<{ csrfToken: string }>;
 export type HealthResponse = {
   status: "ok";
   database: "up";
+  redis: "up";
 };

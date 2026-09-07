@@ -3,6 +3,10 @@ export type RateLimitResult = {
   retryAfterSeconds: number;
 };
 
+export type RateLimiter = {
+  consume(key: string): Promise<RateLimitResult>;
+};
+
 type RateLimiterOptions = {
   limit: number;
   windowMs: number;
@@ -12,7 +16,7 @@ type RateLimiterOptions = {
 
 type Entry = { count: number; resetAt: number };
 
-export class SlidingWindowRateLimiter {
+export class SlidingWindowRateLimiter implements RateLimiter {
   private readonly entries = new Map<string, Entry>();
   private readonly now: () => number;
   private readonly maxEntries: number;
@@ -25,7 +29,7 @@ export class SlidingWindowRateLimiter {
     this.maxEntries = options.maxEntries ?? 10_000;
   }
 
-  consume(key: string): RateLimitResult {
+  async consume(key: string): Promise<RateLimitResult> {
     const currentTime = this.now();
     const current = this.entries.get(key);
     if (!current || current.resetAt <= currentTime) {

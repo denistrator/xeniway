@@ -1,6 +1,7 @@
 import { type AuthResponse, registerInputSchema } from "@job-tracker/shared";
 import { Elysia } from "elysia";
 import { AuthError } from "../services/auth";
+import { RedisRateLimitError } from "../services/redis-rate-limit";
 import {
   errorResponseWithStatus,
   rateLimitError,
@@ -17,10 +18,10 @@ export function authRegisterRoute({ auth, authRateLimiter }: RouteDependencies) 
       return errorResponseWithStatus(set, 403, "CSRF_ERROR", "Invalid CSRF token");
     const parsed = registerInputSchema.safeParse(body);
     if (!parsed.success) return validationError(set, parsed.error);
-    const rateLimit = authRateLimiter.consume(`register:${parsed.data.email}`);
-    if (!rateLimit.allowed) return rateLimitError(set, rateLimit);
-
     try {
+      const rateLimit = await authRateLimiter.consume(`register:${parsed.data.email}`);
+      if (!rateLimit.allowed) return rateLimitError(set, rateLimit);
+
       const existingSession = await readSessionId(set, request);
       await auth.logout(existingSession);
       const result = await auth.register(parsed.data);
@@ -29,6 +30,13 @@ export function authRegisterRoute({ auth, authRateLimiter }: RouteDependencies) 
       set.status = 201;
       return response;
     } catch (error) {
+      if (error instanceof RedisRateLimitError)
+        return errorResponseWithStatus(
+          set,
+          503,
+          "RATE_LIMIT_UNAVAILABLE",
+          "Authentication rate limiting is unavailable",
+        );
       if (error instanceof AuthError && error.code === "EMAIL_TAKEN")
         return errorResponseWithStatus(set, 409, error.code, error.message);
       return errorResponseWithStatus(set, 500, "AUTHENTICATION_ERROR", "Unable to register user");

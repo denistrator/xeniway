@@ -11,7 +11,7 @@ The API uses camelCase JSON. Session authentication is carried by the `session_i
 
 | Method | Path | Auth | Purpose |
 | --- | --- | --- | --- |
-| `GET` | `/api/health` | No | Returns database health; `503` when unavailable |
+| `GET` | `/api/health` | No | Returns database and Redis health; `503` when either is unavailable |
 | `GET` | `/api/auth/csrf` | No | Returns a CSRF token and creates an anonymous session if needed |
 | `POST` | `/api/auth/register` | CSRF | Creates a user and authenticated session; returns `201` |
 | `POST` | `/api/auth/login` | CSRF | Authenticates credentials and returns a session |
@@ -64,4 +64,4 @@ Application create/update fields:
 
 ## Error behavior
 
-Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `RATE_LIMITED` (`429`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures are intentionally reported as not found rather than revealing another user's records. Repeated login and registration attempts for the same normalized email are limited in the API process; rejected requests include `Retry-After`.
+The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures are intentionally reported as not found rather than revealing another user's records. Repeated login and registration attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, login and registration fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.

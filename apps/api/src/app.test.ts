@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { type AppDependencies, createApp } from "./app";
 import type { ApplicationRepository, SessionRepository, UserRepository } from "./db/repository";
 import { SlidingWindowRateLimiter } from "./services/rate-limit";
+import { RedisRateLimitError } from "./services/redis-rate-limit";
 
 function createDependencies(): AppDependencies {
   const users: Array<{
@@ -520,5 +521,61 @@ describe("application API", () => {
     expect(second.response.status).toBe(429);
     expect(second.response.headers.get("retry-after")).toBe("60");
     expect((second.payload as unknown as { error: { code: string } }).error.code).toBe("RATE_LIMITED");
+  });
+
+  it("fails closed when the authentication rate limiter is unavailable", async () => {
+    const dependencies = createDependencies();
+    const app = createApp({
+      ...dependencies,
+      authRateLimiter: {
+        async consume() {
+          throw new RedisRateLimitError(new Error("Redis unavailable"));
+        },
+      },
+    });
+    const csrf = await createCsrf(app);
+
+    const response = await app.handle(
+      new Request("http://localhost/api/auth/register", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `session_id=${csrf.sessionId}`,
+          "x-csrf-token": csrf.csrfToken,
+        },
+        body: JSON.stringify({ email: "candidate@example.com", password: "password123" }),
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: { code: "RATE_LIMIT_UNAVAILABLE", message: "Authentication rate limiting is unavailable" },
+    });
+  });
+
+  it("reports database and Redis health", async () => {
+    const app = createApp({
+      ...createDependencies(),
+      health: async () => true,
+      redisHealth: async () => true,
+    });
+
+    const response = await app.handle(new Request("http://localhost/api/health"));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "ok", database: "up", redis: "up" });
+  });
+
+  it("reports Redis health failures", async () => {
+    const app = createApp({
+      ...createDependencies(),
+      health: async () => true,
+      redisHealth: async () => false,
+    });
+
+    const response = await app.handle(new Request("http://localhost/api/health"));
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: { code: "REDIS_UNAVAILABLE", message: "Redis is unavailable" } });
   });
 });

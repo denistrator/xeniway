@@ -11,7 +11,7 @@ Job Tracker is a candidate-facing application for recording employer conversatio
 - `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
 - `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.
 - `docs` contains human and AI-facing architecture, API, database, operations, testing, and migration documentation.
-- `infra/docker-compose.yml` defines the local PostgreSQL service.
+- `infra/docker-compose.yml` defines the local PostgreSQL and Redis services.
 
 The web UI is an accessibility-sensitive product surface. Preserve semantic HTML, keyboard access, visible focus indicators, dialog focus management, accessible names, live announcements for async states, responsive touch targets, and reduced-motion behavior.
 
@@ -20,12 +20,13 @@ The web UI is an accessibility-sensitive product surface. Preserve semantic HTML
 Run `bun install` after cloning, copy `.env.example` to `.env`, then use:
 
 - `bun run db:up` and `bun run db:down` to manage local PostgreSQL.
+- `bun run redis:up`, `bun run redis:down`, and `bun run redis:check` to manage and check local Redis.
 - `bun run db:migrate` to apply migrations.
 - `bun run db:seed` to create or refresh development fixtures.
 - `bun run dev` to run the API and web app together.
 - `bun run typecheck`, `bun run test`, `bun run build`, and `bun run test:e2e` for verification.
 
-The E2E workflow expects PostgreSQL to be migrated and seeded. Install Chromium with `bunx playwright install chromium` when needed.
+The E2E workflow expects PostgreSQL and Redis to be running, and PostgreSQL to be migrated and seeded. Install Chromium with `bunx playwright install chromium` when needed.
 
 ## Coding conventions
 
@@ -53,7 +54,7 @@ bun run test:e2e
 
 ## Security and configuration
 
-Never commit `.env`, passwords, session IDs, or generated test artifacts. Use `.env.example` as the configuration template. Passwords are hashed with Argon2id; session IDs are stored in HttpOnly cookies; CSRF tokens are stored server-side and sent in `x-csrf-token`. Do not weaken ownership checks or cookie settings to make tests pass.
+Never commit `.env`, passwords, session IDs, or generated test artifacts. Use `.env.example` as the configuration template. Passwords are hashed with Argon2id; session IDs are stored in HttpOnly cookies; CSRF tokens are stored server-side and sent in `x-csrf-token`; Redis stores only hashed-key authentication rate-limit counters. Do not weaken ownership checks, cookie settings, or fail-closed rate limiting to make tests pass.
 
 ## Change boundaries
 
