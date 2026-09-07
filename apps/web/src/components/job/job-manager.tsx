@@ -1,7 +1,7 @@
 import type { CreateApplicationInput, JobApplication } from "@job-tracker/shared";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { jobFormPresentationStorageKey, type RootState, setJobFormPresentation } from "../store";
+import { jobFormPresentationStorageKey, type RootState, setJobFormPresentation } from "../../store";
 import { JobDrawer } from "./job-drawer";
 import { JobModal } from "./job-modal";
 

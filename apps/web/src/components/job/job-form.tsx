@@ -1,9 +1,9 @@
 import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@job-tracker/shared";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
+import { FloatingLabel } from "../ui/floating-label";
+import { Input } from "../ui/input";
 import { jobStatuses, statusLabels } from "./job-status";
-import { Button } from "./ui/button";
-import { FloatingLabel } from "./ui/floating-label";
-import { Input } from "./ui/input";
 
 type FormState = {
   company: string;

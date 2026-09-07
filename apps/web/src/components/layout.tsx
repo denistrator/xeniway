@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { JobManagerHost } from "./job-manager-host";
+import { JobManagerHost } from "./job/job-manager-host";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 

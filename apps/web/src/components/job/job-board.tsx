@@ -2,7 +2,7 @@ import type { JobApplication, JobStatus } from "@job-tracker/shared";
 import type { DragEvent } from "react";
 import { useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { openEditDrawer, type RootState } from "../store";
+import { openEditDrawer, type RootState } from "../../store";
 import { JobCard } from "./job-card";
 import { jobStatuses, statusLabels, statusStyles } from "./job-status";
 

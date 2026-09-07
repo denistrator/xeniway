@@ -1,9 +1,9 @@
 import type { CreateApplicationInput, JobApplication } from "@job-tracker/shared";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { RefObject } from "react";
-import type { JobFormPresentation } from "../store";
+import type { JobFormPresentation } from "../../store";
+import { Button } from "../ui/button";
 import { JobForm } from "./job-form";
-import { Button } from "./ui/button";
 
 export type JobFormContentProps = {
   presentation: JobFormPresentation;

@@ -1,7 +1,7 @@
 import type { CreateApplicationInput } from "@job-tracker/shared";
 import { useDispatch, useSelector } from "react-redux";
-import { useApplicationMutations, useApplications, useCurrentUser } from "../lib/queries";
-import { closeDrawer, type RootState } from "../store";
+import { useApplicationMutations, useApplications, useCurrentUser } from "../../lib/queries";
+import { closeDrawer, type RootState } from "../../store";
 import { JobManager } from "./job-manager";
 
 export function JobManagerHost() {

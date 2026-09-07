@@ -1,6 +1,6 @@
 import type { JobStatus } from "@job-tracker/shared";
 import { useDispatch, useSelector } from "react-redux";
-import { JobBoard } from "../components/job-board";
+import { JobBoard } from "../components/job/job-board";
 import { PageIntro } from "../components/page-intro";
 import { StatusFilter } from "../components/status-filter";
 import { Button } from "../components/ui/button";

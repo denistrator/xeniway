@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { type RootState, setAllStatuses, toggleStatus } from "../store";
-import { jobStatuses, statusLabels } from "./job-status";
+import { jobStatuses, statusLabels } from "./job/job-status";
 import { Button } from "./ui/button";
 
 export function StatusFilter() {
