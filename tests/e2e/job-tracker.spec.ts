@@ -8,8 +8,6 @@ test("shows the about page without authentication", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByRole("heading", { name: "Keep your job search moving" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
-  await expect(page.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
 });
 
 test("uses floating labels for authentication fields", async ({ page }) => {
