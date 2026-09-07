@@ -9,6 +9,7 @@ import { AboutPage } from "./pages/about-page";
 import { ArchivePage } from "./pages/archive-page";
 import { HomePage } from "./pages/home-page";
 import { LoginPage } from "./pages/login-page";
+import { NotFoundPage } from "./pages/not-found-page";
 import { RegisterPage } from "./pages/register-page";
 
 export function App() {
@@ -33,8 +34,8 @@ export function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

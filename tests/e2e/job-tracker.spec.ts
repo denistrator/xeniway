@@ -10,6 +10,16 @@ test("shows the about page without authentication", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Keep your job search moving" })).toBeVisible();
 });
 
+test("shows a public not found page for unknown routes", async ({ page }) => {
+  await page.goto("/does-not-exist");
+
+  await expect(page).toHaveURL(/\/does-not-exist$/);
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go to applications" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "About Job Tracker" })).toHaveAttribute("href", "/about");
+  await expect(page.getByRole("group", { name: "Theme preference" })).toBeVisible();
+});
+
 test("uses floating labels for authentication fields", async ({ page }) => {
   await page.goto("/login");
   await expect(page.locator(".floating-label > input")).toHaveCount(2);
@@ -19,7 +29,7 @@ test("uses floating labels for authentication fields", async ({ page }) => {
   await page.goto("/register");
   await expect(page.locator(".floating-label > input")).toHaveCount(5);
   for (const label of ["First name", "Last name", "Email", "Password", "Confirm password"]) {
-    await expect(page.getByLabel(label)).toHaveAttribute("placeholder", " ");
+    await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("placeholder", " ");
   }
 });
 
