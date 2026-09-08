@@ -116,7 +116,7 @@ export function RegisterPage() {
             role="alert"
             aria-live="assertive"
             tabIndex={-1}
-            className="text-sm text-rose-600 dark:text-rose-400"
+            className="text-sm leading-6 text-rose-600 dark:text-rose-400"
           >
             {validationError ?? register.error?.message}
           </p>
@@ -125,7 +125,7 @@ export function RegisterPage() {
           {register.isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-muted">
+      <p className="mt-5 text-center text-sm leading-6 text-muted">
         Already registered?{" "}
         <Link className="font-semibold text-ink" to="/login">
           Sign in

@@ -31,17 +31,17 @@ export function HomePage() {
           <StatusFilter />
         </div>
         {applications.isPending && (
-          <p role="status" aria-live="polite" className="py-8 text-center text-sm text-muted">
+          <p role="status" aria-live="polite" className="py-8 text-center text-sm leading-6 text-muted">
             Loading applications…
           </p>
         )}
         {applications.error && (
-          <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+          <p className="rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
             Unable to load applications: {applications.error.message}
           </p>
         )}
         {applications.data && !applications.data.length && (
-          <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+          <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
             No applications yet. Add your first opportunity to get started.
           </p>
         )}

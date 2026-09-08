@@ -62,7 +62,7 @@ export function LoginPage() {
             role="alert"
             aria-live="assertive"
             tabIndex={-1}
-            className="text-sm text-rose-600 dark:text-rose-400"
+            className="text-sm leading-6 text-rose-600 dark:text-rose-400"
           >
             {login.error.message}
           </p>
@@ -71,7 +71,7 @@ export function LoginPage() {
           {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-muted">
+      <p className="mt-5 text-center text-sm leading-6 text-muted">
         New here?{" "}
         <Link className="font-semibold text-ink" to="/register">
           Create an account

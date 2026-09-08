@@ -50,7 +50,7 @@ function AuthenticatedJobManager() {
         onClose={() => dispatch(closeDrawer())}
       />
       {(mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error) && (
-        <p className="mx-auto max-w-7xl px-6 pb-6 text-sm text-rose-600 dark:text-rose-400">
+        <p className="mx-auto max-w-7xl px-6 pb-6 text-sm leading-6 text-rose-600 dark:text-rose-400">
           {
             (mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error)
               ?.message

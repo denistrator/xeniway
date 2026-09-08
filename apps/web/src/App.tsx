@@ -72,5 +72,7 @@ function GuestOnly() {
 }
 
 function LoadingScreen() {
-  return <div className="flex min-h-screen items-center justify-center bg-canvas text-sm text-muted">Loading…</div>;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-canvas text-sm leading-6 text-muted">Loading…</div>
+  );
 }

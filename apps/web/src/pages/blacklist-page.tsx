@@ -34,20 +34,20 @@ export function BlacklistPage() {
         <ApplicationSearch />
       </div>
       {blacklisted.isPending && (
-        <p role="status" aria-live="polite" className="py-10 text-center text-sm text-muted">
+        <p role="status" aria-live="polite" className="py-10 text-center text-sm leading-6 text-muted">
           Loading blacklist…
         </p>
       )}
       {blacklisted.error && (
         <p
           role="alert"
-          className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+          className="rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
         >
           Unable to load blacklist: {blacklisted.error.message}
         </p>
       )}
       {blacklisted.data && !blacklisted.data.length && (
-        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
           Your blacklist is empty.
         </p>
       )}
@@ -56,14 +56,16 @@ export function BlacklistPage() {
           {filteredBlacklisted.map((job) => (
             <Card key={job.id}>
               <CardContent className="space-y-4 p-5">
-                <div>
-                  <h2 className="font-semibold text-ink">{job.company}</h2>
-                  <p className="text-sm text-muted">{job.position}</p>
-                  <p className="mt-2 text-xs text-muted">Status: {statusLabels[job.status]}</p>
+                <div className="min-w-0">
+                  <h2 className="break-words font-semibold text-ink">{job.company}</h2>
+                  <p className="break-words text-sm leading-6 text-muted">{job.position}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted">Status: {statusLabels[job.status]}</p>
                   {job.blacklistReason && (
-                    <p className="mt-3 rounded-lg bg-surface-tint p-3 text-sm text-ink">{job.blacklistReason}</p>
+                    <p className="mt-3 break-words rounded-lg bg-surface-tint p-3 text-sm leading-6 text-ink">
+                      {job.blacklistReason}
+                    </p>
                   )}
-                  <p className="mt-2 text-xs text-muted">
+                  <p className="mt-2 text-sm leading-6 text-muted">
                     Blacklisted{" "}
                     {job.blacklistedAt
                       ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(job.blacklistedAt))
@@ -84,12 +86,12 @@ export function BlacklistPage() {
         </div>
       )}
       {blacklisted.data && blacklisted.data.length > 0 && !filteredBlacklisted.length && (
-        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
           No blacklisted applications match the current search.
         </p>
       )}
       {mutations.unblacklist.error && (
-        <p className="text-sm text-rose-600 dark:text-rose-400">{mutations.unblacklist.error.message}</p>
+        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">{mutations.unblacklist.error.message}</p>
       )}
     </div>
   );

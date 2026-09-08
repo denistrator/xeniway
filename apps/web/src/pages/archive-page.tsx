@@ -38,17 +38,17 @@ export function ArchivePage() {
         <ApplicationSearch />
       </div>
       {archived.isPending && (
-        <p role="status" aria-live="polite" className="py-10 text-center text-sm text-muted">
+        <p role="status" aria-live="polite" className="py-10 text-center text-sm leading-6 text-muted">
           Loading archive…
         </p>
       )}
       {archived.error && (
-        <p className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+        <p className="rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
           Unable to load archive: {archived.error.message}
         </p>
       )}
       {archived.data && !archived.data.length && (
-        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
           Your archive is empty.
         </p>
       )}
@@ -57,11 +57,11 @@ export function ArchivePage() {
           {filteredArchived.map((job) => (
             <Card key={job.id}>
               <CardContent className="space-y-4 p-5">
-                <div>
-                  <h2 className="font-semibold text-ink">{job.company}</h2>
-                  <p className="text-sm text-muted">{job.position}</p>
-                  {job.location && <p className="mt-1 text-xs text-muted">{job.location}</p>}
-                  <p className="mt-2 text-xs text-muted">
+                <div className="min-w-0">
+                  <h2 className="break-words font-semibold text-ink">{job.company}</h2>
+                  <p className="break-words text-sm leading-6 text-muted">{job.position}</p>
+                  {job.location && <p className="mt-1 break-words text-sm leading-6 text-muted">{job.location}</p>}
+                  <p className="mt-2 text-sm leading-6 text-muted">
                     Archived{" "}
                     {job.archivedAt
                       ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(job.archivedAt))
@@ -93,12 +93,12 @@ export function ArchivePage() {
         </div>
       )}
       {archived.data && archived.data.length > 0 && !filteredArchived.length && (
-        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
           No archived applications match the current search.
         </p>
       )}
       {(mutations.restore.error || mutations.remove.error) && (
-        <p className="text-sm text-rose-600 dark:text-rose-400">
+        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">
           {(mutations.restore.error || mutations.remove.error)?.message}
         </p>
       )}

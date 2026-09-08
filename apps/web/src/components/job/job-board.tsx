@@ -82,7 +82,7 @@ export function JobBoard({
                 }}
               >
                 <div className="mb-3 flex items-center justify-between px-1">
-                  <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ink">{statusLabels[status]}</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-ink">{statusLabels[status]}</h2>
                   <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold tabular-nums text-accent">
                     {columnJobs.length}
                   </span>
@@ -131,7 +131,7 @@ export function JobBoard({
                   ))}
                   {!columnJobs.length && (
                     <li>
-                      <p className="rounded-xl border border-dashed border-line px-3 py-8 text-center text-xs text-muted">
+                      <p className="rounded-xl border border-dashed border-line px-3 py-8 text-center text-sm leading-6 text-muted">
                         Drop applications here
                       </p>
                     </li>

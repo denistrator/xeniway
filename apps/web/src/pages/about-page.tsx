@@ -232,7 +232,7 @@ function StackBlock({
   return (
     <article className="rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8">
       <h3 className="font-display text-2xl font-bold tracking-tight text-ink">{title}</h3>
-      <p className="mt-2 text-sm text-muted">{description}</p>
+      <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
       <dl className="mt-6 divide-y divide-line">
         {items.map(([name, description, href]) => {
           const Icon = stackIcons[name];
@@ -251,7 +251,7 @@ function StackBlock({
                   name
                 )}
               </dt>
-              <dd className="text-sm leading-6 text-muted">{description}</dd>
+              <dd className="break-words text-sm leading-6 text-muted">{description}</dd>
             </div>
           );
         })}

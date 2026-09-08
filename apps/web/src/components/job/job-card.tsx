@@ -47,14 +47,16 @@ export function JobCard({
       className={`w-full cursor-grab rounded-xl border border-line border-l-4 bg-surface p-4 text-left shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing ${statusStyles[job.status].card}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-semibold text-ink">{job.company}</p>
-          <p className="mt-1 text-sm text-muted">{job.position}</p>
+        <div className="min-w-0">
+          <p className="break-words font-semibold text-ink">{job.company}</p>
+          <p className="mt-1 break-words text-sm leading-6 text-muted">{job.position}</p>
         </div>
       </div>
-      {job.description && <p className="mt-3 line-clamp-2 text-sm text-muted">{job.description}</p>}
-      <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted">
-        {job.location && <span>{job.location}</span>}
+      {job.description && (
+        <p className="mt-3 line-clamp-2 break-words text-sm leading-6 text-muted">{job.description}</p>
+      )}
+      <div className="mt-3 flex flex-wrap gap-3 text-sm leading-6 text-muted">
+        {job.location && <span className="break-words">{job.location}</span>}
         {job.appliedAt && <span>Applied {job.appliedAt}</span>}
       </div>
     </button>
