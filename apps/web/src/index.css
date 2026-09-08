@@ -26,13 +26,13 @@
 }
 
 html[data-theme="dark"] {
-  --theme-canvas: #020618;
-  --theme-surface: #182335;
-  --theme-ink: #f7f4eb;
-  --theme-muted: #aeb8c9;
-  --theme-line: #3c4659;
-  --theme-accent: #84c5b8;
-  --theme-accent-warm: #e19a73;
+  --theme-canvas: #1b1715;
+  --theme-surface: #28211d;
+  --theme-ink: #f6eee2;
+  --theme-muted: #c2b2a2;
+  --theme-line: #514239;
+  --theme-accent: #8fc9b2;
+  --theme-accent-warm: #e29a70;
 }
 
 @theme inline {
