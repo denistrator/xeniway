@@ -1,5 +1,5 @@
 import type { JobStatus } from "@job-tracker/shared";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { JobBoard } from "../components/job/job-board";
 import { PageIntro } from "../components/page-intro";
@@ -42,18 +42,29 @@ export function HomePage() {
           >
             <Input
               id="application-search"
-              className="peer"
+              className={filters.search ? "peer pe-10" : "peer"}
               placeholder=" "
               name="search"
               autoComplete="off"
               value={filters.search}
               onChange={(event) => dispatch(setSearch(event.target.value))}
             />
+            {filters.search && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute end-1 top-1/2 size-8 -translate-y-1/2"
+                aria-label="Clear search"
+                title="Clear search"
+                onClick={() => dispatch(setSearch(""))}
+              >
+                <X aria-hidden="true" size={16} />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            )}
           </FloatingLabel>
           <StatusFilter />
-          <Button variant="outline" onClick={() => dispatch(setSearch(""))}>
-            Clear search
-          </Button>
         </div>
         {applications.isPending && (
           <p role="status" aria-live="polite" className="py-8 text-center text-sm text-muted">

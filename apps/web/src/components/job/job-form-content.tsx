@@ -59,17 +59,10 @@ export function JobFormContent({
         job={job}
         submitting={submitting}
         onSubmit={onSave}
-        onCancel={onClose}
+        onArchive={mode === "edit" ? onArchive : undefined}
         onBlacklist={mode === "edit" ? onBlacklist : undefined}
         blacklisting={blacklisting}
       />
-      {mode === "edit" && (
-        <div className="mt-auto border-t border-line pt-5">
-          <Button variant="outline" className="w-full" onClick={onArchive}>
-            Archive application
-          </Button>
-        </div>
-      )}
     </>
   );
 }
