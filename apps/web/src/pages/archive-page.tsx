@@ -1,12 +1,22 @@
 import type { JobApplication } from "@job-tracker/shared";
+import { useMemo } from "react";
+import { useSelector } from "react-redux";
+import { ApplicationSearch } from "../components/application-search";
 import { PageIntro } from "../components/page-intro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { matchesApplicationSearch } from "../lib/application-filters";
 import { useApplicationMutations, useArchivedApplications } from "../lib/queries";
+import type { RootState } from "../store";
 
 export function ArchivePage() {
   const archived = useArchivedApplications();
   const mutations = useApplicationMutations();
+  const search = useSelector((state: RootState) => state.ui.search);
+  const filteredArchived = useMemo(
+    () => archived.data?.filter((job) => matchesApplicationSearch(job, search)) ?? [],
+    [archived.data, search],
+  );
 
   async function restore(job: JobApplication) {
     await mutations.restore.mutateAsync(job.id);
@@ -24,6 +34,9 @@ export function ArchivePage() {
         title="Archive"
         description="Restore an application or remove it permanently."
       />
+      <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
+        <ApplicationSearch />
+      </div>
       {archived.isPending && (
         <p role="status" aria-live="polite" className="py-10 text-center text-sm text-muted">
           Loading archive…
@@ -39,9 +52,9 @@ export function ArchivePage() {
           Your archive is empty.
         </p>
       )}
-      {archived.data && archived.data.length > 0 && (
+      {archived.data && archived.data.length > 0 && filteredArchived.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {archived.data.map((job) => (
+          {filteredArchived.map((job) => (
             <Card key={job.id}>
               <CardContent className="space-y-4 p-5">
                 <div>
@@ -78,6 +91,11 @@ export function ArchivePage() {
             </Card>
           ))}
         </div>
+      )}
+      {archived.data && archived.data.length > 0 && !filteredArchived.length && (
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+          No archived applications match the current search.
+        </p>
       )}
       {(mutations.restore.error || mutations.remove.error) && (
         <p className="text-sm text-rose-600 dark:text-rose-400">

@@ -2,6 +2,7 @@ import type { JobApplication, JobStatus } from "@job-tracker/shared";
 import type { DragEvent } from "react";
 import { useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { matchesApplicationSearch } from "../../lib/application-filters";
 import { openEditDrawer, type RootState } from "../../store";
 import { JobCard } from "./job-card";
 import { jobStatuses, statusLabels, statusStyles } from "./job-status";
@@ -22,14 +23,9 @@ export function JobBoard({
   const draggedIdRef = useRef<number | null>(null);
 
   const filteredJobs = useMemo(() => {
-    const query = search.trim().toLowerCase();
     return [...jobs]
       .filter((job) => visibleStatuses.includes(job.status))
-      .filter(
-        (job) =>
-          !query ||
-          [job.company, job.position, job.location ?? ""].some((value) => value.toLowerCase().includes(query)),
-      );
+      .filter((job) => matchesApplicationSearch(job, search));
   }, [jobs, search, visibleStatuses]);
 
   function reorderWithinStatus(status: JobStatus, id: number, direction: "up" | "down" | "first" | "last") {

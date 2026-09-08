@@ -1,18 +1,11 @@
 import type { JobStatus } from "@job-tracker/shared";
-import { Search, X } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import { ApplicationSearch } from "../components/application-search";
 import { JobBoard } from "../components/job/job-board";
 import { PageIntro } from "../components/page-intro";
 import { StatusFilter } from "../components/status-filter";
-import { Button } from "../components/ui/button";
-import { FloatingLabel } from "../components/ui/floating-label";
-import { Input } from "../components/ui/input";
 import { useApplicationMutations, useApplications } from "../lib/queries";
-import { type RootState, setSearch } from "../store";
 
 export function HomePage() {
-  const dispatch = useDispatch();
-  const filters = useSelector((state: RootState) => state.ui);
   const applications = useApplications();
   const mutations = useApplicationMutations();
   async function handleStatusChange(id: number, status: JobStatus) {
@@ -34,36 +27,7 @@ export function HomePage() {
           />
         </div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <FloatingLabel
-            htmlFor="application-search"
-            label="Search applications"
-            icon={Search}
-            className="min-w-64 flex-1"
-          >
-            <Input
-              id="application-search"
-              className={filters.search ? "peer pe-10" : "peer"}
-              placeholder=" "
-              name="search"
-              autoComplete="off"
-              value={filters.search}
-              onChange={(event) => dispatch(setSearch(event.target.value))}
-            />
-            {filters.search && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute end-1 top-1/2 size-8 -translate-y-1/2"
-                aria-label="Clear search"
-                title="Clear search"
-                onClick={() => dispatch(setSearch(""))}
-              >
-                <X aria-hidden="true" size={16} />
-                <span className="sr-only">Clear search</span>
-              </Button>
-            )}
-          </FloatingLabel>
+          <ApplicationSearch />
           <StatusFilter />
         </div>
         {applications.isPending && (

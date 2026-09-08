@@ -1,13 +1,23 @@
 import type { JobApplication } from "@job-tracker/shared";
+import { useMemo } from "react";
+import { useSelector } from "react-redux";
+import { ApplicationSearch } from "../components/application-search";
 import { statusLabels } from "../components/job/job-status";
 import { PageIntro } from "../components/page-intro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { matchesApplicationSearch } from "../lib/application-filters";
 import { useApplicationMutations, useBlacklistedApplications } from "../lib/queries";
+import type { RootState } from "../store";
 
 export function BlacklistPage() {
   const blacklisted = useBlacklistedApplications();
   const mutations = useApplicationMutations();
+  const search = useSelector((state: RootState) => state.ui.search);
+  const filteredBlacklisted = useMemo(
+    () => blacklisted.data?.filter((job) => matchesApplicationSearch(job, search)) ?? [],
+    [blacklisted.data, search],
+  );
 
   async function restore(job: JobApplication) {
     await mutations.unblacklist.mutateAsync(job.id);
@@ -20,6 +30,9 @@ export function BlacklistPage() {
         title="Blacklist"
         description="Keep employers you do not want to pursue out of your active workflow."
       />
+      <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
+        <ApplicationSearch />
+      </div>
       {blacklisted.isPending && (
         <p role="status" aria-live="polite" className="py-10 text-center text-sm text-muted">
           Loading blacklist…
@@ -38,9 +51,9 @@ export function BlacklistPage() {
           Your blacklist is empty.
         </p>
       )}
-      {blacklisted.data && blacklisted.data.length > 0 && (
+      {blacklisted.data && blacklisted.data.length > 0 && filteredBlacklisted.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {blacklisted.data.map((job) => (
+          {filteredBlacklisted.map((job) => (
             <Card key={job.id}>
               <CardContent className="space-y-4 p-5">
                 <div>
@@ -69,6 +82,11 @@ export function BlacklistPage() {
             </Card>
           ))}
         </div>
+      )}
+      {blacklisted.data && blacklisted.data.length > 0 && !filteredBlacklisted.length && (
+        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm text-muted">
+          No blacklisted applications match the current search.
+        </p>
       )}
       {mutations.unblacklist.error && (
         <p className="text-sm text-rose-600 dark:text-rose-400">{mutations.unblacklist.error.message}</p>
