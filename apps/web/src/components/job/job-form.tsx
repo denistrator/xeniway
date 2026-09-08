@@ -107,7 +107,7 @@ export function JobForm({
 
   return (
     <form
-      className="space-y-4"
+      className="space-y-4 flex flex-col grow"
       onSubmit={handleSubmit}
       aria-describedby={error ? "application-form-error" : undefined}
       autoComplete="off"
@@ -259,7 +259,7 @@ export function JobForm({
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 mt-auto">
         <Button type="submit" disabled={submitting}>
           {submitting ? "Saving…" : "Save application"}
         </Button>

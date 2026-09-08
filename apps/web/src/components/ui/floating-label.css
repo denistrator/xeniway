@@ -5,7 +5,7 @@
 .floating-label > input,
 .floating-label > select,
 .floating-label > textarea {
-    @apply block w-full min-h-10 appearance-none rounded-lg border border-line px-2.5 pb-2.5 pt-4 text-sm text-ink duration-300 focus:border-accent focus:outline-none focus:ring-0;
+    @apply block w-full min-h-10 appearance-none rounded-lg border border-line px-2.5 pb-2.5 pt-4 text-sm text-ink duration-300 ease-out focus:border-accent focus:outline-none focus:ring-0;
 }
 
 .floating-label > select {
@@ -13,7 +13,7 @@
 }
 
 .floating-label > .floating-label-label {
-    @apply pointer-events-none cursor-text absolute inset-s-1 top-2 -translate-y-4 scale-75 rounded-sm bg-surface px-2 text-sm text-muted duration-300 transition-[color,background,top,translate,scale];
+    @apply pointer-events-none cursor-text absolute inset-s-1 top-2 -translate-y-4 scale-75 rounded-sm bg-surface px-2 text-sm text-muted duration-300 ease-out transition-[color,background,top,translate,scale];
 }
 
 .floating-label-with-icon > .floating-label-icon {

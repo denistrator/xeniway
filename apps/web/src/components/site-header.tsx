@@ -17,6 +17,7 @@ const navigationLinks = [
   { to: "/", label: "Applications", end: true },
   { to: "/blacklist", label: "Blacklist", end: false },
   { to: "/archive", label: "Archive", end: false },
+  { to: "/about", label: "About", end: false },
 ] as const;
 
 export function SiteHeader() {
