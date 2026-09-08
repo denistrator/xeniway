@@ -9,7 +9,7 @@ import { Button } from "./ui/button";
 function navigationLinkClassName({ isActive }: { isActive: boolean }) {
   return cn(
     "rounded-lg px-3 py-2 text-sm transition-colors",
-    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:text-ink",
+    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-accent-hover hover:text-accent",
   );
 }
 

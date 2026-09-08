@@ -8,9 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-ink text-canvas shadow-sm hover:bg-accent",
-        outline: "border border-line bg-surface text-ink hover:bg-surface-tint",
-        ghost: "text-muted hover:bg-accent-hover hover:text-ink",
+        default: "bg-ink text-canvas shadow-sm hover:bg-accent hover:shadow-md",
+        outline: "border border-line bg-surface text-ink hover:border-line-hover hover:bg-surface-hover",
+        ghost: "text-muted hover:bg-accent-hover hover:text-accent",
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -44,7 +44,7 @@ export function JobCard({
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight"
       aria-label={`${job.company}, ${job.position}, ${statusLabels[job.status]}. Position ${position} of ${total}. Use Arrow Up or Arrow Down to reorder, Home or End to move to an edge, and Shift plus Arrow Left or Right to change status.`}
-      className={`w-full cursor-grab rounded-xl border border-line border-l-4 bg-surface p-4 text-left shadow-sm transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md active:cursor-grabbing ${statusStyles[job.status].card}`}
+      className={`w-full cursor-grab rounded-xl border border-line border-l-4 bg-surface p-4 text-left shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing ${statusStyles[job.status].card}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>

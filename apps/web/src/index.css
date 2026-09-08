@@ -11,8 +11,10 @@
   --theme-accent: #1f6d67;
   --theme-accent-warm: #a45f3d;
   --theme-accent-soft: color-mix(in srgb, var(--theme-accent) 12%, transparent);
-  --theme-accent-hover: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  --theme-accent-hover: color-mix(in srgb, var(--theme-accent) 18%, transparent);
+  --theme-line-hover: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-line));
   --theme-surface-tint: color-mix(in srgb, var(--theme-surface) 82%, var(--theme-canvas));
+  --theme-surface-hover: color-mix(in srgb, var(--theme-accent) 8%, var(--theme-surface));
   --theme-overlay: color-mix(in srgb, var(--theme-ink) 35%, transparent);
   --theme-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
@@ -43,7 +45,9 @@ html[data-theme="dark"] {
   --color-accent-warm: var(--theme-accent-warm);
   --color-accent-soft: var(--theme-accent-soft);
   --color-accent-hover: var(--theme-accent-hover);
+  --color-line-hover: var(--theme-line-hover);
   --color-surface-tint: var(--theme-surface-tint);
+  --color-surface-hover: var(--theme-surface-hover);
   --color-overlay: var(--theme-overlay);
   --font-display: var(--theme-font-display);
 }
@@ -89,7 +93,18 @@ body {
 }
 
 :where(a, button, input, select, textarea) {
+  cursor: pointer;
   touch-action: manipulation;
+}
+
+:where(a:not([class*="bg-"])):hover {
+  color: var(--theme-accent);
+}
+
+input:not(:disabled):not(:focus):hover,
+select:not(:disabled):not(:focus):hover,
+textarea:not(:disabled):not(:focus):hover {
+  border-color: var(--theme-line-hover);
 }
 
 @property --job-board-left-fade {
@@ -176,8 +191,4 @@ body {
 button,
 input {
   font: inherit;
-}
-
-button {
-  cursor: pointer;
 }
