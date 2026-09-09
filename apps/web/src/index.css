@@ -3,14 +3,14 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
-  --theme-canvas: #f5f3ee;
-  --theme-surface: #fffdf8;
-  --theme-ink: #172033;
-  --theme-muted: #5f6b7a;
-  --theme-line: #d8d4cb;
-  --theme-accent: #1f6d67;
-  --theme-accent-warm: #a45f3d;
-  --theme-focus: #0284c7;
+  --theme-canvas: oklch(96.43% 0.007 88.64);
+  --theme-surface: oklch(99.42% 0.0069 88.64);
+  --theme-ink: oklch(24.49% 0.0388 264.35);
+  --theme-muted: oklch(52.31% 0.0279 254.08);
+  --theme-line: oklch(87.06% 0.013 86.84);
+  --theme-accent: oklch(48.7% 0.0742 187.6);
+  --theme-accent-warm: oklch(55.68% 0.1021 46.18);
+  --theme-focus: oklch(58.76% 0.1389 241.97);
   --theme-accent-soft: color-mix(in srgb, var(--theme-accent) 12%, transparent);
   --theme-accent-hover: color-mix(in srgb, var(--theme-accent) 18%, transparent);
   --theme-line-hover: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-line));
@@ -27,14 +27,14 @@
 }
 
 html[data-theme="dark"] {
-  --theme-canvas: #1b1715;
-  --theme-surface: #28211d;
-  --theme-ink: #f6eee2;
-  --theme-muted: #c2b2a2;
-  --theme-line: #514239;
-  --theme-accent: #8fc9b2;
-  --theme-accent-warm: #e29a70;
-  --theme-focus: #7dd3fc;
+  --theme-canvas: oklch(20.86% 0.0075 48.34);
+  --theme-surface: oklch(25.44% 0.0131 51.58);
+  --theme-ink: oklch(95.21% 0.0181 78.24);
+  --theme-muted: oklch(77.27% 0.0289 67.38);
+  --theme-line: oklch(39.2% 0.0256 52.69);
+  --theme-accent: oklch(78.94% 0.0684 168.03);
+  --theme-accent-warm: oklch(74.79% 0.1035 50.84);
+  --theme-focus: oklch(82.76% 0.1013 230.32);
 }
 
 @theme inline {
