@@ -153,7 +153,6 @@ export function AboutPage() {
     <div className="px-6 text-ink">
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         <section className="rounded-3xl border border-line bg-surface p-8 shadow-sm sm:p-12">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-accent">About Job Tracker</p>
           <h1 className="font-display max-w-4xl text-4xl font-bold tracking-tight text-ink sm:text-6xl">
             A clear workspace for a complicated job search.
           </h1>
@@ -166,14 +165,13 @@ export function AboutPage() {
 
         <section aria-labelledby="capabilities-title">
           <div className="mb-5 max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">The workspace</p>
-            <h2 id="capabilities-title" className="mt-2 font-display text-3xl font-bold tracking-tight text-ink">
+            <h2 id="capabilities-title" className="font-display text-3xl font-bold tracking-tight text-ink">
               Everything needed to keep momentum.
             </h2>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-[1.15fr_0.85fr]">
             {capabilities.map((capability) => (
-              <article key={capability.title} className="rounded-2xl border border-line bg-accent-soft p-5">
+              <article key={capability.title} className="border-t border-line pt-4">
                 <h3 className="font-semibold text-ink">{capability.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-ink">{capability.text}</p>
               </article>
@@ -183,8 +181,7 @@ export function AboutPage() {
 
         <section aria-labelledby="stack-title" className="space-y-5">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Built as one typed system</p>
-            <h2 id="stack-title" className="mt-2 font-display text-3xl font-bold tracking-tight text-ink">
+            <h2 id="stack-title" className="font-display text-3xl font-bold tracking-tight text-ink">
               A modern frontend and a focused API working together.
             </h2>
             <p className="mt-3 leading-7 text-muted">
@@ -205,8 +202,7 @@ export function AboutPage() {
         <section className="rounded-3xl border border-line bg-surface p-8 shadow-sm sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Trust and ownership</p>
-              <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink">Your search stays yours.</h2>
+              <h2 className="font-display text-3xl font-bold tracking-tight text-ink">Your search stays yours.</h2>
             </div>
             <div className="space-y-4 text-sm leading-7 text-muted">
               <p>
@@ -240,7 +236,7 @@ function StackBlock({
   items: readonly (readonly [string, string, string?])[];
 }) {
   return (
-    <article className="rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8">
+    <article className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
       <h3 className="font-display text-2xl font-bold tracking-tight text-ink">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
       <dl className="mt-6 divide-y divide-line">
@@ -254,7 +250,12 @@ function StackBlock({
               <dt className="flex items-center gap-2 font-semibold text-ink">
                 <Icon aria-hidden="true" size={16} strokeWidth={1.8} className="shrink-0 text-accent" />
                 {href ? (
-                  <a href={href} target="_blank" rel="noreferrer noopener">
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="underline decoration-accent/60 underline-offset-4 hover:decoration-accent"
+                  >
                     {name}
                   </a>
                 ) : (

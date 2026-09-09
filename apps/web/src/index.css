@@ -10,6 +10,7 @@
   --theme-line: #d8d4cb;
   --theme-accent: #1f6d67;
   --theme-accent-warm: #a45f3d;
+  --theme-focus: #0284c7;
   --theme-accent-soft: color-mix(in srgb, var(--theme-accent) 12%, transparent);
   --theme-accent-hover: color-mix(in srgb, var(--theme-accent) 18%, transparent);
   --theme-line-hover: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-line));
@@ -33,6 +34,7 @@ html[data-theme="dark"] {
   --theme-line: #514239;
   --theme-accent: #8fc9b2;
   --theme-accent-warm: #e29a70;
+  --theme-focus: #7dd3fc;
 }
 
 @theme inline {
@@ -43,6 +45,7 @@ html[data-theme="dark"] {
   --color-line: var(--theme-line);
   --color-accent: var(--theme-accent);
   --color-accent-warm: var(--theme-accent-warm);
+  --color-focus: var(--theme-focus);
   --color-accent-soft: var(--theme-accent-soft);
   --color-accent-hover: var(--theme-accent-hover);
   --color-line-hover: var(--theme-line-hover);
@@ -76,7 +79,7 @@ html[data-theme="light"] {
 }
 
 :where(a, button):focus-visible {
-  outline: 2px solid #0284c7;
+  outline: 2px solid var(--theme-focus);
   outline-offset: 2px;
 }
 

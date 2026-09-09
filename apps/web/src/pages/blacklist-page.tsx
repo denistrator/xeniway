@@ -26,7 +26,6 @@ export function BlacklistPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
       <PageIntro
-        eyebrow="Excluded opportunities"
         title="Blacklist"
         description="Keep employers you do not want to pursue out of your active workflow."
       />

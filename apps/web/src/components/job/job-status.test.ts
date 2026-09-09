@@ -7,11 +7,11 @@ describe("job statuses", () => {
     expect(statusLabels.offer).toBe("Offer");
   });
 
-  test("defines matching column and card decoration classes", () => {
+  test("defines matching column and marker decoration classes", () => {
     expect(statusStyles.offer).toEqual({
       column: "border-t-emerald-600 dark:border-t-emerald-400",
-      card: "border-l-emerald-600 dark:border-l-emerald-400",
+      marker: "bg-emerald-600 dark:bg-emerald-400",
     });
-    expect(statusStyles.saved.card).toBe("border-l-slate-400 dark:border-l-slate-500");
+    expect(statusStyles.saved.marker).toBe("bg-slate-400 dark:bg-slate-500");
   });
 });

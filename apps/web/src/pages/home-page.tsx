@@ -20,11 +20,7 @@ export function HomePage() {
     <div className="space-y-6">
       <div className="mx-auto max-w-7xl space-y-6 px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <PageIntro
-            eyebrow="Your search, organized"
-            title="Applications"
-            description="Track every conversation from first contact to outcome."
-          />
+          <PageIntro title="Applications" description="Track every conversation from first contact to outcome." />
         </div>
         <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
           <ApplicationSearch />

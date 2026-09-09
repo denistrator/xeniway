@@ -29,11 +29,7 @@ export function ArchivePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
-      <PageIntro
-        eyebrow="Past opportunities"
-        title="Archive"
-        description="Restore an application or remove it permanently."
-      />
+      <PageIntro title="Archive" description="Restore an application or remove it permanently." />
       <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <ApplicationSearch />
       </div>

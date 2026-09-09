@@ -38,7 +38,7 @@ export function SiteHeader() {
         <Link to="/" className="font-display mr-auto text-xl font-bold tracking-tight text-ink">
           Job Tracker
         </Link>
-        <nav className="flex items-center gap-1" aria-label="Main navigation">
+        <nav className="flex items-center gap-1" aria-label="Workspace navigation">
           {navigationLinks.map(
             ({ to, label, authOnly, end }) =>
               (!authOnly || Boolean(user.data)) && (
@@ -48,20 +48,20 @@ export function SiteHeader() {
               ),
           )}
         </nav>
-        {user.data && (
-          <>
-            <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
+        <div className="flex items-center gap-2 border-l border-line pl-3">
+          {user.data && <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>}
+          {user.data && (
             <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
               + Add job
             </Button>
-          </>
-        )}
-        <ThemeSelector />
-        {user.data && (
-          <Button variant="ghost" size="sm" onClick={handleLogout} disabled={logout.isPending}>
-            {logout.isPending ? "Signing out…" : "Logout"}
-          </Button>
-        )}
+          )}
+          <ThemeSelector />
+          {user.data && (
+            <Button variant="ghost" size="sm" onClick={handleLogout} disabled={logout.isPending}>
+              {logout.isPending ? "Signing out…" : "Logout"}
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );
