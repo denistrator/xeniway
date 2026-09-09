@@ -4,8 +4,10 @@ import {
   Braces,
   Database,
   Gauge,
+  Inbox,
   Layers,
   type LucideIcon,
+  Mail,
   MousePointer2,
   Palette,
   Route,
@@ -33,6 +35,8 @@ const stackIcons: Record<string, LucideIcon> = {
   "Drizzle ORM": Layers,
   PostgreSQL: Database,
   Redis: Gauge,
+  Nodemailer: Mail,
+  Mailpit: Inbox,
   "Session + CSRF security": ShieldCheck,
 };
 
@@ -119,13 +123,19 @@ const backendStack = [
   ],
   [
     "PostgreSQL",
-    "Authoritative storage for users, sessions, and owned job applications.",
+    "Authoritative storage for users, sessions, password-reset tokens, and owned job applications.",
     "https://github.com/postgres/postgres",
   ],
   [
     "Redis",
-    "Short-lived distributed rate-limit counters for login and registration only.",
+    "Short-lived distributed rate-limit counters for authentication and password reset.",
     "https://github.com/redis/redis",
+  ],
+  ["Nodemailer", "SMTP transport used to deliver password-reset emails.", "https://github.com/nodemailer/nodemailer"],
+  [
+    "Mailpit",
+    "Local SMTP inbox for safely inspecting password-reset emails during development.",
+    "https://github.com/axllent/mailpit",
   ],
   [
     "Session + CSRF security",
@@ -205,8 +215,8 @@ export function AboutPage() {
               </p>
               <p>
                 Passwords are hashed with Argon2id. Sessions use HttpOnly cookies, mutations require a server-issued
-                CSRF token, and Redis protects login and registration from repeated attempts without storing application
-                data.
+                CSRF token, and Redis protects authentication and password-reset requests from repeated attempts without
+                storing application data.
               </p>
               <p>
                 The interface is designed for keyboard access, responsive layouts, visible focus, managed dialogs, live

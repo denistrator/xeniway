@@ -3,11 +3,26 @@ import { expect, test } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
 
+test("provides public password recovery pages", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("link", { name: "Forgot your password?" }).click();
+  await expect(page).toHaveURL(/\/forgot-password$/);
+  await page.getByLabel("Email").fill("unknown@example.com");
+  await page.getByRole("button", { name: "Send instructions" }).click();
+  await expect(page.getByRole("status")).toContainText("If an account exists for that email");
+
+  await page.goto("/reset-password?token=invalid-token");
+  await page.getByLabel("New password").fill("password123");
+  await page.getByLabel("Confirm password").fill("password123");
+  await page.getByRole("button", { name: "Update password" }).click();
+  await expect(page.getByRole("alert")).toContainText("invalid or expired");
+});
+
 test("shows the about page without authentication", async ({ page }) => {
   await page.goto("/about");
 
   await expect(page).toHaveURL(/\/about$/);
-  await expect(page.getByRole("heading", { name: "Keep your job search moving" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
 });
 
 test("shows a public not found page for unknown routes", async ({ page }) => {
@@ -40,7 +55,7 @@ test("has no automated accessibility violations across key workflows", async ({ 
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   await page.goto("/login");
-  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Email").fill("admin@example.com");
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
@@ -228,12 +243,10 @@ test("logs out and returns to login", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
-  await page.getByLabel("Theme").selectOption("dark");
+  await page.getByRole("button", { name: "Use Dark theme" }).click();
   await expect.poll(() => page.locator("html").getAttribute("data-theme")).toBe("dark");
-  await expect(page.locator("header")).toHaveClass(/dark:bg-slate-900/);
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("header")).toHaveClass(/dark:bg-slate-900/);
   await page.getByRole("button", { name: "Logout" }).click();
 
   await expect(page).toHaveURL(/\/login$/);
@@ -293,7 +306,9 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
     },
     [sourceHandle, targetHandle],
   );
-  await expect(applicationCard.getByText("Applied", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Applied applications" }).getByRole("button", { name: new RegExp(company) }),
+  ).toBeVisible();
 
   await applicationCard.click();
   await page.getByRole("button", { name: "Archive application" }).click();

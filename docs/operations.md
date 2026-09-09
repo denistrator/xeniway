@@ -2,7 +2,7 @@
 
 ## Environment
 
-Copy `.env.example` to `.env` and set `DATABASE_URL` and `REDIS_URL`. `PORT` controls the API port. The web app uses Vite defaults unless `VITE_PORT` and `API_PORT` are supplied to the Vite process. `CORS_ORIGIN` may be set when the web origin is different from the default local origin. Login and registration use a five-attempt, fifteen-minute distributed limit per normalized email, backed by Redis.
+Copy `.env.example` to `.env` and set `DATABASE_URL` and `REDIS_URL`. `PORT` controls the API port. Set `APP_ORIGIN` to the web origin used in reset links. Local defaults send mail to Mailpit at `smtp://127.0.0.1:1025`, with the inbox available at `http://localhost:8025`. Configure `SMTP_URL` and `MAIL_FROM` for another SMTP server; without SMTP configuration the API uses a console mailer intended only for development. The web app uses Vite defaults unless `VITE_PORT` and `API_PORT` are supplied to the Vite process. `CORS_ORIGIN` may be set when the web origin is different from the default local origin. Login, registration, and password reset use a five-attempt, fifteen-minute distributed limit per normalized email, backed by Redis.
 
 Never use seed credentials outside development. Never commit `.env` or generated test artifacts.
 
@@ -10,20 +10,24 @@ Never use seed credentials outside development. Never commit `.env` or generated
 
 ```bash
 bun install
-bun run db:up
-bun run redis:up
+bun run up
 bun run db:migrate
 bun run db:seed
 bun run dev
 ```
 
-Stop PostgreSQL with `bun run db:down` and Redis with `bun run redis:down`. The Compose volumes `job_tracker_postgres_data` and `job_tracker_redis_data` persist local data between container restarts.
+Use `bun run check` to check PostgreSQL, Redis, and Mailpit together. Stop all local infrastructure with `bun run down`, or stop PostgreSQL only with `bun run db:down`, Redis only with `bun run redis:down`, and Mailpit only with `bun run mailpit:down`. The Compose volumes `job_tracker_postgres_data` and `job_tracker_redis_data` persist local data between container restarts; Mailpit mail is disposable.
 
 Check Redis with `bun run redis:check`; a healthy instance responds with `PONG`.
+Check Mailpit with `bun run mailpit:check`; a healthy instance returns its API metadata. Browse received messages at `http://localhost:8025`.
+
+## Password recovery
+
+The public forgot-password form always reports the same completion message so account existence is not disclosed. A known account receives a one-hour, single-use link. The raw token is sent only by mail, its SHA-256 hash is stored in PostgreSQL, and successful use changes the Argon2id password and invalidates every existing session. Older outstanding tokens are invalidated when a new request is created.
 
 ## Redis behavior
 
-Redis is not the source of truth for application data or sessions. It stores only short-lived, hashed-key rate-limit counters for login and registration. The API reports `REDIS_UNAVAILABLE` from `/api/health` when Redis cannot be reached, and authentication returns `RATE_LIMIT_UNAVAILABLE` with `503` rather than bypassing the limiter.
+Redis is not the source of truth for application data or sessions. It stores only short-lived, hashed-key rate-limit counters for login, registration, and password reset. The API reports `REDIS_UNAVAILABLE` from `/api/health` when Redis cannot be reached, and authentication returns `RATE_LIMIT_UNAVAILABLE` with `503` rather than bypassing the limiter.
 
 ## CI
 

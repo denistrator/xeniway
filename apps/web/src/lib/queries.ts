@@ -4,6 +4,8 @@ import type {
   CurrentUserResponse,
   JobApplication,
   LoginInput,
+  PasswordResetConfirmInput,
+  PasswordResetRequestInput,
   RegisterInput,
   UpdateApplicationInput,
 } from "@job-tracker/shared";
@@ -12,6 +14,7 @@ import {
   applicationKeys,
   archiveApplication,
   blacklistApplication,
+  confirmPasswordReset,
   createApplication,
   deleteApplication,
   getCsrfToken,
@@ -23,6 +26,7 @@ import {
   logout,
   register,
   reorderApplications,
+  requestPasswordReset,
   restoreApplication,
   unblacklistApplication,
   updateApplication,
@@ -78,6 +82,19 @@ export function useAuthMutations() {
         queryClient.removeQueries({ queryKey: authKeys.csrf });
         queryClient.removeQueries({ queryKey: applicationKeys.all });
       },
+    }),
+  };
+}
+
+export function usePasswordResetMutations() {
+  const csrfToken = useCsrfToken().data ?? "";
+
+  return {
+    request: useMutation({
+      mutationFn: (input: PasswordResetRequestInput) => requestPasswordReset(input, csrfToken),
+    }),
+    confirm: useMutation({
+      mutationFn: (input: PasswordResetConfirmInput) => confirmPasswordReset(input, csrfToken),
     }),
   };
 }

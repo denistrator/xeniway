@@ -8,7 +8,7 @@ import type {
 } from "@job-tracker/shared";
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { createDatabase } from "./client";
-import { jobApplications, sessions, users } from "./schema";
+import { jobApplications, passwordResetTokens, sessions, users } from "./schema";
 
 type Database = ReturnType<typeof createDatabase>;
 type UserRow = typeof users.$inferSelect;
@@ -23,13 +23,21 @@ export interface UserRepository {
     firstName?: string | null;
     lastName?: string | null;
   }): Promise<UserRow>;
+  updatePasswordHash(id: number, passwordHash: string): Promise<boolean>;
 }
 
 export interface SessionRepository {
   create(input: { id: string; userId: number | null; csrfToken: string; expiresAt: Date }): Promise<void>;
   findActive(id: string): Promise<SessionRow | null>;
   delete(id: string): Promise<void>;
+  deleteForUser(userId: number): Promise<void>;
   deleteExpired(): Promise<void>;
+}
+
+export interface PasswordResetTokenRepository {
+  invalidateForUser(userId: number): Promise<void>;
+  create(input: { userId: number; tokenHash: string; expiresAt: Date }): Promise<void>;
+  consume(tokenHash: string, now?: Date): Promise<{ userId: number } | null>;
 }
 
 export interface ApplicationRepository {
@@ -69,6 +77,11 @@ export class DrizzleUserRepository implements UserRepository {
     if (!row) throw new Error("Unable to create user");
     return row;
   }
+
+  async updatePasswordHash(id: number, passwordHash: string): Promise<boolean> {
+    const result = await this.database.update(users).set({ passwordHash }).where(eq(users.id, id));
+    return result.count > 0;
+  }
 }
 
 export class DrizzleSessionRepository implements SessionRepository {
@@ -91,8 +104,42 @@ export class DrizzleSessionRepository implements SessionRepository {
     await this.database.delete(sessions).where(eq(sessions.id, id));
   }
 
+  async deleteForUser(userId: number): Promise<void> {
+    await this.database.delete(sessions).where(eq(sessions.userId, userId));
+  }
+
   async deleteExpired(): Promise<void> {
     await this.database.delete(sessions).where(lte(sessions.expiresAt, new Date()));
+  }
+}
+
+export class DrizzlePasswordResetTokenRepository implements PasswordResetTokenRepository {
+  constructor(private readonly database: Database) {}
+
+  async invalidateForUser(userId: number): Promise<void> {
+    await this.database
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
+  }
+
+  async create(input: { userId: number; tokenHash: string; expiresAt: Date }): Promise<void> {
+    await this.database.insert(passwordResetTokens).values(input);
+  }
+
+  async consume(tokenHash: string, now = new Date()): Promise<{ userId: number } | null> {
+    const [row] = await this.database
+      .update(passwordResetTokens)
+      .set({ usedAt: now })
+      .where(
+        and(
+          eq(passwordResetTokens.tokenHash, tokenHash),
+          isNull(passwordResetTokens.usedAt),
+          gt(passwordResetTokens.expiresAt, now),
+        ),
+      )
+      .returning({ userId: passwordResetTokens.userId });
+    return row ?? null;
   }
 }
 

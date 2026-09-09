@@ -35,6 +35,21 @@ export const loginInputSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+export const passwordResetRequestInputSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(255),
+});
+
+export const passwordResetConfirmInputSchema = z
+  .object({
+    token: z.string().trim().min(1).max(512),
+    password: z.string().min(8).max(128),
+    passwordConfirmation: z.string().min(8).max(128),
+  })
+  .refine((input) => input.password === input.passwordConfirmation, {
+    message: "Passwords do not match",
+    path: ["passwordConfirmation"],
+  });
+
 export const statusFilterSchema = jobStatusSchema.optional();
 export const reorderApplicationsInputSchema = z.object({
   status: jobStatusSchema,
@@ -47,6 +62,8 @@ export type BlacklistInput = z.infer<typeof blacklistInputSchema>;
 export type ReorderApplicationsInput = z.infer<typeof reorderApplicationsInputSchema>;
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
+export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestInputSchema>;
+export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmInputSchema>;
 
 export type User = {
   id: number;
@@ -91,6 +108,10 @@ export type ApplicationResponse = ApiSuccess<{ application: JobApplication }>;
 export type ApplicationListResponse = ApiSuccess<{ applications: JobApplication[] }>;
 export type MessageResponse = ApiSuccess<{ message: string }>;
 export type CsrfResponse = ApiSuccess<{ csrfToken: string }>;
+
+export const PASSWORD_RESET_REQUESTED_MESSAGE =
+  "If an account exists for that email, we’ll send password reset instructions.";
+export const PASSWORD_RESET_INVALID_ERROR = "PASSWORD_RESET_INVALID";
 
 export type HealthResponse = {
   status: "ok";

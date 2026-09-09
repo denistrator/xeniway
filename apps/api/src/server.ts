@@ -1,7 +1,13 @@
 import { createApp } from "./app";
 import { createDatabase, createPostgresClient } from "./db/client";
-import { DrizzleApplicationRepository, DrizzleSessionRepository, DrizzleUserRepository } from "./db/repository";
+import {
+  DrizzleApplicationRepository,
+  DrizzlePasswordResetTokenRepository,
+  DrizzleSessionRepository,
+  DrizzleUserRepository,
+} from "./db/repository";
 import { createRedisClient } from "./redis/client";
+import { ConsolePasswordResetMailer, SmtpPasswordResetMailer } from "./services/mailer";
 import { RedisRateLimiter } from "./services/redis-rate-limit";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -24,11 +30,23 @@ const database = createDatabase(client);
 const users = new DrizzleUserRepository(database);
 const sessions = new DrizzleSessionRepository(database);
 const applications = new DrizzleApplicationRepository(database);
+const passwordResetTokens = new DrizzlePasswordResetTokenRepository(database);
+if (process.env.NODE_ENV === "production" && (!process.env.SMTP_URL || !process.env.MAIL_FROM)) {
+  throw new Error("SMTP_URL and MAIL_FROM are required in production");
+}
+const passwordResetMailer =
+  process.env.SMTP_URL && process.env.MAIL_FROM
+    ? new SmtpPasswordResetMailer(process.env.SMTP_URL, process.env.MAIL_FROM)
+    : new ConsolePasswordResetMailer();
 const SESSION_CLEANUP_INTERVAL_MS = 15 * 60 * 1000;
 const app = createApp({
   users,
   sessions,
   applications,
+  passwordResetTokens,
+  passwordResetMailer,
+  appOrigin: process.env.APP_ORIGIN ?? "http://localhost:5173",
+  passwordResetRateLimiter: new RedisRateLimiter(redis, { limit: 5, windowMs: 15 * 60 * 1000 }),
   authRateLimiter: new RedisRateLimiter(redis, { limit: 5, windowMs: 15 * 60 * 1000 }),
   health: async () => {
     try {

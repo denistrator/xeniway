@@ -21,6 +21,10 @@ Stores normalized unique email addresses, Argon2id password hashes, optional fir
 
 Stores the random session ID, optional owning user ID, server-side CSRF token, and expiration time. Anonymous rows support CSRF acquisition before login. User deletion cascades to sessions.
 
+### `password_reset_tokens`
+
+Stores a user foreign key, unique SHA-256 token hash, expiry, nullable one-time-use timestamp, and creation time. The API never stores or logs the raw URL token. User deletion cascades to reset tokens; indexes support user cleanup and token lookup.
+
 ### `job_applications`
 
 Stores the owning user, company, position, optional job details, one of the six PostgreSQL `job_status` enum values, timestamps, nullable `archived_at`, and independent blacklist state in `blacklisted_at` plus an optional `blacklist_reason`. User deletion cascades to applications. Active and archive queries exclude blacklisted rows; the blacklist page uses the user/blacklist index.

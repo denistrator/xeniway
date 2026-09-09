@@ -2,7 +2,7 @@
 
 ## Runtime
 
-The browser runs a React/Vite single-page application. In development, Vite proxies `/api` to the Bun/Elysia server. The API owns authentication, authorization, validation, and persistence. PostgreSQL is the source of truth for users, sessions, and applications. Redis is a supporting dependency used only for distributed login and registration rate limiting.
+The browser runs a React/Vite single-page application. In development, Vite proxies `/api` to the Bun/Elysia server. The API owns authentication, authorization, validation, and persistence. PostgreSQL is the source of truth for users, sessions, applications, and password-reset tokens. Redis is a supporting dependency used only for distributed authentication and password-reset rate limiting. SMTP is an outbound delivery dependency behind an injectable mailer interface.
 
 ```text
 React + React Router
@@ -44,5 +44,7 @@ Login and registration consume an atomic Redis counter with a fifteen-minute fix
 Applications are never addressed without an authenticated owner in repository calls. Archive is a state transition represented by `archivedAt`; blacklist is an independent exclusion state represented by `blacklistedAt` and `blacklistReason`. Active, archive, and blacklist lists are separate queries. Blacklisting preserves the six-status workflow and restores the job to its previous active status when removed from the blacklist. Permanent deletion is accepted only for an archived application.
 
 ## Deliberate non-goals
+
+Password recovery obtains the anonymous CSRF session, rate-limits the normalized email, and returns a generic response. For an existing user it stores a hashed one-time token and sends the raw token only in the reset link. Confirmation consumes an unused, unexpired token, updates the Argon2id password, and removes all sessions for that user.
 
 The current system does not include external authentication, Redis-backed sessions, Redis caching, queues, pub/sub, object storage, background jobs, deployment configuration, or an application data migration from another project. These require separate approval.

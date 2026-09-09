@@ -17,6 +17,8 @@ The API uses camelCase JSON. Session authentication is carried by the `session_i
 | `POST` | `/api/auth/login` | CSRF | Authenticates credentials and returns a session |
 | `POST` | `/api/auth/logout` | CSRF | Deletes the current session and clears the cookie |
 | `GET` | `/api/auth/me` | Session | Returns the current user |
+| `POST` | `/api/auth/password-reset/request` | CSRF | Sends a reset link when the email belongs to an account; always returns the same message |
+| `POST` | `/api/auth/password-reset/confirm` | CSRF | Consumes a valid reset token and changes the password |
 
 Register body:
 
@@ -30,6 +32,8 @@ Register body:
 ```
 
 Login body is `{ "email": "...", "password": "..." }`. Emails are trimmed and normalized to lowercase. Passwords are 8–128 characters for registration.
+
+Password reset request body is `{ "email": "candidate@example.com" }`. A valid request returns the same generic message for known and unknown emails. Confirmation accepts a URL-safe token, a new 8–128 character password, and matching `passwordConfirmation`. Reset tokens are single-use, expire after one hour, and are stored only as SHA-256 hashes. A successful confirmation invalidates all existing sessions. Invalid, expired, and reused tokens return `PASSWORD_RESET_INVALID` with status `400`.
 
 ## Applications
 
@@ -69,4 +73,4 @@ Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" 
 
 ## Error behavior
 
-The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login and registration attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, login and registration fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.
+The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `PASSWORD_RESET_INVALID` (`400`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login, registration, and password-reset attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, these flows fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.

@@ -11,6 +11,8 @@ import type {
   JobApplication,
   LoginInput,
   MessageResponse,
+  PasswordResetConfirmInput,
+  PasswordResetRequestInput,
   RegisterInput,
   ReorderApplicationsInput,
   UpdateApplicationInput,
@@ -83,6 +85,28 @@ export function login(input: LoginInput, csrfToken: string): Promise<AuthRespons
       method: "POST",
       body: JSON.stringify(input),
     },
+    csrfToken,
+  );
+}
+
+export function requestPasswordReset(
+  input: PasswordResetRequestInput,
+  csrfToken: string,
+): Promise<ApiSuccess<MessageResponse["data"]>> {
+  return requestJson<ApiSuccess<MessageResponse["data"]>>(
+    "/api/auth/password-reset/request",
+    { method: "POST", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function confirmPasswordReset(
+  input: PasswordResetConfirmInput,
+  csrfToken: string,
+): Promise<ApiSuccess<MessageResponse["data"]>> {
+  return requestJson<ApiSuccess<MessageResponse["data"]>>(
+    "/api/auth/password-reset/confirm",
+    { method: "POST", body: JSON.stringify(input) },
     csrfToken,
   );
 }

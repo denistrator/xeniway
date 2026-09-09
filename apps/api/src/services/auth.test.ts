@@ -33,6 +33,12 @@ function createHarness() {
       users.push(user);
       return user;
     },
+    async updatePasswordHash(id, passwordHash) {
+      const user = users.find((candidate) => candidate.id === id);
+      if (!user) return false;
+      user.passwordHash = passwordHash;
+      return true;
+    },
   };
 
   const sessionRepository: SessionRepository = {
@@ -45,6 +51,11 @@ function createHarness() {
     },
     async delete(id) {
       sessions.delete(id);
+    },
+    async deleteForUser(userId) {
+      for (const [id, session] of sessions) {
+        if (session.userId === userId) sessions.delete(id);
+      }
     },
     async deleteExpired() {
       for (const [id, session] of sessions) {

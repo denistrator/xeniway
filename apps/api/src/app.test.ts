@@ -1,7 +1,13 @@
 import type { ApplicationResponse, AuthResponse, JobApplication } from "@job-tracker/shared";
 import { describe, expect, it } from "vitest";
 import { type AppDependencies, createApp } from "./app";
-import type { ApplicationRepository, SessionRepository, UserRepository } from "./db/repository";
+import type {
+  ApplicationRepository,
+  PasswordResetTokenRepository,
+  SessionRepository,
+  UserRepository,
+} from "./db/repository";
+import type { PasswordResetMailer } from "./services/mailer";
 import { SlidingWindowRateLimiter } from "./services/rate-limit";
 import { RedisRateLimitError } from "./services/redis-rate-limit";
 
@@ -15,6 +21,7 @@ function createDependencies(): AppDependencies {
     createdAt: Date;
   }> = [];
   const sessions = new Map<string, { id: string; userId: number | null; csrfToken: string; expiresAt: Date }>();
+  const resetTokens: Array<{ userId: number; tokenHash: string; expiresAt: Date; usedAt: Date | null }> = [];
   const applications: JobApplication[] = [];
 
   const userRepository: UserRepository = {
@@ -36,6 +43,12 @@ function createDependencies(): AppDependencies {
       users.push(user);
       return user;
     },
+    async updatePasswordHash(id, passwordHash) {
+      const user = users.find((candidate) => candidate.id === id);
+      if (!user) return false;
+      user.passwordHash = passwordHash;
+      return true;
+    },
   };
 
   const sessionRepository: SessionRepository = {
@@ -48,6 +61,11 @@ function createDependencies(): AppDependencies {
     },
     async delete(id) {
       sessions.delete(id);
+    },
+    async deleteForUser(userId) {
+      for (const [id, session] of sessions) {
+        if (session.userId === userId) sessions.delete(id);
+      }
     },
     async deleteExpired() {},
   };
@@ -172,10 +190,31 @@ function createDependencies(): AppDependencies {
   };
 
   const applicationUserIds = new Map<number, number>();
+  const passwordResetTokens: PasswordResetTokenRepository = {
+    async invalidateForUser(userId) {
+      for (const token of resetTokens) if (token.userId === userId && !token.usedAt) token.usedAt = new Date();
+    },
+    async create(input) {
+      resetTokens.push({ ...input, usedAt: null });
+    },
+    async consume(tokenHash, now = new Date()) {
+      const token = resetTokens.find(
+        (candidate) => candidate.tokenHash === tokenHash && !candidate.usedAt && candidate.expiresAt > now,
+      );
+      if (!token) return null;
+      token.usedAt = now;
+      return { userId: token.userId };
+    },
+  };
+  const passwordResetMailer: PasswordResetMailer = {
+    async sendPasswordReset() {},
+  };
   return {
     users: userRepository,
     sessions: sessionRepository,
     applications: applicationRepository,
+    passwordResetTokens,
+    passwordResetMailer,
     passwordHasher: {
       async hash(password) {
         return `hashed:${password}`;
@@ -229,6 +268,29 @@ function jsonRequest(url: string, init: RequestInit, sessionId: string, csrfToke
 }
 
 describe("application API", () => {
+  it("returns a generic response for both known and unknown password reset emails", async () => {
+    const app = createApp(createDependencies());
+    const account = await register(app, "candidate@example.com");
+    const csrf = { sessionId: account.sessionId, csrfToken: account.payload.data.csrfToken };
+
+    const requestReset = (email: string) =>
+      app.handle(
+        jsonRequest(
+          "http://localhost/api/auth/password-reset/request",
+          { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) },
+          csrf.sessionId,
+          csrf.csrfToken,
+        ),
+      );
+
+    const known = await requestReset("candidate@example.com");
+    const unknown = await requestReset("missing@example.com");
+
+    expect(known.status).toBe(200);
+    expect(unknown.status).toBe(200);
+    expect(await known.json()).toEqual(await unknown.json());
+  });
+
   it("rejects unauthenticated application access", async () => {
     const response = await createApp(createDependencies()).handle(new Request("http://localhost/api/applications"));
     expect(response.status).toBe(401);

@@ -8,9 +8,11 @@ import { authKeys, useCurrentUser } from "./lib/queries";
 import { AboutPage } from "./pages/about-page";
 import { ArchivePage } from "./pages/archive-page";
 import { BlacklistPage } from "./pages/blacklist-page";
+import { ForgotPasswordPage } from "./pages/forgot-password-page";
 import { HomePage } from "./pages/home-page";
 import { LoginPage } from "./pages/login-page";
 import { NotFoundPage } from "./pages/not-found-page";
+import { PasswordResetPage } from "./pages/password-reset-page";
 import { RegisterPage } from "./pages/register-page";
 
 export function App() {
@@ -36,6 +38,8 @@ export function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<PasswordResetPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

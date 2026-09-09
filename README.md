@@ -7,6 +7,7 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 ## Features
 
 - Registration, login, logout, and session restoration.
+- Enumeration-safe password recovery with one-time reset links.
 - Argon2id password hashing, secure HttpOnly sessions, and CSRF protection.
 - Create, read, update, and archive job applications.
 - Search, status filtering, and native drag-and-drop status changes with keyboard alternatives.
@@ -26,7 +27,7 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 | UI | Tailwind CSS and local shadcn/ui-style primitives |
 | API | Bun, Elysia, Zod |
 | Persistence | Drizzle ORM and PostgreSQL |
-| Abuse protection | Redis-backed distributed login and registration rate limiting |
+| Abuse protection | Redis-backed distributed authentication and password-reset rate limiting |
 | Tests | Vitest and Playwright |
 | Local infrastructure | Docker Compose |
 
@@ -37,8 +38,7 @@ Prerequisites: Bun, Docker Compose, and a Playwright Chromium installation for b
 ```bash
 cp .env.example .env
 bun install
-bun run db:up
-bun run redis:up
+bun run up
 bun run db:migrate
 bun run db:seed       # optional development fixtures
 bun run dev
@@ -48,16 +48,25 @@ Open the web app at [http://localhost:5173](http://localhost:5173). The API list
 
 Seed credentials are `admin@example.com` / `password` and `test_user@example.com` / `password`. Seed data is development-only and is not created by migrations.
 
+Password recovery uses the local Mailpit SMTP inbox by default. Open [http://localhost:8025](http://localhost:8025) to inspect messages. Use `bun run mailpit:down` to stop it. Configure `APP_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` for another SMTP server.
+
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
 | `bun run dev` | Start the API and Vite web app |
+| `bun run up` | Start PostgreSQL, Redis, and Mailpit |
+| `bun run check` | Check PostgreSQL, Redis, and Mailpit |
+| `bun run down` | Stop all local infrastructure services |
 | `bun run db:up` | Start local PostgreSQL |
-| `bun run db:down` | Stop local PostgreSQL |
+| `bun run db:down` | Stop local PostgreSQL only |
+| `bun run db:check` | Check local PostgreSQL connectivity |
 | `bun run redis:up` | Start local Redis |
 | `bun run redis:down` | Stop local Redis |
 | `bun run redis:check` | Check local Redis connectivity |
+| `bun run mailpit:up` | Start the local SMTP test inbox |
+| `bun run mailpit:down` | Stop the local SMTP test inbox |
+| `bun run mailpit:check` | Check the local SMTP test inbox |
 | `bun run db:migrate` | Apply checked-in SQL migrations |
 | `bun run db:seed` | Idempotently recreate development accounts and fixtures |
 | `bun run typecheck` | Typecheck shared, API, and web packages |

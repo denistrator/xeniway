@@ -70,6 +70,11 @@ export function LoginPage() {
         <Button className="w-full" type="submit" disabled={csrf.isPending || login.isPending}>
           {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
+        <p className="text-center text-sm leading-6 text-muted">
+          <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/forgot-password">
+            Forgot your password?
+          </Link>
+        </p>
       </form>
       <p className="mt-5 text-center text-sm leading-6 text-muted">
         New here?{" "}

@@ -14,6 +14,7 @@
     "@job-tracker/shared": "workspace:*",
     "drizzle-orm": "latest",
     "elysia": "latest",
+    "nodemailer": "latest",
     "postgres": "latest",
     "redis": "^6.2.1",
     "zod": "latest"
@@ -21,6 +22,7 @@
   "devDependencies": {
     "drizzle-kit": "latest",
     "bun-types": "latest",
+    "@types/nodemailer": "latest",
     "vitest": "latest",
     "typescript": "latest"
   }

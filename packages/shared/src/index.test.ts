@@ -3,6 +3,8 @@ import {
   blacklistInputSchema,
   createApplicationInputSchema,
   loginInputSchema,
+  passwordResetConfirmInputSchema,
+  passwordResetRequestInputSchema,
   registerInputSchema,
   updateApplicationInputSchema,
 } from "./index";
@@ -58,5 +60,28 @@ describe("authentication contracts", () => {
 
   it("rejects malformed login credentials", () => {
     expect(loginInputSchema.safeParse({ email: "not-an-email", password: "password123" }).success).toBe(false);
+  });
+
+  it("normalizes password reset request email", () => {
+    expect(passwordResetRequestInputSchema.parse({ email: " USER@EXAMPLE.COM " })).toEqual({
+      email: "user@example.com",
+    });
+  });
+
+  it("requires matching password reset confirmation", () => {
+    expect(
+      passwordResetConfirmInputSchema.safeParse({
+        token: "reset-token",
+        password: "password123",
+        passwordConfirmation: "different",
+      }).success,
+    ).toBe(false);
+    expect(
+      passwordResetConfirmInputSchema.parse({
+        token: "reset-token",
+        password: "password123",
+        passwordConfirmation: "password123",
+      }),
+    ).toEqual({ token: "reset-token", password: "password123", passwordConfirmation: "password123" });
   });
 });

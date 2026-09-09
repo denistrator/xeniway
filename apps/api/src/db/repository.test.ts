@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { toJobApplication, toUser } from "./repository";
+import {
+  DrizzlePasswordResetTokenRepository,
+  DrizzleSessionRepository,
+  DrizzleUserRepository,
+  toJobApplication,
+  toUser,
+} from "./repository";
 import type { jobApplications, users } from "./schema";
 
 describe("database row mapping", () => {
@@ -63,5 +69,65 @@ describe("database row mapping", () => {
       blacklistedAt: null,
       blacklistReason: null,
     });
+  });
+});
+
+describe("password reset repository operations", () => {
+  it("updates a user's password hash", async () => {
+    let updatedValues: unknown;
+    const database = {
+      update: () => ({
+        set: (values: unknown) => {
+          updatedValues = values;
+          return { where: async () => ({ count: 1 }) };
+        },
+      }),
+    } as never;
+
+    await new DrizzleUserRepository(database).updatePasswordHash(7, "new-hash");
+
+    expect(updatedValues).toEqual({ passwordHash: "new-hash" });
+  });
+
+  it("deletes every session belonging to a user", async () => {
+    let deleted = false;
+    const database = {
+      delete: () => ({
+        where: async () => {
+          deleted = true;
+          return { count: 2 };
+        },
+      }),
+    } as never;
+
+    await new DrizzleSessionRepository(database).deleteForUser(7);
+
+    expect(deleted).toBe(true);
+  });
+
+  it("invalidates older reset tokens before creating a new one", async () => {
+    const operations: string[] = [];
+    const database = {
+      update: () => ({
+        set: () => ({
+          where: async () => {
+            operations.push("invalidate");
+            return { count: 1 };
+          },
+        }),
+      }),
+      insert: () => ({
+        values: async () => {
+          operations.push("create");
+          return { count: 1 };
+        },
+      }),
+    } as never;
+
+    const repository = new DrizzlePasswordResetTokenRepository(database);
+    await repository.invalidateForUser(7);
+    await repository.create({ userId: 7, tokenHash: "hash", expiresAt: new Date() });
+
+    expect(operations).toEqual(["invalidate", "create"]);
   });
 });

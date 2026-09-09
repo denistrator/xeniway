@@ -21,6 +21,8 @@ Run `bun install` after cloning, copy `.env.example` to `.env`, then use:
 
 - `bun run db:up` and `bun run db:down` to manage local PostgreSQL.
 - `bun run redis:up`, `bun run redis:down`, and `bun run redis:check` to manage and check local Redis.
+- `bun run mailpit:up`, `bun run mailpit:down`, and `bun run mailpit:check` to manage and check the local SMTP test inbox.
+- `bun run up`, `bun run check`, and `bun run down` to manage or check all local infrastructure services together.
 - `bun run db:migrate` to apply migrations.
 - `bun run db:seed` to create or refresh development fixtures.
 - `bun run dev` to run the API and web app together.
@@ -35,6 +37,8 @@ Use TypeScript with two-space indentation, double-quoted imports and strings, se
 Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for the supported TypeScript and TSX files.
 
 Keep server state in TanStack Query and local presentation state in Redux Toolkit. Keep database access behind typed repositories. Every application repository operation must be scoped by authenticated user ID. Mutating authenticated requests require the session CSRF token.
+
+Password recovery must remain enumeration-safe: reset tokens are random, single-use, time-limited, stored only as hashes, and successful resets invalidate all sessions. Keep mail delivery behind the injectable mailer interface; use Mailpit for local SMTP testing, the console mailer only when SMTP is intentionally absent, and never add a test-only production endpoint for raw reset tokens.
 
 For frontend work, prefer semantic controls over ARIA recreation, associate every form control with a label, provide `name` and appropriate `autocomplete`, keep icon-only actions labeled, use `:focus-visible`, maintain keyboard alternatives for drag-and-drop, and preserve accessible modal/drawer behavior. Use `…` for loading copy and announce asynchronous status changes with an appropriate live region.
 
