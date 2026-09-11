@@ -1,5 +1,8 @@
 import type { CreateApplicationInput } from "@job-tracker/shared";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
+import { getApiErrorKey } from "../../i18n/format";
+import { ApiRequestError } from "../../lib/api";
 import { useApplicationMutations, useApplications, useCurrentUser } from "../../lib/queries";
 import { closeDrawer, type RootState } from "../../store";
 import { JobManager } from "./job-manager";
@@ -11,12 +14,16 @@ export function JobManagerHost() {
 }
 
 function AuthenticatedJobManager() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const drawer = useSelector((state: RootState) => state.ui.drawer);
   const applications = useApplications();
   const mutations = useApplicationMutations();
   const selectedJob = applications.data?.find((job) => job.id === drawer.jobId);
   const pending = mutations.create.isPending || mutations.update.isPending;
+  const mutationError =
+    mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error;
+  const mutationErrorCode = mutationError instanceof ApiRequestError ? mutationError.code : "REQUEST_FAILED";
 
   async function handleSave(input: CreateApplicationInput) {
     if (drawer.mode === "create") await mutations.create.mutateAsync(input);
@@ -49,12 +56,9 @@ function AuthenticatedJobManager() {
         blacklisting={mutations.blacklist.isPending}
         onClose={() => dispatch(closeDrawer())}
       />
-      {(mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error) && (
+      {mutationError && (
         <p className="mx-auto max-w-7xl px-6 pb-6 text-sm leading-6 text-rose-600 dark:text-rose-400">
-          {
-            (mutations.create.error || mutations.update.error || mutations.archive.error || mutations.blacklist.error)
-              ?.message
-          }
+          {t(getApiErrorKey(mutationErrorCode))}
         </p>
       )}
     </>

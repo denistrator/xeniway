@@ -1,14 +1,18 @@
 import { registerInputSchema } from "@job-tracker/shared";
 import { LockKeyhole, Mail, User } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
 import { FloatingLabel } from "../components/ui/floating-label";
 import { Input } from "../components/ui/input";
+import { getApiErrorKey } from "../i18n/format";
+import { ApiRequestError } from "../lib/api";
 import { useAuthMutations, useCsrfToken } from "../lib/queries";
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const csrf = useCsrfToken();
   const { register } = useAuthMutations();
@@ -31,11 +35,11 @@ export function RegisterPage() {
       lastName: form.lastName || null,
     });
     if (!parsed.success) {
-      setValidationError(parsed.error.issues[0]?.message ?? "Check your details");
+      setValidationError(t("auth.register.checkDetails"));
       return;
     }
     if (form.password !== form.confirmPassword) {
-      setValidationError("Passwords must match");
+      setValidationError(t("auth.register.passwordsMustMatch"));
       return;
     }
     setValidationError(null);
@@ -44,10 +48,10 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthCard title="Create your account" description="Keep your job search organized from first contact to offer.">
+    <AuthCard title={t("auth.register.title")} description={t("auth.register.description")}>
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <FloatingLabel htmlFor="register-first-name" label="First name" icon={User}>
+          <FloatingLabel htmlFor="register-first-name" label={t("auth.fields.firstName")} icon={User}>
             <Input
               id="register-first-name"
               className="peer"
@@ -58,7 +62,7 @@ export function RegisterPage() {
               onChange={(event) => update("firstName", event.target.value)}
             />
           </FloatingLabel>
-          <FloatingLabel htmlFor="register-last-name" label="Last name" icon={User}>
+          <FloatingLabel htmlFor="register-last-name" label={t("auth.fields.lastName")} icon={User}>
             <Input
               id="register-last-name"
               className="peer"
@@ -70,7 +74,7 @@ export function RegisterPage() {
             />
           </FloatingLabel>
         </div>
-        <FloatingLabel htmlFor="register-email" label="Email" icon={Mail}>
+        <FloatingLabel htmlFor="register-email" label={t("auth.fields.email")} icon={Mail}>
           <Input
             id="register-email"
             className="peer"
@@ -84,7 +88,7 @@ export function RegisterPage() {
             onChange={(event) => update("email", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="register-password" label="Password" icon={LockKeyhole}>
+        <FloatingLabel htmlFor="register-password" label={t("auth.fields.password")} icon={LockKeyhole}>
           <Input
             id="register-password"
             className="peer"
@@ -97,7 +101,7 @@ export function RegisterPage() {
             onChange={(event) => update("password", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="register-confirm-password" label="Confirm password" icon={LockKeyhole}>
+        <FloatingLabel htmlFor="register-confirm-password" label={t("auth.fields.confirmPassword")} icon={LockKeyhole}>
           <Input
             id="register-confirm-password"
             className="peer"
@@ -118,17 +122,18 @@ export function RegisterPage() {
             tabIndex={-1}
             className="text-sm leading-6 text-rose-600 dark:text-rose-400"
           >
-            {validationError ?? register.error?.message}
+            {validationError ??
+              t(getApiErrorKey(register.error instanceof ApiRequestError ? register.error.code : "REQUEST_FAILED"))}
           </p>
         )}
         <Button className="w-full" type="submit" disabled={csrf.isPending || register.isPending}>
-          {register.isPending ? "Creating account…" : "Create account"}
+          {register.isPending ? t("auth.register.pending") : t("auth.register.submit")}
         </Button>
       </form>
       <p className="mt-5 text-center text-sm leading-6 text-muted">
-        Already registered?{" "}
+        {t("auth.register.alreadyRegistered")}{" "}
         <Link className="font-semibold text-ink" to="/login">
-          Sign in
+          {t("auth.login.submit")}
         </Link>
       </p>
     </AuthCard>

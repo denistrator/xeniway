@@ -1,11 +1,12 @@
 import type { JobApplication, JobStatus } from "@job-tracker/shared";
 import type { DragEvent } from "react";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { matchesApplicationSearch } from "../../lib/application-filters";
 import { openEditDrawer, type RootState } from "../../store";
 import { JobCard } from "./job-card";
-import { jobStatuses, statusLabels, statusStyles } from "./job-status";
+import { getStatusLabel, jobStatuses, statusStyles } from "./job-status";
 
 export { jobStatuses } from "./job-status";
 
@@ -18,6 +19,7 @@ export function JobBoard({
   onStatusChange: (id: number, status: JobStatus) => void;
   onReorder: (status: JobStatus, applicationIds: number[]) => void;
 }) {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { search, visibleStatuses } = useSelector((state: RootState) => state.ui);
   const draggedIdRef = useRef<number | null>(null);
@@ -66,7 +68,7 @@ export function JobBoard({
             return (
               <section
                 key={status}
-                aria-label={`${statusLabels[status]} applications`}
+                aria-label={`${getStatusLabel(t, status)} applications`}
                 className={`job-board-column min-h-64 rounded-2xl border border-line border-t-4 bg-surface-tint p-3 md:min-w-64 ${statusStyles[status].column}`}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
@@ -82,7 +84,9 @@ export function JobBoard({
                 }}
               >
                 <div className="mb-3 flex items-center justify-between px-1">
-                  <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-ink">{statusLabels[status]}</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-ink">
+                    {getStatusLabel(t, status)}
+                  </h2>
                   <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold tabular-nums text-accent">
                     {columnJobs.length}
                   </span>
@@ -132,7 +136,7 @@ export function JobBoard({
                   {!columnJobs.length && (
                     <li>
                       <p className="rounded-xl border border-dashed border-line px-3 py-8 text-center text-sm leading-6 text-muted">
-                        Drop applications here
+                        {t("applications.board.dropHere")}
                       </p>
                     </li>
                   )}
@@ -143,7 +147,7 @@ export function JobBoard({
       </div>
       {!filteredJobs.length && (
         <p role="status" aria-live="polite" className="px-6 pt-4 text-center text-sm text-muted">
-          No applications match the current search and status filters.
+          {t("applications.board.noMatch")}
         </p>
       )}
     </div>

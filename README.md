@@ -14,6 +14,7 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 - Archive restore and permanent deletion with confirmation.
 - Blacklist jobs with an optional reason and restore them from a dedicated blacklist page.
 - Light, dark, and system themes with a persisted browser preference.
+- English, Russian, and Ukrainian UI translations with a browser-local language preference.
 - Accessible UI with semantic controls, visible focus states, keyboard navigation, live status updates, and reduced-motion support.
 - Per-user ownership isolation for all application operations.
 - Development seed accounts and 36 deterministic fixture applications.
@@ -22,7 +23,7 @@ The application is a Bun workspace with a React SPA, a typed Elysia API, shared 
 
 | Layer | Technology |
 | --- | --- |
-| Web | React, TypeScript, Vite, React Router |
+| Web | React, TypeScript, Vite, React Router, i18next |
 | Client state | TanStack Query for server state, Redux Toolkit for UI state |
 | UI | Tailwind CSS and local shadcn/ui-style primitives |
 | API | Bun, Elysia, Zod |
@@ -93,6 +94,12 @@ See [API documentation](docs/api.md), [database documentation](docs/database.md)
 ## Accessibility
 
 Accessibility is a first-class UI goal. Preserve semantic HTML, associated form labels and autocomplete metadata, visible `:focus-visible` states, keyboard alternatives for drag-and-drop interactions, focus management for dialogs, polite announcements for asynchronous states, responsive touch targets, and `prefers-reduced-motion` support. Verify user-visible changes with keyboard navigation and the accessible roles and names used by Playwright tests.
+
+## Languages
+
+The UI supports `en`, `ru`, and `uk`. English is the initial fallback; Russian and Ukrainian dictionaries are lazy-loaded so they do not inflate the initial bundle. The header selector stores an explicit choice in the browser under `job-tracker-language`. Without a saved choice, the browser language is reduced to its supported base language and unsupported languages use English. The selected locale updates `html[lang]` and all displayed dates use it through `Intl.DateTimeFormat`.
+
+Language preference is intentionally not part of the user record or API contract. Status values, API error codes, database data, email content, and candidate-entered fields remain language-neutral; the React client translates stable error codes and UI copy at presentation time.
 
 ## Scope and deferred work
 

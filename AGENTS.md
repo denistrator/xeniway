@@ -38,6 +38,8 @@ Run `bun run format` after source edits and `bun run lint` before committing. Bi
 
 Keep server state in TanStack Query and local presentation state in Redux Toolkit. Keep database access behind typed repositories. Every application repository operation must be scoped by authenticated user ID. Mutating authenticated requests require the session CSRF token.
 
+Internationalization is owned by i18next/react-i18next, not Redux. Supported locales are `en`, `ru`, and `uk`; English is the fallback and Russian/Ukrainian dictionaries are dynamically imported. Persist explicit browser choices only under `job-tracker-language`; never add locale fields to API or database contracts. Translate UI copy and stable API error codes, preserve canonical status values and user-entered content, update `html[lang]`, and format dates with the active locale.
+
 Password recovery must remain enumeration-safe: reset tokens are random, single-use, time-limited, stored only as hashes, and successful resets invalidate all sessions. Keep mail delivery behind the injectable mailer interface; use Mailpit for local SMTP testing, the console mailer only when SMTP is intentionally absent, and never add a test-only production endpoint for raw reset tokens.
 
 For frontend work, prefer semantic controls over ARIA recreation, associate every form control with a label, provide `name` and appropriate `autocomplete`, keep icon-only actions labeled, use `:focus-visible`, maintain keyboard alternatives for drag-and-drop, and preserve accessible modal/drawer behavior. Use `…` for loading copy and announce asynchronous status changes with an appropriate live region.
@@ -45,6 +47,8 @@ For frontend work, prefer semantic controls over ARIA recreation, associate ever
 ## Testing expectations
 
 Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, user-visible workflows, and accessibility behavior require focused regression coverage where practical. Exercise keyboard navigation and responsive states for changed UI.
+
+Locale changes require focused dictionary/selector tests and a browser test covering language switching, `html[lang]`, and reload persistence. Keep all three dictionaries structurally aligned with the English source dictionary.
 
 Before claiming a change is complete, run the checks relevant to the change. For a full change, run:
 

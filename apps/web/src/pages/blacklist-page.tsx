@@ -1,16 +1,20 @@
 import type { JobApplication } from "@job-tracker/shared";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { ApplicationSearch } from "../components/application-search";
-import { statusLabels } from "../components/job/job-status";
+import { getStatusLabel } from "../components/job/job-status";
 import { PageIntro } from "../components/page-intro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { formatDate, getApiErrorKey } from "../i18n/format";
+import { ApiRequestError } from "../lib/api";
 import { matchesApplicationSearch } from "../lib/application-filters";
 import { useApplicationMutations, useBlacklistedApplications } from "../lib/queries";
 import type { RootState } from "../store";
 
 export function BlacklistPage() {
+  const { i18n, t } = useTranslation();
   const blacklisted = useBlacklistedApplications();
   const mutations = useApplicationMutations();
   const search = useSelector((state: RootState) => state.ui.search);
@@ -25,16 +29,13 @@ export function BlacklistPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
-      <PageIntro
-        title="Blacklist"
-        description="Keep employers you do not want to pursue out of your active workflow."
-      />
+      <PageIntro title={t("applications.blacklist.title")} description={t("applications.blacklist.description")} />
       <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <ApplicationSearch />
       </div>
       {blacklisted.isPending && (
         <p role="status" aria-live="polite" className="py-10 text-center text-sm leading-6 text-muted">
-          Loading blacklist…
+          {t("applications.blacklist.loading")}
         </p>
       )}
       {blacklisted.error && (
@@ -42,12 +43,12 @@ export function BlacklistPage() {
           role="alert"
           className="rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
         >
-          Unable to load blacklist: {blacklisted.error.message}
+          {t(getApiErrorKey(blacklisted.error instanceof ApiRequestError ? blacklisted.error.code : "REQUEST_FAILED"))}
         </p>
       )}
       {blacklisted.data && !blacklisted.data.length && (
         <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-          Your blacklist is empty.
+          {t("applications.blacklist.empty")}
         </p>
       )}
       {blacklisted.data && blacklisted.data.length > 0 && filteredBlacklisted.length > 0 && (
@@ -58,17 +59,18 @@ export function BlacklistPage() {
                 <div className="min-w-0">
                   <h2 className="break-words font-semibold text-ink">{job.company}</h2>
                   <p className="break-words text-sm leading-6 text-muted">{job.position}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted">Status: {statusLabels[job.status]}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    {t("applications.blacklist.status", { status: getStatusLabel(t, job.status) })}
+                  </p>
                   {job.blacklistReason && (
                     <p className="mt-3 break-words rounded-lg bg-surface-tint p-3 text-sm leading-6 text-ink">
                       {job.blacklistReason}
                     </p>
                   )}
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Blacklisted{" "}
-                    {job.blacklistedAt
-                      ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(job.blacklistedAt))
-                      : "—"}
+                    {t("applications.blacklist.blacklisted", {
+                      date: job.blacklistedAt ? formatDate(job.blacklistedAt, i18n.resolvedLanguage ?? "en") : "—",
+                    })}
                   </p>
                 </div>
                 <Button
@@ -77,7 +79,7 @@ export function BlacklistPage() {
                   onClick={() => restore(job)}
                   disabled={mutations.unblacklist.isPending}
                 >
-                  Remove from blacklist
+                  {t("applications.blacklist.remove")}
                 </Button>
               </CardContent>
             </Card>
@@ -86,11 +88,19 @@ export function BlacklistPage() {
       )}
       {blacklisted.data && blacklisted.data.length > 0 && !filteredBlacklisted.length && (
         <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-          No blacklisted applications match the current search.
+          {t("applications.blacklist.noMatch")}
         </p>
       )}
       {mutations.unblacklist.error && (
-        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">{mutations.unblacklist.error.message}</p>
+        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">
+          {t(
+            getApiErrorKey(
+              mutations.unblacklist.error instanceof ApiRequestError
+                ? mutations.unblacklist.error.code
+                : "REQUEST_FAILED",
+            ),
+          )}
+        </p>
       )}
     </div>
   );

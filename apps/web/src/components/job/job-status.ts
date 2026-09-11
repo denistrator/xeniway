@@ -1,16 +1,13 @@
 import type { JobStatus } from "@job-tracker/shared";
+import type { TFunction } from "i18next";
 
 export const jobStatuses: JobStatus[] = ["saved", "applied", "interview", "offer", "rejected", "withdrawn"];
 
-export const statusLabels: Record<JobStatus, string> = {
-  saved: "Saved",
-  applied: "Applied",
-  interview: "Interview",
-  offer: "Offer",
-  rejected: "Rejected",
-  withdrawn: "Withdrawn",
-};
+export function getStatusLabel(t: TFunction, status: JobStatus) {
+  return t(`applications.status.${status}`);
+}
 
+// Transitional export for workspace components that are localized in the next migration step.
 export const statusStyles: Record<JobStatus, { column: string; marker: string }> = {
   saved: {
     column: "border-t-slate-400 dark:border-t-slate-500",

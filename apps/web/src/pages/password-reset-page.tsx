@@ -1,10 +1,13 @@
 import { LockKeyhole } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
 import { FloatingLabel } from "../components/ui/floating-label";
 import { Input } from "../components/ui/input";
+import { getApiErrorKey } from "../i18n/format";
+import { ApiRequestError } from "../lib/api";
 import { useCsrfToken, usePasswordResetMutations } from "../lib/queries";
 
 export function getResetToken(search: string): string | null {
@@ -12,6 +15,7 @@ export function getResetToken(search: string): string | null {
 }
 
 export function PasswordResetPage() {
+  const { t } = useTranslation();
   const location = useLocation();
   const csrf = useCsrfToken();
   const { confirm } = usePasswordResetMutations();
@@ -30,11 +34,11 @@ export function PasswordResetPage() {
     event.preventDefault();
     if (!token) return;
     if (password.length < 8) {
-      setValidationError("Password must be at least 8 characters");
+      setValidationError(t("auth.resetPassword.passwordTooShort"));
       return;
     }
     if (password !== passwordConfirmation) {
-      setValidationError("Passwords must match");
+      setValidationError(t("auth.register.passwordsMustMatch"));
       return;
     }
     setValidationError(null);
@@ -44,9 +48,12 @@ export function PasswordResetPage() {
 
   if (!token) {
     return (
-      <AuthCard title="Reset link unavailable" description="This password reset link is missing or invalid.">
+      <AuthCard
+        title={t("auth.resetPassword.unavailableTitle")}
+        description={t("auth.resetPassword.unavailableDescription")}
+      >
         <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/forgot-password">
-          Request a new link
+          {t("auth.resetPassword.requestNewLink")}
         </Link>
       </AuthCard>
     );
@@ -54,18 +61,18 @@ export function PasswordResetPage() {
 
   if (submitted) {
     return (
-      <AuthCard title="Password updated" description="Your password has been reset successfully.">
+      <AuthCard title={t("auth.resetPassword.successTitle")} description={t("auth.resetPassword.successDescription")}>
         <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/login">
-          Return to sign in
+          {t("auth.forgotPassword.returnToSignIn")}
         </Link>
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard title="Choose a new password" description="Use at least 8 characters for your new password.">
+    <AuthCard title={t("auth.resetPassword.title")} description={t("auth.resetPassword.description")}>
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <FloatingLabel htmlFor="reset-password" label="New password" icon={LockKeyhole}>
+        <FloatingLabel htmlFor="reset-password" label={t("auth.fields.newPassword")} icon={LockKeyhole}>
           <Input
             id="reset-password"
             className="peer"
@@ -79,7 +86,11 @@ export function PasswordResetPage() {
             onChange={(event) => setPassword(event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="reset-password-confirmation" label="Confirm password" icon={LockKeyhole}>
+        <FloatingLabel
+          htmlFor="reset-password-confirmation"
+          label={t("auth.fields.confirmPassword")}
+          icon={LockKeyhole}
+        >
           <Input
             id="reset-password-confirmation"
             className="peer"
@@ -101,11 +112,12 @@ export function PasswordResetPage() {
             tabIndex={-1}
             className="text-sm leading-6 text-rose-600 dark:text-rose-400"
           >
-            {validationError ?? confirm.error?.message}
+            {validationError ??
+              t(getApiErrorKey(confirm.error instanceof ApiRequestError ? confirm.error.code : "REQUEST_FAILED"))}
           </p>
         )}
         <Button className="w-full" type="submit" disabled={csrf.isPending || confirm.isPending}>
-          {confirm.isPending ? "Updating password…" : "Update password"}
+          {confirm.isPending ? t("auth.resetPassword.pending") : t("auth.resetPassword.submit")}
         </Button>
       </form>
     </AuthCard>

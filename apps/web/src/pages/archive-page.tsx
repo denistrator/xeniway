@@ -1,15 +1,19 @@
 import type { JobApplication } from "@job-tracker/shared";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { ApplicationSearch } from "../components/application-search";
 import { PageIntro } from "../components/page-intro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { formatDate, getApiErrorKey } from "../i18n/format";
+import { ApiRequestError } from "../lib/api";
 import { matchesApplicationSearch } from "../lib/application-filters";
 import { useApplicationMutations, useArchivedApplications } from "../lib/queries";
 import type { RootState } from "../store";
 
 export function ArchivePage() {
+  const { i18n, t } = useTranslation();
   const archived = useArchivedApplications();
   const mutations = useApplicationMutations();
   const search = useSelector((state: RootState) => state.ui.search);
@@ -23,29 +27,32 @@ export function ArchivePage() {
   }
 
   async function remove(job: JobApplication) {
-    if (!window.confirm(`Permanently delete ${job.company} — ${job.position}? This cannot be undone.`)) return;
+    if (!window.confirm(t("applications.archive.deleteConfirmation", job))) return;
     await mutations.remove.mutateAsync(job.id);
   }
 
+  const mutationError = mutations.restore.error || mutations.remove.error;
+  const mutationErrorCode = mutationError instanceof ApiRequestError ? mutationError.code : "REQUEST_FAILED";
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
-      <PageIntro title="Archive" description="Restore an application or remove it permanently." />
+      <PageIntro title={t("applications.archive.title")} description={t("applications.archive.description")} />
       <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <ApplicationSearch />
       </div>
       {archived.isPending && (
         <p role="status" aria-live="polite" className="py-10 text-center text-sm leading-6 text-muted">
-          Loading archive…
+          {t("applications.archive.loading")}
         </p>
       )}
       {archived.error && (
         <p className="rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
-          Unable to load archive: {archived.error.message}
+          {t(getApiErrorKey(archived.error instanceof ApiRequestError ? archived.error.code : "REQUEST_FAILED"))}
         </p>
       )}
       {archived.data && !archived.data.length && (
         <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-          Your archive is empty.
+          {t("applications.archive.empty")}
         </p>
       )}
       {archived.data && archived.data.length > 0 && filteredArchived.length > 0 && (
@@ -58,10 +65,9 @@ export function ArchivePage() {
                   <p className="break-words text-sm leading-6 text-muted">{job.position}</p>
                   {job.location && <p className="mt-1 break-words text-sm leading-6 text-muted">{job.location}</p>}
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Archived{" "}
-                    {job.archivedAt
-                      ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(job.archivedAt))
-                      : "—"}
+                    {t("applications.archive.archived", {
+                      date: job.archivedAt ? formatDate(job.archivedAt, i18n.resolvedLanguage ?? "en") : "—",
+                    })}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -71,7 +77,7 @@ export function ArchivePage() {
                     onClick={() => restore(job)}
                     disabled={mutations.restore.isPending}
                   >
-                    Restore
+                    {t("applications.archive.restore")}
                   </Button>
                   <Button
                     className="flex-1"
@@ -80,7 +86,7 @@ export function ArchivePage() {
                     onClick={() => remove(job)}
                     disabled={mutations.remove.isPending}
                   >
-                    Delete
+                    {t("applications.archive.delete")}
                   </Button>
                 </div>
               </CardContent>
@@ -90,13 +96,11 @@ export function ArchivePage() {
       )}
       {archived.data && archived.data.length > 0 && !filteredArchived.length && (
         <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-          No archived applications match the current search.
+          {t("applications.archive.noMatch")}
         </p>
       )}
-      {(mutations.restore.error || mutations.remove.error) && (
-        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">
-          {(mutations.restore.error || mutations.remove.error)?.message}
-        </p>
+      {mutationError && (
+        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">{t(getApiErrorKey(mutationErrorCode))}</p>
       )}
     </div>
   );

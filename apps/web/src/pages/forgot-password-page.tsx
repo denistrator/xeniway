@@ -1,13 +1,17 @@
 import { Mail } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
 import { FloatingLabel } from "../components/ui/floating-label";
 import { Input } from "../components/ui/input";
+import { getApiErrorKey } from "../i18n/format";
+import { ApiRequestError } from "../lib/api";
 import { useCsrfToken, usePasswordResetMutations } from "../lib/queries";
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const csrf = useCsrfToken();
   const { request } = usePasswordResetMutations();
   const [email, setEmail] = useState("");
@@ -25,19 +29,17 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthCard title="Forgot your password?" description="We’ll help you get back to your application tracker.">
+    <AuthCard title={t("auth.forgotPassword.title")} description={t("auth.forgotPassword.description")}>
       {submitted ? (
         <div className="space-y-4" role="status" aria-live="polite">
-          <p className="text-sm leading-6 text-muted">
-            If an account exists for that email, we’ll send password reset instructions.
-          </p>
+          <p className="text-sm leading-6 text-muted">{t("auth.forgotPassword.submitted")}</p>
           <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/login">
-            Return to sign in
+            {t("auth.forgotPassword.returnToSignIn")}
           </Link>
         </div>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <FloatingLabel htmlFor="forgot-password-email" label="Email" icon={Mail}>
+          <FloatingLabel htmlFor="forgot-password-email" label={t("auth.fields.email")} icon={Mail}>
             <Input
               id="forgot-password-email"
               className="peer"
@@ -59,16 +61,16 @@ export function ForgotPasswordPage() {
               tabIndex={-1}
               className="text-sm leading-6 text-rose-600 dark:text-rose-400"
             >
-              {request.error.message}
+              {t(getApiErrorKey(request.error instanceof ApiRequestError ? request.error.code : "REQUEST_FAILED"))}
             </p>
           )}
           <Button className="w-full" type="submit" disabled={csrf.isPending || request.isPending}>
-            {request.isPending ? "Sending instructions…" : "Send instructions"}
+            {request.isPending ? t("auth.forgotPassword.pending") : t("auth.forgotPassword.submit")}
           </Button>
           <p className="text-center text-sm leading-6 text-muted">
-            Remembered your password?{" "}
+            {t("auth.forgotPassword.rememberedPassword")}{" "}
             <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/login">
-              Sign in
+              {t("auth.login.submit")}
             </Link>
           </p>
         </form>

@@ -25,6 +25,17 @@ test("shows the about page without authentication", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
 });
 
+test("switches and persists the selected browser language", async ({ page }) => {
+  await page.goto("/about");
+  await page.getByRole("button", { name: "Українська" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+  await expect(page.getByRole("heading", { name: "Зрозумілий простір для складного пошуку роботи." })).toBeVisible();
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+  await expect(page.getByRole("button", { name: "Українська", pressed: true })).toBeVisible();
+});
+
 test("shows a public not found page for unknown routes", async ({ page }) => {
   await page.goto("/does-not-exist");
 

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { JobFormContent, type JobFormDialogProps } from "./job-form-content";
 
 export function JobDrawer({
@@ -13,11 +14,13 @@ export function JobDrawer({
   onSwitchPresentation,
   dialogRef,
 }: JobFormDialogProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="fixed inset-0 z-50 bg-overlay">
       <button
         type="button"
-        aria-label="Close dialog"
+        aria-label={t("applications.editor.closeDialog")}
         tabIndex={-1}
         className="absolute inset-0 h-full w-full cursor-default"
         onClick={onClose}

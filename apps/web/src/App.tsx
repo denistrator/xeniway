@@ -1,6 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { LanguageSync } from "./components/language-sync";
 import { Layout } from "./components/layout";
 import { ThemeSync } from "./components/theme-sync";
 import { applicationKeys } from "./lib/api";
@@ -16,15 +18,18 @@ import { PasswordResetPage } from "./pages/password-reset-page";
 import { RegisterPage } from "./pages/register-page";
 
 export function App() {
+  const { t } = useTranslation();
+
   return (
     <>
       <a
         href="#main-content"
         className="skip-link fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-canvas shadow-lg transition-transform focus:translate-y-0"
       >
-        Skip to main content
+        {t("accessibility.skipToMainContent")}
       </a>
       <ThemeSync />
+      <LanguageSync />
       <AuthFailureHandler />
       <Routes>
         <Route element={<Layout />}>
@@ -76,7 +81,11 @@ function GuestOnly() {
 }
 
 function LoadingScreen() {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas text-sm leading-6 text-muted">Loading…</div>
+    <div className="flex min-h-screen items-center justify-center bg-canvas text-sm leading-6 text-muted">
+      {t("common.loading")}
+    </div>
   );
 }

@@ -11,10 +11,11 @@ import {
   StickyNote,
 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { FloatingLabel } from "../ui/floating-label";
 import { Input } from "../ui/input";
-import { jobStatuses, statusLabels } from "./job-status";
+import { getStatusLabel, jobStatuses } from "./job-status";
 
 type FormState = {
   company: string;
@@ -71,6 +72,7 @@ export function JobForm({
   onBlacklist?: (reason: string) => void;
   blacklisting?: boolean;
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<FormState>(() => toForm(job));
   const [error, setError] = useState<string | null>(null);
   const [blacklistOpen, setBlacklistOpen] = useState(false);
@@ -98,7 +100,7 @@ export function JobForm({
       notes: form.notes || null,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Check the application details");
+      setError(t("applications.form.checkDetails"));
       return;
     }
     setError(null);
@@ -113,7 +115,7 @@ export function JobForm({
       autoComplete="off"
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-company" label="Company *" icon={Building2}>
+        <FloatingLabel htmlFor="job-company" label={t("applications.form.company")} icon={Building2}>
           <Input
             id="job-company"
             className="peer"
@@ -124,7 +126,7 @@ export function JobForm({
             onChange={(event) => update("company", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-position" label="Position *" icon={BriefcaseBusiness}>
+        <FloatingLabel htmlFor="job-position" label={t("applications.form.position")} icon={BriefcaseBusiness}>
           <Input
             id="job-position"
             className="peer"
@@ -137,7 +139,7 @@ export function JobForm({
         </FloatingLabel>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-location" label="Location" icon={MapPin}>
+        <FloatingLabel htmlFor="job-location" label={t("applications.form.location")} icon={MapPin}>
           <Input
             id="job-location"
             className="peer"
@@ -147,7 +149,7 @@ export function JobForm({
             onChange={(event) => update("location", event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-salary" label="Salary" icon={Banknote}>
+        <FloatingLabel htmlFor="job-salary" label={t("applications.form.salary")} icon={Banknote}>
           <Input
             id="job-salary"
             className="peer"
@@ -158,7 +160,7 @@ export function JobForm({
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="job-url" label="Job URL" icon={Link}>
+      <FloatingLabel htmlFor="job-url" label={t("applications.form.jobUrl")} icon={Link}>
         <Input
           id="job-url"
           className="peer"
@@ -170,7 +172,7 @@ export function JobForm({
         />
       </FloatingLabel>
       <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-status" label="Status" icon={CircleDot}>
+        <FloatingLabel htmlFor="job-status" label={t("applications.form.status")} icon={CircleDot}>
           <select
             id="job-status"
             className="peer"
@@ -180,12 +182,12 @@ export function JobForm({
           >
             {jobStatuses.map((status) => (
               <option key={status} value={status}>
-                {statusLabels[status]}
+                {getStatusLabel(t, status)}
               </option>
             ))}
           </select>
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-applied-at" label="Applied date" icon={CalendarDays}>
+        <FloatingLabel htmlFor="job-applied-at" label={t("applications.form.appliedDate")} icon={CalendarDays}>
           <Input
             id="job-applied-at"
             className="peer"
@@ -197,7 +199,7 @@ export function JobForm({
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="job-description" label="Description" icon={FileText}>
+      <FloatingLabel htmlFor="job-description" label={t("applications.form.description")} icon={FileText}>
         <textarea
           id="job-description"
           className="peer min-h-24"
@@ -207,7 +209,7 @@ export function JobForm({
           onChange={(event) => update("description", event.target.value)}
         />
       </FloatingLabel>
-      <FloatingLabel htmlFor="job-notes" label="Notes" icon={StickyNote}>
+      <FloatingLabel htmlFor="job-notes" label={t("applications.form.notes")} icon={StickyNote}>
         <textarea
           id="job-notes"
           className="peer min-h-24"
@@ -220,7 +222,7 @@ export function JobForm({
       {job && onBlacklist && blacklistOpen && (
         <div className="border-t border-line pt-5">
           <div className="space-y-3">
-            <FloatingLabel htmlFor="job-blacklist-reason" label="Reason" icon={StickyNote}>
+            <FloatingLabel htmlFor="job-blacklist-reason" label={t("applications.form.reason")} icon={StickyNote}>
               <textarea
                 id="job-blacklist-reason"
                 className="peer min-h-24"
@@ -233,7 +235,7 @@ export function JobForm({
             </FloatingLabel>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setBlacklistOpen(false)}>
-                Cancel
+                {t("applications.form.cancel")}
               </Button>
               <Button
                 type="button"
@@ -241,7 +243,7 @@ export function JobForm({
                 onClick={() => onBlacklist(blacklistReason)}
                 disabled={blacklisting}
               >
-                {blacklisting ? "Blacklisting…" : "Confirm blacklist"}
+                {blacklisting ? t("applications.form.blacklisting") : t("applications.form.confirmBlacklist")}
               </Button>
             </div>
           </div>
@@ -261,16 +263,16 @@ export function JobForm({
       )}
       <div className="flex flex-wrap items-center gap-2 mt-auto">
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Saving…" : "Save application"}
+          {submitting ? t("applications.form.saving") : t("applications.form.save")}
         </Button>
         {job && onBlacklist && !blacklistOpen && (
           <Button type="button" variant="outline" onClick={() => setBlacklistOpen(true)}>
-            Blacklist
+            {t("applications.form.blacklist")}
           </Button>
         )}
         {job && onArchive && (
           <Button type="button" variant="outline" onClick={onArchive}>
-            Archive application
+            {t("applications.form.archive")}
           </Button>
         )}
       </div>

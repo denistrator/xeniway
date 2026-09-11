@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
+import { initializeI18n } from "./i18n/i18n";
 import { store } from "./store";
 import "./index.css";
 
@@ -14,16 +15,22 @@ const queryClient = new QueryClient({
 });
 const root = document.getElementById("root");
 
-if (!root) throw new Error("The application root element is missing");
+async function bootstrap() {
+  if (!root) throw new Error("The application root element is missing");
 
-createRoot(root).render(
-  <StrictMode>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </Provider>
-  </StrictMode>,
-);
+  await initializeI18n();
+
+  createRoot(root).render(
+    <StrictMode>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </Provider>
+    </StrictMode>,
+  );
+}
+
+void bootstrap();

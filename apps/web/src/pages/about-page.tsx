@@ -17,6 +17,7 @@ import {
   TestTube,
   Zap,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const stackIcons: Record<string, LucideIcon> = {
   React: Atom,
@@ -41,139 +42,64 @@ const stackIcons: Record<string, LucideIcon> = {
 };
 
 const capabilities = [
-  {
-    title: "Track every opportunity",
-    text: "Capture the company, position, location, salary, job link, notes, and important dates for each application.",
-  },
-  {
-    title: "See your progress",
-    text: "Move applications through six stages: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.",
-  },
-  {
-    title: "Stay focused",
-    text: "Search your opportunities, filter visible status columns, and reorder work with drag-and-drop or keyboard controls.",
-  },
-  {
-    title: "Keep a clean history",
-    text: "Archive finished opportunities, restore them later, or permanently delete archived records when they are no longer useful.",
-  },
-  {
-    title: "Avoid dead ends",
-    text: "Blacklist employers you do not want to pursue and leave a reason so the decision remains clear later.",
-  },
-  {
-    title: "Work comfortably",
-    text: "Use the responsive workspace in light, dark, or system theme with the same workflows across desktop and mobile.",
-  },
-];
+  "capability1",
+  "capability2",
+  "capability3",
+  "capability4",
+  "capability5",
+  "capability6",
+] as const;
 
 const frontendStack = [
-  ["React", "Component-based interface and shared application workflows.", "https://github.com/facebook/react"],
-  ["TypeScript", "Typed UI, state, API boundaries, and shared data models.", "https://github.com/microsoft/TypeScript"],
-  ["Vite", "Fast development server and production SPA build pipeline.", "https://github.com/vitejs/vite"],
-  [
-    "Tailwind CSS v4",
-    "CSS-first design tokens, responsive layouts, and theme-aware styles.",
-    "https://github.com/tailwindlabs/tailwindcss",
-  ],
-  [
-    "Redux Toolkit",
-    "Local UI state for filters, theme preference, and job-manager presentation.",
-    "https://github.com/reduxjs/redux-toolkit",
-  ],
-  [
-    "TanStack Query",
-    "Server-state caching, authentication restoration, mutations, and invalidation.",
-    "https://github.com/TanStack/query",
-  ],
-  [
-    "React Router",
-    "Public, guest-only, protected, archive, blacklist, and fallback routes.",
-    "https://github.com/remix-run/react-router",
-  ],
-  [
-    "Lucide React",
-    "Consistent interface icons with semantic labels for accessible controls.",
-    "https://github.com/lucide-icons/lucide",
-  ],
-  ["Vitest", "Focused component and client tests.", "https://github.com/vitest-dev/vitest"],
-  ["Playwright", "Complete browser workflows with axe coverage.", "https://github.com/microsoft/playwright"],
+  ["React", "react", "https://github.com/facebook/react"],
+  ["TypeScript", "typescript", "https://github.com/microsoft/TypeScript"],
+  ["Vite", "vite", "https://github.com/vitejs/vite"],
+  ["Tailwind CSS v4", "tailwind", "https://github.com/tailwindlabs/tailwindcss"],
+  ["Redux Toolkit", "redux", "https://github.com/reduxjs/redux-toolkit"],
+  ["TanStack Query", "query", "https://github.com/TanStack/query"],
+  ["React Router", "router", "https://github.com/remix-run/react-router"],
+  ["Lucide React", "lucide", "https://github.com/lucide-icons/lucide"],
+  ["Vitest", "vitest", "https://github.com/vitest-dev/vitest"],
+  ["Playwright", "playwright", "https://github.com/microsoft/playwright"],
 ] as const;
 
 const backendStack = [
-  [
-    "Bun",
-    "JavaScript runtime, package manager, scripts, and development server runtime.",
-    "https://github.com/oven-sh/bun",
-  ],
-  [
-    "Elysia",
-    "Typed HTTP API with injectable dependencies and separated route modules.",
-    "https://github.com/elysiajs/elysia",
-  ],
-  [
-    "Zod",
-    "Shared runtime validation for authentication, applications, errors, and responses.",
-    "https://github.com/colinhacks/zod",
-  ],
-  [
-    "Drizzle ORM",
-    "Typed PostgreSQL schema, migrations, queries, and repository persistence.",
-    "https://github.com/drizzle-team/drizzle-orm",
-  ],
-  [
-    "PostgreSQL",
-    "Authoritative storage for users, sessions, password-reset tokens, and owned job applications.",
-    "https://github.com/postgres/postgres",
-  ],
-  [
-    "Redis",
-    "Short-lived distributed rate-limit counters for authentication and password reset.",
-    "https://github.com/redis/redis",
-  ],
-  ["Nodemailer", "SMTP transport used to deliver password-reset emails.", "https://github.com/nodemailer/nodemailer"],
-  [
-    "Mailpit",
-    "Local SMTP inbox for safely inspecting password-reset emails during development.",
-    "https://github.com/axllent/mailpit",
-  ],
-  [
-    "Session + CSRF security",
-    "HttpOnly session cookies, server-side CSRF tokens, Argon2id passwords, and ownership checks.",
-  ],
-  [
-    "Vitest",
-    "Focused tests for contracts, repositories, authentication, routes, validation, and ownership isolation.",
-    "https://github.com/vitest-dev/vitest",
-  ],
+  ["Bun", "bun", "https://github.com/oven-sh/bun"],
+  ["Elysia", "elysia", "https://github.com/elysiajs/elysia"],
+  ["Zod", "zod", "https://github.com/colinhacks/zod"],
+  ["Drizzle ORM", "drizzle", "https://github.com/drizzle-team/drizzle-orm"],
+  ["PostgreSQL", "postgres", "https://github.com/postgres/postgres"],
+  ["Redis", "redis", "https://github.com/redis/redis"],
+  ["Nodemailer", "nodemailer", "https://github.com/nodemailer/nodemailer"],
+  ["Mailpit", "mailpit", "https://github.com/axllent/mailpit"],
+  ["Session + CSRF security", "security"],
+  ["Vitest", "apiTests", "https://github.com/vitest-dev/vitest"],
 ] as const;
 
 export function AboutPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="px-6 text-ink">
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         <section className="rounded-3xl border border-line bg-surface p-8 shadow-sm sm:p-12">
           <h1 className="font-display max-w-4xl text-4xl font-bold tracking-tight text-ink sm:text-6xl">
-            A clear workspace for a complicated job search.
+            {t("about.heroTitle")}
           </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">
-            Job Tracker helps candidates keep track of every conversation with a potential employer, from the first
-            saved opportunity to the final outcome. It gives each application a place, a status, useful context, and a
-            next step.
-          </p>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">{t("about.heroDescription")}</p>
         </section>
 
         <section aria-labelledby="capabilities-title">
           <div className="mb-5 max-w-2xl">
             <h2 id="capabilities-title" className="font-display text-3xl font-bold tracking-tight text-ink">
-              Everything needed to keep momentum.
+              {t("about.capabilitiesTitle")}
             </h2>
           </div>
           <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-[1.15fr_0.85fr]">
-            {capabilities.map((capability) => (
-              <article key={capability.title} className="border-t border-line pt-4">
-                <h3 className="font-semibold text-ink">{capability.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-ink">{capability.text}</p>
+            {capabilities.map((capability, index) => (
+              <article key={capability} className="border-t border-line pt-4">
+                <h3 className="font-semibold text-ink">{t(`about.capability${index + 1}Title`)}</h3>
+                <p className="mt-2 text-sm leading-6 text-ink">{t(`about.capability${index + 1}Text`)}</p>
               </article>
             ))}
           </div>
@@ -182,42 +108,29 @@ export function AboutPage() {
         <section aria-labelledby="stack-title" className="space-y-5">
           <div className="max-w-2xl">
             <h2 id="stack-title" className="font-display text-3xl font-bold tracking-tight text-ink">
-              A modern frontend and a focused API working together.
+              {t("about.stackTitle")}
             </h2>
-            <p className="mt-3 leading-7 text-muted">
-              The browser and server share their contracts, so validation and response shapes stay consistent from the
-              form to the database.
-            </p>
+            <p className="mt-3 leading-7 text-muted">{t("about.stackDescription")}</p>
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
-            <StackBlock title="Frontend" description="The candidate-facing React workspace." items={frontendStack} />
             <StackBlock
-              title="Backend"
-              description="The authenticated API and persistence layer."
-              items={backendStack}
+              title={t("about.frontend")}
+              description={t("about.frontendDescription")}
+              items={frontendStack}
             />
+            <StackBlock title={t("about.backend")} description={t("about.backendDescription")} items={backendStack} />
           </div>
         </section>
 
         <section className="rounded-3xl border border-line bg-surface p-8 shadow-sm sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
-              <h2 className="font-display text-3xl font-bold tracking-tight text-ink">Your search stays yours.</h2>
+              <h2 className="font-display text-3xl font-bold tracking-tight text-ink">{t("about.securityTitle")}</h2>
             </div>
             <div className="space-y-4 text-sm leading-7 text-muted">
-              <p>
-                Every application belongs to an authenticated user. Repository operations are scoped by that owner, so
-                one candidate cannot read or change another candidate&apos;s records.
-              </p>
-              <p>
-                Passwords are hashed with Argon2id. Sessions use HttpOnly cookies, mutations require a server-issued
-                CSRF token, and Redis protects authentication and password-reset requests from repeated attempts without
-                storing application data.
-              </p>
-              <p>
-                The interface is designed for keyboard access, responsive layouts, visible focus, managed dialogs, live
-                async states, and reduced motion preferences.
-              </p>
+              <p>{t("about.securityOwnership")}</p>
+              <p>{t("about.securityCredentials")}</p>
+              <p>{t("about.securityAccessibility")}</p>
             </div>
           </div>
         </section>
@@ -235,6 +148,8 @@ function StackBlock({
   description: string;
   items: readonly (readonly [string, string, string?])[];
 }) {
+  const { t } = useTranslation();
+
   return (
     <article className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
       <h3 className="font-display text-2xl font-bold tracking-tight text-ink">{title}</h3>
@@ -262,7 +177,7 @@ function StackBlock({
                   name
                 )}
               </dt>
-              <dd className="break-words text-sm leading-6 text-muted">{description}</dd>
+              <dd className="break-words text-sm leading-6 text-muted">{t(`about.stack.${description}`)}</dd>
             </div>
           );
         })}

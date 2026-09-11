@@ -5,8 +5,10 @@
 - `packages/shared/src/index.test.ts` verifies shared schemas and public contract assumptions.
 - `apps/api/src/*.test.ts` covers authentication, expiration, CSRF, password-reset token lifecycle, mailer/service behavior, row mapping, seed invariants, validation, CRUD, status filtering, archive and blacklist transitions, error status codes, and ownership isolation using focused in-memory dependencies.
 - `apps/web/src/lib/api.test.ts` covers client error parsing, query-key separation, and CSRF headers on password-reset mutations.
-- `apps/web/src/components/job-status.test.ts` protects the shared six-status display order and labels used by the board, filters, and form.
-- `tests/e2e/job-tracker.spec.ts` covers public password recovery navigation and validation, then logs in with development seed credentials and exercises the board, six statuses, search, create, blacklist with reason, blacklist restore, native drag-and-drop, archive, and permanent deletion.
+- `apps/web/src/i18n/i18n.test.ts`, `format.test.ts`, and `components/language-selector.test.tsx` cover locale resolution, lazy resource selection, browser persistence, date formatting, compact labels, and accessible language names.
+- `apps/web/src/components/job/job-status.test.ts` protects the shared six-status display order and translated labels used by the board, filters, and form.
+- `apps/web/src/pages/password-reset-page.test.tsx` verifies a user-visible validation message after switching locale.
+- `tests/e2e/job-tracker.spec.ts` covers language switching and reload persistence, public password recovery navigation and validation, then logs in with development seed credentials and exercises the board, six statuses, search, create, blacklist with reason, blacklist restore, native drag-and-drop, archive, and permanent deletion.
 
 ## Commands
 

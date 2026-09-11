@@ -1,13 +1,17 @@
 import { LockKeyhole, Mail } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthCard } from "../components/auth-card";
 import { Button } from "../components/ui/button";
 import { FloatingLabel } from "../components/ui/floating-label";
 import { Input } from "../components/ui/input";
+import { getApiErrorKey } from "../i18n/format";
+import { ApiRequestError } from "../lib/api";
 import { useAuthMutations, useCsrfToken } from "../lib/queries";
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const csrf = useCsrfToken();
@@ -27,9 +31,9 @@ export function LoginPage() {
   }
 
   return (
-    <AuthCard title="Welcome back" description="Sign in to continue tracking your applications.">
+    <AuthCard title={t("auth.login.title")} description={t("auth.login.description")}>
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <FloatingLabel htmlFor="login-email" label="Email" icon={Mail}>
+        <FloatingLabel htmlFor="login-email" label={t("auth.fields.email")} icon={Mail}>
           <Input
             id="login-email"
             className="peer"
@@ -43,7 +47,7 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="login-password" label="Password" icon={LockKeyhole}>
+        <FloatingLabel htmlFor="login-password" label={t("auth.fields.password")} icon={LockKeyhole}>
           <Input
             id="login-password"
             className="peer"
@@ -64,22 +68,22 @@ export function LoginPage() {
             tabIndex={-1}
             className="text-sm leading-6 text-rose-600 dark:text-rose-400"
           >
-            {login.error.message}
+            {t(getApiErrorKey(login.error instanceof ApiRequestError ? login.error.code : "REQUEST_FAILED"))}
           </p>
         )}
         <Button className="w-full" type="submit" disabled={csrf.isPending || login.isPending}>
-          {login.isPending ? "Signing in…" : "Sign in"}
+          {login.isPending ? t("auth.login.pending") : t("auth.login.submit")}
         </Button>
         <p className="text-center text-sm leading-6 text-muted">
           <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/forgot-password">
-            Forgot your password?
+            {t("auth.login.forgotPassword")}
           </Link>
         </p>
       </form>
       <p className="mt-5 text-center text-sm leading-6 text-muted">
-        New here?{" "}
+        {t("auth.login.newHere")}{" "}
         <Link className="font-semibold text-ink" to="/register">
-          Create an account
+          {t("auth.login.createAccount")}
         </Link>
       </p>
     </AuthCard>

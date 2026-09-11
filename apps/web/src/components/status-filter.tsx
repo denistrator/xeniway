@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { type RootState, setAllStatuses, toggleStatus } from "../store";
-import { jobStatuses, statusLabels } from "./job/job-status";
+import { getStatusLabel, jobStatuses } from "./job/job-status";
 import { Button } from "./ui/button";
 
 export function StatusFilter() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const visibleStatuses = useSelector((state: RootState) => state.ui.visibleStatuses);
   const [open, setOpen] = useState(false);
@@ -48,9 +50,9 @@ export function StatusFilter() {
         aria-controls="status-filter-options"
         onClick={() => setOpen((current) => !current)}
       >
-        Filter statuses
+        {t("applications.filterStatuses")}
         <span className="ml-2 text-xs text-muted">
-          {allSelected ? "All" : `${visibleStatuses.length}/${jobStatuses.length}`}
+          {allSelected ? t("applications.allStatuses") : `${visibleStatuses.length}/${jobStatuses.length}`}
         </span>
       </Button>
       {open && (
@@ -58,7 +60,7 @@ export function StatusFilter() {
           id="status-filter-options"
           className="absolute left-0 top-full z-20 mt-2 w-full min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg sm:w-64"
         >
-          <legend className="sr-only">Filter statuses</legend>
+          <legend className="sr-only">{t("applications.filterStatuses")}</legend>
           <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-accent-hover">
             <input
               ref={selectAllRef}
@@ -66,7 +68,7 @@ export function StatusFilter() {
               checked={allSelected}
               onChange={(event) => dispatch(setAllStatuses(event.target.checked))}
             />
-            Select all statuses
+            {t("applications.selectAllStatuses")}
           </label>
           <div className="my-1 border-t border-line" />
           {jobStatuses.map((status) => (
@@ -79,7 +81,7 @@ export function StatusFilter() {
                 checked={visibleStatuses.includes(status)}
                 onChange={() => dispatch(toggleStatus(status))}
               />
-              {statusLabels[status]}
+              {getStatusLabel(t, status)}
             </label>
           ))}
         </fieldset>

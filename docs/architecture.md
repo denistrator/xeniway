@@ -28,6 +28,8 @@ React + React Router
 
 The UI follows an accessibility-first baseline: semantic controls and labels, keyboard-operable workflows including a keyboard alternative to drag-and-drop, visible focus indicators, managed focus within dialogs and drawers, live regions for asynchronous feedback, responsive layouts, and reduced-motion support. The document theme is initialized before React starts to avoid a flash of the wrong theme.
 
+The UI language is a separate client-side concern owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists only an explicit browser choice under `job-tracker-language`, falls back from the browser base language to English, and synchronizes `html[lang]`. Redux does not duplicate locale state.
+
 ## Request lifecycle
 
 1. The browser acquires a CSRF token from `GET /api/auth/csrf`; the server creates an anonymous session when needed.
@@ -36,6 +38,8 @@ The UI follows an accessibility-first baseline: semantic controls and labels, ke
 4. Application reads require a valid session and are filtered by `userId` in the repository.
 5. Application mutations require both a valid session and the CSRF token belonging to that session.
 6. TanStack Query invalidates active/archive lists after mutations so the UI reflects the server state.
+
+Locale-neutral API values are translated only at the presentation boundary. Application statuses and error codes remain canonical, candidate-entered data is never machine-translated, and displayed dates are formatted with the active locale while stored ISO timestamps remain unchanged.
 
 Login and registration consume an atomic Redis counter with a fifteen-minute fixed window and a limit of five attempts per normalized email. Counter keys contain a SHA-256 digest rather than the raw email. If Redis is unavailable, authentication fails closed with a `503` response instead of bypassing abuse protection.
 

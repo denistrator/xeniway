@@ -1,5 +1,7 @@
 import type { JobApplication } from "@job-tracker/shared";
-import { statusLabels, statusStyles } from "./job-status";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "../../i18n/format";
+import { getStatusLabel, statusStyles } from "./job-status";
 
 export function JobCard({
   job,
@@ -16,6 +18,7 @@ export function JobCard({
   position: number;
   total: number;
 }) {
+  const { i18n, t } = useTranslation();
   return (
     <button
       type="button"
@@ -43,7 +46,7 @@ export function JobCard({
         onKeyboardMove(direction);
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight"
-      aria-label={`${job.company}, ${job.position}, ${statusLabels[job.status]}. Position ${position} of ${total}. Use Arrow Up or Arrow Down to reorder, Home or End to move to an edge, and Shift plus Arrow Left or Right to change status.`}
+      aria-label={`${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`}
       className="w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-left shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-3">
@@ -63,7 +66,11 @@ export function JobCard({
       )}
       <div className="mt-3 flex flex-wrap gap-3 text-sm leading-6 text-muted">
         {job.location && <span className="break-words">{job.location}</span>}
-        {job.appliedAt && <span>Applied {job.appliedAt}</span>}
+        {job.appliedAt && (
+          <span>
+            {t("applications.board.applied", { date: formatDate(job.appliedAt, i18n.resolvedLanguage ?? "en") })}
+          </span>
+        )}
       </div>
     </button>
   );
