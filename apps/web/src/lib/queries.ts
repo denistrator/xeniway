@@ -10,6 +10,8 @@ import type {
   RegisterInput,
   UpdateApplicationInput,
 } from "@xeniway/shared";
+import { useDispatch } from "react-redux";
+import { closeWelcome, openWelcome } from "../store";
 import {
   applicationKeys,
   archiveApplication,
@@ -19,17 +21,20 @@ import {
   deleteApplication,
   getCsrfToken,
   getCurrentUser,
+  getUserPreferences,
   listApplications,
   listArchivedApplications,
   listBlacklistedApplications,
   login,
   logout,
+  markUserIntroduced,
   register,
   reorderApplications,
   requestPasswordReset,
   restoreApplication,
   unblacklistApplication,
   updateApplication,
+  userPreferencesKeys,
 } from "./api";
 
 export const authKeys = {
@@ -58,12 +63,15 @@ export function useCsrfToken() {
 }
 
 export function useAuthMutations() {
+  const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const csrfToken = useCsrfToken().data;
 
   const finishAuth = (response: Awaited<ReturnType<typeof login>>) => {
     queryClient.setQueryData(authKeys.me, { data: { user: response.data.user } });
     queryClient.setQueryData(authKeys.csrf, { data: { csrfToken: response.data.csrfToken } });
+    queryClient.removeQueries({ queryKey: userPreferencesKeys.current });
+    dispatch(openWelcome());
   };
 
   return {
@@ -78,12 +86,32 @@ export function useAuthMutations() {
     logout: useMutation({
       mutationFn: () => logout(csrfToken ?? ""),
       onSuccess: () => {
+        dispatch(closeWelcome());
         queryClient.setQueryData<CurrentUserQueryData>(authKeys.me, { data: { user: null } });
         queryClient.removeQueries({ queryKey: authKeys.csrf });
         queryClient.removeQueries({ queryKey: applicationKeys.all });
       },
     }),
   };
+}
+
+export function useUserPreferences(enabled: boolean) {
+  return useQuery({
+    queryKey: userPreferencesKeys.current,
+    queryFn: getUserPreferences,
+    enabled,
+    retry: false,
+    select: (response) => response.data.preferences,
+  });
+}
+
+export function useCompleteIntroduction() {
+  const queryClient = useQueryClient();
+  const csrfToken = useCsrfToken().data ?? "";
+  return useMutation({
+    mutationFn: () => markUserIntroduced(csrfToken),
+    onSuccess: (response) => queryClient.setQueryData(userPreferencesKeys.current, response),
+  });
 }
 
 export function usePasswordResetMutations() {

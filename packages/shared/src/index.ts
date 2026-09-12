@@ -73,6 +73,12 @@ export type User = {
   createdAt: string;
 };
 
+export type UserPreferences = {
+  wasIntroduced: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type JobApplication = {
   id: number;
   company: string;
@@ -104,6 +110,7 @@ export type ApiError = {
 
 export type AuthResponse = ApiSuccess<{ user: User; csrfToken: string }>;
 export type CurrentUserResponse = ApiSuccess<{ user: User }>;
+export type UserPreferencesResponse = ApiSuccess<{ preferences: UserPreferences }>;
 export type ApplicationResponse = ApiSuccess<{ application: JobApplication }>;
 export type ApplicationListResponse = ApiSuccess<{ applications: JobApplication[] }>;
 export type MessageResponse = ApiSuccess<{ message: string }>;

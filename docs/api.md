@@ -75,6 +75,15 @@ Application create/update fields:
 
 Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
 
+## User preferences
+
+| Method | Path | Auth/CSRF | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/user/preferences` | Session | Reads the current user's preferences; an absent row is treated as the default state |
+| `POST` | `/api/user/preferences/introduced` | Session + CSRF | Marks the current user's introduction as complete |
+
+The current preference response contains `wasIntroduced`, `createdAt`, and `updatedAt`. New accounts begin with `wasIntroduced: false`. The frontend checks this value only after successful login or registration; restoring an existing session on page reload does not open the welcome popup. Preference reads and writes are scoped by authenticated user ID, and ownership is never accepted from request input.
+
 ## Error behavior
 
 The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `PASSWORD_RESET_INVALID` (`400`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login, registration, and password-reset attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, these flows fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.

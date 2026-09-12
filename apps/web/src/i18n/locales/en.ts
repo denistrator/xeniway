@@ -154,6 +154,17 @@ export const en = {
       passwordTooShort: "Password must be at least 8 characters",
     },
   },
+  welcome: {
+    title: "Welcome to Xenia Way",
+    close: "Close welcome introduction",
+    introduction:
+      "Xenia Way gives you one clear place to keep track of every job opportunity, conversation, follow-up, and outcome.",
+    features:
+      "Track applications, move them through six statuses, search your board, and keep useful context close at hand.",
+    goToBoard: "Go to board",
+    about: "About Xenia Way",
+    updateFailed: "We couldn't save your introduction status. Please try again.",
+  },
   notFound: {
     title: "Page not found",
     description: "We couldn’t find the page you requested. Return to your applications or learn more about Xenia Way.",

@@ -4,6 +4,7 @@ import {
   DrizzleApplicationRepository,
   DrizzlePasswordResetTokenRepository,
   DrizzleSessionRepository,
+  DrizzleUserPreferencesRepository,
   DrizzleUserRepository,
 } from "./db/repository";
 import { createRedisClient } from "./redis/client";
@@ -30,6 +31,7 @@ const database = createDatabase(client);
 const users = new DrizzleUserRepository(database);
 const sessions = new DrizzleSessionRepository(database);
 const applications = new DrizzleApplicationRepository(database);
+const preferences = new DrizzleUserPreferencesRepository(database);
 const passwordResetTokens = new DrizzlePasswordResetTokenRepository(database);
 if (process.env.NODE_ENV === "production" && (!process.env.SMTP_URL || !process.env.MAIL_FROM)) {
   throw new Error("SMTP_URL and MAIL_FROM are required in production");
@@ -43,6 +45,7 @@ const app = createApp({
   users,
   sessions,
   applications,
+  preferences,
   passwordResetTokens,
   passwordResetMailer,
   appOrigin: process.env.APP_ORIGIN ?? "http://localhost:5173",

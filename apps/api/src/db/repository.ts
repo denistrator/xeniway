@@ -5,14 +5,16 @@ import type {
   JobStatus,
   UpdateApplicationInput,
   User,
+  UserPreferences,
 } from "@xeniway/shared";
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { createDatabase } from "./client";
-import { jobApplications, passwordResetTokens, sessions, users } from "./schema";
+import { jobApplications, passwordResetTokens, sessions, userPreferences, users } from "./schema";
 
 type Database = ReturnType<typeof createDatabase>;
 type UserRow = typeof users.$inferSelect;
 type SessionRow = typeof sessions.$inferSelect;
+type UserPreferencesRow = typeof userPreferences.$inferSelect;
 
 export interface UserRepository {
   findByEmail(email: string): Promise<UserRow | null>;
@@ -32,6 +34,11 @@ export interface SessionRepository {
   delete(id: string): Promise<void>;
   deleteForUser(userId: number): Promise<void>;
   deleteExpired(): Promise<void>;
+}
+
+export interface UserPreferencesRepository {
+  findByUserId(userId: number): Promise<UserPreferencesRow | null>;
+  markIntroduced(userId: number): Promise<UserPreferencesRow>;
 }
 
 export interface PasswordResetTokenRepository {
@@ -110,6 +117,28 @@ export class DrizzleSessionRepository implements SessionRepository {
 
   async deleteExpired(): Promise<void> {
     await this.database.delete(sessions).where(lte(sessions.expiresAt, new Date()));
+  }
+}
+
+export class DrizzleUserPreferencesRepository implements UserPreferencesRepository {
+  constructor(private readonly database: Database) {}
+
+  async findByUserId(userId: number): Promise<UserPreferencesRow | null> {
+    const [row] = await this.database.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
+    return row ?? null;
+  }
+
+  async markIntroduced(userId: number): Promise<UserPreferencesRow> {
+    const [row] = await this.database
+      .insert(userPreferences)
+      .values({ userId, wasIntroduced: true })
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: { wasIntroduced: true, updatedAt: new Date() },
+      })
+      .returning();
+    if (!row) throw new Error("Unable to update user preferences");
+    return row;
   }
 }
 
@@ -290,6 +319,14 @@ export function toUser(row: UserRow): User {
     firstName: row.firstName,
     lastName: row.lastName,
     createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export function toUserPreferences(row: UserPreferencesRow): UserPreferences {
+  return {
+    wasIntroduced: row.wasIntroduced,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 

@@ -21,6 +21,10 @@ Stores normalized unique email addresses, Argon2id password hashes, optional fir
 
 Stores the random session ID, optional owning user ID, server-side CSRF token, and expiration time. Anonymous rows support CSRF acquisition before login. User deletion cascades to sessions.
 
+### `user_preferences`
+
+Stores account-scoped onboarding state. `user_id` is the primary key and cascades from `users`; `was_introduced` defaults to `false`, and timestamps record row creation and updates. Language and theme preferences are not stored server-side yet and can be added in a later migration when that synchronization is needed.
+
 ### `password_reset_tokens`
 
 Stores a user foreign key, unique SHA-256 token hash, expiry, nullable one-time-use timestamp, and creation time. The API never stores or logs the raw URL token. User deletion cascades to reset tokens; indexes support user cleanup and token lookup.

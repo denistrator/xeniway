@@ -22,6 +22,7 @@ import { authRegisterRoute } from "./routes/auth-register";
 import { healthRoute } from "./routes/health";
 import { CSRF_HEADER, errorResponse } from "./routes/support";
 import type { AppDependencies, RouteDependencies } from "./routes/types";
+import { userPreferencesRoute } from "./routes/user-preferences";
 import { AuthService } from "./services/auth";
 import { PasswordResetService } from "./services/password-reset";
 import { SlidingWindowRateLimiter } from "./services/rate-limit";
@@ -50,6 +51,7 @@ export function createApp(dependencies: AppDependencies) {
       : undefined);
   const routeDependencies: RouteDependencies = {
     applications: dependencies.applications,
+    preferences: dependencies.preferences,
     auth,
     authRateLimiter,
     passwordReset,
@@ -79,6 +81,7 @@ export function createApp(dependencies: AppDependencies) {
     .use(authLoginRoute(routeDependencies))
     .use(authLogoutRoute(routeDependencies))
     .use(authMeRoute(routeDependencies))
+    .use(userPreferencesRoute(routeDependencies))
     .use(applicationsArchiveRoute(routeDependencies))
     .use(applicationsBlacklistRoute(routeDependencies))
     .use(applicationsListRoute(routeDependencies))

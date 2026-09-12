@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiRequestError, applicationKeys, confirmPasswordReset, parseApiError, requestPasswordReset } from "./api";
+import {
+  ApiRequestError,
+  applicationKeys,
+  confirmPasswordReset,
+  getUserPreferences,
+  markUserIntroduced,
+  parseApiError,
+  requestPasswordReset,
+  userPreferencesKeys,
+} from "./api";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -15,6 +24,29 @@ describe("web API helpers", () => {
     expect(applicationKeys.list("active")).toEqual(["applications", "list", "active"]);
     expect(applicationKeys.list("archive")).toEqual(["applications", "list", "archive"]);
     expect(applicationKeys.list("blacklist")).toEqual(["applications", "list", "blacklist"]);
+  });
+
+  it("keeps preference state isolated and protects completion with CSRF", async () => {
+    expect(userPreferencesKeys.current).toEqual(["user-preferences", "current"]);
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        async () => new Response(JSON.stringify({ data: { preferences: { wasIntroduced: false } } }), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getUserPreferences();
+    await markUserIntroduced("csrf-token");
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/user/preferences",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    const request = fetchMock.mock.calls[1]?.[1];
+    if (!request) throw new Error("Expected the preference completion request");
+    expect((request.headers as Headers).get("x-csrf-token")).toBe("csrf-token");
+    expect(request.method).toBe("POST");
   });
 
   it("keeps API error identity and HTTP status together", () => {

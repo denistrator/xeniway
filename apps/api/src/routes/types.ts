@@ -2,6 +2,7 @@ import type {
   ApplicationRepository,
   PasswordResetTokenRepository,
   SessionRepository,
+  UserPreferencesRepository,
   UserRepository,
 } from "../db/repository";
 import type { AuthService, PasswordHasher } from "../services/auth";
@@ -12,6 +13,7 @@ import type { RateLimiter } from "../services/rate-limit";
 export type AppDependencies = {
   users: UserRepository;
   sessions: SessionRepository;
+  preferences: UserPreferencesRepository;
   applications: ApplicationRepository;
   health?: () => Promise<boolean>;
   redisHealth?: () => Promise<boolean>;
@@ -26,6 +28,7 @@ export type AppDependencies = {
 
 export type RouteDependencies = {
   applications: ApplicationRepository;
+  preferences: UserPreferencesRepository;
   auth: AuthService;
   authRateLimiter: RateLimiter;
   passwordReset?: PasswordResetService;

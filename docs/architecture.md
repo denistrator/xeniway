@@ -26,6 +26,8 @@ React + React Router
 
 `apps/web/src/lib/api.ts` provides the typed HTTP client. `apps/web/src/lib/queries.ts` owns TanStack Query keys, authentication queries, CSRF acquisition, mutations, and cache invalidation. Redux contains only local UI preferences and controls.
 
+The user-preferences repository and API store account-scoped onboarding state separately from the `users` record. A successful login or registration creates an explicit frontend welcome trigger; the layout then reads preferences and renders the welcome dialog only when the account has not been introduced.
+
 The UI follows an accessibility-first baseline: semantic controls and labels, keyboard-operable workflows including a keyboard alternative to drag-and-drop, visible focus indicators, managed focus within dialogs and drawers, live regions for asynchronous feedback, responsive layouts, and reduced-motion support. The document theme is initialized before React starts to avoid a flash of the wrong theme.
 
 The UI language is a separate client-side concern owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists only an explicit browser choice under `xeniway-language`, falls back from the browser base language to English, and synchronizes `html[lang]`. Redux does not duplicate locale state.

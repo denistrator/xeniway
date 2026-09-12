@@ -14,6 +14,7 @@ This repository contains the candidate-tracking product and its local developmen
 - Archive applications, restore them, or permanently delete them from the archive.
 - Blacklist applications with an optional reason and remove them from a dedicated blacklist page.
 - Register, sign in, restore a session, sign out, and recover a password through a one-time email link.
+- See a localized welcome introduction after the first successful login or registration, with links to the board and About page.
 - Use light, dark, or system theme preferences.
 - Use the English, Russian, or Ukrainian interface with locale-aware dates.
 

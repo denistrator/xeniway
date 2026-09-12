@@ -61,6 +61,44 @@ test("uses floating labels for authentication fields", async ({ page }) => {
   }
 });
 
+test("shows the welcome popup after login and registration", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  await expect(welcome).toBeVisible();
+  await expect(welcome.getByText("Xenia Way gives you one clear place")).toBeVisible();
+  await welcome.getByRole("button", { name: "Close welcome introduction" }).click();
+  await expect(welcome).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("dialog", { name: "Welcome to Xenia Way" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Logout" }).click();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("test_user@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  const secondWelcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  await expect(secondWelcome).toBeVisible();
+  await page.getByRole("button", { name: "Close welcome introduction" }).first().click();
+  await expect(secondWelcome).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Logout" }).click();
+  await page.goto("/register");
+  const email = `welcome-${Date.now()}@example.com`;
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByLabel("Confirm password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  const registeredWelcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  await expect(registeredWelcome).toBeVisible();
+  await registeredWelcome.getByRole("button", { name: "About Xenia Way" }).click();
+  await expect(page).toHaveURL(/\/about$/);
+  await expect(registeredWelcome).toHaveCount(0);
+});
+
 test("has no automated accessibility violations across key workflows", async ({ page }) => {
   await page.goto("/about");
   await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();

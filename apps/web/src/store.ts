@@ -11,6 +11,7 @@ type UiState = {
   search: string;
   visibleStatuses: JobStatus[];
   drawer: { open: boolean; mode: "create" | "edit"; jobId: number | null };
+  welcome: { open: boolean };
 };
 
 const initialState: UiState = {
@@ -25,6 +26,7 @@ const initialState: UiState = {
   search: "",
   visibleStatuses: ["saved", "applied", "interview", "offer", "rejected", "withdrawn"],
   drawer: { open: false, mode: "create", jobId: null },
+  welcome: { open: false },
 };
 
 const uiSlice = createSlice({
@@ -57,6 +59,12 @@ const uiSlice = createSlice({
     closeDrawer: (state) => {
       state.drawer.open = false;
     },
+    openWelcome: (state) => {
+      state.welcome.open = true;
+    },
+    closeWelcome: (state) => {
+      state.welcome.open = false;
+    },
   },
 });
 
@@ -69,6 +77,8 @@ export const {
   openCreateDrawer,
   openEditDrawer,
   closeDrawer,
+  openWelcome,
+  closeWelcome,
 } = uiSlice.actions;
 
 export const store = configureStore({ reducer: { ui: uiSlice.reducer } });

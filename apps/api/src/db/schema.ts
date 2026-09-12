@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   index,
   integer,
@@ -36,6 +37,15 @@ export const sessions = pgTable(
   },
   (table) => [index("sessions_user_id_idx").on(table.userId)],
 );
+
+export const userPreferences = pgTable("user_preferences", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  wasIntroduced: boolean("was_introduced").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const passwordResetTokens = pgTable(
   "password_reset_tokens",

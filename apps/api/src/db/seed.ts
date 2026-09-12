@@ -1,7 +1,7 @@
 import type { CreateApplicationInput, JobStatus } from "@xeniway/shared";
 import { inArray } from "drizzle-orm";
 import { createDatabase, createPostgresClient } from "./client";
-import { jobApplications, users } from "./schema";
+import { jobApplications, userPreferences, users } from "./schema";
 
 export const seedAccounts = [
   { key: "admin", email: "admin@example.com", firstName: "Demo", lastName: "Admin" },
@@ -49,6 +49,13 @@ async function seed(): Promise<void> {
       })
       .returning({ id: users.id, email: users.email });
     const userIds = new Map(accountRows.map((account) => [account.email, account.id]));
+    await database
+      .insert(userPreferences)
+      .values(accountRows.map(({ id }) => ({ userId: id, wasIntroduced: false })))
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: { wasIntroduced: false, updatedAt: new Date() },
+      });
     const applications = buildSeedApplications(seedAccounts.map((account) => account.key)).map((application) => {
       const account = seedAccounts.find((candidate) => candidate.key === application.userKey);
       const userId = account ? userIds.get(account.email) : undefined;

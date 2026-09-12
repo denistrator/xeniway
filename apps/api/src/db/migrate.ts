@@ -14,6 +14,7 @@ const migrations = [
   { id: "0002_application_sort_order", file: "0002_application_sort_order.sql" },
   { id: "0003_blacklist_state", file: "0003_blacklist_state.sql" },
   { id: "0004_password_reset_tokens", file: "0004_password_reset_tokens.sql" },
+  { id: "0005_user_preferences", file: "0005_user_preferences.sql" },
 ];
 
 try {

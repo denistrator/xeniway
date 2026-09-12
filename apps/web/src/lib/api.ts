@@ -16,6 +16,7 @@ import type {
   RegisterInput,
   ReorderApplicationsInput,
   UpdateApplicationInput,
+  UserPreferencesResponse,
 } from "@xeniway/shared";
 
 export type ApplicationList = "active" | "archive" | "blacklist";
@@ -23,6 +24,11 @@ export type ApplicationList = "active" | "archive" | "blacklist";
 export const applicationKeys = {
   all: ["applications"] as const,
   list: (list: ApplicationList) => ["applications", "list", list] as const,
+};
+
+export const userPreferencesKeys = {
+  all: ["user-preferences"] as const,
+  current: ["user-preferences", "current"] as const,
 };
 
 type ParsedApiError = { code: string; message: string };
@@ -113,6 +119,14 @@ export function confirmPasswordReset(
 
 export function getCurrentUser(): Promise<CurrentUserResponse> {
   return requestJson<CurrentUserResponse>("/api/auth/me");
+}
+
+export function getUserPreferences(): Promise<UserPreferencesResponse> {
+  return requestJson<UserPreferencesResponse>("/api/user/preferences");
+}
+
+export function markUserIntroduced(csrfToken: string): Promise<UserPreferencesResponse> {
+  return requestJson<UserPreferencesResponse>("/api/user/preferences/introduced", { method: "POST" }, csrfToken);
 }
 
 export function logout(csrfToken: string): Promise<ApiSuccess<MessageResponse["data"]>> {

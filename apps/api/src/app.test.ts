@@ -5,6 +5,7 @@ import type {
   ApplicationRepository,
   PasswordResetTokenRepository,
   SessionRepository,
+  UserPreferencesRepository,
   UserRepository,
 } from "./db/repository";
 import type { PasswordResetMailer } from "./services/mailer";
@@ -209,9 +210,28 @@ function createDependencies(): AppDependencies {
   const passwordResetMailer: PasswordResetMailer = {
     async sendPasswordReset() {},
   };
+  const userPreferences = new Map<
+    number,
+    { userId: number; wasIntroduced: boolean; createdAt: Date; updatedAt: Date }
+  >();
+  const preferences: UserPreferencesRepository = {
+    async findByUserId(userId) {
+      return userPreferences.get(userId) ?? null;
+    },
+    async markIntroduced(userId) {
+      const now = new Date();
+      const existing = userPreferences.get(userId);
+      const row = existing ?? { userId, wasIntroduced: false, createdAt: now, updatedAt: now };
+      row.wasIntroduced = true;
+      row.updatedAt = now;
+      userPreferences.set(userId, row);
+      return row;
+    },
+  };
   return {
     users: userRepository,
     sessions: sessionRepository,
+    preferences,
     applications: applicationRepository,
     passwordResetTokens,
     passwordResetMailer,
@@ -268,6 +288,62 @@ function jsonRequest(url: string, init: RequestInit, sessionId: string, csrfToke
 }
 
 describe("application API", () => {
+  it("reads and completes user introduction preferences with CSRF protection", async () => {
+    const app = createApp(createDependencies());
+    const account = await register(app, "preferences@example.com");
+    const csrf = { sessionId: account.sessionId, csrfToken: account.payload.data.csrfToken };
+
+    const initial = await app.handle(
+      new Request("http://localhost/api/user/preferences", {
+        headers: { cookie: `session_id=${csrf.sessionId}` },
+      }),
+    );
+    expect(initial.status).toBe(200);
+    expect((await initial.json()).data.preferences.wasIntroduced).toBe(false);
+
+    const invalid = await app.handle(
+      new Request("http://localhost/api/user/preferences/introduced", {
+        method: "POST",
+        headers: { cookie: `session_id=${csrf.sessionId}` },
+      }),
+    );
+    expect(invalid.status).toBe(403);
+
+    const completed = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences/introduced",
+        { method: "POST" },
+        csrf.sessionId,
+        csrf.csrfToken,
+      ),
+    );
+    expect(completed.status).toBe(200);
+    expect((await completed.json()).data.preferences.wasIntroduced).toBe(true);
+  });
+
+  it("keeps introduction preferences isolated between accounts", async () => {
+    const app = createApp(createDependencies());
+    const first = await register(app, "first-preferences@example.com");
+    const second = await register(app, "second-preferences@example.com");
+
+    const completed = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences/introduced",
+        { method: "POST" },
+        first.sessionId,
+        first.payload.data.csrfToken,
+      ),
+    );
+    expect(completed.status).toBe(200);
+
+    const secondPreferences = await app.handle(
+      new Request("http://localhost/api/user/preferences", {
+        headers: { cookie: `session_id=${second.sessionId}` },
+      }),
+    );
+    expect((await secondPreferences.json()).data.preferences.wasIntroduced).toBe(false);
+  });
+
   it("returns a generic response for both known and unknown password reset emails", async () => {
     const app = createApp(createDependencies());
     const account = await register(app, "candidate@example.com");
