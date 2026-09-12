@@ -15,7 +15,7 @@ React + React Router
                 │
         AuthService + typed repositories ──→ Drizzle ORM → PostgreSQL
                 │
-        Redis rate limiter (auth only)
+        Redis rate limiter (auth + password reset)
 ```
 
 ## Workspace boundaries
@@ -41,7 +41,7 @@ The UI language is a separate client-side concern owned by i18next/react-i18next
 
 Locale-neutral API values are translated only at the presentation boundary. Application statuses and error codes remain canonical, candidate-entered data is never machine-translated, and displayed dates are formatted with the active locale while stored ISO timestamps remain unchanged.
 
-Login and registration consume an atomic Redis counter with a fifteen-minute fixed window and a limit of five attempts per normalized email. Counter keys contain a SHA-256 digest rather than the raw email. If Redis is unavailable, authentication fails closed with a `503` response instead of bypassing abuse protection.
+Login, registration, and password-reset requests consume an atomic Redis counter with a fifteen-minute fixed window and a limit of five attempts per normalized email. Counter keys contain a SHA-256 digest rather than the raw email. If Redis is unavailable, these flows fail closed with a `503` response instead of bypassing abuse protection.
 
 ## Data ownership
 

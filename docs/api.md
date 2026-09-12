@@ -1,9 +1,11 @@
 # API Reference
 
-All JSON responses use one of these envelopes:
+Most JSON responses use one of these envelopes:
 
 - Success: `{ "data": { ... } }`
 - Error: `{ "error": { "code": "...", "message": "...", "fields": { ... } } }`
+
+The `GET /api/health` endpoint is the exception: it returns a direct health object so infrastructure checks can read it without unwrapping `data`.
 
 The API uses camelCase JSON. Session authentication is carried by the `session_id` HttpOnly cookie. Mutating requests also send `x-csrf-token`.
 
@@ -19,6 +21,8 @@ The API uses camelCase JSON. Session authentication is carried by the `session_i
 | `GET` | `/api/auth/me` | Session | Returns the current user |
 | `POST` | `/api/auth/password-reset/request` | CSRF | Sends a reset link when the email belongs to an account; always returns the same message |
 | `POST` | `/api/auth/password-reset/confirm` | CSRF | Consumes a valid reset token and changes the password |
+
+All mutating authenticated requests require the current session's CSRF token in `x-csrf-token`. Reads require the session cookie but not the CSRF header. Requests that address an application are always scoped to the authenticated user; ownership failures are reported as `NOT_FOUND`.
 
 Register body:
 
@@ -67,7 +71,7 @@ Application create/update fields:
 }
 ```
 
-`company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date.
+`company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date. Archive and blacklist are independent lifecycle states, not additional status values. Blacklisting preserves the application's status and data; removing it from the blacklist returns it to the active list. Permanent deletion is accepted only for an archived application.
 
 Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
 

@@ -23,7 +23,7 @@ bun run db:seed
 bun run test:e2e
 ```
 
-The root `test` command runs all Vitest workspaces. E2E requires a migrated and seeded PostgreSQL instance because it uses the real API and database.
+The root `test` command runs all Vitest workspaces. E2E requires Docker, running PostgreSQL and Redis, a migrated and seeded database, the API and web servers, and a Playwright Chromium installation because it uses the real API and database. The checked-in `.github/workflows/ci.yml` workflow runs the same verification sequence on pushes and pull requests using PostgreSQL and Redis service containers.
 
 ## Test design rules
 

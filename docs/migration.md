@@ -1,6 +1,6 @@
-# Migration Record
+# Migration Record (Historical)
 
-The current repository is the React/Bun implementation of Xenia Way. The previous implementation was used as a behavioral reference during migration, but its code, demonstration routes, schema, and data are not part of this repository.
+This is a historical record of the move to the current React/Bun implementation of Xenia Way. It is not a setup guide. The previous implementation was used as a behavioral reference during migration, but its code, demonstration routes, schema, and data are not part of this repository.
 
 ## Result
 

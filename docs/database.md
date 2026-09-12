@@ -44,9 +44,9 @@ Migrations create schema only and do not insert users or applications. Existing 
 
 ## Development seed
 
-Run `bun run db:seed` after migrations. It upserts:
+Run `bun run db:seed` after migrations. The command is for local development only and upserts:
 
 - `admin@example.com` / `password`
 - `test_user@example.com` / `password`
 
-It creates 36 applications: three per status for each account. Re-running the command replaces only rows identified by its development seed keys.
+It creates 36 applications: three per status for each account. Re-running the command replaces only rows identified by its development seed keys. The seed command does not represent production data and should never be run against a production database.

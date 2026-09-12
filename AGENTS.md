@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Xenia Way is a candidate-facing application for recording employer conversations and application progress. Preserve the six-status workflow, authenticated ownership boundary, archive semantics, and shared API contracts when changing the code.
+Xenia Way is a candidate-facing workspace for recording employer conversations, job applications, follow-ups, and outcomes. Each signed-in candidate owns a private application board. Preserve the six-status workflow (`saved`, `applied`, `interview`, `offer`, `rejected`, and `withdrawn`), authenticated ownership boundary, separate archive and blacklist semantics, and shared API contracts when changing the code.
+
+The repository describes the candidate-tracking product and its local development environment. Do not present external authentication, deployment configuration, integrations, background jobs, or a migration from the previous application as current capabilities without explicit approval.
 
 ## Structure
 
@@ -11,7 +13,7 @@ Xenia Way is a candidate-facing application for recording employer conversations
 - `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
 - `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.
 - `docs` contains human and AI-facing architecture, API, database, operations, testing, and migration documentation.
-- `infra/docker-compose.yml` defines the local PostgreSQL and Redis services.
+- `infra/docker-compose.yml` defines the local PostgreSQL, Redis, and Mailpit services.
 
 The web UI is an accessibility-sensitive product surface. Preserve semantic HTML, keyboard access, visible focus indicators, dialog focus management, accessible names, live announcements for async states, responsive touch targets, and reduced-motion behavior.
 
@@ -30,9 +32,11 @@ Run `bun install` after cloning, copy `.env.example` to `.env`, then use:
 
 The E2E workflow expects PostgreSQL and Redis to be running, and PostgreSQL to be migrated and seeded. Install Chromium with `bunx playwright install chromium` when needed.
 
+The newcomer setup sequence and current command table live in `README.md`; keep them synchronized with the root `package.json`, `.env.example`, and `infra/docker-compose.yml`. Technical behavior belongs in the linked documents under `docs/` rather than in undocumented assumptions.
+
 ## Coding conventions
 
-Use TypeScript with two-space indentation, double-quoted imports and strings, semicolons, and trailing commas consistent with the existing source. Use `camelCase` for values and functions, `PascalCase` for React components and types, and kebab-case for route/page filenames. Keep API JSON camelCase and wrapped in the documented `data` or `error` envelope. Prefer the shared Zod schemas at all browser/API boundaries.
+Use TypeScript with two-space indentation, double-quoted imports and strings, semicolons, and trailing commas consistent with the existing source. Use `camelCase` for values and functions, `PascalCase` for React components and types, and kebab-case for route/page filenames. Keep API JSON camelCase and wrapped in the documented `data` or `error` envelope, except for the direct `/api/health` response. Prefer the shared Zod schemas at all browser/API boundaries.
 
 Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for the supported TypeScript and TSX files.
 
@@ -62,8 +66,12 @@ bun run test:e2e
 
 ## Security and configuration
 
-Never commit `.env`, passwords, session IDs, or generated test artifacts. Use `.env.example` as the configuration template. Passwords are hashed with Argon2id; session IDs are stored in HttpOnly cookies; CSRF tokens are stored server-side and sent in `x-csrf-token`; Redis stores only hashed-key authentication rate-limit counters. Do not weaken ownership checks, cookie settings, or fail-closed rate limiting to make tests pass.
+Never commit `.env`, passwords, session IDs, or generated test artifacts. Use `.env.example` as the configuration template. Passwords are hashed with Argon2id; session IDs are stored in HttpOnly cookies; CSRF tokens are stored server-side and sent in `x-csrf-token`; Redis stores only hashed-key rate-limit counters for login, registration, and password reset. Do not weaken ownership checks, cookie settings, or fail-closed rate limiting to make tests pass.
 
 ## Change boundaries
 
 Do not add new product features, pages, integrations, external authentication, caching, object storage, or deployment systems without explicit approval. If a requested change conflicts with the API contract or requires data migration outside the current empty-migration policy, stop and ask for direction.
+
+## Documentation
+
+When changing product behavior, setup, commands, environment variables, API contracts, schema, security behavior, tests, or supported locales, update the relevant current documentation and README links in the same change. Treat `docs/superpowers/plans/` and `docs/superpowers/specs/` as historical implementation records; preserve them unless they contain a claim that would actively mislead contributors outside its historical context.

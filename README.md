@@ -1,75 +1,101 @@
 # Xenia Way
 
-Xenia Way helps job candidates keep a reliable record of conversations and progress with potential employers. Each application belongs to the signed-in user and moves through six workflow statuses: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.
+Xenia Way is a candidate-facing workspace for keeping a reliable record of the job search: employer conversations, application details, follow-ups, and outcomes. It gives each signed-in candidate a private board for moving applications through six statuses—Saved, Applied, Interview, Offer, Rejected, and Withdrawn—without losing the notes and context around each opportunity.
 
-The application is a Bun workspace with a React SPA, a typed Elysia API, shared Zod contracts, Drizzle ORM, PostgreSQL, and Redis-backed authentication rate limiting.
+Archive and blacklist are separate from the six-status workflow. Archive is for applications you want out of the active board but may restore or permanently delete later. Blacklist is for excluding an employer or opportunity from the active workflow while preserving its status and notes; it is not a seventh status.
 
-## Features
+This repository contains the candidate-tracking product and its local development environment. It does not include external authentication, deployment configuration, integrations, background jobs, or data migration from the previous application.
 
-- Registration, login, logout, and session restoration.
-- Enumeration-safe password recovery with one-time reset links.
-- Argon2id password hashing, secure HttpOnly sessions, and CSRF protection.
-- Create, read, update, and archive job applications.
-- Search, status filtering, and native drag-and-drop status changes with keyboard alternatives.
-- Archive restore and permanent deletion with confirmation.
-- Blacklist jobs with an optional reason and restore them from a dedicated blacklist page.
-- Light, dark, and system themes with a persisted browser preference.
-- English, Russian, and Ukrainian UI translations with a browser-local language preference.
-- Accessible UI with semantic controls, visible focus states, keyboard navigation, live status updates, and reduced-motion support.
-- Per-user ownership isolation for all application operations.
-- Development seed accounts and 36 deterministic fixture applications.
+## What you can do
 
-## Stack
+- Create and edit applications with company, position, location, salary, job URL, description, applied date, notes, and status.
+- Search applications and filter the board by status.
+- Reorder applications within a status using drag-and-drop or keyboard controls.
+- Archive applications, restore them, or permanently delete them from the archive.
+- Blacklist applications with an optional reason and remove them from a dedicated blacklist page.
+- Register, sign in, restore a session, sign out, and recover a password through a one-time email link.
+- Use light, dark, or system theme preferences.
+- Use the English, Russian, or Ukrainian interface with locale-aware dates.
+
+The application is designed as an accessibility-sensitive product surface: it uses semantic controls, associated labels, visible focus states, keyboard-operable workflows, managed dialog focus, live announcements, responsive touch targets, and reduced-motion support.
+
+## Technology
 
 | Layer | Technology |
 | --- | --- |
-| Web | React, TypeScript, Vite, React Router, i18next |
-| Client state | TanStack Query for server state, Redux Toolkit for UI state |
-| UI | Tailwind CSS and local shadcn/ui-style primitives |
+| Web | React 19, TypeScript, Vite, React Router, i18next |
+| Client state | TanStack Query for server state, Redux Toolkit for local UI state |
+| UI | Tailwind CSS v4 and local shadcn/ui-style primitives |
 | API | Bun, Elysia, Zod |
-| Persistence | Drizzle ORM and PostgreSQL |
-| Abuse protection | Redis-backed distributed authentication and password-reset rate limiting |
+| Persistence | Drizzle ORM and PostgreSQL 16 |
+| Rate limiting | Redis 7 for login, registration, and password-reset limits |
+| Password recovery | Nodemailer with Mailpit for local development |
 | Tests | Vitest and Playwright |
 | Local infrastructure | Docker Compose |
 
-## Local setup
+The repository is a Bun workspace with three packages: `apps/web` for the React SPA, `apps/api` for the API and database services, and `packages/shared` for Zod schemas and public TypeScript contracts shared by both applications.
 
-Prerequisites: Bun, Docker Compose, and a Playwright Chromium installation for browser tests.
+## Requirements
+
+For local development you need:
+
+- [Bun](https://bun.sh/) 1.4 or newer;
+- Docker with the Docker Compose plugin;
+- a browser for the application; and
+- Chromium installed through Playwright if you want to run the browser tests.
+
+Check the installed tools before starting:
+
+```bash
+bun --version
+docker compose version
+```
+
+## Install and run locally
+
+From the repository root:
 
 ```bash
 cp .env.example .env
 bun install
 bun run up
 bun run db:migrate
-bun run db:seed       # optional development fixtures
+bun run db:seed
 bun run dev
 ```
 
-Open the web app at [http://localhost:5173](http://localhost:5173). The API listens at [http://localhost:3000](http://localhost:3000). The Vite development server proxies `/api` requests to the API.
+The seed step is optional for ordinary development, but it provides realistic data for exploring the board and is required by the end-to-end tests. It creates these development-only accounts:
 
-Seed credentials are `admin@example.com` / `password` and `test_user@example.com` / `password`. Seed data is development-only and is not created by migrations.
+| Email | Password |
+| --- | --- |
+| `admin@example.com` | `password` |
+| `test_user@example.com` | `password` |
 
-Password recovery uses the local Mailpit SMTP inbox by default. Open [http://localhost:8025](http://localhost:8025) to inspect messages. Use `bun run mailpit:down` to stop it. Configure `APP_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` for another SMTP server.
+Open:
 
-## Commands
+- web app: [http://localhost:5173](http://localhost:5173)
+- API health: [http://localhost:3000/api/health](http://localhost:3000/api/health)
+- Mailpit inbox: [http://localhost:8025](http://localhost:8025)
+
+The Vite development server proxies `/api` requests to the API. PostgreSQL listens on port `5432`, Redis on `6379`, the API on `3000`, and the web app on `5173` by default.
+
+Password recovery sends local mail to Mailpit through `smtp://127.0.0.1:1025`. For another SMTP server, set `APP_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` in `.env`. In production, `SMTP_URL` and `MAIL_FROM` are required; the console mailer is intended only for local development when SMTP is intentionally absent.
+
+## Common commands
+
+Run commands from the repository root.
 
 | Command | Purpose |
 | --- | --- |
 | `bun run dev` | Start the API and Vite web app |
 | `bun run up` | Start PostgreSQL, Redis, and Mailpit |
-| `bun run check` | Check PostgreSQL, Redis, and Mailpit |
 | `bun run down` | Stop all local infrastructure services |
-| `bun run db:up` | Start local PostgreSQL |
-| `bun run db:down` | Stop local PostgreSQL only |
-| `bun run db:check` | Check local PostgreSQL connectivity |
-| `bun run redis:up` | Start local Redis |
-| `bun run redis:down` | Stop local Redis |
-| `bun run redis:check` | Check local Redis connectivity |
-| `bun run mailpit:up` | Start the local SMTP test inbox |
-| `bun run mailpit:down` | Stop the local SMTP test inbox |
-| `bun run mailpit:check` | Check the local SMTP test inbox |
+| `bun run check` | Check PostgreSQL, Redis, and Mailpit |
+| `bun run db:up` / `bun run db:down` | Start or stop PostgreSQL |
+| `bun run redis:up` / `bun run redis:down` | Start or stop Redis |
+| `bun run mailpit:up` / `bun run mailpit:down` | Start or stop Mailpit |
 | `bun run db:migrate` | Apply checked-in SQL migrations |
-| `bun run db:seed` | Idempotently recreate development accounts and fixtures |
+| `bun run db:seed` | Recreate development accounts and deterministic fixtures |
 | `bun run typecheck` | Typecheck shared, API, and web packages |
 | `bun run test` | Run all Vitest suites |
 | `bun run build` | Build the web bundle and typecheck the API |
@@ -77,30 +103,48 @@ Password recovery uses the local Mailpit SMTP inbox by default. Open [http://loc
 | `bun run format` | Format supported source files with Biome |
 | `bun run lint` | Check formatting, imports, and lint rules with Biome |
 
-For E2E testing, start PostgreSQL and Redis, apply migrations, seed the database, and install Chromium with `bunx playwright install chromium`.
+`bun run up` recreates the Compose services safely and keeps PostgreSQL and Redis data in named local volumes. `bun run down` stops the services without removing those volumes. Mailpit messages are disposable.
+
+## Browser tests
+
+Install Chromium once if it is not already available:
+
+```bash
+bunx playwright install chromium
+```
+
+Then ensure PostgreSQL and Redis are running, apply migrations, seed the database, and run:
+
+```bash
+bun run up
+bun run db:migrate
+bun run db:seed
+bun run test:e2e
+```
+
+The browser workflow covers language switching and reload persistence, public password recovery navigation and validation, authentication, the six statuses, search, create/edit flows, blacklist and restore, drag-and-drop, archive, and permanent deletion.
 
 ## Repository map
 
-- `apps/web` — React routes, components, Redux UI state, TanStack Query hooks, and typed API client.
-- `apps/api` — Elysia app factory, authentication, repositories, Drizzle schema, migration runner, and seed command.
-- `packages/shared` — shared Zod request schemas and TypeScript response contracts.
-- `apps/api/drizzle` — checked-in PostgreSQL migrations.
-- `infra/docker-compose.yml` — local PostgreSQL and Redis services with persistent volumes.
+- `apps/web` — React routes, components, translations, Redux UI state, TanStack Query hooks, and the typed API client.
+- `apps/api` — Elysia app factory, authentication, CSRF, rate limiting, repositories, Drizzle schema, migrations, and seed command.
+- `packages/shared` — shared Zod input schemas and public response contracts.
+- `apps/api/drizzle` — checked-in PostgreSQL migrations; migrations create schema but do not seed data.
+- `infra/docker-compose.yml` — local PostgreSQL, Redis, and Mailpit services.
 - `tests/e2e` — Playwright browser workflows.
-- `docs` — architecture, API, database, operations, testing, and migration notes.
+- `docs` — current API, architecture, database, operations, testing, and migration documentation.
 
-See [API documentation](docs/api.md), [database documentation](docs/database.md), [operations documentation](docs/operations.md), and [testing documentation](docs/testing.md) for details.
+## Further documentation
 
-## Accessibility
+- [API reference](docs/api.md)
+- [Architecture](docs/architecture.md)
+- [Database](docs/database.md)
+- [Operations and troubleshooting](docs/operations.md)
+- [Testing](docs/testing.md)
+- [Migration record](docs/migration.md)
 
-Accessibility is a first-class UI goal. Preserve semantic HTML, associated form labels and autocomplete metadata, visible `:focus-visible` states, keyboard alternatives for drag-and-drop interactions, focus management for dialogs, polite announcements for asynchronous states, responsive touch targets, and `prefers-reduced-motion` support. Verify user-visible changes with keyboard navigation and the accessible roles and names used by Playwright tests.
+## Security and data boundaries
 
-## Languages
+All application operations are scoped to the authenticated user. Sessions use HttpOnly cookies, mutating authenticated requests require the server-issued CSRF token, passwords use Argon2id, and authentication/password-reset rate limits fail closed when Redis is unavailable. Password-reset tokens are random, single-use, time-limited, and stored only as hashes.
 
-The UI supports `en`, `ru`, and `uk`. English is the initial fallback; Russian and Ukrainian dictionaries are lazy-loaded so they do not inflate the initial bundle. The header selector stores an explicit choice in the browser under `xeniway-language`. Without a saved choice, the browser language is reduced to its supported base language and unsupported languages use English. The selected locale updates `html[lang]` and all displayed dates use it through `Intl.DateTimeFormat`.
-
-Language preference is intentionally not part of the user record or API contract. Status values, API error codes, database data, email content, and candidate-entered fields remain language-neutral; the React client translates stable error codes and UI copy at presentation time.
-
-## Scope and deferred work
-
-This repository intentionally contains only the candidate job-tracking workflow. New product features, integrations, external authentication, caching, object storage, and deployment systems are deferred until separately approved.
+Do not use the seed credentials outside local development. Never commit `.env`, passwords, session IDs, or generated test artifacts.
