@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { LanguageSync } from "./components/language-sync";
@@ -7,15 +7,26 @@ import { Layout } from "./components/layout";
 import { ThemeSync } from "./components/theme-sync";
 import { applicationKeys } from "./lib/api";
 import { authKeys, useCurrentUser } from "./lib/queries";
-import { AboutPage } from "./pages/about-page";
-import { ArchivePage } from "./pages/archive-page";
-import { BlacklistPage } from "./pages/blacklist-page";
-import { ForgotPasswordPage } from "./pages/forgot-password-page";
-import { HomePage } from "./pages/home-page";
-import { LoginPage } from "./pages/login-page";
-import { NotFoundPage } from "./pages/not-found-page";
-import { PasswordResetPage } from "./pages/password-reset-page";
-import { RegisterPage } from "./pages/register-page";
+
+const AboutPage = lazy(() => import("./pages/about-page").then(({ AboutPage }) => ({ default: AboutPage })));
+const ArchivePage = lazy(() => import("./pages/archive-page").then(({ ArchivePage }) => ({ default: ArchivePage })));
+const BlacklistPage = lazy(() =>
+  import("./pages/blacklist-page").then(({ BlacklistPage }) => ({ default: BlacklistPage })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import("./pages/forgot-password-page").then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })),
+);
+const HomePage = lazy(() => import("./pages/home-page").then(({ HomePage }) => ({ default: HomePage })));
+const LoginPage = lazy(() => import("./pages/login-page").then(({ LoginPage }) => ({ default: LoginPage })));
+const NotFoundPage = lazy(() =>
+  import("./pages/not-found-page").then(({ NotFoundPage }) => ({ default: NotFoundPage })),
+);
+const PasswordResetPage = lazy(() =>
+  import("./pages/password-reset-page").then(({ PasswordResetPage }) => ({ default: PasswordResetPage })),
+);
+const RegisterPage = lazy(() =>
+  import("./pages/register-page").then(({ RegisterPage }) => ({ default: RegisterPage })),
+);
 
 export function App() {
   const { t } = useTranslation();
@@ -31,23 +42,25 @@ export function App() {
       <ThemeSync />
       <LanguageSync />
       <AuthFailureHandler />
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/about" element={<AboutPage />} />
-          <Route element={<RequireAuth />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/archive" element={<ArchivePage />} />
-            <Route path="/blacklist" element={<BlacklistPage />} />
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/about" element={<AboutPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/archive" element={<ArchivePage />} />
+              <Route path="/blacklist" element={<BlacklistPage />} />
+            </Route>
+            <Route element={<GuestOnly />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Route>
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<PasswordResetPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
-          <Route element={<GuestOnly />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-          </Route>
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<PasswordResetPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

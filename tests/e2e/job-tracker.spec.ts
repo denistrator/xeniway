@@ -63,6 +63,7 @@ test("uses floating labels for authentication fields", async ({ page }) => {
 
 test("has no automated accessibility violations across key workflows", async ({ page }) => {
   await page.goto("/about");
+  await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   await page.goto("/login");

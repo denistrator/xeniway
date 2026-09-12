@@ -1,3 +1,4 @@
+import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
@@ -5,7 +6,7 @@ import { useAuthMutations, useCurrentUser } from "../lib/queries";
 import { cn } from "../lib/utils";
 import { closeDrawer, openCreateDrawer } from "../store";
 import { LanguageSelector } from "./language-selector";
-import { ThemeSelector } from "./theme-selector";
+import { ThemeSelector} from "./theme-selector";
 import { Button } from "./ui/button";
 
 function navigationLinkClassName({ isActive }: { isActive: boolean }) {
@@ -37,11 +38,11 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-line bg-surface">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-6 py-4">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center px-6 py-4">
         <Link to="/" className="font-display mr-auto text-xl font-bold tracking-tight text-ink">
           Job Tracker
         </Link>
-        <nav className="flex items-center gap-1" aria-label={t("accessibility.workspaceNavigation")}>
+        <nav className="flex items-center gap-1 px-3" aria-label={t("accessibility.workspaceNavigation")}>
           {navigationLinks.map(
             ({ to, labelKey, authOnly, end }) =>
               (!authOnly || Boolean(user.data)) && (
@@ -51,20 +52,27 @@ export function SiteHeader() {
               ),
           )}
         </nav>
-        <div className="flex items-center gap-2 border-l border-line pl-3">
-          {user.data && <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>}
+        <div className="flex items-center gap-4">
           {user.data && (
-            <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
-              + {t("common.actions.addJob")}
-            </Button>
+            <>
+              <div className="flex items-center lg:border-x border-line ps-6 pe-3">
+                <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
+                <Button variant="ghost" size="sm" className="ms-1" onClick={handleLogout} disabled={logout.isPending}>
+                  <div className="sr-only">{logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}</div>
+                  <LogOut aria-hidden="true" size={15} strokeWidth={2} />
+                </Button>
+              </div>
+            </>
           )}
-          <LanguageSelector />
-          <ThemeSelector />
-          {user.data && (
-            <Button variant="ghost" size="sm" onClick={handleLogout} disabled={logout.isPending}>
-              {logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}
-            </Button>
-          )}
+          <div className="ms-2 flex items-center gap-2">
+            {user.data && (
+              <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
+                + {t("common.actions.addJob")}
+              </Button>
+            )}
+            <ThemeSelector />
+            <LanguageSelector />
+          </div>
         </div>
       </div>
     </header>
