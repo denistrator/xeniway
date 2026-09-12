@@ -1,10 +1,8 @@
 import type { CreateApplicationInput, JobApplication } from "@xeniway/shared";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { RefObject } from "react";
-import { useTranslation } from "react-i18next";
 import type { JobFormPresentation } from "../../store";
-import { Button } from "../ui/button";
 import { JobForm } from "./job-form";
+import { JobFormHeader } from "./job-form-header";
 
 export type JobFormContentProps = {
   presentation: JobFormPresentation;
@@ -35,43 +33,14 @@ export function JobFormContent({
   onClose,
   onSwitchPresentation,
 }: JobFormContentProps) {
-  const { t } = useTranslation();
-
   return (
     <>
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 id="job-form-title" className="font-display text-2xl font-bold tracking-tight text-ink">
-          {mode === "create" ? t("applications.editor.add") : t("applications.editor.edit")}
-        </h2>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={
-              presentation === "drawer"
-                ? t("applications.editor.switchToModal")
-                : t("applications.editor.switchToDrawer")
-            }
-            title={
-              presentation === "drawer"
-                ? t("applications.editor.switchToModal")
-                : t("applications.editor.switchToDrawer")
-            }
-            onClick={onSwitchPresentation}
-          >
-            {presentation === "drawer" ? <PanelRightOpen aria-hidden="true" /> : <PanelRightClose aria-hidden="true" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t("applications.editor.close")}
-            data-dialog-initial-focus
-            onClick={onClose}
-          >
-            ×
-          </Button>
-        </div>
-      </div>
+      <JobFormHeader
+        mode={mode}
+        presentation={presentation}
+        onClose={onClose}
+        onSwitchPresentation={onSwitchPresentation}
+      />
       <JobForm
         job={job}
         submitting={submitting}
