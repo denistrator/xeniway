@@ -17,6 +17,7 @@ This repository contains the candidate-tracking product and its local developmen
 - See a localized welcome introduction after the first successful login or registration, with links to the board and About page.
 - Use light, dark, or system theme preferences.
 - Use the English, Russian, or Ukrainian interface with locale-aware dates.
+- Signed-in language, theme, and job-form presentation choices are stored with the account. The browser updates immediately and syncs explicit changes in the background; after login or registration, saved account values replace the browser cache. The browser keeps the flat `userPreferences` cache for theme, language, form presentation, and the welcome status.
 
 The application is designed as an accessibility-sensitive product surface: it uses semantic controls, associated labels, visible focus states, keyboard-operable workflows, managed dialog focus, live announcements, responsive touch targets, and reduced-motion support.
 
@@ -80,6 +81,8 @@ Open:
 
 The Vite development server proxies `/api` requests to the API. PostgreSQL listens on port `5432`, Redis on `6379`, the API on `3000`, and the web app on `5173` by default.
 
+User preferences are account-scoped on the server. `GET /api/user/preferences` reads the current record, `PATCH /api/user/preferences` saves a selected language and/or theme, and `POST /api/user/preferences/introduced` completes the welcome introduction. The read requires authentication; both writes require the authenticated session's CSRF token. Values are validated against the supported locales (`en`, `ru`, `uk`) and themes (`light`, `dark`, `system`), and all operations use the session user rather than a client-supplied user ID.
+
 Password recovery sends local mail to Mailpit through `smtp://127.0.0.1:1025`. For another SMTP server, set `APP_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` in `.env`. In production, `SMTP_URL` and `MAIL_FROM` are required; the console mailer is intended only for local development when SMTP is intentionally absent.
 
 ## Common commands
@@ -123,7 +126,7 @@ bun run db:seed
 bun run test:e2e
 ```
 
-The browser workflow covers language switching and reload persistence, public password recovery navigation and validation, authentication, the six statuses, search, create/edit flows, blacklist and restore, drag-and-drop, archive, and permanent deletion.
+The browser workflow covers language switching and reload persistence, server preference persistence and account override, account isolation, both selectors, welcome completion after login and registration, public password recovery navigation and validation, authentication, the six statuses, search, create/edit flows, blacklist and restore, drag-and-drop, archive, and permanent deletion.
 
 ## Repository map
 

@@ -1,10 +1,15 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import {
+  readLocalUserPreferences,
+  userPreferencesStorageKey,
+  writeLocalUserPreferences,
+} from "../lib/user-preferences";
 import { en, type TranslationDictionary } from "./locales/en";
 
 export const supportedLocales = ["en", "ru", "uk"] as const;
 export type SupportedLocale = (typeof supportedLocales)[number];
-export const languageStorageKey = "xeniway-language";
+export const languageStorageKey = userPreferencesStorageKey;
 
 const localeLoaders: Record<Exclude<SupportedLocale, "en">, () => Promise<{ default: TranslationDictionary }>> = {
   ru: () => import("./locales/ru"),
@@ -26,7 +31,7 @@ async function ensureLocaleResources(locale: SupportedLocale) {
 }
 
 export async function initializeI18n() {
-  const locale = resolveLocale(window.localStorage.getItem(languageStorageKey), window.navigator.language);
+  const locale = resolveLocale(readLocalUserPreferences().language, window.navigator.language);
 
   if (!i18n.isInitialized) {
     await i18n.use(initReactI18next).init({
@@ -46,7 +51,7 @@ export async function initializeI18n() {
 export async function changeLocale(locale: SupportedLocale) {
   await ensureLocaleResources(locale);
   await i18n.changeLanguage(locale);
-  window.localStorage.setItem(languageStorageKey, locale);
+  writeLocalUserPreferences({ language: locale });
 }
 
 export { i18n };

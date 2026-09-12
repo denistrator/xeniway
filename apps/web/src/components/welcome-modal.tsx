@@ -1,33 +1,24 @@
 import { X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "./language-selector";
 import { Button } from "./ui/button";
 
 export type WelcomeAction = "stay" | "board" | "about";
 
-export function WelcomeModal({
-  onComplete,
-  submitting = false,
-}: {
-  onComplete: (action: WelcomeAction) => Promise<void>;
-  submitting?: boolean;
-}) {
+export function WelcomeModal({ onComplete }: { onComplete: (action: WelcomeAction) => void }) {
   const { t } = useTranslation();
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [error, setError] = useState(false);
 
   const complete = useCallback(
-    async (action: WelcomeAction) => {
-      if (submitting) return;
-      setError(false);
+    (action: WelcomeAction) => {
       try {
-        await onComplete(action);
+        onComplete(action);
       } catch {
-        setError(true);
+        // Completion is local-first; a background persistence failure is intentionally invisible.
       }
     },
-    [onComplete, submitting],
+    [onComplete],
   );
 
   useEffect(() => {
@@ -35,7 +26,7 @@ export function WelcomeModal({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        void complete("stay");
+        complete("stay");
         return;
       }
       if (event.key !== "Tab") return;
@@ -73,7 +64,7 @@ export function WelcomeModal({
         aria-label={t("welcome.close")}
         tabIndex={-1}
         className="absolute inset-0 h-full w-full cursor-default"
-        onClick={() => void complete("stay")}
+        onClick={() => complete("stay")}
       />
       <div
         role="dialog"
@@ -89,8 +80,7 @@ export function WelcomeModal({
             type="button"
             aria-label={t("welcome.close")}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted transition-colors hover:bg-accent-hover hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            onClick={() => void complete("stay")}
-            disabled={submitting}
+            onClick={() => complete("stay")}
           >
             <X aria-hidden="true" size={20} />
           </button>
@@ -104,18 +94,11 @@ export function WelcomeModal({
           </p>
           <p className="mt-3 text-base leading-7 text-muted">{t("welcome.features")}</p>
         </div>
-        {error && (
-          <p role="alert" aria-live="assertive" className="mt-5 text-sm leading-6 text-rose-600 dark:text-rose-400">
-            {t("welcome.updateFailed")}
-          </p>
-        )}
         <div className="mt-8 flex flex-wrap justify-end gap-3">
-          <Button variant="outline" onClick={() => void complete("about")} disabled={submitting}>
+          <Button variant="outline" onClick={() => complete("about")}>
             {t("welcome.about")}
           </Button>
-          <Button onClick={() => void complete("board")} disabled={submitting}>
-            {t("welcome.goToBoard")}
-          </Button>
+          <Button onClick={() => complete("board")}>{t("welcome.goToBoard")}</Button>
         </div>
       </div>
     </div>

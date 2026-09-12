@@ -1,11 +1,15 @@
-import type {
-  BlacklistInput,
-  CreateApplicationInput,
-  JobApplication,
-  JobStatus,
-  UpdateApplicationInput,
-  User,
-  UserPreferences,
+import {
+  type BlacklistInput,
+  type CreateApplicationInput,
+  formPresentationSchema,
+  type JobApplication,
+  type JobStatus,
+  supportedLocaleSchema,
+  themePreferenceSchema,
+  type UpdateApplicationInput,
+  type UpdateUserPreferencesInput,
+  type User,
+  type UserPreferences,
 } from "@xeniway/shared";
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { createDatabase } from "./client";
@@ -38,6 +42,7 @@ export interface SessionRepository {
 
 export interface UserPreferencesRepository {
   findByUserId(userId: number): Promise<UserPreferencesRow | null>;
+  update(userId: number, input: UpdateUserPreferencesInput): Promise<UserPreferencesRow>;
   markIntroduced(userId: number): Promise<UserPreferencesRow>;
 }
 
@@ -126,6 +131,20 @@ export class DrizzleUserPreferencesRepository implements UserPreferencesReposito
   async findByUserId(userId: number): Promise<UserPreferencesRow | null> {
     const [row] = await this.database.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
     return row ?? null;
+  }
+
+  async update(userId: number, input: UpdateUserPreferencesInput): Promise<UserPreferencesRow> {
+    const values = { userId, ...input };
+    const [row] = await this.database
+      .insert(userPreferences)
+      .values(values)
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: { ...input, updatedAt: new Date() },
+      })
+      .returning();
+    if (!row) throw new Error("Unable to update user preferences");
+    return row;
   }
 
   async markIntroduced(userId: number): Promise<UserPreferencesRow> {
@@ -325,6 +344,11 @@ export function toUser(row: UserRow): User {
 export function toUserPreferences(row: UserPreferencesRow): UserPreferences {
   return {
     wasIntroduced: row.wasIntroduced,
+    selectedLanguage: row.selectedLanguage ? supportedLocaleSchema.parse(row.selectedLanguage) : null,
+    selectedTheme: row.selectedTheme ? themePreferenceSchema.parse(row.selectedTheme) : null,
+    selectedFormPresentation: row.selectedFormPresentation
+      ? formPresentationSchema.parse(row.selectedFormPresentation)
+      : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

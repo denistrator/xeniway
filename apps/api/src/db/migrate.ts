@@ -15,6 +15,8 @@ const migrations = [
   { id: "0003_blacklist_state", file: "0003_blacklist_state.sql" },
   { id: "0004_password_reset_tokens", file: "0004_password_reset_tokens.sql" },
   { id: "0005_user_preferences", file: "0005_user_preferences.sql" },
+  { id: "0006_user_preference_values", file: "0006_user_preference_values.sql" },
+  { id: "0007_user_preference_form_presentation", file: "0007_user_preference_form_presentation.sql" },
 ];
 
 try {

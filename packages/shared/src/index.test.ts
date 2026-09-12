@@ -6,7 +6,10 @@ import {
   passwordResetConfirmInputSchema,
   passwordResetRequestInputSchema,
   registerInputSchema,
+  supportedLocaleSchema,
+  themePreferenceSchema,
   updateApplicationInputSchema,
+  updateUserPreferencesInputSchema,
 } from "./index";
 
 describe("application contracts", () => {
@@ -83,5 +86,36 @@ describe("authentication contracts", () => {
         passwordConfirmation: "password123",
       }),
     ).toEqual({ token: "reset-token", password: "password123", passwordConfirmation: "password123" });
+  });
+});
+
+describe("user preference contracts", () => {
+  it("accepts valid form presentation preferences", () => {
+    expect(updateUserPreferencesInputSchema.parse({ selectedFormPresentation: "modal" })).toEqual({
+      selectedFormPresentation: "modal",
+    });
+    expect(() => updateUserPreferencesInputSchema.parse({ selectedFormPresentation: "popover" })).toThrow();
+  });
+
+  it("accepts the supported locales and themes only", () => {
+    expect(supportedLocaleSchema.options).toEqual(["en", "ru", "uk"]);
+    expect(themePreferenceSchema.options).toEqual(["light", "dark", "system"]);
+    expect(supportedLocaleSchema.safeParse("fr").success).toBe(false);
+    expect(themePreferenceSchema.safeParse("blue").success).toBe(false);
+  });
+
+  it("requires at least one preference in an update", () => {
+    expect(updateUserPreferencesInputSchema.parse({ selectedLanguage: "uk" })).toEqual({
+      selectedLanguage: "uk",
+    });
+    expect(updateUserPreferencesInputSchema.parse({ selectedTheme: "dark" })).toEqual({
+      selectedTheme: "dark",
+    });
+    expect(updateUserPreferencesInputSchema.parse({ selectedLanguage: null, selectedTheme: "system" })).toEqual({
+      selectedLanguage: null,
+      selectedTheme: "system",
+    });
+    expect(() => updateUserPreferencesInputSchema.parse({})).toThrow();
+    expect(() => updateUserPreferencesInputSchema.parse({ selectedTheme: "blue" })).toThrow();
   });
 });

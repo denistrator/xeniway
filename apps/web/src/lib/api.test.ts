@@ -7,6 +7,7 @@ import {
   markUserIntroduced,
   parseApiError,
   requestPasswordReset,
+  updateUserPreferences,
   userPreferencesKeys,
 } from "./api";
 
@@ -27,7 +28,7 @@ describe("web API helpers", () => {
   });
 
   it("keeps preference state isolated and protects completion with CSRF", async () => {
-    expect(userPreferencesKeys.current).toEqual(["user-preferences", "current"]);
+    expect(userPreferencesKeys.current(1)).toEqual(["user-preferences", "current", 1]);
     const fetchMock = vi
       .fn()
       .mockImplementation(
@@ -53,6 +54,34 @@ describe("web API helpers", () => {
     const error = new ApiRequestError("Unauthenticated", "UNAUTHENTICATED", 401);
     expect(error).toMatchObject({ code: "UNAUTHENTICATED", status: 401, message: "Unauthenticated" });
     expect(error.name).toBe("ApiRequestError");
+  });
+
+  it("updates user preferences with a JSON body and CSRF protection", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ data: { preferences: { selectedLanguage: "uk", selectedTheme: "dark" } } }), {
+          status: 200,
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const signal = new AbortController().signal;
+
+    await expect(
+      updateUserPreferences({ selectedLanguage: "uk", selectedTheme: "dark" }, "csrf-token", signal),
+    ).resolves.toEqual({
+      data: { preferences: { selectedLanguage: "uk", selectedTheme: "dark" } },
+    });
+
+    const request = fetchMock.mock.calls[0]?.[1];
+    if (!request) throw new Error("Expected the preference update request");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/user/preferences",
+      expect.objectContaining({ method: "PATCH", credentials: "include" }),
+    );
+    expect((request.headers as Headers).get("content-type")).toBe("application/json");
+    expect((request.headers as Headers).get("x-csrf-token")).toBe("csrf-token");
+    expect(request.signal).toBe(signal);
+    expect(request.body).toBe(JSON.stringify({ selectedLanguage: "uk", selectedTheme: "dark" }));
   });
 
   it("sends password reset mutations with the CSRF header", async () => {

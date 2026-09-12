@@ -24,13 +24,13 @@ React + React Router
 
 `apps/api/src/app.ts` is an injectable Elysia app factory. Its dependencies are typed repository interfaces, which allows route behavior to be tested with in-memory implementations. `apps/api/src/server.ts` wires the production Drizzle repositories, Redis rate limiter, and independent database/Redis health checks.
 
-`apps/web/src/lib/api.ts` provides the typed HTTP client. `apps/web/src/lib/queries.ts` owns TanStack Query keys, authentication queries, CSRF acquisition, mutations, and cache invalidation. Redux contains only local UI preferences and controls.
+`apps/web/src/lib/api.ts` provides the typed HTTP client. `apps/web/src/lib/queries.ts` owns TanStack Query keys, authentication queries, CSRF acquisition, mutations, and cache invalidation. TanStack Query owns the server preference record; Redux contains immediate presentation state such as the active theme and welcome dialog.
 
-The user-preferences repository and API store account-scoped onboarding state separately from the `users` record. A successful login or registration creates an explicit frontend welcome trigger; the layout then reads preferences and renders the welcome dialog only when the account has not been introduced.
+The user-preferences repository and API store account-scoped onboarding, language, theme, and job-form presentation values separately from the `users` record. Selected values are nullable until explicitly chosen. The browser applies its local cache immediately; a successful login or registration fetches the account values and applies non-null server values over the cache. Explicit user actions update local storage and the UI before sending best-effort background writes. A successful login or registration creates an explicit frontend welcome trigger; the layout then reads preferences and renders the welcome dialog only when the account has not been introduced.
 
 The UI follows an accessibility-first baseline: semantic controls and labels, keyboard-operable workflows including a keyboard alternative to drag-and-drop, visible focus indicators, managed focus within dialogs and drawers, live regions for asynchronous feedback, responsive layouts, and reduced-motion support. The document theme is initialized before React starts to avoid a flash of the wrong theme.
 
-The UI language is a separate client-side concern owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists only an explicit browser choice under `xeniway-language`, falls back from the browser base language to English, and synchronizes `html[lang]`. Redux does not duplicate locale state.
+The UI language is owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists the selected value in the flat `userPreferences` browser object and synchronizes it with the authenticated account. Theme, language, and job-form presentation share that key with the cached `wasIntroduced` value. Redux does not duplicate locale state, and local storage is never treated as account identity or authoritative onboarding state.
 
 ## Request lifecycle
 
@@ -40,6 +40,7 @@ The UI language is a separate client-side concern owned by i18next/react-i18next
 4. Application reads require a valid session and are filtered by `userId` in the repository.
 5. Application mutations require both a valid session and the CSRF token belonging to that session.
 6. TanStack Query invalidates active/archive lists after mutations so the UI reflects the server state.
+7. After authentication, the preferences query applies the current account's non-null language, theme, and job-form presentation values to the UI and browser cache. Explicit preference changes update local storage and the UI first, then use `PATCH /api/user/preferences` with the authenticated session's CSRF token in the background. Account changes clear account-specific preference query state.
 
 Locale-neutral API values are translated only at the presentation boundary. Application statuses and error codes remain canonical, candidate-entered data is never machine-translated, and displayed dates are formatted with the active locale while stored ISO timestamps remain unchanged.
 

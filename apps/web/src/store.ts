@@ -1,9 +1,12 @@
 import { configureStore, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { JobStatus } from "@xeniway/shared";
+import type { FormPresentation, JobStatus, ThemePreference } from "@xeniway/shared";
+import { readLocalUserPreferences } from "./lib/user-preferences";
 
-export type ThemePreference = "light" | "dark" | "system";
-export type JobFormPresentation = "drawer" | "modal";
-export const jobFormPresentationStorageKey = "xeniway-form-presentation";
+export type { ThemePreference } from "@xeniway/shared";
+
+export type JobFormPresentation = FormPresentation;
+
+const localPreferences = readLocalUserPreferences();
 
 type UiState = {
   theme: ThemePreference;
@@ -15,14 +18,8 @@ type UiState = {
 };
 
 const initialState: UiState = {
-  theme:
-    typeof window !== "undefined" && ["light", "dark", "system"].includes(localStorage.getItem("xeniway-theme") ?? "")
-      ? (localStorage.getItem("xeniway-theme") as ThemePreference)
-      : "system",
-  jobFormPresentation:
-    typeof window !== "undefined" && localStorage.getItem(jobFormPresentationStorageKey) === "modal"
-      ? "modal"
-      : "drawer",
+  theme: localPreferences.theme,
+  jobFormPresentation: localPreferences.formPresentation,
   search: "",
   visibleStatuses: ["saved", "applied", "interview", "offer", "rejected", "withdrawn"],
   drawer: { open: false, mode: "create", jobId: null },

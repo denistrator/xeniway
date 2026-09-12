@@ -1,7 +1,18 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
+
+async function setBrowserPreferences(
+  page: Page,
+  preferences: { theme: "light" | "dark" | "system"; language: "en" | "ru" | "uk" },
+) {
+  await page.goto("/about");
+  await page.evaluate((value) => {
+    window.localStorage.setItem("userPreferences", JSON.stringify(value));
+  }, preferences);
+  await page.reload();
+}
 
 test("provides public password recovery pages", async ({ page }) => {
   await page.goto("/login");
@@ -27,13 +38,14 @@ test("shows the about page without authentication", async ({ page }) => {
 
 test("switches and persists the selected browser language", async ({ page }) => {
   await page.goto("/about");
-  await page.getByRole("button", { name: "Українська" }).click();
+  await page.getByRole("button", { name: "Language: English. Change language" }).click();
+  await page.getByRole("button", { name: "Language: Русский. Change language" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
   await expect(page.getByRole("heading", { name: "Зрозумілий простір для складного пошуку роботи." })).toBeVisible();
 
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
-  await expect(page.getByRole("button", { name: "Українська", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Language: Українська. Change language" })).toBeVisible();
 });
 
 test("shows a public not found page for unknown routes", async ({ page }) => {
@@ -43,7 +55,7 @@ test("shows a public not found page for unknown routes", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Go to applications" })).toHaveAttribute("href", "/");
   await expect(page.getByRole("link", { name: "About Xenia Way" })).toHaveAttribute("href", "/about");
-  await expect(page.getByRole("group", { name: "Theme preference" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Theme: .*\. Change theme/ })).toBeVisible();
 });
 
 test("uses floating labels for authentication fields", async ({ page }) => {
@@ -67,10 +79,19 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
-  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  const welcome = page.getByRole("dialog");
   await expect(welcome).toBeVisible();
+  await expect(welcome).toHaveAccessibleName("Welcome to Xenia Way");
   await expect(welcome.getByText("Xenia Way gives you one clear place")).toBeVisible();
-  await welcome.getByRole("button", { name: "Close welcome introduction" }).click();
+  await welcome.getByRole("button", { name: "Language: English. Change language" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(welcome).toHaveAccessibleName("Добро пожаловать в Xenia Way");
+  await expect(welcome.getByRole("heading", { name: "Добро пожаловать в Xenia Way" })).toBeVisible();
+  await welcome.getByRole("button", { name: "Language: Русский. Change language" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+  await welcome.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
   await expect(welcome).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("dialog", { name: "Welcome to Xenia Way" })).toHaveCount(0);
@@ -82,14 +103,14 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await page.getByRole("button", { name: "Sign in" }).click();
   const secondWelcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
   await expect(secondWelcome).toBeVisible();
-  await page.getByRole("button", { name: "Close welcome introduction" }).first().click();
+  await secondWelcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
   await expect(secondWelcome).toHaveCount(0);
 
   await page.getByRole("button", { name: "Logout" }).click();
   await page.goto("/register");
   const email = `welcome-${Date.now()}@example.com`;
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("password123");
+  await page.getByLabel("Password", { exact: true }).fill("password123");
   await page.getByLabel("Confirm password").fill("password123");
   await page.getByRole("button", { name: "Create account" }).click();
   const registeredWelcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
@@ -97,6 +118,118 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await registeredWelcome.getByRole("button", { name: "About Xenia Way" }).click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(registeredWelcome).toHaveCount(0);
+});
+
+test("syncs browser preferences with each authenticated account", async ({ page }) => {
+  const accountA = `preferences-a-${Date.now()}@example.com`;
+  const accountB = `preferences-b-${Date.now()}@example.com`;
+
+  await setBrowserPreferences(page, { language: "uk", theme: "dark" });
+  await page.goto("/register");
+  await page.getByLabel("Ім’я").fill("Preference");
+  await page.getByLabel("Прізвище").fill("Account A");
+  await page.getByLabel("Електронна пошта").fill(accountA);
+  await page.getByLabel("Пароль", { exact: true }).fill("password123");
+  await page.getByLabel("Підтвердьте пароль").fill("password123");
+  await page.getByRole("button", { name: "Створити обліковий запис" }).click();
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const welcome = page.getByRole("dialog", { name: "Ласкаво просимо до Xenia Way" });
+  await expect(welcome).toBeVisible();
+  await welcome.getByRole("button", { name: "Перейти до дошки" }).click();
+  await expect(page.getByRole("heading", { name: "Вакансії" })).toBeVisible();
+
+  const accountATheme = page.getByRole("button", { name: "Theme: Dark. Change theme" });
+  const accountALanguage = page.getByRole("banner").getByRole("button", {
+    name: "Language: Українська. Change language",
+  });
+  await expect(accountATheme).toBeEnabled();
+  await expect(accountALanguage).toBeEnabled();
+  const accountAThemeUpdate = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/user/preferences") &&
+      response.request().method() === "PATCH" &&
+      response.status() === 200,
+  );
+  await accountATheme.click();
+  await accountAThemeUpdate;
+  const accountALanguageUpdate = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/user/preferences") &&
+      response.request().method() === "PATCH" &&
+      response.status() === 200,
+  );
+  await accountALanguage.click();
+  await accountALanguageUpdate;
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
+  await page.getByRole("button", { name: "Logout" }).click();
+  await page.goto("/register");
+  await page.getByLabel("First name").fill("Preference");
+  await page.getByLabel("Last name").fill("Account B");
+  await page.getByLabel("Email").fill(accountB);
+  await page.getByLabel("Password", { exact: true }).fill("password123");
+  await page.getByLabel("Confirm password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByRole("dialog", { name: "Welcome to Xenia Way" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.getByRole("dialog", { name: "Welcome to Xenia Way" }).getByRole("button", { name: "Go to board" }).click();
+
+  const accountBTheme = page.getByRole("button", { name: "Theme: Light. Change theme" });
+  const accountBLanguage = page.getByRole("banner").getByRole("button", {
+    name: "Language: English. Change language",
+  });
+  await expect(accountBTheme).toBeEnabled();
+  await expect(accountBLanguage).toBeEnabled();
+  const accountBThemeUpdate = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/user/preferences") &&
+      response.request().method() === "PATCH" &&
+      response.status() === 200,
+  );
+  await accountBTheme.click();
+  await accountBThemeUpdate;
+  const accountBLanguageUpdate = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/user/preferences") &&
+      response.request().method() === "PATCH" &&
+      response.status() === 200,
+  );
+  await accountBLanguage.click();
+  await accountBLanguageUpdate;
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page.getByRole("button", { name: "Theme: System. Change theme" })).toBeVisible();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page.getByRole("button", { name: "Theme: System. Change theme" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Выйти" }).click();
+  await page.goto("/login");
+  await page.getByLabel("Электронная почта").fill(accountA);
+  await page.getByLabel("Пароль").fill("password123");
+  await page.getByRole("button", { name: "Войти" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.getByRole("dialog", { name: "Welcome to Xenia Way" })).toHaveCount(0);
+
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      "userPreferences",
+      JSON.stringify({ theme: "dark", language: "uk", wasIntroduced: false }),
+    );
+  });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
 
 test("has no automated accessibility violations across key workflows", async ({ page }) => {
@@ -145,6 +278,22 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await page.keyboard.press("Escape");
   await expect(closeButton).toHaveCount(0);
   await expect(addJob).toBeFocused();
+
+  await addJob.click();
+  const switchToModal = page.getByRole("button", { name: "Switch to modal" });
+  const presentationUpdate = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/user/preferences") &&
+      response.request().method() === "PATCH" &&
+      response.status() === 200,
+  );
+  await switchToModal.click();
+  await presentationUpdate;
+  await expect(page.locator(".job-modal")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Switch to drawer" })).toBeVisible();
+  await expect(
+    page.evaluate(() => JSON.parse(localStorage.getItem("userPreferences") ?? "{}").formPresentation),
+  ).resolves.toBe("modal");
 });
 
 test("shows only the statuses selected in the filter menu", async ({ page }) => {

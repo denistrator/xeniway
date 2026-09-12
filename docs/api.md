@@ -80,9 +80,37 @@ Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" 
 | Method | Path | Auth/CSRF | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/api/user/preferences` | Session | Reads the current user's preferences; an absent row is treated as the default state |
+| `PATCH` | `/api/user/preferences` | Session + CSRF | Updates one or more selected preferences and returns the complete preference record |
 | `POST` | `/api/user/preferences/introduced` | Session + CSRF | Marks the current user's introduction as complete |
 
-The current preference response contains `wasIntroduced`, `createdAt`, and `updatedAt`. New accounts begin with `wasIntroduced: false`. The frontend checks this value only after successful login or registration; restoring an existing session on page reload does not open the welcome popup. Preference reads and writes are scoped by authenticated user ID, and ownership is never accepted from request input.
+The preference response is shaped as `{ "data": { "preferences": { ... } } }`:
+
+```json
+{
+  "data": {
+    "preferences": {
+      "wasIntroduced": false,
+      "selectedLanguage": null,
+      "selectedTheme": null,
+      "selectedFormPresentation": null,
+      "createdAt": "2026-09-01T10:00:00.000Z",
+      "updatedAt": "2026-09-01T10:00:00.000Z"
+    }
+  }
+}
+```
+
+`selectedLanguage` is nullable and accepts `en`, `ru`, or `uk`. `selectedTheme` is nullable and accepts `light`, `dark`, or `system`. A PATCH body must include at least one of these fields; omitted fields are preserved and explicit `null` clears a selected value. For example:
+
+```json
+{ "selectedLanguage": "uk", "selectedTheme": "dark" }
+```
+
+`selectedFormPresentation` is nullable and accepts `drawer` or `modal`. It follows the same partial-update rules and controls whether the job form opens as a side drawer or a centered modal.
+
+Preference reads and writes require the authenticated session and are scoped by its user ID; `userId` is never accepted from request input. PATCH and introduction completion requests also require the current session's `x-csrf-token`. New accounts begin with all selected values null and `wasIntroduced: false`. The frontend checks the introduction flag only after successful login or registration; restoring an existing session on page reload does not open the welcome popup.
+
+The browser stores the flat object `{ "theme", "language", "formPresentation", "wasIntroduced" }` under the single `userPreferences` key. The browser applies this cache immediately at startup. After successful login or registration, non-null values from the authenticated account replace the corresponding browser values; nullable server fields remain unset until the user explicitly changes them. Authentication never uploads browser values. Explicit theme, language, form-presentation, and welcome actions update the browser first and send a best-effort background write. The browser cache contains no user ID and cannot authorize access, complete onboarding, or bypass authentication and CSRF checks.
 
 ## Error behavior
 

@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const jobStatusSchema = z.enum(["saved", "applied", "interview", "offer", "rejected", "withdrawn"]);
 
+export const supportedLocaleSchema = z.enum(["en", "ru", "uk"]);
+export const themePreferenceSchema = z.enum(["light", "dark", "system"]);
+export const formPresentationSchema = z.enum(["drawer", "modal"]);
+
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 
 const nullableTrimmedString = z.string().trim().max(500).nullable().optional();
@@ -64,6 +68,27 @@ export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestInputSchema>;
 export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmInputSchema>;
+export type SupportedLocale = z.infer<typeof supportedLocaleSchema>;
+export type ThemePreference = z.infer<typeof themePreferenceSchema>;
+export type FormPresentation = z.infer<typeof formPresentationSchema>;
+
+export const updateUserPreferencesInputSchema = z
+  .object({
+    selectedLanguage: supportedLocaleSchema.nullable().optional(),
+    selectedTheme: themePreferenceSchema.nullable().optional(),
+    selectedFormPresentation: formPresentationSchema.nullable().optional(),
+  })
+  .refine(
+    (value) =>
+      value.selectedLanguage !== undefined ||
+      value.selectedTheme !== undefined ||
+      value.selectedFormPresentation !== undefined,
+    {
+      message: "At least one preference must be provided",
+    },
+  );
+
+export type UpdateUserPreferencesInput = z.infer<typeof updateUserPreferencesInputSchema>;
 
 export type User = {
   id: number;
@@ -75,6 +100,9 @@ export type User = {
 
 export type UserPreferences = {
   wasIntroduced: boolean;
+  selectedLanguage: SupportedLocale | null;
+  selectedTheme: ThemePreference | null;
+  selectedFormPresentation: FormPresentation | null;
   createdAt: string;
   updatedAt: string;
 };

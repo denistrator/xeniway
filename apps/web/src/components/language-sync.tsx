@@ -6,7 +6,7 @@ export function LanguageSync() {
 
   useEffect(() => {
     document.documentElement.lang = i18n.resolvedLanguage ?? "en";
-  }, [i18n.language, i18n.resolvedLanguage]);
+  }, [i18n.resolvedLanguage]);
 
   return null;
 }

@@ -9,7 +9,9 @@ import type {
   PasswordResetRequestInput,
   RegisterInput,
   UpdateApplicationInput,
+  UpdateUserPreferencesInput,
 } from "@xeniway/shared";
+import { useCallback, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { closeWelcome, openWelcome } from "../store";
 import {
@@ -34,8 +36,10 @@ import {
   restoreApplication,
   unblacklistApplication,
   updateApplication,
+  updateUserPreferences,
   userPreferencesKeys,
 } from "./api";
+import { writeLocalUserPreferences } from "./user-preferences";
 
 export const authKeys = {
   me: ["auth", "me"] as const,
@@ -70,7 +74,7 @@ export function useAuthMutations() {
   const finishAuth = (response: Awaited<ReturnType<typeof login>>) => {
     queryClient.setQueryData(authKeys.me, { data: { user: response.data.user } });
     queryClient.setQueryData(authKeys.csrf, { data: { csrfToken: response.data.csrfToken } });
-    queryClient.removeQueries({ queryKey: userPreferencesKeys.current });
+    queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
     dispatch(openWelcome());
   };
 
@@ -90,19 +94,48 @@ export function useAuthMutations() {
         queryClient.setQueryData<CurrentUserQueryData>(authKeys.me, { data: { user: null } });
         queryClient.removeQueries({ queryKey: authKeys.csrf });
         queryClient.removeQueries({ queryKey: applicationKeys.all });
+        queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
       },
     }),
   };
 }
 
-export function useUserPreferences(enabled: boolean) {
+export function useUserPreferences(userId: number | null) {
   return useQuery({
-    queryKey: userPreferencesKeys.current,
+    queryKey: userId === null ? userPreferencesKeys.all : userPreferencesKeys.current(userId),
     queryFn: getUserPreferences,
-    enabled,
+    enabled: userId !== null,
     retry: false,
     select: (response) => response.data.preferences,
   });
+}
+
+export function useUpdateUserPreferences() {
+  const user = useCurrentUser();
+  const userId = user.data?.id;
+  const csrfToken = useCsrfToken().data ?? "";
+  const controllerRef = useRef<AbortController | null>(null);
+  const mutation = useMutation({
+    mutationFn: ({ input, signal }: { input: UpdateUserPreferencesInput; signal: AbortSignal }) =>
+      updateUserPreferences(input, csrfToken, signal),
+  });
+
+  useEffect(() => {
+    if (userId !== undefined) controllerRef.current?.abort();
+    return () => controllerRef.current?.abort();
+  }, [userId]);
+
+  const mutate = useCallback(
+    (input: UpdateUserPreferencesInput) => {
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      mutation.mutate({ input, signal: controller.signal });
+    },
+    [mutation.mutate],
+  );
+
+  return { ...mutation, mutate };
 }
 
 export function useCompleteIntroduction() {
@@ -110,7 +143,11 @@ export function useCompleteIntroduction() {
   const csrfToken = useCsrfToken().data ?? "";
   return useMutation({
     mutationFn: () => markUserIntroduced(csrfToken),
-    onSuccess: (response) => queryClient.setQueryData(userPreferencesKeys.current, response),
+    onSuccess: (response) => {
+      const userId = queryClient.getQueryData<CurrentUserQueryData>(authKeys.me)?.data.user?.id;
+      if (userId) queryClient.setQueryData(userPreferencesKeys.current(userId), response);
+      writeLocalUserPreferences({ wasIntroduced: response.data.preferences.wasIntroduced });
+    },
   });
 }
 

@@ -16,6 +16,7 @@ import type {
   RegisterInput,
   ReorderApplicationsInput,
   UpdateApplicationInput,
+  UpdateUserPreferencesInput,
   UserPreferencesResponse,
 } from "@xeniway/shared";
 
@@ -28,7 +29,7 @@ export const applicationKeys = {
 
 export const userPreferencesKeys = {
   all: ["user-preferences"] as const,
-  current: ["user-preferences", "current"] as const,
+  current: (userId: number) => ["user-preferences", "current", userId] as const,
 };
 
 type ParsedApiError = { code: string; message: string };
@@ -127,6 +128,18 @@ export function getUserPreferences(): Promise<UserPreferencesResponse> {
 
 export function markUserIntroduced(csrfToken: string): Promise<UserPreferencesResponse> {
   return requestJson<UserPreferencesResponse>("/api/user/preferences/introduced", { method: "POST" }, csrfToken);
+}
+
+export function updateUserPreferences(
+  input: UpdateUserPreferencesInput,
+  csrfToken: string,
+  signal?: AbortSignal,
+): Promise<UserPreferencesResponse> {
+  return requestJson<UserPreferencesResponse>(
+    "/api/user/preferences",
+    { method: "PATCH", body: JSON.stringify(input), signal },
+    csrfToken,
+  );
 }
 
 export function logout(csrfToken: string): Promise<ApiSuccess<MessageResponse["data"]>> {

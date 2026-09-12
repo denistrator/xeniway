@@ -12,6 +12,7 @@ export const en = {
       closeDialog: "Close dialog",
       logout: "Logout",
       signingOut: "Signing out…",
+      retry: "Retry",
     },
     loading: "Loading…",
   },
@@ -163,7 +164,6 @@ export const en = {
       "Track applications, move them through six statuses, search your board, and keep useful context close at hand.",
     goToBoard: "Go to board",
     about: "About Xenia Way",
-    updateFailed: "We couldn't save your introduction status. Please try again.",
   },
   notFound: {
     title: "Page not found",

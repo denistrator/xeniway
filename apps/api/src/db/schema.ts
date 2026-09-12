@@ -43,6 +43,9 @@ export const userPreferences = pgTable("user_preferences", {
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
   wasIntroduced: boolean("was_introduced").default(false).notNull(),
+  selectedLanguage: varchar("selected_language", { length: 2 }),
+  selectedTheme: varchar("selected_theme", { length: 10 }),
+  selectedFormPresentation: varchar("selected_form_presentation", { length: 10 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

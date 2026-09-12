@@ -23,7 +23,7 @@ Stores the random session ID, optional owning user ID, server-side CSRF token, a
 
 ### `user_preferences`
 
-Stores account-scoped onboarding state. `user_id` is the primary key and cascades from `users`; `was_introduced` defaults to `false`, and timestamps record row creation and updates. Language and theme preferences are not stored server-side yet and can be added in a later migration when that synchronization is needed.
+Stores account-scoped onboarding and selected UI preferences. `user_id` is the primary key and cascades from `users`; `was_introduced` defaults to `false`; `selected_language` is nullable and constrained to `en`, `ru`, or `uk`; and `selected_theme` is nullable and constrained to `light`, `dark`, or `system`. Timestamps record row creation and updates. The nullable values allow a new account to be initialized from the browser once before the server becomes authoritative.
 
 ### `password_reset_tokens`
 
@@ -46,11 +46,15 @@ bun run db:migrate
 
 Migrations create schema only and do not insert users or applications. Existing data from the former application is intentionally not migrated.
 
+Migration `0006_user_preference_values.sql` adds the nullable language and theme columns to the existing `user_preferences` table. It is forward-only and safe to rerun through the migration runner; it does not change or reset existing onboarding state.
+
 ## Development seed
 
 Run `bun run db:seed` after migrations. The command is for local development only and upserts:
 
 - `admin@example.com` / `password`
 - `test_user@example.com` / `password`
+
+The seed command resets both selected values to `NULL` and `was_introduced` to `false` for these development accounts, making preference and welcome tests repeatable.
 
 It creates 36 applications: three per status for each account. Re-running the command replaces only rows identified by its development seed keys. The seed command does not represent production data and should never be run against a production database.

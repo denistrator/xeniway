@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { changeLocale, type SupportedLocale } from "../i18n/i18n";
+import { useCurrentUser, useUpdateUserPreferences } from "../lib/queries";
 
 const options: Array<{ value: SupportedLocale; label: string; accessibleLabel: string }> = [
   { value: "en", label: "EN", accessibleLabel: "English" },
@@ -16,10 +17,13 @@ export function LanguageSelector() {
   const { i18n } = useTranslation();
   const currentLocale = i18n.resolvedLanguage ?? "en";
   const currentOption = options.find((option) => option.value === currentLocale) ?? options[0];
+  const user = useCurrentUser();
+  const updatePreferences = useUpdateUserPreferences();
 
   async function handleChange(locale: SupportedLocale) {
     try {
       await changeLocale(locale);
+      if (user.data) updatePreferences.mutate({ selectedLanguage: locale });
     } catch {
       // Keep the current locale when a lazy dictionary cannot be loaded.
     }

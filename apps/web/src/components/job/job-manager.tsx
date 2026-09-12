@@ -1,7 +1,9 @@
 import type { CreateApplicationInput, JobApplication } from "@xeniway/shared";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { jobFormPresentationStorageKey, type RootState, setJobFormPresentation } from "../../store";
+import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
+import { writeLocalUserPreferences } from "../../lib/user-preferences";
+import { type RootState, setJobFormPresentation } from "../../store";
 import { JobDrawer } from "./job-drawer";
 import { JobModal } from "./job-modal";
 
@@ -29,9 +31,8 @@ export function JobManager({
   const openerRef = useRef<HTMLElement | null>(null);
   const wasOpenRef = useRef(false);
 
-  useEffect(() => {
-    localStorage.setItem(jobFormPresentationStorageKey, presentation);
-  }, [presentation]);
+  const user = useCurrentUser();
+  const updatePreferences = useUpdateUserPreferences();
 
   useLayoutEffect(() => {
     if (drawer.open && !wasOpenRef.current) {
@@ -77,7 +78,10 @@ export function JobManager({
   if (!drawer.open) return null;
 
   const switchPresentation = () => {
-    dispatch(setJobFormPresentation(presentation === "drawer" ? "modal" : "drawer"));
+    const nextPresentation = presentation === "drawer" ? "modal" : "drawer";
+    dispatch(setJobFormPresentation(nextPresentation));
+    writeLocalUserPreferences({ formPresentation: nextPresentation });
+    if (user.data) updatePreferences.mutate({ selectedFormPresentation: nextPresentation });
   };
 
   const wrapperProps = {

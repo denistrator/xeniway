@@ -1,4 +1,10 @@
-import type { ApplicationResponse, AuthResponse, JobApplication } from "@xeniway/shared";
+import type {
+  ApplicationResponse,
+  AuthResponse,
+  JobApplication,
+  SupportedLocale,
+  ThemePreference,
+} from "@xeniway/shared";
 import { describe, expect, it } from "vitest";
 import { type AppDependencies, createApp } from "./app";
 import type {
@@ -212,16 +218,51 @@ function createDependencies(): AppDependencies {
   };
   const userPreferences = new Map<
     number,
-    { userId: number; wasIntroduced: boolean; createdAt: Date; updatedAt: Date }
+    {
+      userId: number;
+      wasIntroduced: boolean;
+      selectedLanguage: SupportedLocale | null;
+      selectedTheme: ThemePreference | null;
+      selectedFormPresentation: "drawer" | "modal" | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }
   >();
   const preferences: UserPreferencesRepository = {
     async findByUserId(userId) {
       return userPreferences.get(userId) ?? null;
     },
+    async update(userId, input) {
+      const now = new Date();
+      const existing = userPreferences.get(userId);
+      const row = existing ?? {
+        userId,
+        wasIntroduced: false,
+        selectedLanguage: null,
+        selectedTheme: null,
+        selectedFormPresentation: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      if (input.selectedLanguage !== undefined) row.selectedLanguage = input.selectedLanguage;
+      if (input.selectedTheme !== undefined) row.selectedTheme = input.selectedTheme;
+      if (input.selectedFormPresentation !== undefined) row.selectedFormPresentation = input.selectedFormPresentation;
+      row.updatedAt = now;
+      userPreferences.set(userId, row);
+      return row;
+    },
     async markIntroduced(userId) {
       const now = new Date();
       const existing = userPreferences.get(userId);
-      const row = existing ?? { userId, wasIntroduced: false, createdAt: now, updatedAt: now };
+      const row = existing ?? {
+        userId,
+        wasIntroduced: false,
+        selectedLanguage: null,
+        selectedTheme: null,
+        selectedFormPresentation: null,
+        createdAt: now,
+        updatedAt: now,
+      };
       row.wasIntroduced = true;
       row.updatedAt = now;
       userPreferences.set(userId, row);
@@ -299,7 +340,12 @@ describe("application API", () => {
       }),
     );
     expect(initial.status).toBe(200);
-    expect((await initial.json()).data.preferences.wasIntroduced).toBe(false);
+    expect((await initial.json()).data.preferences).toMatchObject({
+      wasIntroduced: false,
+      selectedLanguage: null,
+      selectedTheme: null,
+      selectedFormPresentation: null,
+    });
 
     const invalid = await app.handle(
       new Request("http://localhost/api/user/preferences/introduced", {
@@ -342,6 +388,136 @@ describe("application API", () => {
       }),
     );
     expect((await secondPreferences.json()).data.preferences.wasIntroduced).toBe(false);
+  });
+
+  it("updates both user preferences and preserves omitted values", async () => {
+    const app = createApp(createDependencies());
+    const account = await register(app, "update-preferences@example.com");
+    const csrf = { sessionId: account.sessionId, csrfToken: account.payload.data.csrfToken };
+
+    const initial = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences",
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            selectedLanguage: "uk",
+            selectedTheme: "dark",
+            selectedFormPresentation: "modal",
+          }),
+        },
+        csrf.sessionId,
+        csrf.csrfToken,
+      ),
+    );
+    expect(initial.status).toBe(200);
+    expect((await initial.json()).data.preferences).toMatchObject({
+      selectedLanguage: "uk",
+      selectedTheme: "dark",
+      selectedFormPresentation: "modal",
+    });
+
+    const languageOnly = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences",
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ selectedLanguage: "ru" }),
+        },
+        csrf.sessionId,
+        csrf.csrfToken,
+      ),
+    );
+    expect(languageOnly.status).toBe(200);
+    expect((await languageOnly.json()).data.preferences).toMatchObject({
+      selectedLanguage: "ru",
+      selectedTheme: "dark",
+      selectedFormPresentation: "modal",
+    });
+  });
+
+  it("validates preference updates and protects them with authentication and CSRF", async () => {
+    const app = createApp(createDependencies());
+    const unauthenticated = await app.handle(
+      new Request("http://localhost/api/user/preferences", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ selectedLanguage: "uk" }),
+      }),
+    );
+    expect(unauthenticated.status).toBe(401);
+
+    const account = await register(app, "invalid-preferences@example.com");
+    const csrf = { sessionId: account.sessionId, csrfToken: account.payload.data.csrfToken };
+    const missingCsrf = await app.handle(
+      new Request("http://localhost/api/user/preferences", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", cookie: `session_id=${csrf.sessionId}` },
+        body: JSON.stringify({ selectedTheme: "dark" }),
+      }),
+    );
+    expect(missingCsrf.status).toBe(403);
+
+    const invalidCsrf = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences",
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ selectedTheme: "dark" }),
+        },
+        csrf.sessionId,
+        "invalid-csrf-token",
+      ),
+    );
+    expect(invalidCsrf.status).toBe(403);
+
+    const invalid = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences",
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ selectedLanguage: "de", selectedTheme: "solarized" }),
+        },
+        csrf.sessionId,
+        csrf.csrfToken,
+      ),
+    );
+    expect(invalid.status).toBe(422);
+    expect((await invalid.json()).error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("does not expose preference values across accounts", async () => {
+    const app = createApp(createDependencies());
+    const first = await register(app, "first-update-preferences@example.com");
+    const second = await register(app, "second-update-preferences@example.com");
+
+    const updated = await app.handle(
+      jsonRequest(
+        "http://localhost/api/user/preferences",
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ selectedLanguage: "uk", selectedTheme: "dark" }),
+        },
+        first.sessionId,
+        first.payload.data.csrfToken,
+      ),
+    );
+    expect(updated.status).toBe(200);
+
+    const secondPreferences = await app.handle(
+      new Request("http://localhost/api/user/preferences", {
+        headers: { cookie: `session_id=${second.sessionId}` },
+      }),
+    );
+    expect((await secondPreferences.json()).data.preferences).toMatchObject({
+      selectedLanguage: null,
+      selectedTheme: null,
+    });
   });
 
   it("returns a generic response for both known and unknown password reset emails", async () => {

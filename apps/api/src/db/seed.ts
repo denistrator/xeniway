@@ -51,10 +51,24 @@ async function seed(): Promise<void> {
     const userIds = new Map(accountRows.map((account) => [account.email, account.id]));
     await database
       .insert(userPreferences)
-      .values(accountRows.map(({ id }) => ({ userId: id, wasIntroduced: false })))
+      .values(
+        accountRows.map(({ id }) => ({
+          userId: id,
+          wasIntroduced: false,
+          selectedLanguage: null,
+          selectedTheme: null,
+          selectedFormPresentation: null,
+        })),
+      )
       .onConflictDoUpdate({
         target: userPreferences.userId,
-        set: { wasIntroduced: false, updatedAt: new Date() },
+        set: {
+          wasIntroduced: false,
+          selectedLanguage: null,
+          selectedTheme: null,
+          selectedFormPresentation: null,
+          updatedAt: new Date(),
+        },
       });
     const applications = buildSeedApplications(seedAccounts.map((account) => account.key)).map((application) => {
       const account = seedAccounts.find((candidate) => candidate.key === application.userKey);

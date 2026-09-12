@@ -5,7 +5,7 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { LanguageSync } from "./components/language-sync";
 import { Layout } from "./components/layout";
 import { ThemeSync } from "./components/theme-sync";
-import { applicationKeys } from "./lib/api";
+import { applicationKeys, userPreferencesKeys } from "./lib/api";
 import { authKeys, useCurrentUser } from "./lib/queries";
 
 const AboutPage = lazy(() => import("./pages/about-page").then(({ AboutPage }) => ({ default: AboutPage })));
@@ -65,7 +65,7 @@ export function App() {
   );
 }
 
-function AuthFailureHandler() {
+export function AuthFailureHandler() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -73,6 +73,7 @@ function AuthFailureHandler() {
       queryClient.removeQueries({ queryKey: authKeys.me });
       queryClient.removeQueries({ queryKey: authKeys.csrf });
       queryClient.removeQueries({ queryKey: applicationKeys.all });
+      queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
     };
     window.addEventListener("xeniway:auth-expired", handleAuthExpired);
     return () => window.removeEventListener("xeniway:auth-expired", handleAuthExpired);

@@ -54,17 +54,15 @@ export function SiteHeader() {
         </nav>
         <div className="flex items-center gap-4">
           {user.data && (
-            <>
-              <div className="flex items-center lg:border-x border-line ps-6 pe-3">
-                <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
-                <Button variant="ghost" size="sm" className="ms-1" onClick={handleLogout} disabled={logout.isPending}>
-                  <div className="sr-only">
-                    {logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}
-                  </div>
-                  <LogOut aria-hidden="true" size={15} strokeWidth={2} />
-                </Button>
-              </div>
-            </>
+            <div className="flex items-center lg:border-x border-line ps-6 pe-3">
+              <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
+              <Button variant="ghost" size="sm" className="ms-1" onClick={handleLogout} disabled={logout.isPending}>
+                <div className="sr-only">
+                  {logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}
+                </div>
+                <LogOut aria-hidden="true" size={15} strokeWidth={2} />
+              </Button>
+            </div>
           )}
           <div className="ms-2 flex items-center gap-2">
             {user.data && (

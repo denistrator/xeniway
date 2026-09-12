@@ -6,7 +6,14 @@
     <meta name="theme-color" content="#f8fafc" />
     <script>
       (() => {
-        const storedTheme = localStorage.getItem("xeniway-theme");
+        let storedTheme = null;
+        try {
+          const rawPreferences = localStorage.getItem("userPreferences");
+          const preferences = rawPreferences ? JSON.parse(rawPreferences) : null;
+          storedTheme = preferences?.theme;
+        } catch {
+          storedTheme = null;
+        }
         const preference = ["light", "dark", "system"].includes(storedTheme ?? "") ? storedTheme : "system";
         const isDark = preference === "dark" || (preference === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.theme = isDark ? "dark" : "light";

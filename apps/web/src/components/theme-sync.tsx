@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
+import { writeLocalUserPreferences } from "../lib/user-preferences";
 import type { RootState } from "../store";
 
 export function ThemeSync() {
@@ -16,7 +17,7 @@ export function ThemeSync() {
     };
     apply();
     media.addEventListener("change", apply);
-    localStorage.setItem("xeniway-theme", preference);
+    writeLocalUserPreferences({ theme: preference });
     return () => media.removeEventListener("change", apply);
   }, [preference]);
 

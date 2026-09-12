@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import { readLocalUserPreferences } from "../lib/user-preferences";
 import { changeLocale, i18n, initializeI18n, languageStorageKey, resolveLocale } from "./i18n";
 
 beforeEach(async () => {
@@ -24,5 +25,6 @@ test("loads and stores an explicitly selected locale", async () => {
   await changeLocale("uk");
 
   expect(i18n.resolvedLanguage).toBe("uk");
-  expect(window.localStorage.getItem(languageStorageKey)).toBe("uk");
+  expect(window.localStorage.getItem(languageStorageKey)).toContain('"language":"uk"');
+  expect(readLocalUserPreferences().language).toBe("uk");
 });
