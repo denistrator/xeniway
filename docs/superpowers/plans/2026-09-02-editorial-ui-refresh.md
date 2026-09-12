@@ -234,7 +234,7 @@ git commit -m "style: refresh forms and overlays"
 
 **Files:**
 - Modify: only files required to fix verified regressions from Tasks 1–4
-- Test: `apps/web/src/components/job-status.test.ts`, `apps/web/src/lib/api.test.ts`, `tests/e2e/job-tracker.spec.ts` only if a regression test is required
+- Test: `apps/web/src/components/job-status.test.ts`, `apps/web/src/lib/api.test.ts`, `tests/e2e/xeniway.spec.ts` only if a regression test is required
 
 **Interfaces:**
 - Consumes the completed visual refresh.

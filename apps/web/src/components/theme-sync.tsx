@@ -16,7 +16,7 @@ export function ThemeSync() {
     };
     apply();
     media.addEventListener("change", apply);
-    localStorage.setItem("job-tracker-theme", preference);
+    localStorage.setItem("xeniway-theme", preference);
     return () => media.removeEventListener("change", apply);
   }, [preference]);
 

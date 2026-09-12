@@ -45,7 +45,7 @@ Use the existing data/error envelopes, CSRF rules, ownership isolation, and stab
 - Create apps/web/src/pages/blacklist-page.tsx and add the authenticated route.
 - Modify apps/web/src/components/site-header.tsx for Blacklist navigation.
 - Modify apps/web/src/components/job/job-form.tsx and job-form-content.tsx for the revealable reason flow.
-- Modify tests/e2e/job-tracker.spec.ts for list, reason, restore, ownership, keyboard, and responsive workflows.
+- Modify tests/e2e/xeniway.spec.ts for list, reason, restore, ownership, keyboard, and responsive workflows.
 - Update README.md, docs/architecture.md, docs/api.md, docs/database.md, and docs/testing.md.
 
 ---
@@ -118,7 +118,7 @@ Files:
 Files:
 - Create apps/web/src/pages/blacklist-page.tsx.
 - Modify apps/web/src/App.tsx and apps/web/src/components/site-header.tsx.
-- Extend tests/e2e/job-tracker.spec.ts.
+- Extend tests/e2e/xeniway.spec.ts.
 
 - [ ] Add /blacklist under RequireAuth and add an authenticated Blacklist NavLink beside Applications and Archive.
 - [ ] Render PageIntro, loading/error live regions, an empty state, and responsive cards.
@@ -132,7 +132,7 @@ Files:
 Files:
 - Modify apps/web/src/components/job/job-form.tsx.
 - Modify apps/web/src/components/job/job-form-content.tsx and manager plumbing only if required.
-- Extend tests/e2e/job-tracker.spec.ts.
+- Extend tests/e2e/xeniway.spec.ts.
 
 - [ ] For existing active jobs, show a secondary Blacklist action in edit mode.
 - [ ] On first click, reveal a hidden Reason textarea and show Confirm blacklist plus Cancel.

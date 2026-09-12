@@ -41,7 +41,7 @@
 - Modify: `apps/web/src/pages/register-page.tsx`
 - Modify: `apps/web/src/pages/home-page.tsx`
 - Modify: `apps/web/src/components/job-form.tsx`
-- Modify: `tests/e2e/job-tracker.spec.ts`
+- Modify: `tests/e2e/xeniway.spec.ts`
 
 **Interfaces:**
 - Each migrated consumer imports `FloatingLabel` and supplies its existing control as `children`.

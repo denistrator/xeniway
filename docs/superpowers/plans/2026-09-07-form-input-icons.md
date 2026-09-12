@@ -42,7 +42,7 @@
 - Modify `apps/web/src/components/ui/floating-label.css`: icon placement and control padding.
 - Modify `apps/web/src/pages/login-page.tsx`, `register-page.tsx`, and `home-page.tsx`: auth and search icons.
 - Modify `apps/web/src/components/job/job-form.tsx`: add/edit job field icons.
-- Modify `apps/web/src/components/ui/floating-label.test.tsx` and `tests/e2e/job-tracker.spec.ts`: semantic and workflow coverage.
+- Modify `apps/web/src/components/ui/floating-label.test.tsx` and `tests/e2e/xeniway.spec.ts`: semantic and workflow coverage.
 
 ---
 
@@ -75,7 +75,7 @@ Run `bun run --cwd apps/web test -- src/components/ui/floating-label.test.tsx`, 
 - Modify: `apps/web/src/pages/login-page.tsx`
 - Modify: `apps/web/src/pages/register-page.tsx`
 - Modify: `apps/web/src/pages/home-page.tsx`
-- Modify: `tests/e2e/job-tracker.spec.ts`
+- Modify: `tests/e2e/xeniway.spec.ts`
 
 - [ ] **Step 1: Add the mapped icons without changing behavior**
 
@@ -93,7 +93,7 @@ Run `bun run --cwd apps/web test`, `bun run typecheck`, and the relevant auth/se
 
 **Files:**
 - Modify: `apps/web/src/components/job/job-form.tsx`
-- Modify: `tests/e2e/job-tracker.spec.ts`
+- Modify: `tests/e2e/xeniway.spec.ts`
 
 - [ ] **Step 1: Add the mapped job icons**
 

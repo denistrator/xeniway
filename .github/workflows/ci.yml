@@ -8,19 +8,19 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgres://job_tracker:job_tracker@localhost:5432/job_tracker
+      DATABASE_URL: postgres://xeniway:xeniway@localhost:5432/xeniway
       REDIS_URL: redis://localhost:6379
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: job_tracker
-          POSTGRES_USER: job_tracker
-          POSTGRES_PASSWORD: job_tracker
+          POSTGRES_DB: xeniway
+          POSTGRES_USER: xeniway
+          POSTGRES_PASSWORD: xeniway
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U job_tracker -d job_tracker"
+          --health-cmd "pg_isready -U xeniway -d xeniway"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5

@@ -4,9 +4,9 @@
 
 Local development uses PostgreSQL 16 from `infra/docker-compose.yml`:
 
-- database: `job_tracker`
-- user: `job_tracker`
-- password: `job_tracker`
+- database: `xeniway`
+- user: `xeniway`
+- password: `xeniway`
 - port: `5432`
 
 Configure the connection through `DATABASE_URL`; do not commit `.env`.

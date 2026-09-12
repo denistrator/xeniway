@@ -1,9 +1,9 @@
-import type { JobStatus } from "@job-tracker/shared";
 import { configureStore, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { JobStatus } from "@xeniway/shared";
 
 export type ThemePreference = "light" | "dark" | "system";
 export type JobFormPresentation = "drawer" | "modal";
-export const jobFormPresentationStorageKey = "job-tracker-form-presentation";
+export const jobFormPresentationStorageKey = "xeniway-form-presentation";
 
 type UiState = {
   theme: ThemePreference;
@@ -15,9 +15,8 @@ type UiState = {
 
 const initialState: UiState = {
   theme:
-    typeof window !== "undefined" &&
-    ["light", "dark", "system"].includes(localStorage.getItem("job-tracker-theme") ?? "")
-      ? (localStorage.getItem("job-tracker-theme") as ThemePreference)
+    typeof window !== "undefined" && ["light", "dark", "system"].includes(localStorage.getItem("xeniway-theme") ?? "")
+      ? (localStorage.getItem("xeniway-theme") as ThemePreference)
       : "system",
   jobFormPresentation:
     typeof window !== "undefined" && localStorage.getItem(jobFormPresentationStorageKey) === "modal"

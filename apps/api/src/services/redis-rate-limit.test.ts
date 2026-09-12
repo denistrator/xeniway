@@ -33,7 +33,7 @@ describe("RedisRateLimiter", () => {
     expect(calls[0]?.script).toContain("EXPIRE");
     const expectedHash = createHash("sha256").update("user@example.com").digest("hex");
     expect(calls[0]?.options).toEqual({
-      keys: [`job-tracker:rate-limit:v1:login:${expectedHash}`],
+      keys: [`xeniway:rate-limit:v1:login:${expectedHash}`],
       arguments: ["900"],
     });
     expect(calls[0]?.options.keys[0]).not.toContain("user@example.com");

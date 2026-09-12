@@ -21,7 +21,7 @@
 
 - Create: `apps/web/src/pages/not-found-page.tsx` — public 404 content and recovery links.
 - Modify: `apps/web/src/App.tsx` — import the page and replace the wildcard redirect.
-- Modify: `tests/e2e/job-tracker.spec.ts` — cover unknown-path behavior.
+- Modify: `tests/e2e/xeniway.spec.ts` — cover unknown-path behavior.
 - No API, database, or shared-contract changes.
 
 ---
@@ -68,7 +68,7 @@ git commit -m "feat: add not found page"
 
 **Files:**
 - Modify: `apps/web/src/App.tsx`
-- Modify: `tests/e2e/job-tracker.spec.ts`
+- Modify: `tests/e2e/xeniway.spec.ts`
 
 - [ ] **Step 1: Add the failing E2E test**
 
@@ -106,7 +106,7 @@ Expected: all commands pass; the unknown URL remains unchanged and shared chrome
 - [ ] **Step 4: Commit**
 
 ```bash
-git add apps/web/src/App.tsx tests/e2e/job-tracker.spec.ts
+git add apps/web/src/App.tsx tests/e2e/xeniway.spec.ts
 git commit -m "feat: route unknown paths to 404"
 ```
 

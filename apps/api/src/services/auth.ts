@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterInput, User } from "@job-tracker/shared";
+import type { LoginInput, RegisterInput, User } from "@xeniway/shared";
 import { type SessionRepository, toUser, type UserRepository } from "../db/repository";
 
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000;

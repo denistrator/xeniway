@@ -46,7 +46,7 @@ Files: `apps/api/src/services/redis-rate-limit.ts`, `apps/api/src/services/redis
 - Use a namespaced key containing the operation and SHA-256 of the normalized identifier:
 
 ```text
-job-tracker:rate-limit:v1:<operation>:<sha256(normalizedEmail)>
+xeniway:rate-limit:v1:<operation>:<sha256(normalizedEmail)>
 ```
 
 - Preserve the five-attempt, fifteen-minute production policy.

@@ -26,7 +26,7 @@ export const en = {
     workspaceNavigation: "Workspace navigation",
   },
   footer: {
-    description: "© {{year}} Job Tracker · Built for focused job searches",
+    description: "© {{year}} Xenia Way · Built for focused job searches",
   },
   applications: {
     status: {
@@ -156,16 +156,15 @@ export const en = {
   },
   notFound: {
     title: "Page not found",
-    description:
-      "We couldn’t find the page you requested. Return to your applications or learn more about Job Tracker.",
+    description: "We couldn’t find the page you requested. Return to your applications or learn more about Xenia Way.",
     navigationLabel: "404 recovery",
     goToApplications: "Go to applications",
-    about: "About Job Tracker",
+    about: "About Xenia Way",
   },
   about: {
     heroTitle: "A clear workspace for a complicated job search.",
     heroDescription:
-      "Job Tracker helps candidates keep track of every conversation with a potential employer, from the first saved opportunity to the final outcome. It gives each application a place, a status, useful context, and a next step.",
+      "Xenia Way helps candidates keep track of every conversation with a potential employer, from the first saved opportunity to the final outcome. It gives each application a place, a status, useful context, and a next step.",
     capabilitiesTitle: "Everything needed to keep momentum.",
     stackTitle: "A modern frontend and a focused API working together.",
     stackDescription:

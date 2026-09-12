@@ -1,5 +1,5 @@
 {
-  "name": "job-tracker",
+  "name": "xeniway",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -16,7 +16,7 @@
     "check": "bun run db:check && bun run redis:check && bun run mailpit:check",
     "db:up": "docker compose -f infra/docker-compose.yml up -d postgres",
     "db:down": "docker compose -f infra/docker-compose.yml stop postgres",
-    "db:check": "docker compose -f infra/docker-compose.yml exec -T postgres pg_isready -U job_tracker -d job_tracker",
+    "db:check": "docker compose -f infra/docker-compose.yml exec -T postgres pg_isready -U xeniway -d xeniway",
     "redis:up": "docker compose -f infra/docker-compose.yml up -d redis",
     "redis:down": "docker compose -f infra/docker-compose.yml stop redis",
     "redis:check": "docker compose -f infra/docker-compose.yml exec -T redis redis-cli ping",

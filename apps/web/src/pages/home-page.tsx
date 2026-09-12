@@ -1,4 +1,4 @@
-import type { JobStatus } from "@job-tracker/shared";
+import type { JobStatus } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
 import { ApplicationSearch } from "../components/application-search";
 import { JobBoard } from "../components/job/job-board";

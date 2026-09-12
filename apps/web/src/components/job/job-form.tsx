@@ -1,4 +1,4 @@
-import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@job-tracker/shared";
+import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@xeniway/shared";
 import {
   Banknote,
   BriefcaseBusiness,

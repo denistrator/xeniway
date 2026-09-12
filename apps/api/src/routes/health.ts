@@ -1,4 +1,4 @@
-import type { HealthResponse } from "@job-tracker/shared";
+import type { HealthResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { errorResponse } from "./support";
 import type { RouteDependencies } from "./types";

@@ -1,4 +1,4 @@
-import type { JobApplication } from "@job-tracker/shared";
+import type { JobApplication } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../i18n/format";
 import { getStatusLabel, statusStyles } from "./job-status";

@@ -1,4 +1,4 @@
-import type { CurrentUserResponse } from "@job-tracker/shared";
+import type { CurrentUserResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { errorResponseWithStatus, readSessionId } from "./support";
 import type { RouteDependencies } from "./types";

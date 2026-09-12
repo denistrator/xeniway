@@ -1,6 +1,6 @@
 # Migration Record
 
-The current repository is the React/Bun implementation of Job Tracker. The previous implementation was used as a behavioral reference during migration, but its code, demonstration routes, schema, and data are not part of this repository.
+The current repository is the React/Bun implementation of Xenia Way. The previous implementation was used as a behavioral reference during migration, but its code, demonstration routes, schema, and data are not part of this repository.
 
 ## Result
 

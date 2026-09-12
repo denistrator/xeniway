@@ -42,7 +42,7 @@ test("shows a public not found page for unknown routes", async ({ page }) => {
   await expect(page).toHaveURL(/\/does-not-exist$/);
   await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Go to applications" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "About Job Tracker" })).toHaveAttribute("href", "/about");
+  await expect(page.getByRole("link", { name: "About Xenia Way" })).toHaveAttribute("href", "/about");
   await expect(page.getByRole("group", { name: "Theme preference" })).toBeVisible();
 });
 

@@ -1,4 +1,4 @@
-import type { CsrfResponse } from "@job-tracker/shared";
+import type { CsrfResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { readSessionId, setSessionCookie } from "./support";
 import type { RouteDependencies } from "./types";

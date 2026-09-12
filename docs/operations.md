@@ -16,7 +16,7 @@ bun run db:seed
 bun run dev
 ```
 
-Use `bun run check` to check PostgreSQL, Redis, and Mailpit together. Stop all local infrastructure with `bun run down`, or stop PostgreSQL only with `bun run db:down`, Redis only with `bun run redis:down`, and Mailpit only with `bun run mailpit:down`. The Compose volumes `job_tracker_postgres_data` and `job_tracker_redis_data` persist local data between container restarts; Mailpit mail is disposable.
+Use `bun run check` to check PostgreSQL, Redis, and Mailpit together. Stop all local infrastructure with `bun run down`, or stop PostgreSQL only with `bun run db:down`, Redis only with `bun run redis:down`, and Mailpit only with `bun run mailpit:down`. The Compose volumes `xeniway_postgres_data` and `xeniway_redis_data` persist local data between container restarts; Mailpit mail is disposable.
 
 Check Redis with `bun run redis:check`; a healthy instance responds with `PONG`.
 Check Mailpit with `bun run mailpit:check`; a healthy instance returns its API metadata. Browse received messages at `http://localhost:8025`.

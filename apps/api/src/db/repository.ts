@@ -5,7 +5,7 @@ import type {
   JobStatus,
   UpdateApplicationInput,
   User,
-} from "@job-tracker/shared";
+} from "@xeniway/shared";
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { createDatabase } from "./client";
 import { jobApplications, passwordResetTokens, sessions, users } from "./schema";

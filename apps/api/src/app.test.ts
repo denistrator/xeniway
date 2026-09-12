@@ -1,4 +1,4 @@
-import type { ApplicationResponse, AuthResponse, JobApplication } from "@job-tracker/shared";
+import type { ApplicationResponse, AuthResponse, JobApplication } from "@xeniway/shared";
 import { describe, expect, it } from "vitest";
 import { type AppDependencies, createApp } from "./app";
 import type {

@@ -1,4 +1,4 @@
-import type { JobApplication } from "@job-tracker/shared";
+import type { JobApplication } from "@xeniway/shared";
 
 export function matchesApplicationSearch(job: JobApplication, search: string) {
   const query = search.trim().toLowerCase();

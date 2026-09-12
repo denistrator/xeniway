@@ -1,4 +1,4 @@
-import type { CreateApplicationInput, JobStatus } from "@job-tracker/shared";
+import type { CreateApplicationInput, JobStatus } from "@xeniway/shared";
 import { inArray } from "drizzle-orm";
 import { createDatabase, createPostgresClient } from "./client";
 import { jobApplications, users } from "./schema";

@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterInput } from "@job-tracker/shared";
+import type { LoginInput, RegisterInput } from "@xeniway/shared";
 import { describe, expect, it } from "vitest";
 import type { SessionRepository, UserRepository } from "../db/repository";
 import { AuthService, type PasswordHasher } from "./auth";

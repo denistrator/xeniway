@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc" />
     <script>
       (() => {
-        const storedTheme = localStorage.getItem("job-tracker-theme");
+        const storedTheme = localStorage.getItem("xeniway-theme");
         const preference = ["light", "dark", "system"].includes(storedTheme ?? "") ? storedTheme : "system";
         const isDark = preference === "dark" || (preference === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.theme = isDark ? "dark" : "light";
@@ -15,7 +15,7 @@
         document.querySelector('meta[name="theme-color"]')?.setAttribute("content", isDark ? "#020618" : "#f5f3ee");
       })();
     </script>
-    <title>Job Tracker</title>
+    <title>Xenia Way</title>
   </head>
   <body>
     <div id="root"></div>

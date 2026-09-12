@@ -1,4 +1,4 @@
-import { blacklistInputSchema, type MessageResponse } from "@job-tracker/shared";
+import { blacklistInputSchema, type MessageResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import {
   errorResponse,

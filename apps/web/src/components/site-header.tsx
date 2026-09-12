@@ -6,7 +6,7 @@ import { useAuthMutations, useCurrentUser } from "../lib/queries";
 import { cn } from "../lib/utils";
 import { closeDrawer, openCreateDrawer } from "../store";
 import { LanguageSelector } from "./language-selector";
-import { ThemeSelector} from "./theme-selector";
+import { ThemeSelector } from "./theme-selector";
 import { Button } from "./ui/button";
 
 function navigationLinkClassName({ isActive }: { isActive: boolean }) {
@@ -40,7 +40,7 @@ export function SiteHeader() {
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center px-6 py-4">
         <Link to="/" className="font-display mr-auto text-xl font-bold tracking-tight text-ink">
-          Job Tracker
+          Xenia Way
         </Link>
         <nav className="flex items-center gap-1 px-3" aria-label={t("accessibility.workspaceNavigation")}>
           {navigationLinks.map(
@@ -58,7 +58,9 @@ export function SiteHeader() {
               <div className="flex items-center lg:border-x border-line ps-6 pe-3">
                 <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
                 <Button variant="ghost" size="sm" className="ms-1" onClick={handleLogout} disabled={logout.isPending}>
-                  <div className="sr-only">{logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}</div>
+                  <div className="sr-only">
+                    {logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}
+                  </div>
                   <LogOut aria-hidden="true" size={15} strokeWidth={2} />
                 </Button>
               </div>

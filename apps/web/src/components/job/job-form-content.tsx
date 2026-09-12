@@ -1,4 +1,4 @@
-import type { CreateApplicationInput, JobApplication } from "@job-tracker/shared";
+import type { CreateApplicationInput, JobApplication } from "@xeniway/shared";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { PasswordResetConfirmInput, PasswordResetRequestInput } from "@job-tracker/shared";
+import type { PasswordResetConfirmInput, PasswordResetRequestInput } from "@xeniway/shared";
 import type { PasswordResetTokenRepository, SessionRepository, UserRepository } from "../db/repository";
 import type { PasswordHasher } from "./auth";
 import type { PasswordResetMailer } from "./mailer";

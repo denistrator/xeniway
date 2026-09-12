@@ -1,5 +1,5 @@
 {
-  "name": "@job-tracker/shared",
+  "name": "@xeniway/shared",
   "private": true,
   "type": "module",
   "exports": {

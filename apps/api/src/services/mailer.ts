@@ -32,9 +32,9 @@ export class SmtpPasswordResetMailer implements PasswordResetMailer {
     await this.transporter.sendMail({
       from: this.from,
       to,
-      subject: "Reset your Job Tracker password",
+      subject: "Reset your Xenia Way password",
       text: [
-        "We received a request to reset your Job Tracker password.",
+        "We received a request to reset your Xenia Way password.",
         "",
         `Reset your password: ${resetUrl}`,
         "",

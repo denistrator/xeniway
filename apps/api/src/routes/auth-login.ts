@@ -1,4 +1,4 @@
-import { type AuthResponse, loginInputSchema } from "@job-tracker/shared";
+import { type AuthResponse, loginInputSchema } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { AuthError } from "../services/auth";
 import { RedisRateLimitError } from "../services/redis-rate-limit";

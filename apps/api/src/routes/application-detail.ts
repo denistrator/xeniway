@@ -1,4 +1,4 @@
-import type { ApplicationResponse } from "@job-tracker/shared";
+import type { ApplicationResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { errorResponse, errorResponseWithStatus, parseId, requireAuth } from "./support";
 import type { RouteDependencies } from "./types";

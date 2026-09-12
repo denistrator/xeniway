@@ -4,7 +4,7 @@ import { en, type TranslationDictionary } from "./locales/en";
 
 export const supportedLocales = ["en", "ru", "uk"] as const;
 export type SupportedLocale = (typeof supportedLocales)[number];
-export const languageStorageKey = "job-tracker-language";
+export const languageStorageKey = "xeniway-language";
 
 const localeLoaders: Record<Exclude<SupportedLocale, "en">, () => Promise<{ default: TranslationDictionary }>> = {
   ru: () => import("./locales/ru"),

@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BlacklistInput,
   CreateApplicationInput,
@@ -8,8 +9,7 @@ import type {
   PasswordResetRequestInput,
   RegisterInput,
   UpdateApplicationInput,
-} from "@job-tracker/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+} from "@xeniway/shared";
 import {
   applicationKeys,
   archiveApplication,

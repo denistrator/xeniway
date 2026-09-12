@@ -1,5 +1,5 @@
 {
-  "name": "@job-tracker/api",
+  "name": "@xeniway/api",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.2",
-    "@job-tracker/shared": "workspace:*",
+    "@xeniway/shared": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "elysia": "^1.4.30",
     "nodemailer": "^10.0.8",

@@ -1,4 +1,4 @@
-import type { MessageResponse } from "@job-tracker/shared";
+import type { MessageResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { clearSessionCookie, errorResponseWithStatus, readSessionId, verifyRequestCsrf } from "./support";
 import type { RouteDependencies } from "./types";

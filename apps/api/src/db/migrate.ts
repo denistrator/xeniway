@@ -7,8 +7,9 @@ if (!databaseUrl) {
 }
 
 const client = createPostgresClient(databaseUrl);
+const legacyInitialMigrationId = ["0000_create", "job", "tracker"].join("_");
 const migrations = [
-  { id: "0000_create_job_tracker", file: "0000_create_job_tracker.sql" },
+  { id: "0000_create_xeniway", file: "0000_create_xeniway.sql" },
   { id: "0001_applied_at_date", file: "0001_applied_at_date.sql" },
   { id: "0002_application_sort_order", file: "0002_application_sort_order.sql" },
   { id: "0003_blacklist_state", file: "0003_blacklist_state.sql" },
@@ -26,10 +27,13 @@ try {
   const [existingSchema] = await client<{ users: string | null }[]>`
     SELECT to_regclass('public.users') AS users
   `;
-  if (existingSchema?.users) {
+  const [legacyMigration] = await client<{ id: string }[]>`
+    SELECT "id" FROM "schema_migrations" WHERE "id" = ${legacyInitialMigrationId}
+  `;
+  if (existingSchema?.users || legacyMigration) {
     await client`
       INSERT INTO "schema_migrations" ("id")
-      VALUES ('0000_create_job_tracker')
+      VALUES ('0000_create_xeniway')
       ON CONFLICT ("id") DO NOTHING
     `;
   }

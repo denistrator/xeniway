@@ -1,4 +1,4 @@
-import { type MessageResponse, passwordResetConfirmInputSchema } from "@job-tracker/shared";
+import { type MessageResponse, passwordResetConfirmInputSchema } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { PasswordResetError } from "../services/password-reset";
 import { errorResponseWithStatus, validationError, verifyRequestCsrf } from "./support";

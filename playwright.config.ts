@@ -14,7 +14,7 @@ export default defineConfig({
   webServer: {
     command: "bun run dev",
     env: {
-      DATABASE_URL: "postgres://job_tracker:job_tracker@localhost:5432/job_tracker",
+      DATABASE_URL: "postgres://xeniway:xeniway@localhost:5432/xeniway",
       REDIS_URL: "redis://localhost:6379",
       PORT: "3100",
       API_PORT: "3100",

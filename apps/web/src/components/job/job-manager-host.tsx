@@ -1,4 +1,4 @@
-import type { CreateApplicationInput } from "@job-tracker/shared";
+import type { CreateApplicationInput } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { getApiErrorKey } from "../../i18n/format";

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Job Tracker is a candidate-facing application for recording employer conversations and application progress. Preserve the six-status workflow, authenticated ownership boundary, archive semantics, and shared API contracts when changing the code.
+Xenia Way is a candidate-facing application for recording employer conversations and application progress. Preserve the six-status workflow, authenticated ownership boundary, archive semantics, and shared API contracts when changing the code.
 
 ## Structure
 
@@ -38,7 +38,7 @@ Run `bun run format` after source edits and `bun run lint` before committing. Bi
 
 Keep server state in TanStack Query and local presentation state in Redux Toolkit. Keep database access behind typed repositories. Every application repository operation must be scoped by authenticated user ID. Mutating authenticated requests require the session CSRF token.
 
-Internationalization is owned by i18next/react-i18next, not Redux. Supported locales are `en`, `ru`, and `uk`; English is the fallback and Russian/Ukrainian dictionaries are dynamically imported. Persist explicit browser choices only under `job-tracker-language`; never add locale fields to API or database contracts. Translate UI copy and stable API error codes, preserve canonical status values and user-entered content, update `html[lang]`, and format dates with the active locale.
+Internationalization is owned by i18next/react-i18next, not Redux. Supported locales are `en`, `ru`, and `uk`; English is the fallback and Russian/Ukrainian dictionaries are dynamically imported. Persist explicit browser choices only under `xeniway-language`; never add locale fields to API or database contracts. Translate UI copy and stable API error codes, preserve canonical status values and user-entered content, update `html[lang]`, and format dates with the active locale.
 
 Password recovery must remain enumeration-safe: reset tokens are random, single-use, time-limited, stored only as hashes, and successful resets invalidate all sessions. Keep mail delivery behind the injectable mailer interface; use Mailpit for local SMTP testing, the console mailer only when SMTP is intentionally absent, and never add a test-only production endpoint for raw reset tokens.
 

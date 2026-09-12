@@ -1,4 +1,4 @@
-import { type ApplicationResponse, updateApplicationInputSchema } from "@job-tracker/shared";
+import { type ApplicationResponse, updateApplicationInputSchema } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import {
   errorResponse,

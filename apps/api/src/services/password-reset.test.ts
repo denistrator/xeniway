@@ -1,4 +1,4 @@
-import type { PasswordResetConfirmInput, PasswordResetRequestInput } from "@job-tracker/shared";
+import type { PasswordResetConfirmInput, PasswordResetRequestInput } from "@xeniway/shared";
 import { describe, expect, it } from "vitest";
 import type { PasswordResetTokenRepository, SessionRepository, UserRepository } from "../db/repository";
 import type { PasswordHasher } from "./auth";

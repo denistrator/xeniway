@@ -1,6 +1,6 @@
-# Job Tracker
+# Xenia Way
 
-Job Tracker helps job candidates keep a reliable record of conversations and progress with potential employers. Each application belongs to the signed-in user and moves through six workflow statuses: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.
+Xenia Way helps job candidates keep a reliable record of conversations and progress with potential employers. Each application belongs to the signed-in user and moves through six workflow statuses: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.
 
 The application is a Bun workspace with a React SPA, a typed Elysia API, shared Zod contracts, Drizzle ORM, PostgreSQL, and Redis-backed authentication rate limiting.
 
@@ -97,7 +97,7 @@ Accessibility is a first-class UI goal. Preserve semantic HTML, associated form 
 
 ## Languages
 
-The UI supports `en`, `ru`, and `uk`. English is the initial fallback; Russian and Ukrainian dictionaries are lazy-loaded so they do not inflate the initial bundle. The header selector stores an explicit choice in the browser under `job-tracker-language`. Without a saved choice, the browser language is reduced to its supported base language and unsupported languages use English. The selected locale updates `html[lang]` and all displayed dates use it through `Intl.DateTimeFormat`.
+The UI supports `en`, `ru`, and `uk`. English is the initial fallback; Russian and Ukrainian dictionaries are lazy-loaded so they do not inflate the initial bundle. The header selector stores an explicit choice in the browser under `xeniway-language`. Without a saved choice, the browser language is reduced to its supported base language and unsupported languages use English. The selected locale updates `html[lang]` and all displayed dates use it through `Intl.DateTimeFormat`.
 
 Language preference is intentionally not part of the user record or API contract. Status values, API error codes, database data, email content, and candidate-entered fields remain language-neutral; the React client translates stable error codes and UI copy at presentation time.
 

@@ -1,4 +1,4 @@
-import type { CreateApplicationInput, JobApplication } from "@job-tracker/shared";
+import type { CreateApplicationInput, JobApplication } from "@xeniway/shared";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { jobFormPresentationStorageKey, type RootState, setJobFormPresentation } from "../../store";

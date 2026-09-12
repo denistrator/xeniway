@@ -1,4 +1,4 @@
-import { registerInputSchema } from "@job-tracker/shared";
+import { registerInputSchema } from "@xeniway/shared";
 import { LockKeyhole, Mail, User } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

@@ -1,4 +1,4 @@
-import type { JobApplication } from "@job-tracker/shared";
+import type { JobApplication } from "@xeniway/shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";

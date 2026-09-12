@@ -44,7 +44,7 @@ export class RedisRateLimiter implements RateLimiter {
     const operation = separatorIndex === -1 ? "unknown" : key.slice(0, separatorIndex);
     const identifier = separatorIndex === -1 ? key : key.slice(separatorIndex + 1);
     const identifierHash = createHash("sha256").update(identifier).digest("hex");
-    const redisKey = `job-tracker:rate-limit:v1:${operation}:${identifierHash}`;
+    const redisKey = `xeniway:rate-limit:v1:${operation}:${identifierHash}`;
 
     try {
       const current = Number(

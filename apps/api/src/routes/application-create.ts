@@ -1,4 +1,4 @@
-import { type ApplicationResponse, createApplicationInputSchema } from "@job-tracker/shared";
+import { type ApplicationResponse, createApplicationInputSchema } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { errorResponseWithStatus, requireAuth, validationError, verifyRequestCsrf } from "./support";
 import type { RouteDependencies } from "./types";

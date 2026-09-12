@@ -1,4 +1,4 @@
-import type { ApiError } from "@job-tracker/shared";
+import type { ApiError } from "@xeniway/shared";
 import type { Context } from "elysia";
 import { createCookieJar, parseCookie } from "elysia/cookies";
 import type { AuthService } from "../services/auth";

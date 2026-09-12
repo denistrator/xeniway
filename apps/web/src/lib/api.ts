@@ -16,7 +16,7 @@ import type {
   RegisterInput,
   ReorderApplicationsInput,
   UpdateApplicationInput,
-} from "@job-tracker/shared";
+} from "@xeniway/shared";
 
 export type ApplicationList = "active" | "archive" | "blacklist";
 
@@ -56,7 +56,7 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, csrfT
   if (!response.ok) {
     const error = parseApiError(payload);
     if (response.status === 401 && path.startsWith("/api/applications") && typeof window !== "undefined") {
-      window.dispatchEvent(new Event("job-tracker:auth-expired"));
+      window.dispatchEvent(new Event("xeniway:auth-expired"));
     }
     throw new ApiRequestError(error.message, error.code, response.status);
   }

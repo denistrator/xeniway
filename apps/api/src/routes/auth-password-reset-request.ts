@@ -2,7 +2,7 @@ import {
   type MessageResponse,
   PASSWORD_RESET_REQUESTED_MESSAGE,
   passwordResetRequestInputSchema,
-} from "@job-tracker/shared";
+} from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { PasswordResetError } from "../services/password-reset";
 import { RedisRateLimitError } from "../services/redis-rate-limit";

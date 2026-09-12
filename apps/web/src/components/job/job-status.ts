@@ -1,4 +1,4 @@
-import type { JobStatus } from "@job-tracker/shared";
+import type { JobStatus } from "@xeniway/shared";
 import type { TFunction } from "i18next";
 
 export const jobStatuses: JobStatus[] = ["saved", "applied", "interview", "offer", "rejected", "withdrawn"];

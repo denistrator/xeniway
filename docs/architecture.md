@@ -28,7 +28,7 @@ React + React Router
 
 The UI follows an accessibility-first baseline: semantic controls and labels, keyboard-operable workflows including a keyboard alternative to drag-and-drop, visible focus indicators, managed focus within dialogs and drawers, live regions for asynchronous feedback, responsive layouts, and reduced-motion support. The document theme is initialized before React starts to avoid a flash of the wrong theme.
 
-The UI language is a separate client-side concern owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists only an explicit browser choice under `job-tracker-language`, falls back from the browser base language to English, and synchronizes `html[lang]`. Redux does not duplicate locale state.
+The UI language is a separate client-side concern owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists only an explicit browser choice under `xeniway-language`, falls back from the browser base language to English, and synchronizes `html[lang]`. Redux does not duplicate locale state.
 
 ## Request lifecycle
 

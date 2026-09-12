@@ -74,8 +74,8 @@ function AuthFailureHandler() {
       queryClient.removeQueries({ queryKey: authKeys.csrf });
       queryClient.removeQueries({ queryKey: applicationKeys.all });
     };
-    window.addEventListener("job-tracker:auth-expired", handleAuthExpired);
-    return () => window.removeEventListener("job-tracker:auth-expired", handleAuthExpired);
+    window.addEventListener("xeniway:auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("xeniway:auth-expired", handleAuthExpired);
   }, [queryClient]);
 
   return null;

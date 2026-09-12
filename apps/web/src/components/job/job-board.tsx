@@ -1,4 +1,4 @@
-import type { JobApplication, JobStatus } from "@job-tracker/shared";
+import type { JobApplication, JobStatus } from "@xeniway/shared";
 import type { DragEvent } from "react";
 import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
