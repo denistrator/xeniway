@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "latest"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
-    "vitest": "latest",
-    "typescript": "latest"
+    "vitest": "^5.0.0",
+    "typescript": "^7.0.2"
   }
 }
