@@ -8,12 +8,10 @@ beforeEach(async () => {
   await initializeI18n();
 });
 
-test("uses compact visual labels with unambiguous accessible names", () => {
+test("uses a compact visual label with an unambiguous accessible name", () => {
   render(<LanguageSelector />);
 
-  expect(screen.getByRole("group", { name: /language/i })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "English" })).toHaveTextContent("EN");
-  expect(screen.getByRole("button", { name: "Українська" })).toHaveTextContent("UK");
+  expect(screen.getByRole("button", { name: "Language: English. Change language" })).toHaveTextContent("EN");
 });
 
 test("rotates the current locale from the mobile language control", async () => {
