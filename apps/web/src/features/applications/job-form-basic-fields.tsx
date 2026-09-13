@@ -2,7 +2,7 @@ import { Banknote, BriefcaseBusiness, Building2, Link, MapPin } from "lucide-rea
 import { useTranslation } from "react-i18next";
 import { FloatingLabel } from "../../components/ui/floating-label";
 import { Input } from "../../components/ui/input";
-import type { FormState } from "./use-job-form";
+import type { ApplicationFormState as FormState } from "./application-form";
 
 export function JobFormBasicFields({
   form,

@@ -1,46 +1,9 @@
 import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@xeniway/shared";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { type ApplicationFormState, applicationToForm, normalizeApplicationForm } from "./application-form";
 
-export type FormState = {
-  company: string;
-  position: string;
-  location: string;
-  salary: string;
-  jobUrl: string;
-  description: string;
-  status: CreateApplicationInput["status"];
-  appliedAt: string;
-  notes: string;
-};
-
-const emptyForm: FormState = {
-  company: "",
-  position: "",
-  location: "",
-  salary: "",
-  jobUrl: "",
-  description: "",
-  status: "saved",
-  appliedAt: "",
-  notes: "",
-};
-
-function toForm(job?: JobApplication | null): FormState {
-  return job
-    ? {
-        company: job.company,
-        position: job.position,
-        location: job.location ?? "",
-        salary: job.salary ?? "",
-        jobUrl: job.jobUrl ?? "",
-        description: job.description ?? "",
-        status: job.status,
-        appliedAt: job.appliedAt ?? "",
-        notes: job.notes ?? "",
-      }
-    : emptyForm;
-}
+export type FormState = ApplicationFormState;
 
 export function useJobForm({
   job,
@@ -50,13 +13,13 @@ export function useJobForm({
   onSubmit: (input: CreateApplicationInput) => void;
 }) {
   const { t } = useTranslation();
-  const [form, setForm] = useState<FormState>(() => toForm(job));
+  const [form, setForm] = useState<FormState>(() => applicationToForm(job));
   const [error, setError] = useState<string | null>(null);
   const [blacklistOpen, setBlacklistOpen] = useState(false);
   const [blacklistReason, setBlacklistReason] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
 
-  useEffect(() => setForm(toForm(job)), [job]);
+  useEffect(() => setForm(applicationToForm(job)), [job]);
   useEffect(() => {
     if (error) errorRef.current?.focus();
   }, [error]);
@@ -67,15 +30,7 @@ export function useJobForm({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const parsed = createApplicationInputSchema.safeParse({
-      ...form,
-      location: form.location || null,
-      salary: form.salary || null,
-      jobUrl: form.jobUrl || null,
-      description: form.description || null,
-      appliedAt: form.appliedAt || null,
-      notes: form.notes || null,
-    });
+    const parsed = createApplicationInputSchema.safeParse(normalizeApplicationForm(form));
     if (!parsed.success) {
       setError(t("applications.form.checkDetails"));
       return;

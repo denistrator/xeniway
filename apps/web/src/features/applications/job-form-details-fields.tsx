@@ -2,8 +2,8 @@ import { CalendarDays, CircleDot, FileText, StickyNote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FloatingLabel } from "../../components/ui/floating-label";
 import { Input } from "../../components/ui/input";
+import type { ApplicationFormState as FormState } from "./application-form";
 import { getStatusLabel, jobStatuses } from "./job-status";
-import type { FormState } from "./use-job-form";
 
 export function JobFormDetailsFields({
   form,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { type RootState, setAllStatuses, toggleStatus } from "../../../store";
 import { jobStatuses } from "../job-status";
@@ -12,6 +12,11 @@ export function useStatusFilter() {
   const selectAllRef = useRef<HTMLInputElement>(null);
   const allSelected = visibleStatuses.length === jobStatuses.length;
   const partiallySelected = visibleStatuses.length > 0 && !allSelected;
+  const selectAll = useCallback((selected: boolean) => dispatch(setAllStatuses(selected)), [dispatch]);
+  const toggle = useCallback(
+    (status: RootState["ui"]["visibleStatuses"][number]) => dispatch(toggleStatus(status)),
+    [dispatch],
+  );
 
   useEffect(() => {
     if (selectAllRef.current) selectAllRef.current.indeterminate = partiallySelected;
@@ -44,8 +49,7 @@ export function useStatusFilter() {
     open,
     setOpen,
     allSelected,
-    dispatch,
-    setAllStatuses,
-    toggleStatus,
+    selectAll,
+    toggle,
   };
 }

@@ -4,8 +4,8 @@ import { useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { matchesApplicationSearch } from "../../lib/application-filters";
 import type { RootState } from "../../store";
+import { insertApplication, type MoveDirection, moveApplication } from "./application-order";
 
-type MoveDirection = "up" | "down" | "first" | "last";
 type StatusDirection = "previousStatus" | "nextStatus";
 
 export function useJobBoard({
@@ -31,15 +31,8 @@ export function useJobBoard({
       .filter((job) => job.status === status)
       .sort((left, right) => left.sortOrder - right.sortOrder)
       .map((job) => job.id);
-    const currentIndex = applicationIds.indexOf(id);
-    if (currentIndex === -1) return;
-    const targetIndex = { up: currentIndex - 1, down: currentIndex + 1, first: 0, last: applicationIds.length - 1 }[
-      direction
-    ];
-    if (targetIndex === currentIndex || targetIndex < 0 || targetIndex >= applicationIds.length) return;
-    const [movedId] = applicationIds.splice(currentIndex, 1);
-    applicationIds.splice(targetIndex, 0, movedId);
-    onReorder(status, applicationIds);
+    const reordered = moveApplication(applicationIds, id, direction);
+    if (reordered) onReorder(status, reordered);
   }
 
   function moveToAdjacentStatus(id: number, status: JobStatus, direction: StatusDirection) {
@@ -71,8 +64,8 @@ export function useJobBoard({
       return;
     }
     const applicationIds = columnJobs.filter((job) => job.id !== id).map((job) => job.id);
-    applicationIds.splice(applicationIds.indexOf(targetId), 0, id);
-    onReorder(status, applicationIds);
+    const reordered = insertApplication(applicationIds, id, targetId);
+    if (reordered) onReorder(status, reordered);
     draggedIdRef.current = null;
   }
 

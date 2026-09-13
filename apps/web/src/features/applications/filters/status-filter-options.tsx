@@ -1,18 +1,20 @@
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { type AppDispatch, type RootState, setAllStatuses, toggleStatus } from "../../../store";
+import type { RootState } from "../../../store";
 import { getStatusLabel, jobStatuses } from "../job-status";
 
 export function StatusFilterOptions({
   selectAllRef,
   visibleStatuses,
   allSelected,
-  dispatch,
+  selectAll,
+  toggle,
 }: {
   selectAllRef: RefObject<HTMLInputElement | null>;
   visibleStatuses: RootState["ui"]["visibleStatuses"];
   allSelected: boolean;
-  dispatch: AppDispatch;
+  selectAll: (selected: boolean) => void;
+  toggle: (status: RootState["ui"]["visibleStatuses"][number]) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -26,7 +28,7 @@ export function StatusFilterOptions({
           ref={selectAllRef}
           type="checkbox"
           checked={allSelected}
-          onChange={(event) => dispatch(setAllStatuses(event.target.checked))}
+          onChange={(event) => selectAll(event.target.checked)}
         />
         {t("applications.selectAllStatuses")}
       </label>
@@ -36,11 +38,7 @@ export function StatusFilterOptions({
           key={status}
           className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent-hover"
         >
-          <input
-            type="checkbox"
-            checked={visibleStatuses.includes(status)}
-            onChange={() => dispatch(toggleStatus(status))}
-          />
+          <input type="checkbox" checked={visibleStatuses.includes(status)} onChange={() => toggle(status)} />
           {getStatusLabel(t, status)}
         </label>
       ))}
