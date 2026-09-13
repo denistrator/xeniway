@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { AppRoutes } from "./app-routes";
 import { AuthFailureHandler } from "./components/auth-failure-handler";
-import { LanguageSync } from "./components/language-sync";
-import { ThemeSync } from "./components/theme-sync";
+import { LanguageSync } from "./features/preferences/language-sync";
+import { ThemeSync } from "./features/preferences/theme-sync";
 
 export { AuthFailureHandler } from "./components/auth-failure-handler";
 

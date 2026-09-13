@@ -5,23 +5,31 @@ import { LoadingScreen } from "./components/loading-screen";
 import { GuestOnly, RequireAuth } from "./route-guards";
 
 const AboutPage = lazy(() => import("./pages/about-page").then(({ AboutPage }) => ({ default: AboutPage })));
-const ArchivePage = lazy(() => import("./pages/archive-page").then(({ ArchivePage }) => ({ default: ArchivePage })));
+const ArchivePage = lazy(() =>
+  import("./features/applications/archive/archive-page").then(({ ArchivePage }) => ({ default: ArchivePage })),
+);
 const BlacklistPage = lazy(() =>
-  import("./pages/blacklist-page").then(({ BlacklistPage }) => ({ default: BlacklistPage })),
+  import("./features/applications/blacklist/blacklist-page").then(({ BlacklistPage }) => ({ default: BlacklistPage })),
 );
 const ForgotPasswordPage = lazy(() =>
-  import("./pages/forgot-password-page").then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })),
+  import("./features/auth/forgot-password/forgot-password-page").then(({ ForgotPasswordPage }) => ({
+    default: ForgotPasswordPage,
+  })),
 );
 const HomePage = lazy(() => import("./pages/home-page").then(({ HomePage }) => ({ default: HomePage })));
-const LoginPage = lazy(() => import("./pages/login-page").then(({ LoginPage }) => ({ default: LoginPage })));
+const LoginPage = lazy(() =>
+  import("./features/auth/login/login-page").then(({ LoginPage }) => ({ default: LoginPage })),
+);
 const NotFoundPage = lazy(() =>
   import("./pages/not-found-page").then(({ NotFoundPage }) => ({ default: NotFoundPage })),
 );
 const PasswordResetPage = lazy(() =>
-  import("./pages/password-reset-page").then(({ PasswordResetPage }) => ({ default: PasswordResetPage })),
+  import("./features/auth/password-reset/password-reset-page").then(({ PasswordResetPage }) => ({
+    default: PasswordResetPage,
+  })),
 );
 const RegisterPage = lazy(() =>
-  import("./pages/register-page").then(({ RegisterPage }) => ({ default: RegisterPage })),
+  import("./features/auth/register/register-page").then(({ RegisterPage }) => ({ default: RegisterPage })),
 );
 
 export function AppRoutes() {

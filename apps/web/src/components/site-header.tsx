@@ -2,11 +2,11 @@ import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { LanguageSelector } from "../features/preferences/language-selector";
+import { ThemeSelector } from "../features/preferences/theme-selector";
 import { useAuthMutations, useCurrentUser } from "../lib/queries";
 import { cn } from "../lib/utils";
 import { closeDrawer, openCreateDrawer } from "../store";
-import { LanguageSelector } from "./language-selector";
-import { ThemeSelector } from "./theme-selector";
 import { Button } from "./ui/button";
 
 function navigationLinkClassName({ isActive }: { isActive: boolean }) {

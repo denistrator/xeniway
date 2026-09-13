@@ -1,16 +1,16 @@
 import { lazy, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
+import { UserPreferencesSync } from "../features/preferences/user-preferences-sync";
+import { type WelcomeAction, WelcomeModal } from "../features/welcome/welcome-modal";
 import { useCompleteIntroduction, useCurrentUser, useUserPreferences } from "../lib/queries";
 import { writeLocalUserPreferences } from "../lib/user-preferences";
 import { closeWelcome, type RootState } from "../store";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
-import { UserPreferencesSync } from "./user-preferences-sync";
-import { type WelcomeAction, WelcomeModal } from "./welcome-modal";
 
 const JobManagerHost = lazy(() =>
-  import("./job/job-manager-host").then(({ JobManagerHost }) => ({ default: JobManagerHost })),
+  import("../features/applications/job-manager-host").then(({ JobManagerHost }) => ({ default: JobManagerHost })),
 );
 
 export function Layout() {

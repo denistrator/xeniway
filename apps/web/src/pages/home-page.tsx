@@ -1,9 +1,9 @@
 import type { JobStatus } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
 import { ApplicationSearch } from "../components/application-search";
-import { JobBoard } from "../components/job/job-board";
 import { PageIntro } from "../components/page-intro";
-import { StatusFilter } from "../components/status-filter";
+import { StatusFilter } from "../features/applications/filters/status-filter";
+import { JobBoard } from "../features/applications/job-board";
 import { getApiErrorKey } from "../i18n/format";
 import { ApiRequestError } from "../lib/api";
 import { useApplicationMutations, useApplications } from "../lib/queries";
