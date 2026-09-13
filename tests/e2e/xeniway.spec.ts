@@ -48,10 +48,18 @@ test("shows the about page without authentication", async ({ page }) => {
 });
 
 test("switches and persists the selected browser language", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("e2e-preferences-reset")) return;
+    localStorage.clear();
+    sessionStorage.setItem("e2e-preferences-reset", "true");
+  });
   await page.goto("/about");
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Russian" }).click();
   await page.getByRole("button", { name: "Language: Русский. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Украинский" }).click();
   await page.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: "מרחב עבודה ברור לחיפוש עבודה מורכב." })).toBeVisible();
@@ -88,6 +96,11 @@ test("uses floating labels for authentication fields", async ({ page }) => {
 });
 
 test("shows the welcome popup after login and registration", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("e2e-preferences-reset")) return;
+    localStorage.clear();
+    sessionStorage.setItem("e2e-preferences-reset", "true");
+  });
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");
   await page.getByLabel("Password").fill("password");
@@ -98,15 +111,19 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await expect(welcome).toHaveAccessibleName("Welcome to Xenia Way");
   await expect(welcome.getByText("Xenia Way gives you one clear place")).toBeVisible();
   await welcome.getByRole("button", { name: "Language: English. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Russian" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
   await expect(welcome).toHaveAccessibleName("Добро пожаловать в Xenia Way");
   await expect(welcome.getByRole("heading", { name: "Добро пожаловать в Xenia Way" })).toBeVisible();
   await welcome.getByRole("button", { name: "Language: Русский. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Украинский" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
   await welcome.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(welcome).toHaveAccessibleName("ברוכים הבאים ל־Xenia Way");
   await welcome.getByRole("button", { name: "Language: עברית. Change language" }).click();
+  await page.getByRole("menuitem", { name: "אנגלית" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
   await expect(welcome).toHaveCount(0);
@@ -179,6 +196,8 @@ test("syncs browser preferences with each authenticated account", async ({ page 
       response.status() === 200,
   );
   await accountALanguage.click();
+  const accountALanguageOption = page.getByRole("menuitem", { name: "Англійська" });
+  await accountALanguageOption.click();
   await accountALanguageUpdate;
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
@@ -221,6 +240,8 @@ test("syncs browser preferences with each authenticated account", async ({ page 
       response.status() === 200,
   );
   await accountBLanguage.click();
+  const accountBLanguageOption = page.getByRole("menuitem", { name: "Russian" });
+  await accountBLanguageOption.click();
   await accountBLanguageUpdate;
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
   await expect(page.getByRole("button", { name: "Theme: System. Change theme" })).toBeVisible();
@@ -345,21 +366,25 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  if (await welcome.isVisible())
+    await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
 
   const savedColumn = page.getByRole("region", { name: "Saved applications" });
-  const cards = savedColumn.locator('button[draggable="true"]');
+  const cards = savedColumn.locator("ul > li > button");
+  const cardTargets = savedColumn.locator("ul > li");
   await expect(cards.nth(1)).toBeVisible();
   expect(await cards.count()).toBeGreaterThanOrEqual(2);
   const secondCompany = await cards.nth(1).locator("p").first().textContent();
   if (!secondCompany) throw new Error("Unable to locate the second saved application");
 
-  await cards.nth(1).dragTo(cards.nth(0));
-  await expect(savedColumn.locator('button[draggable="true"]').first()).toContainText(secondCompany);
+  await cards.nth(1).dragTo(cardTargets.nth(0));
+  await expect(savedColumn.locator("ul > li > button").first()).toContainText(secondCompany);
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
   await expect(
-    page.getByRole("region", { name: "Saved applications" }).locator('button[draggable="true"]').first(),
+    page.getByRole("region", { name: "Saved applications" }).locator("ul > li > button").first(),
   ).toContainText(secondCompany);
 });
 
@@ -505,12 +530,12 @@ test("permanently deletes a blacklisted application", async ({ page }) => {
   await page.getByRole("link", { name: "Blacklist" }).click();
   await expect(page.getByRole("heading", { name: company })).toBeVisible();
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("heading", { name: company })
     .locator("xpath=../..")
     .getByRole("button", { name: "Delete" })
     .click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
   await expect(page.getByText(company, { exact: true })).toHaveCount(0);
 });
 
@@ -522,6 +547,9 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
 
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  if (await welcome.isVisible())
+    await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
   for (const status of ["Saved", "Applied", "Interview", "Offer", "Rejected", "Withdrawn"]) {
     await expect(page.getByRole("heading", { name: status })).toBeVisible();
   }
@@ -540,9 +568,10 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await page.getByRole("button", { name: "Confirm blacklist" }).click();
   await page.getByRole("link", { name: "Blacklist" }).click();
   await expect(page).toHaveURL(/\/blacklist$/);
-  await expect(page.getByText(company, { exact: true })).toBeVisible();
-  await expect(page.getByText("Duplicate employer", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Remove from blacklist" }).click();
+  const blacklistedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
+  await expect(blacklistedCard).toBeVisible();
+  await expect(blacklistedCard.getByText("Duplicate employer", { exact: true })).toBeVisible();
+  await blacklistedCard.getByRole("button", { name: "Restore" }).click();
   await expect(page.getByText(company, { exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: "Applications" }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -576,11 +605,11 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await expect(page).toHaveURL(/\/archive$/);
   await expect(page.getByText(company, { exact: true })).toBeVisible();
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("heading", { name: company })
     .locator("xpath=../..")
     .getByRole("button", { name: "Delete" })
     .click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
   await expect(page.getByText(company, { exact: true })).toHaveCount(0);
 });

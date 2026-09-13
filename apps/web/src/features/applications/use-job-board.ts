@@ -71,7 +71,6 @@ export function useJobBoard({
 
   function handleDragStart(id: number) {
     draggedIdRef.current = id;
-    setDropTarget(null);
   }
 
   return {

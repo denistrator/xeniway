@@ -73,6 +73,12 @@ export function JobBoardColumn({
                 onOpen={() => onOpen(job.id)}
                 onKeyboardMove={(direction) => onKeyboardMove(job.id, status, direction)}
                 onDragStart={() => onDragStart(job.id)}
+                dropTarget={{
+                  status,
+                  index,
+                  onEnter: () => setDropTarget({ status, index }),
+                  onDrop: (id) => onJobDrop(id, status, job.id, columnJobs),
+                }}
               />
             </DropTargetItem>
           </Fragment>

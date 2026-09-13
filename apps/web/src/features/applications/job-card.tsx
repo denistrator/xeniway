@@ -1,4 +1,5 @@
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type { JobApplication } from "@xeniway/shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,6 +13,7 @@ export function JobCard({
   onKeyboardMove,
   position,
   total,
+  dropTarget,
 }: {
   job: JobApplication;
   onOpen: () => void;
@@ -19,17 +21,36 @@ export function JobCard({
   onKeyboardMove: (direction: "up" | "down" | "first" | "last" | "previousStatus" | "nextStatus") => void;
   position: number;
   total: number;
+  dropTarget?: {
+    status: import("@xeniway/shared").JobStatus;
+    index: number;
+    onEnter: () => void;
+    onDrop: (id: number) => void;
+  };
 }) {
   const { i18n, t } = useTranslation();
   const cardRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!cardRef.current) return;
-    return draggable({
-      element: cardRef.current,
-      getInitialData: () => ({ type: "job-application", applicationId: job.id }),
-      onDragStart,
-    });
-  }, [job.id, onDragStart]);
+    return combine(
+      draggable({
+        element: cardRef.current,
+        getInitialData: () => ({ type: "job-application", applicationId: job.id }),
+        onDragStart,
+      }),
+      ...(dropTarget
+        ? [
+            dropTargetForElements({
+              element: cardRef.current,
+              canDrop: ({ source }) => source.data.type === "job-application",
+              getData: () => ({ status: dropTarget.status, index: dropTarget.index, targetId: job.id }),
+              onDragEnter: dropTarget.onEnter,
+              onDrop: ({ source }) => dropTarget.onDrop(Number(source.data.applicationId)),
+            }),
+          ]
+        : []),
+    );
+  }, [dropTarget, job.id, onDragStart]);
   return (
     <button
       type="button"
