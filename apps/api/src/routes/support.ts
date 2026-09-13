@@ -27,13 +27,13 @@ export async function verifyRequestCsrf(auth: AuthService, set: ResponseSet, req
   return auth.verifyCsrf(await readSessionId(set, request), request.headers.get(CSRF_HEADER) ?? undefined);
 }
 
-export function setSessionCookie(set: ResponseSet, value: string): void {
+export function setSessionCookie(set: ResponseSet, value: string, secure: boolean): void {
   const cookies = createCookieJar(set, {});
   cookies[SESSION_COOKIE].set({
     value,
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

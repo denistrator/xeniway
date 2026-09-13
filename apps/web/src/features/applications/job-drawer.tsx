@@ -20,7 +20,7 @@ export function JobDrawer({
     <div className="fixed inset-0 z-50 bg-overlay">
       <button
         type="button"
-        aria-label={t("applications.editor.closeDialog")}
+        aria-label={t("common.actions.closeDialog")}
         tabIndex={-1}
         className="absolute inset-0 h-full w-full cursor-default"
         onClick={onClose}

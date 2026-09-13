@@ -1,4 +1,5 @@
 import { createApp } from "./app";
+import { loadServerConfig } from "./config";
 import { createDatabase, createPostgresClient } from "./db/client";
 import {
   DrizzleApplicationRepository,
@@ -11,21 +12,9 @@ import { createRedisClient } from "./redis/client";
 import { ConsolePasswordResetMailer, SmtpPasswordResetMailer } from "./services/mailer";
 import { RedisRateLimiter } from "./services/redis-rate-limit";
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const redisUrl = process.env.REDIS_URL;
-
-if (!redisUrl) {
-  throw new Error("REDIS_URL is required");
-}
-
-const port = Number(process.env.PORT ?? 3000);
-const client = createPostgresClient(databaseUrl);
-const redis = createRedisClient(redisUrl);
+const config = loadServerConfig(process.env);
+const client = createPostgresClient(config.databaseUrl);
+const redis = createRedisClient(config.redisUrl);
 await redis.connect();
 const database = createDatabase(client);
 const users = new DrizzleUserRepository(database);
@@ -33,12 +22,9 @@ const sessions = new DrizzleSessionRepository(database);
 const applications = new DrizzleApplicationRepository(database);
 const preferences = new DrizzleUserPreferencesRepository(database);
 const passwordResetTokens = new DrizzlePasswordResetTokenRepository(database);
-if (process.env.NODE_ENV === "production" && (!process.env.SMTP_URL || !process.env.MAIL_FROM)) {
-  throw new Error("SMTP_URL and MAIL_FROM are required in production");
-}
 const passwordResetMailer =
-  process.env.SMTP_URL && process.env.MAIL_FROM
-    ? new SmtpPasswordResetMailer(process.env.SMTP_URL, process.env.MAIL_FROM)
+  config.smtpUrl && config.mailFrom
+    ? new SmtpPasswordResetMailer(config.smtpUrl, config.mailFrom)
     : new ConsolePasswordResetMailer();
 const SESSION_CLEANUP_INTERVAL_MS = 15 * 60 * 1000;
 const app = createApp({
@@ -48,7 +34,9 @@ const app = createApp({
   preferences,
   passwordResetTokens,
   passwordResetMailer,
-  appOrigin: process.env.APP_ORIGIN ?? "http://localhost:5173",
+  appOrigin: config.appOrigin,
+  corsOrigin: config.corsOrigin,
+  secureCookies: config.nodeEnv === "production",
   passwordResetRateLimiter: new RedisRateLimiter(redis, { limit: 5, windowMs: 15 * 60 * 1000 }),
   authRateLimiter: new RedisRateLimiter(redis, { limit: 5, windowMs: 15 * 60 * 1000 }),
   health: async () => {
@@ -66,7 +54,7 @@ const app = createApp({
       return false;
     }
   },
-}).listen(port);
+}).listen(config.port);
 
 const cleanupExpiredSessions = () => {
   void sessions.deleteExpired().catch((error) => {
@@ -78,4 +66,4 @@ cleanupExpiredSessions();
 const cleanupTimer = setInterval(cleanupExpiredSessions, SESSION_CLEANUP_INTERVAL_MS);
 cleanupTimer.unref();
 
-console.log(`API listening at http://${app.server?.hostname ?? "localhost"}:${app.server?.port ?? port}`);
+console.log(`API listening at http://${app.server?.hostname ?? "localhost"}:${app.server?.port ?? config.port}`);

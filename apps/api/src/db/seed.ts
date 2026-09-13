@@ -12,6 +12,35 @@ const seedStatuses: JobStatus[] = ["saved", "applied", "interview", "offer", "re
 
 export type SeedApplication = CreateApplicationInput & { userKey: string; seedKey: string };
 
+type SeedEnvironment = {
+  databaseUrl: string;
+  nodeEnv?: string;
+  allowDevelopmentSeed?: string;
+};
+
+export function assertDevelopmentSeedAllowed(environment: SeedEnvironment): void {
+  if (environment.nodeEnv === "production") {
+    throw new Error("Development seed is disabled in production");
+  }
+  if (environment.allowDevelopmentSeed !== "true") {
+    throw new Error("ALLOW_DEVELOPMENT_SEED=true is required to load development fixtures");
+  }
+
+  let databaseUrl: URL;
+  try {
+    databaseUrl = new URL(environment.databaseUrl);
+  } catch {
+    throw new Error("DATABASE_URL must be a valid URL");
+  }
+  if (databaseUrl.protocol !== "postgres:" && databaseUrl.protocol !== "postgresql:") {
+    throw new Error("DATABASE_URL must use postgres: or postgresql:");
+  }
+  const hostname = databaseUrl.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  if (hostname !== "localhost" && hostname !== "::1" && !/^127\./.test(hostname)) {
+    throw new Error("Development seed requires a local PostgreSQL host");
+  }
+}
+
 export function buildSeedApplications(userKeys: string[]): SeedApplication[] {
   return userKeys.flatMap((userKey) =>
     seedStatuses.flatMap((status) =>
@@ -35,6 +64,11 @@ export function buildSeedApplications(userKeys: string[]): SeedApplication[] {
 async function seed(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is required");
+  assertDevelopmentSeedAllowed({
+    databaseUrl,
+    nodeEnv: process.env.NODE_ENV,
+    allowDevelopmentSeed: process.env.ALLOW_DEVELOPMENT_SEED,
+  });
 
   const client = createPostgresClient(databaseUrl);
   const database = createDatabase(client);

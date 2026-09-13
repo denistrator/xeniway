@@ -12,7 +12,7 @@ import {
 } from "./support";
 import type { RouteDependencies } from "./types";
 
-export function authRegisterRoute({ auth, authRateLimiter }: RouteDependencies) {
+export function authRegisterRoute({ auth, authRateLimiter, secureCookies }: RouteDependencies) {
   return new Elysia().post("/api/auth/register", async ({ body, request, set }) => {
     if (!(await verifyRequestCsrf(auth, set, request)))
       return errorResponseWithStatus(set, 403, "CSRF_ERROR", "Invalid CSRF token");
@@ -25,7 +25,7 @@ export function authRegisterRoute({ auth, authRateLimiter }: RouteDependencies) 
       const existingSession = await readSessionId(set, request);
       await auth.logout(existingSession);
       const result = await auth.register(parsed.data);
-      setSessionCookie(set, result.sessionId);
+      setSessionCookie(set, result.sessionId, secureCookies);
       const response: AuthResponse = { data: { user: result.user, csrfToken: result.csrfToken } };
       set.status = 201;
       return response;

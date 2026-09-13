@@ -5,14 +5,48 @@ on:
   pull_request:
 
 jobs:
-  verify:
+  public-hygiene:
+    name: Public repository hygiene
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgres://xeniway:xeniway@localhost:5432/xeniway
-      REDIS_URL: redis://localhost:6379
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+      - name: Check publishable tracked content
+        run: bun run check:public
+
+  fast-checks:
+    name: Fast checks
+    needs: public-hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+      - run: bun install --frozen-lockfile
+      - name: Check formatting
+        run: bun scripts/run-ci-check.ts "Formatting check" bun run format:check
+      - name: Lint
+        run: bun scripts/run-ci-check.ts "Lint" bun run lint
+      - name: Typecheck
+        run: bun scripts/run-ci-check.ts "Typecheck" bun run typecheck
+      - name: Unit tests
+        run: bun scripts/run-ci-check.ts "Unit tests" bun run test
+      - name: Build
+        run: bun scripts/run-ci-check.ts "Build" bun run build
+
+  service-checks:
+    name: PostgreSQL, Redis, and browser checks
+    needs: fast-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16.15
         env:
           POSTGRES_DB: xeniway
           POSTGRES_USER: xeniway
@@ -25,7 +59,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis:
-        image: redis:7-alpine
+        image: redis:7.4.9-alpine
         ports:
           - 6379:6379
         options: >-
@@ -37,12 +71,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: "1.4.0"
       - run: bun install --frozen-lockfile
-      - run: bun run db:migrate
-      - run: bun run db:seed
-      - run: bun run typecheck
-      - run: bun run test
-      - run: bun run build
       - run: bunx playwright install --with-deps chromium
-      - run: bun run test:e2e
+      - name: Mask service connection values
+        run: |
+          separator=:
+          echo "::add-mask::postgres${separator}//xeniway${separator}xeniway@localhost${separator}5432/xeniway"
+          echo "::add-mask::redis${separator}//localhost${separator}6379"
+      - name: Apply database migrations
+        env:
+          DATABASE_URL: postgres://xeniway:xeniway@localhost:5432/xeniway
+        run: bun scripts/run-ci-check.ts "Database migration" bun run db:migrate
+      - name: Seed development fixtures
+        env:
+          ALLOW_DEVELOPMENT_SEED: "true"
+          DATABASE_URL: postgres://xeniway:xeniway@localhost:5432/xeniway
+        run: bun scripts/run-ci-check.ts "Database seed" bun run db:seed
+      - name: Browser tests
+        env:
+          DATABASE_URL: postgres://xeniway:xeniway@localhost:5432/xeniway
+          REDIS_URL: redis://localhost:6379
+        run: bun scripts/run-ci-check.ts "Browser tests" bun run test:e2e

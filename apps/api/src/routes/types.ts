@@ -23,6 +23,8 @@ export type AppDependencies = {
   passwordResetMailer?: PasswordResetMailer;
   passwordResetRateLimiter?: RateLimiter;
   appOrigin?: string;
+  corsOrigin?: string;
+  secureCookies?: boolean;
   passwordReset?: PasswordResetService;
 };
 
@@ -34,4 +36,5 @@ export type RouteDependencies = {
   passwordReset?: PasswordResetService;
   databaseHealth: () => Promise<boolean>;
   redisHealth: () => Promise<boolean>;
+  secureCookies: boolean;
 };

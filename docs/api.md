@@ -7,7 +7,9 @@ Most JSON responses use one of these envelopes:
 
 The `GET /api/health` endpoint is the exception: it returns a direct health object so infrastructure checks can read it without unwrapping `data`.
 
-The API uses camelCase JSON. Session authentication is carried by the `session_id` HttpOnly cookie. Mutating requests also send `x-csrf-token`.
+The API uses camelCase JSON. Session authentication is carried by the `session_id` HttpOnly, SameSite=Lax cookie; production also marks it `Secure`. Mutating requests send the server-issued token for that session in `x-csrf-token`.
+
+Xenia Way records employer conversations and application progress for one authenticated candidate at a time. Application status is always one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`; archive and blacklist are independent lifecycle states outside that status set.
 
 ## Health and authentication
 
@@ -19,7 +21,7 @@ The API uses camelCase JSON. Session authentication is carried by the `session_i
 | `POST` | `/api/auth/login` | CSRF | Authenticates credentials and returns a session |
 | `POST` | `/api/auth/logout` | CSRF | Deletes the current session and clears the cookie |
 | `GET` | `/api/auth/me` | Session | Returns the current user |
-| `POST` | `/api/auth/password-reset/request` | CSRF | Sends a reset link when the email belongs to an account; always returns the same message |
+| `POST` | `/api/auth/password-reset/request` | CSRF | Returns generic success for an unknown account or after successful known-account reset delivery |
 | `POST` | `/api/auth/password-reset/confirm` | CSRF | Consumes a valid reset token and changes the password |
 
 All mutating authenticated requests require the current session's CSRF token in `x-csrf-token`. Reads require the session cookie but not the CSRF header. Requests that address an application are always scoped to the authenticated user; ownership failures are reported as `NOT_FOUND`.
@@ -37,7 +39,7 @@ Register body:
 
 Login body is `{ "email": "...", "password": "..." }`. Emails are trimmed and normalized to lowercase. Passwords are 8–128 characters for registration.
 
-Password reset request body is `{ "email": "candidate@example.com" }`. A valid request returns the same generic message for known and unknown emails. Confirmation accepts a URL-safe token, a new 8–128 character password, and matching `passwordConfirmation`. Reset tokens are single-use, expire after one hour, and are stored only as SHA-256 hashes. A successful confirmation invalidates all existing sessions. Invalid, expired, and reused tokens return `PASSWORD_RESET_INVALID` with status `400`.
+Password reset request body is `{ "email": "candidate@example.com" }`. An unknown account and a known account whose token is stored and reset message is delivered receive the same generic success response. A token-storage or mail-delivery failure for a known account returns `PASSWORD_RESET_ERROR` with status `500`; because an unknown account still returns success, the current failure behavior is not unconditionally enumeration-safe. Confirmation accepts a URL-safe token, a new 8–128 character password, and matching `passwordConfirmation`. Reset tokens are single-use, expire after one hour, and are stored only as SHA-256 hashes. A successful confirmation invalidates all existing sessions. Invalid, expired, and reused tokens return `PASSWORD_RESET_INVALID` with status `400`.
 
 ## Applications
 
@@ -110,8 +112,10 @@ The preference response is shaped as `{ "data": { "preferences": { ... } } }`:
 
 Preference reads and writes require the authenticated session and are scoped by its user ID; `userId` is never accepted from request input. PATCH and introduction completion requests also require the current session's `x-csrf-token`. New accounts begin with all selected values null and `wasIntroduced: false`. The frontend checks the introduction flag only after successful login or registration; restoring an existing session on page reload does not open the welcome popup.
 
-The browser stores the flat object `{ "theme", "language", "formPresentation", "wasIntroduced" }` under the single `userPreferences` key. The browser applies this cache immediately at startup. After successful login or registration, non-null values from the authenticated account replace the corresponding browser values; nullable server fields remain unset until the user explicitly changes them. Authentication never uploads browser values. Explicit theme, language, form-presentation, and welcome actions update the browser first and send a best-effort background write. The browser cache contains no user ID and cannot authorize access, complete onboarding, or bypass authentication and CSRF checks.
+The browser stores the flat object `{ "theme", "language", "formPresentation", "wasIntroduced" }` under the single local-storage key `userPreferences` and applies it immediately at startup. After successful login or registration, server `selectedTheme`, `selectedLanguage`, and `selectedFormPresentation` values replace the corresponding browser values when they are non-null, while server `wasIntroduced` always replaces the cached flag. Authentication never uploads browser values or fills null server selections. Explicit theme, language, form-presentation, and welcome actions update the UI and browser cache first, then send the corresponding authenticated, CSRF-protected write in the background. The browser cache contains no user ID and cannot authorize access, complete onboarding, or bypass authentication and CSRF checks.
 
 ## Error behavior
 
-The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `PASSWORD_RESET_INVALID` (`400`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login, registration, and password-reset attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window; rejected requests include `Retry-After`. If Redis is unavailable, these flows fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.
+The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `PASSWORD_RESET_INVALID` (`400`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login, registration, and password-reset attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window with SHA-256-digested identifiers; rejected requests include `Retry-After`. If Redis is unavailable, these flows fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.
+
+Passwords are hashed with Argon2id. Raw reset tokens are generated from 32 random bytes and stored only as SHA-256 hashes. With SMTP configured, the raw token is sent only in the delivered reset link. In local development without `SMTP_URL` and `MAIL_FROM`, the intentional console fallback logs the full reset URL, including its raw token, and those logs must be treated as sensitive. Production requires SMTP and sender configuration and cannot select the console fallback. Tokens expire after one hour, are single-use, and a successful reset invalidates every session owned by that user. Production startup also requires an explicit HTTPS app origin; the CORS origin defaults to the app origin and must also be HTTPS, keeping reset links and credentialed browser requests on the intended origins.

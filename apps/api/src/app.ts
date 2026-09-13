@@ -57,12 +57,13 @@ export function createApp(dependencies: AppDependencies) {
     passwordReset,
     databaseHealth: dependencies.health ?? (async () => true),
     redisHealth: dependencies.redisHealth ?? (async () => true),
+    secureCookies: dependencies.secureCookies ?? false,
   };
 
   const app = new Elysia()
     .use(
       cors({
-        origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+        origin: dependencies.corsOrigin ?? "http://localhost:5173",
         credentials: true,
         allowedHeaders: ["content-type", CSRF_HEADER],
       }),

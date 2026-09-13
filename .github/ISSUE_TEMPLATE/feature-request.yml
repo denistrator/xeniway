@@ -1,0 +1,66 @@
+name: Feature request
+description: Suggest an improvement to Xenia Way.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include secrets or personal data. Do not report security vulnerabilities in this public form; use the private reporting process at https://github.com/denistrator/xeniway/security/advisories/new described in [SECURITY.md](https://github.com/denistrator/xeniway/blob/main/SECURITY.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What candidate or maintainer need is not served today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful solution and how it would work.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and boundaries
+      description: Explain affected workflows, API contracts, data ownership, and what should remain unchanged.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and privacy impact
+      description: Describe how the proposal would affect authentication, ownership, personal data, or other security boundaries.
+    validations:
+      required: true
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing considerations
+      description: Suggest unit, API, accessibility, or browser coverage that should accompany the change.
+  - type: textarea
+    id: migrations
+    attributes:
+      label: Migration considerations
+      description: State whether schema or data migration work would be needed. Migrations require explicit approval and must remain data-empty.
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation considerations
+      description: Identify README, API, operations, security, or other documentation that would need updating.
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: This request does not require deployment systems or external integrations without separate approval.
+          required: true

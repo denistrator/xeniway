@@ -1,7 +1,18 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
+import { createRedisClient } from "../../apps/api/src/redis/client";
 
 test.describe.configure({ mode: "serial" });
+
+test.beforeEach(async () => {
+  const redis = createRedisClient("redis://localhost:6379/15");
+  await redis.connect();
+  try {
+    await redis.flushDb();
+  } finally {
+    await redis.close();
+  }
+});
 
 async function setBrowserPreferences(
   page: Page,
@@ -271,6 +282,7 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await addJob.click();
   const closeButton = page.getByRole("button", { name: "Close", exact: true });
   await expect(closeButton).toBeFocused();
+  await expect(page.getByRole("button", { name: "Close dialog", exact: true })).toBeVisible();
 
   await page.keyboard.press("Tab");
   await page.keyboard.press("Shift+Tab");
@@ -291,6 +303,7 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await presentationUpdate;
   await expect(page.locator(".job-modal")).toBeVisible();
   await expect(page.getByRole("button", { name: "Switch to drawer" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close dialog", exact: true })).toBeVisible();
   await expect(
     page.evaluate(() => JSON.parse(localStorage.getItem("userPreferences") ?? "{}").formPresentation),
   ).resolves.toBe("modal");
@@ -442,15 +455,28 @@ test("logs out and returns to login", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
-  await page.getByRole("button", { name: "Use Dark theme" }).click();
+  const themeUpdate = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/user/preferences") &&
+      response.request().method() === "PATCH" &&
+      response.status() === 200,
+  );
+  await page.getByRole("button", { name: "Theme: System. Change theme" }).click();
+  await themeUpdate;
   await expect.poll(() => page.locator("html").getAttribute("data-theme")).toBe("dark");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const preferences = await page.evaluate(() => localStorage.getItem("userPreferences"));
+  expect(preferences).not.toBeNull();
   await page.getByRole("button", { name: "Logout" }).click();
 
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.getByText("Loading applications…")).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("userPreferences"))).toBe(preferences);
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("userPreferences"))).toBe(preferences);
 });
 
 test("logs in, filters the board, moves, archives, and deletes an application", async ({ page }) => {

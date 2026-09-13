@@ -329,6 +329,14 @@ function jsonRequest(url: string, init: RequestInit, sessionId: string, csrfToke
 }
 
 describe("application API", () => {
+  it("uses the validated production mode for secure session cookies", async () => {
+    const app = createApp({ ...createDependencies(), secureCookies: true });
+
+    const response = await app.handle(new Request("http://localhost/api/auth/csrf"));
+
+    expect(response.headers.get("set-cookie")).toContain("Secure");
+  });
+
   it("reads and completes user introduction preferences with CSRF protection", async () => {
     const app = createApp(createDependencies());
     const account = await register(app, "preferences@example.com");
