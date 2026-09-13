@@ -1,0 +1,12 @@
+# Xenia Way
+
+Xenia Way is a candidate-facing workspace for tracking job applications, employer conversations, follow-ups, and outcomes. Each signed-in candidate has a private application board with six statuses: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.
+
+## Project information
+
+- [Project overview](https://github.com/denistrator/xeniway#readme)
+- [API reference](https://github.com/denistrator/xeniway/blob/main/docs/api.md)
+- [Architecture](https://github.com/denistrator/xeniway/blob/main/docs/architecture.md)
+- [Database](https://github.com/denistrator/xeniway/blob/main/docs/database.md)
+- [Testing](https://github.com/denistrator/xeniway/blob/main/docs/testing.md)
+- [Security policy](https://github.com/denistrator/xeniway/blob/main/SECURITY.md)
