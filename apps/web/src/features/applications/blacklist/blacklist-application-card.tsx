@@ -1,17 +1,19 @@
 import type { JobApplication } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
 import { Card, CardContent } from "../../../components/ui/card";
 import { formatDate } from "../../../i18n/format";
+import { ApplicationCollectionActions } from "../application-collection-actions";
 import { getStatusLabel } from "../job-status";
 
 export function BlacklistApplicationCard({
   job,
   onRestore,
+  onDelete,
   busy,
 }: {
   job: JobApplication;
   onRestore: () => void;
+  onDelete: () => void;
   busy: boolean;
 }) {
   const { i18n, t } = useTranslation();
@@ -35,9 +37,13 @@ export function BlacklistApplicationCard({
             })}
           </p>
         </div>
-        <Button className="w-full" size="sm" onClick={onRestore} disabled={busy}>
-          {t("applications.blacklist.remove")}
-        </Button>
+        <ApplicationCollectionActions
+          restoreLabel={t("applications.blacklist.remove")}
+          deleteLabel={t("applications.blacklist.delete")}
+          onRestore={onRestore}
+          onDelete={onDelete}
+          busy={busy}
+        />
       </CardContent>
     </Card>
   );

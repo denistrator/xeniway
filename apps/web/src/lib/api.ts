@@ -9,6 +9,7 @@ import type {
   CsrfResponse,
   CurrentUserResponse,
   JobApplication,
+  JobStatus,
   LoginInput,
   MessageResponse,
   PasswordResetConfirmInput,
@@ -46,6 +47,9 @@ export class ApiRequestError extends Error {
 }
 
 export function parseApiError(payload: unknown): ParsedApiError {
+  if (!payload || typeof payload !== "object") {
+    return { code: "REQUEST_FAILED", message: "The request failed" };
+  }
   const error = payload as Partial<ApiError>;
   return {
     code: error.error?.code ?? "REQUEST_FAILED",
@@ -146,7 +150,7 @@ export function logout(csrfToken: string): Promise<ApiSuccess<MessageResponse["d
   return requestJson<ApiSuccess<MessageResponse["data"]>>("/api/auth/logout", { method: "POST" }, csrfToken);
 }
 
-export function listApplications(status?: string): Promise<ApplicationListResponse> {
+export function listApplications(status?: JobStatus): Promise<ApplicationListResponse> {
   const query = status ? `?status=${encodeURIComponent(status)}` : "";
   return requestJson<ApplicationListResponse>(`/api/applications${query}`);
 }

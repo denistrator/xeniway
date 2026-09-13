@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  ApplicationListResponse,
   BlacklistInput,
   CreateApplicationInput,
   CurrentUserResponse,
@@ -15,6 +16,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { closeWelcome, openWelcome } from "../store";
 import {
+  type ApplicationList,
   applicationKeys,
   archiveApplication,
   blacklistApplication,
@@ -165,27 +167,21 @@ export function usePasswordResetMutations() {
 }
 
 export function useApplications() {
-  return useQuery({
-    queryKey: applicationKeys.list("active"),
-    queryFn: () => listApplications(),
-    retry: false,
-    select: (response) => response.data.applications,
-  });
+  return useApplicationList("active", () => listApplications());
 }
 
 export function useArchivedApplications() {
-  return useQuery({
-    queryKey: applicationKeys.list("archive"),
-    queryFn: listArchivedApplications,
-    retry: false,
-    select: (response) => response.data.applications,
-  });
+  return useApplicationList("archive", listArchivedApplications);
 }
 
 export function useBlacklistedApplications() {
+  return useApplicationList("blacklist", listBlacklistedApplications);
+}
+
+function useApplicationList(list: ApplicationList, queryFn: () => Promise<ApplicationListResponse>) {
   return useQuery({
-    queryKey: applicationKeys.list("blacklist"),
-    queryFn: listBlacklistedApplications,
+    queryKey: applicationKeys.list(list),
+    queryFn,
     retry: false,
     select: (response) => response.data.applications,
   });

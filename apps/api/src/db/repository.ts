@@ -20,6 +20,10 @@ type UserRow = typeof users.$inferSelect;
 type SessionRow = typeof sessions.$inferSelect;
 type UserPreferencesRow = typeof userPreferences.$inferSelect;
 
+function ownedApplication(userId: number, id: number) {
+  return and(eq(jobApplications.userId, userId), eq(jobApplications.id, id));
+}
+
 export interface UserRepository {
   findByEmail(email: string): Promise<UserRow | null>;
   findById(id: number): Promise<UserRow | null>;
@@ -217,8 +221,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       .from(jobApplications)
       .where(
         and(
-          eq(jobApplications.userId, userId),
-          eq(jobApplications.id, id),
+          ownedApplication(userId, id),
           options.archived ? isNotNull(jobApplications.archivedAt) : isNull(jobApplications.archivedAt),
           isNull(jobApplications.blacklistedAt),
         ),
@@ -240,7 +243,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     const [row] = await this.database
       .update(jobApplications)
       .set({ ...input, updatedAt: new Date() })
-      .where(and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNull(jobApplications.archivedAt)))
+      .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)))
       .returning();
     return row ? toJobApplication(row) : null;
   }
@@ -263,7 +266,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         await transaction
           .update(jobApplications)
           .set({ sortOrder, updatedAt: new Date() })
-          .where(and(eq(jobApplications.userId, userId), eq(jobApplications.id, id)));
+          .where(ownedApplication(userId, id));
       }
       return true;
     });
@@ -273,7 +276,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     const result = await this.database
       .update(jobApplications)
       .set({ archivedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNull(jobApplications.archivedAt)));
+      .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)));
     return result.count > 0;
   }
 
@@ -281,18 +284,12 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     const result = await this.database
       .update(jobApplications)
       .set({ archivedAt: null, updatedAt: new Date() })
-      .where(
-        and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNotNull(jobApplications.archivedAt)),
-      );
+      .where(and(ownedApplication(userId, id), isNotNull(jobApplications.archivedAt)));
     return result.count > 0;
   }
 
   async permanentDelete(userId: number, id: number): Promise<boolean> {
-    const result = await this.database
-      .delete(jobApplications)
-      .where(
-        and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNotNull(jobApplications.archivedAt)),
-      );
+    const result = await this.database.delete(jobApplications).where(ownedApplication(userId, id));
     return result.count > 0;
   }
 
@@ -310,12 +307,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       .update(jobApplications)
       .set({ blacklistedAt: new Date(), blacklistReason: reason ?? null, updatedAt: new Date() })
       .where(
-        and(
-          eq(jobApplications.userId, userId),
-          eq(jobApplications.id, id),
-          isNull(jobApplications.archivedAt),
-          isNull(jobApplications.blacklistedAt),
-        ),
+        and(ownedApplication(userId, id), isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt)),
       );
     return result.count > 0;
   }
@@ -324,9 +316,7 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     const result = await this.database
       .update(jobApplications)
       .set({ blacklistedAt: null, blacklistReason: null, updatedAt: new Date() })
-      .where(
-        and(eq(jobApplications.userId, userId), eq(jobApplications.id, id), isNotNull(jobApplications.blacklistedAt)),
-      );
+      .where(and(ownedApplication(userId, id), isNotNull(jobApplications.blacklistedAt)));
     return result.count > 0;
   }
 }

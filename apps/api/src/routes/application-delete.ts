@@ -11,10 +11,8 @@ export function applicationDeleteRoute({ applications, auth }: RouteDependencies
       return errorResponseWithStatus(set, 403, "CSRF_ERROR", "Invalid CSRF token");
     const id = parseId(params.id, set);
     if (id === null) return errorResponse("INVALID_ID", "Application id must be a positive integer");
-    if (await applications.findById(context.userId, id))
-      return errorResponseWithStatus(set, 409, "ACTIVE_APPLICATION", "Archive the application before deleting it");
     if (!(await applications.permanentDelete(context.userId, id)))
-      return errorResponseWithStatus(set, 404, "NOT_FOUND", "Archived application not found");
+      return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
     const response: MessageResponse = { data: { message: "Application deleted" } };
     return response;
   });

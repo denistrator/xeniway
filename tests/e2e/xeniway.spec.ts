@@ -479,6 +479,35 @@ test("logs out and returns to login", async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem("userPreferences"))).toBe(preferences);
 });
 
+test("permanently deletes a blacklisted application", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@example.com");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  if (await welcome.isVisible()) await welcome.getByRole("button", { name: "Go to board" }).click();
+
+  const company = `Blacklisted deletion ${Date.now()}`;
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByLabel("Company *").fill(company);
+  await page.getByLabel("Position *").fill("Engineer");
+  await page.getByRole("button", { name: "Save application" }).click();
+  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("button", { name: "Blacklist", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm blacklist" }).click();
+  await page.getByRole("link", { name: "Blacklist" }).click();
+  await expect(page.getByRole("heading", { name: company })).toBeVisible();
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("heading", { name: company })
+    .locator("xpath=../..")
+    .getByRole("button", { name: "Delete" })
+    .click();
+  await expect(page.getByText(company, { exact: true })).toHaveCount(0);
+});
+
 test("logs in, filters the board, moves, archives, and deletes an application", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");
@@ -499,7 +528,7 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await expect(page.getByRole("button", { name: new RegExp(company) })).toBeVisible();
 
   await page.getByRole("button", { name: new RegExp(company) }).click();
-  await page.getByRole("button", { name: "Blacklist" }).click();
+  await page.getByRole("button", { name: "Blacklist", exact: true }).click();
   await expect(page.getByLabel("Reason")).toBeVisible();
   await page.getByLabel("Reason").fill("Duplicate employer");
   await page.getByRole("button", { name: "Confirm blacklist" }).click();

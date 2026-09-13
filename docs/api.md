@@ -55,7 +55,7 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 | `POST` | `/api/applications/:id/blacklist` | Session + CSRF | Blacklists an active application with an optional reason |
 | `POST` | `/api/applications/:id/restore` | Session + CSRF | Restores an archived application |
 | `POST` | `/api/applications/:id/unblacklist` | Session + CSRF | Restores a blacklisted application to the active list |
-| `DELETE` | `/api/applications/:id` | Session + CSRF | Permanently deletes an archived application |
+| `DELETE` | `/api/applications/:id` | Session + CSRF | Permanently deletes an application owned by the current user |
 
 Application create/update fields:
 
@@ -73,7 +73,7 @@ Application create/update fields:
 }
 ```
 
-`company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date. Archive and blacklist are independent lifecycle states, not additional status values. Blacklisting preserves the application's status and data; removing it from the blacklist returns it to the active list. Permanent deletion is accepted only for an archived application.
+`company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date. Archive and blacklist are independent lifecycle states, not additional status values. Blacklisting preserves the application's status and data; removing it from the blacklist returns it to the active list. Permanent deletion is available to the owner for any application; the UI exposes it from archive and blacklist views.
 
 Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
 

@@ -18,7 +18,10 @@ export function BlacklistPage() {
     () => blacklisted.data?.filter((job) => matchesApplicationSearch(job, search)) ?? [],
     [blacklisted.data, search],
   );
-  const error = blacklisted.error || mutations.unblacklist.error;
+  async function remove(job: (typeof items)[number]) {
+    if (window.confirm(t("applications.blacklist.deleteConfirmation", job))) await mutations.remove.mutateAsync(job.id);
+  }
+  const error = blacklisted.error || mutations.unblacklist.error || mutations.remove.error;
   const errorMessage = error
     ? t(getApiErrorKey(error instanceof ApiRequestError ? error.code : "REQUEST_FAILED"))
     : undefined;
@@ -38,8 +41,9 @@ export function BlacklistPage() {
         <BlacklistApplicationCard
           key={job.id}
           job={job}
-          busy={mutations.unblacklist.isPending}
+          busy={mutations.unblacklist.isPending || mutations.remove.isPending}
           onRestore={() => mutations.unblacklist.mutateAsync(job.id)}
+          onDelete={() => remove(job)}
         />
       ))}
     </ApplicationCollection>

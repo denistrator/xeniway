@@ -161,7 +161,9 @@ function createDependencies(): AppDependencies {
       return true;
     },
     async permanentDelete(userId, id) {
-      const application = await this.findById(userId, id, { archived: true });
+      const application = applications.find(
+        (candidate) => candidate.id === id && applicationUserIds.get(id) === userId,
+      );
       if (!application) return false;
       applications.splice(applications.indexOf(application), 1);
       applicationUserIds.delete(id);
@@ -744,6 +746,15 @@ describe("application API", () => {
     expect(
       ((await activeAfterArchive.json()) as { data: { applications: JobApplication[] } }).data.applications,
     ).toHaveLength(5);
+    const activeDeletion = await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${created[1].id}`,
+        { method: "DELETE" },
+        account.sessionId,
+        account.payload.data.csrfToken,
+      ),
+    );
+    expect(activeDeletion.status).toBe(200);
     const archived = await app.handle(
       jsonRequest("http://localhost/api/applications/archive", {}, account.sessionId, account.payload.data.csrfToken),
     );

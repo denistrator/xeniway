@@ -1,8 +1,8 @@
 import type { JobApplication } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
 import { Card, CardContent } from "../../../components/ui/card";
 import { formatDate } from "../../../i18n/format";
+import { ApplicationCollectionActions } from "../application-collection-actions";
 
 export function ArchiveApplicationCard({
   job,
@@ -29,14 +29,13 @@ export function ArchiveApplicationCard({
             })}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button className="flex-1" size="sm" onClick={onRestore} disabled={busy}>
-            {t("applications.archive.restore")}
-          </Button>
-          <Button className="flex-1" variant="outline" size="sm" onClick={onDelete} disabled={busy}>
-            {t("applications.archive.delete")}
-          </Button>
-        </div>
+        <ApplicationCollectionActions
+          restoreLabel={t("applications.archive.restore")}
+          deleteLabel={t("applications.archive.delete")}
+          onRestore={onRestore}
+          onDelete={onDelete}
+          busy={busy}
+        />
       </CardContent>
     </Card>
   );

@@ -4,6 +4,7 @@ import {
   applicationKeys,
   confirmPasswordReset,
   getUserPreferences,
+  listApplications,
   markUserIntroduced,
   parseApiError,
   requestPasswordReset,
@@ -21,10 +22,26 @@ describe("web API helpers", () => {
     });
   });
 
+  it("falls back safely for malformed API error payloads", () => {
+    expect(parseApiError(null)).toEqual({ code: "REQUEST_FAILED", message: "The request failed" });
+    expect(parseApiError("<!doctype html>")).toEqual({ code: "REQUEST_FAILED", message: "The request failed" });
+  });
+
   it("creates isolated query keys for active and archived applications", () => {
     expect(applicationKeys.list("active")).toEqual(["applications", "list", "active"]);
     expect(applicationKeys.list("archive")).toEqual(["applications", "list", "archive"]);
     expect(applicationKeys.list("blacklist")).toEqual(["applications", "list", "blacklist"]);
+  });
+
+  it("requests active applications without serializing a query context as status", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () => new Response(JSON.stringify({ data: { applications: [] } }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await listApplications();
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/applications", expect.anything());
   });
 
   it("keeps preference state isolated and protects completion with CSRF", async () => {
