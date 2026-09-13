@@ -1,4 +1,6 @@
+import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type { JobApplication } from "@xeniway/shared";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../i18n/format";
 import { getStatusLabel, statusStyles } from "./job-status";
@@ -13,17 +15,25 @@ export function JobCard({
 }: {
   job: JobApplication;
   onOpen: () => void;
-  onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void;
+  onDragStart: () => void;
   onKeyboardMove: (direction: "up" | "down" | "first" | "last" | "previousStatus" | "nextStatus") => void;
   position: number;
   total: number;
 }) {
   const { i18n, t } = useTranslation();
+  const cardRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!cardRef.current) return;
+    return draggable({
+      element: cardRef.current,
+      getInitialData: () => ({ type: "job-application", applicationId: job.id }),
+      onDragStart,
+    });
+  }, [job.id, onDragStart]);
   return (
     <button
       type="button"
-      draggable
-      onDragStart={onDragStart}
+      ref={cardRef}
       onClick={onOpen}
       onKeyDown={(event) => {
         const direction = event.shiftKey

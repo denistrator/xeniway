@@ -31,6 +31,8 @@ export function JobBoard({
               onDrop={board.handleColumnDrop}
               onJobDrop={board.handleJobDrop}
               onDragStart={board.handleDragStart}
+              dropTarget={board.dropTarget}
+              setDropTarget={board.setDropTarget}
               onKeyboardMove={(id, currentStatus, direction) => {
                 if (direction === "previousStatus" || direction === "nextStatus")
                   board.moveToAdjacentStatus(id, currentStatus, direction);

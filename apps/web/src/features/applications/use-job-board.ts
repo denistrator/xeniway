@@ -1,6 +1,5 @@
 import type { JobApplication, JobStatus } from "@xeniway/shared";
-import type { DragEvent } from "react";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { matchesApplicationSearch } from "../../lib/application-filters";
 import type { RootState } from "../../store";
@@ -20,6 +19,7 @@ export function useJobBoard({
   const dispatch = useDispatch();
   const { search, visibleStatuses } = useSelector((state: RootState) => state.ui);
   const draggedIdRef = useRef<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ status: JobStatus; index: number } | null>(null);
   const filteredJobs = useMemo(
     () =>
       jobs.filter((job) => visibleStatuses.includes(job.status)).filter((job) => matchesApplicationSearch(job, search)),
@@ -41,22 +41,21 @@ export function useJobBoard({
     if (targetStatus) onStatusChange(id, targetStatus);
   }
 
-  function handleColumnDrop(event: React.DragEvent, status: JobStatus, columnJobs: JobApplication[]) {
-    event.preventDefault();
-    const transferId = Number(event.dataTransfer.getData("text/plain"));
-    const id = Number.isInteger(transferId) && transferId > 0 ? transferId : draggedIdRef.current;
+  function handleColumnDrop(id: number, status: JobStatus, columnJobs: JobApplication[]) {
     const source = id === null ? undefined : jobs.find((job) => job.id === id);
     if (source && source.status === status)
       onReorder(status, [...columnJobs.filter((job) => job.id !== source.id).map((job) => job.id), source.id]);
     else if (id !== null) onStatusChange(id, status);
     draggedIdRef.current = null;
+    setDropTarget(null);
   }
 
-  function handleJobDrop(event: React.DragEvent, status: JobStatus, targetId: number, columnJobs: JobApplication[]) {
-    event.preventDefault();
-    event.stopPropagation();
-    const id = draggedIdRef.current;
-    if (id === null || id === targetId) return;
+  function handleJobDrop(id: number, status: JobStatus, targetId: number, columnJobs: JobApplication[]) {
+    if (id === targetId) {
+      draggedIdRef.current = null;
+      setDropTarget(null);
+      return;
+    }
     const source = jobs.find((job) => job.id === id);
     if (!source || source.status !== status) {
       if (source) onStatusChange(id, status);
@@ -67,11 +66,12 @@ export function useJobBoard({
     const reordered = insertApplication(applicationIds, id, targetId);
     if (reordered) onReorder(status, reordered);
     draggedIdRef.current = null;
+    setDropTarget(null);
   }
 
-  function handleDragStart(event: DragEvent<HTMLButtonElement>, id: number) {
-    event.dataTransfer.setData("text/plain", String(id));
+  function handleDragStart(id: number) {
     draggedIdRef.current = id;
+    setDropTarget(null);
   }
 
   return {
@@ -84,5 +84,7 @@ export function useJobBoard({
     handleColumnDrop,
     handleJobDrop,
     handleDragStart,
+    dropTarget,
+    setDropTarget,
   };
 }
