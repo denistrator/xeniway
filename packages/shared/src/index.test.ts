@@ -98,7 +98,7 @@ describe("user preference contracts", () => {
   });
 
   it("accepts the supported locales and themes only", () => {
-    expect(supportedLocaleSchema.options).toEqual(["en", "ru", "uk"]);
+    expect(supportedLocaleSchema.options).toEqual(["en", "ru", "uk", "he"]);
     expect(themePreferenceSchema.options).toEqual(["light", "dark", "system"]);
     expect(supportedLocaleSchema.safeParse("fr").success).toBe(false);
     expect(themePreferenceSchema.safeParse("blue").success).toBe(false);

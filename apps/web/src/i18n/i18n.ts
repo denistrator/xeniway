@@ -7,13 +7,14 @@ import {
 } from "../lib/user-preferences";
 import { en, type TranslationDictionary } from "./locales/en";
 
-export const supportedLocales = ["en", "ru", "uk"] as const;
+export const supportedLocales = ["en", "ru", "uk", "he"] as const;
 export type SupportedLocale = (typeof supportedLocales)[number];
 export const languageStorageKey = userPreferencesStorageKey;
 
 const localeLoaders: Record<Exclude<SupportedLocale, "en">, () => Promise<{ default: TranslationDictionary }>> = {
   ru: () => import("./locales/ru"),
   uk: () => import("./locales/uk"),
+  he: () => import("./locales/he"),
 };
 
 export function resolveLocale(storedLocale: string | null, browserLanguage?: string): SupportedLocale {
@@ -46,11 +47,13 @@ export async function initializeI18n() {
 
   await ensureLocaleResources(locale);
   await i18n.changeLanguage(locale);
+  document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
 }
 
 export async function changeLocale(locale: SupportedLocale) {
   await ensureLocaleResources(locale);
   await i18n.changeLanguage(locale);
+  document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
   writeLocalUserPreferences({ language: locale });
 }
 

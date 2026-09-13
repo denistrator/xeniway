@@ -102,7 +102,7 @@ The preference response is shaped as `{ "data": { "preferences": { ... } } }`:
 }
 ```
 
-`selectedLanguage` is nullable and accepts `en`, `ru`, or `uk`. `selectedTheme` is nullable and accepts `light`, `dark`, or `system`. A PATCH body must include at least one of these fields; omitted fields are preserved and explicit `null` clears a selected value. For example:
+`selectedLanguage` is nullable and accepts `en`, `ru`, `uk`, or `he`. `selectedTheme` is nullable and accepts `light`, `dark`, or `system`. A PATCH body must include at least one of these fields; omitted fields are preserved and explicit `null` clears a selected value. For example:
 
 ```json
 { "selectedLanguage": "uk", "selectedTheme": "dark" }

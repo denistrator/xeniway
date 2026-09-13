@@ -20,7 +20,7 @@ export function StatusFilterOptions({
   return (
     <fieldset
       id="status-filter-options"
-      className="absolute left-0 top-full z-20 mt-2 w-full min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg sm:w-64"
+      className="absolute start-0 top-full z-20 mt-2 w-full min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg sm:w-64"
     >
       <legend className="sr-only">{t("applications.filterStatuses")}</legend>
       <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-accent-hover">

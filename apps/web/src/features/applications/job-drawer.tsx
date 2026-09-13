@@ -32,7 +32,7 @@ export function JobDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="job-form-title"
-        className="relative ml-auto flex h-full w-full max-w-xl flex-col overscroll-contain overflow-y-auto border-l border-line bg-surface p-6 shadow-2xl"
+        className="relative ms-auto flex h-full w-full max-w-xl flex-col overscroll-contain overflow-y-auto border-s border-line bg-surface p-6 shadow-2xl"
       >
         <JobFormContent
           presentation={presentation}

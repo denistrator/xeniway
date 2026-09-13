@@ -47,7 +47,7 @@ export function JobCard({
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight"
       aria-label={`${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`}
-      className="w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-left shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing"
+      className="w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

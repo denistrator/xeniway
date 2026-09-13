@@ -6,7 +6,7 @@ import { i18n, initializeI18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { store } from "../../store";
-import { LanguageSelector, nextLocale } from "./language-selector";
+import { LanguageSelector } from "./language-selector";
 
 vi.mock("../../lib/queries", () => ({ useCurrentUser: vi.fn(), useUpdateUserPreferences: vi.fn() }));
 
@@ -27,7 +27,8 @@ test("keeps the authenticated language control interactive before preferences lo
 
   await user.click(screen.getByRole("button", { name: "Language: English. Change language" }));
 
-  await waitFor(() => expect(i18n.resolvedLanguage).toBe("ru"));
+  expect(screen.getByRole("menu")).toBeVisible();
+  expect(screen.getByRole("menuitem", { name: "Russian" })).toBeVisible();
 });
 
 test("uses a compact visual label with an unambiguous accessible name", () => {
@@ -40,7 +41,7 @@ test("uses a compact visual label with an unambiguous accessible name", () => {
   expect(screen.getByRole("button", { name: "Language: English. Change language" })).toHaveTextContent("EN");
 });
 
-test("rotates the current locale from the mobile language control", async () => {
+test("selects a locale from the language menu", async () => {
   const user = userEvent.setup();
   render(
     <Provider store={store}>
@@ -51,9 +52,10 @@ test("rotates the current locale from the mobile language control", async () => 
   const mobileControl = screen.getByRole("button", { name: "Language: English. Change language" });
 
   await user.click(mobileControl);
+  await user.click(screen.getByRole("menuitem", { name: "Ukrainian" }));
 
-  await waitFor(() => expect(i18n.resolvedLanguage).toBe(nextLocale("en")));
-  expect(screen.getByRole("button", { name: "Language: Русский. Change language" })).toHaveTextContent("RU");
+  await waitFor(() => expect(i18n.resolvedLanguage).toBe("uk"));
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
 test("persists a language change for an authenticated user", async () => {
@@ -68,6 +70,7 @@ test("persists a language change for an authenticated user", async () => {
   );
 
   await user.click(screen.getByRole("button", { name: "Language: English. Change language" }));
+  await user.click(screen.getByRole("menuitem", { name: "Russian" }));
 
   await waitFor(() => expect(mutate).toHaveBeenCalledWith({ selectedLanguage: "ru" }));
   expect(readLocalUserPreferences()).toMatchObject({ language: "ru" });

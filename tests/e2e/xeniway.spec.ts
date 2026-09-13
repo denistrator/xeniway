@@ -16,7 +16,7 @@ test.beforeEach(async () => {
 
 async function setBrowserPreferences(
   page: Page,
-  preferences: { theme: "light" | "dark" | "system"; language: "en" | "ru" | "uk" },
+  preferences: { theme: "light" | "dark" | "system"; language: "en" | "ru" | "uk" | "he" },
 ) {
   await page.goto("/about");
   await page.evaluate((value) => {
@@ -51,12 +51,15 @@ test("switches and persists the selected browser language", async ({ page }) => 
   await page.goto("/about");
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
   await page.getByRole("button", { name: "Language: Русский. Change language" }).click();
-  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
-  await expect(page.getByRole("heading", { name: "Зрозумілий простір для складного пошуку роботи." })).toBeVisible();
+  await page.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "he");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "מרחב עבודה ברור לחיפוש עבודה מורכב." })).toBeVisible();
 
   await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("lang", "uk");
-  await expect(page.getByRole("button", { name: "Language: Українська. Change language" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "he");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("button", { name: "Language: עברית. Change language" })).toBeVisible();
 });
 
 test("shows a public not found page for unknown routes", async ({ page }) => {
@@ -101,6 +104,9 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await welcome.getByRole("button", { name: "Language: Русский. Change language" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
   await welcome.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "he");
+  await expect(welcome).toHaveAccessibleName("ברוכים הבאים ל־Xenia Way");
+  await welcome.getByRole("button", { name: "Language: עברית. Change language" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
   await expect(welcome).toHaveCount(0);

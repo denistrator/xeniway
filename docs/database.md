@@ -23,7 +23,7 @@ Stores the random session ID, optional owning user ID, server-side CSRF token, a
 
 ### `user_preferences`
 
-Stores account-scoped onboarding and selected UI preferences. `user_id` is the primary key and cascades from `users`. `was_introduced` defaults to `false`; `selected_language` is nullable and constrained to `en`, `ru`, or `uk`; `selected_theme` is nullable and constrained to `light`, `dark`, or `system`; and `selected_form_presentation` is nullable and constrained to `drawer` or `modal`. Timestamps record row creation and updates. Null selected values mean that the account has no explicit selection for that setting; authentication does not copy browser defaults into these columns.
+Stores account-scoped onboarding and selected UI preferences. `user_id` is the primary key and cascades from `users`. `was_introduced` defaults to `false`; `selected_language` is nullable and constrained to `en`, `ru`, `uk`, or `he`; `selected_theme` is nullable and constrained to `light`, `dark`, or `system`; and `selected_form_presentation` is nullable and constrained to `drawer` or `modal`. Timestamps record row creation and updates. Null selected values mean that the account has no explicit selection for that setting; authentication does not copy browser defaults into these columns.
 
 ### `password_reset_tokens`
 

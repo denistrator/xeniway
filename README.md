@@ -20,7 +20,7 @@ Xenia Way is an actively developed, server-backed candidate-tracking application
 - Register, sign in, restore a session, sign out, and recover a password through a one-time email link.
 - See a localized welcome introduction after the first successful login or registration, with links to the board and About page.
 - Use light, dark, or system theme preferences.
-- Use the English, Russian, or Ukrainian interface with locale-aware dates.
+- Use the English, Russian, Ukrainian, or Hebrew interface with locale-aware dates.
 - Signed-in language, theme, job-form presentation, and welcome-introduction state are stored with the account. The server fields are `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`. The browser keeps the corresponding flat values `language`, `theme`, `formPresentation`, and `wasIntroduced` under the single local-storage key `userPreferences`.
 
 The application is designed as an accessibility-sensitive product surface: it uses semantic controls, associated labels, visible focus states, keyboard-operable workflows, managed dialog focus, live announcements, responsive touch targets, and reduced-motion support.
@@ -85,7 +85,7 @@ Open:
 
 The Vite development server proxies `/api` requests to the API. PostgreSQL listens on port `5432`, Redis on `6379`, the API on `3000`, and the web app on `5173` by default.
 
-User preferences are account-scoped on the server. `GET /api/user/preferences` reads `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`; `PATCH /api/user/preferences` saves one or more selected values; and `POST /api/user/preferences/introduced` completes the welcome introduction. The selected values accept `en`/`ru`/`uk`, `light`/`dark`/`system`, and `drawer`/`modal`, respectively. Reads require authentication, writes require the authenticated session's CSRF token, and every operation uses the session user rather than a client-supplied user ID.
+User preferences are account-scoped on the server. `GET /api/user/preferences` reads `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`; `PATCH /api/user/preferences` saves one or more selected values; and `POST /api/user/preferences/introduced` completes the welcome introduction. The selected values accept `en`/`ru`/`uk`/`he`, `light`/`dark`/`system`, and `drawer`/`modal`, respectively. Reads require authentication, writes require the authenticated session's CSRF token, and every operation uses the session user rather than a client-supplied user ID.
 
 The browser applies its `userPreferences` cache immediately. After a successful login or registration, non-null account selections and the account's `wasIntroduced` value replace their browser counterparts; browser values are never uploaded automatically. An explicit user action updates the interface and local storage first, then synchronizes the corresponding account value in the background. This keeps the interface responsive while making the server authoritative when authentication starts.
 

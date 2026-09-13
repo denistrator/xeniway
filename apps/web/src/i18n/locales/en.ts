@@ -5,6 +5,7 @@ export const en = {
       en: "English",
       ru: "Russian",
       uk: "Ukrainian",
+      he: "Hebrew",
     },
     actions: {
       addJob: "Add job",

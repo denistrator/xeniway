@@ -19,7 +19,7 @@ export function StatusFilter() {
         onClick={() => filter.setOpen((current) => !current)}
       >
         {t("applications.filterStatuses")}
-        <span className="ml-2 text-xs text-muted">
+        <span className="ms-2 text-xs text-muted">
           {filter.allSelected
             ? t("applications.allStatuses")
             : `${filter.visibleStatuses.length}/${jobStatuses.length}`}

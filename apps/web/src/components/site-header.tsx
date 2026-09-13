@@ -39,7 +39,7 @@ export function SiteHeader() {
   return (
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center px-6 py-4">
-        <Link to="/" className="font-display mr-auto text-xl font-bold tracking-tight text-ink">
+        <Link to="/" className="font-display me-auto text-xl font-bold tracking-tight text-ink">
           Xenia Way
         </Link>
         <nav className="flex items-center gap-1 px-3" aria-label={t("accessibility.workspaceNavigation")}>

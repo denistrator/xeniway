@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const jobStatusSchema = z.enum(["saved", "applied", "interview", "offer", "rejected", "withdrawn"]);
 
-export const supportedLocaleSchema = z.enum(["en", "ru", "uk"]);
+export const supportedLocaleSchema = z.enum(["en", "ru", "uk", "he"]);
 export const themePreferenceSchema = z.enum(["light", "dark", "system"]);
 export const formPresentationSchema = z.enum(["drawer", "modal"]);
 export const applicationBoardSchema = z.enum(["active", "archive", "blacklist"]);

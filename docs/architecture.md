@@ -32,7 +32,7 @@ The user-preferences repository and API store account-scoped `selectedLanguage`,
 
 The UI follows an accessibility-first baseline: semantic controls and labels, keyboard-operable workflows including a keyboard alternative to drag-and-drop, visible focus indicators, managed focus within dialogs and drawers, live regions for asynchronous feedback, responsive layouts, and reduced-motion support. The document theme is initialized before React starts to avoid a flash of the wrong theme.
 
-The UI language is owned by i18next/react-i18next. English is initialized before the first React render; Russian and Ukrainian resources are dynamically imported before switching. The language selector persists the selected value in the flat `userPreferences` browser object and synchronizes it with the authenticated account. Theme, language, and job-form presentation share that key with the cached `wasIntroduced` value. Redux does not duplicate locale state, and local storage is never treated as account identity or authoritative onboarding state.
+The UI language is owned by i18next/react-i18next. English is initialized before the first React render; Russian, Ukrainian, and Hebrew resources are dynamically imported before switching. Hebrew sets the document direction to right-to-left, while the other locales use left-to-right. The language selector persists the selected value in the flat `userPreferences` browser object and synchronizes it with the authenticated account. Theme, language, and job-form presentation share that key with the cached `wasIntroduced` value. Redux does not duplicate locale state, and local storage is never treated as account identity or authoritative onboarding state.
 
 ## Request lifecycle
 
