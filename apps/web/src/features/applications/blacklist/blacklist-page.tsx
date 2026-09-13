@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import type { JobApplication } from "@xeniway/shared";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
+import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
 import { formatDate, getApiErrorKey } from "../../../i18n/format";
-import { ApiRequestError, type JobApplication } from "../../../lib/api";
+import { ApiRequestError } from "../../../lib/api";
 import { matchesApplicationSearch } from "../../../lib/application-filters";
 import { useApplicationMutations, useBlacklistedApplications } from "../../../lib/queries";
 import type { RootState } from "../../../store";
@@ -18,50 +20,65 @@ export function BlacklistPage() {
     () => blacklisted.data?.filter((job) => matchesApplicationSearch(job, search)) ?? [],
     [blacklisted.data, search],
   );
-  async function remove(job: JobApplication) {
-    if (window.confirm(t("applications.blacklist.deleteConfirmation", job))) await mutations.remove.mutateAsync(job.id);
+  const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
+  async function remove() {
+    if (!pendingRemoval) return;
+    await mutations.remove.mutateAsync(pendingRemoval.id);
+    setPendingRemoval(null);
   }
   const error = blacklisted.error || mutations.unblacklist.error || mutations.remove.error;
   const errorMessage = error
     ? t(getApiErrorKey(error instanceof ApiRequestError ? error.code : "REQUEST_FAILED"))
     : undefined;
   return (
-    <ApplicationCollection
-      title={t("applications.blacklist.title")}
-      description={t("applications.blacklist.description")}
-      loadingMessage={t("applications.blacklist.loading")}
-      emptyMessage={t("applications.blacklist.empty")}
-      noMatchMessage={t("applications.blacklist.noMatch")}
-      errorMessage={errorMessage}
-      loading={blacklisted.isPending}
-      isEmpty={Boolean(blacklisted.data && !blacklisted.data.length)}
-      hasResults={items.length > 0}
-    >
-      {items.map((job) => (
-        <ApplicationCollectionCard
-          key={job.id}
-          job={job}
-          details={
-            <>
-              {job.blacklistReason && (
-                <p className="break-words rounded-lg bg-surface-tint p-3 text-sm leading-6 text-ink">
-                  {job.blacklistReason}
+    <>
+      <ApplicationCollection
+        title={t("applications.blacklist.title")}
+        description={t("applications.blacklist.description")}
+        loadingMessage={t("applications.blacklist.loading")}
+        emptyMessage={t("applications.blacklist.empty")}
+        noMatchMessage={t("applications.blacklist.noMatch")}
+        errorMessage={errorMessage}
+        loading={blacklisted.isPending}
+        isEmpty={Boolean(blacklisted.data && !blacklisted.data.length)}
+        hasResults={items.length > 0}
+      >
+        {items.map((job) => (
+          <ApplicationCollectionCard
+            key={job.id}
+            job={job}
+            details={
+              <>
+                {job.blacklistReason && (
+                  <p className="break-words rounded-lg bg-surface-tint p-3 text-sm leading-6 text-ink">
+                    {job.blacklistReason}
+                  </p>
+                )}
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  {t("applications.blacklist.blacklisted", {
+                    date: job.blacklistedAt ? formatDate(job.blacklistedAt, i18n.resolvedLanguage ?? "en") : "—",
+                  })}
                 </p>
-              )}
-              <p className="mt-2 text-sm leading-6 text-muted">
-                {t("applications.blacklist.blacklisted", {
-                  date: job.blacklistedAt ? formatDate(job.blacklistedAt, i18n.resolvedLanguage ?? "en") : "—",
-                })}
-              </p>
-            </>
-          }
-          restoreLabel={t("applications.blacklist.restore")}
-          deleteLabel={t("applications.blacklist.delete")}
-          onRestore={() => mutations.unblacklist.mutateAsync(job.id)}
-          onDelete={() => remove(job)}
-          busy={mutations.unblacklist.isPending || mutations.remove.isPending}
+              </>
+            }
+            restoreLabel={t("applications.blacklist.restore")}
+            deleteLabel={t("applications.blacklist.delete")}
+            onRestore={() => mutations.unblacklist.mutateAsync(job.id)}
+            onDelete={() => setPendingRemoval(job)}
+            busy={mutations.unblacklist.isPending || mutations.remove.isPending}
+          />
+        ))}
+      </ApplicationCollection>
+      {pendingRemoval && (
+        <ConfirmationModal
+          title={t("applications.confirmation.title")}
+          text={t("applications.blacklist.deleteConfirmation", pendingRemoval)}
+          yesLabel={t("common.actions.yes")}
+          noLabel={t("common.actions.no")}
+          onYes={remove}
+          onNo={() => setPendingRemoval(null)}
         />
-      ))}
-    </ApplicationCollection>
+      )}
+    </>
   );
 }
