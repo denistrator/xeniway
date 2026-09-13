@@ -169,6 +169,19 @@ function createDependencies(): AppDependencies {
       applicationUserIds.delete(id);
       return true;
     },
+    async removeAll(userId, board) {
+      const matches = applications.filter((application) => {
+        if (applicationUserIds.get(application.id) !== userId) return false;
+        if (board === "archive") return !!application.archivedAt;
+        if (board === "blacklist") return !!application.blacklistedAt;
+        return !application.archivedAt && !application.blacklistedAt;
+      });
+      for (const application of matches) {
+        applications.splice(applications.indexOf(application), 1);
+        applicationUserIds.delete(application.id);
+      }
+      return matches.length;
+    },
     async listBlacklisted(userId) {
       return applications
         .filter((application) => applicationUserIds.get(application.id) === userId && !!application.blacklistedAt)

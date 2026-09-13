@@ -33,6 +33,7 @@ import {
   logout,
   markUserIntroduced,
   register,
+  removeAllApplications,
   reorderApplications,
   requestPasswordReset,
   restoreApplication,
@@ -221,6 +222,10 @@ export function useApplicationMutations() {
     }),
     remove: useMutation({
       mutationFn: (id: number) => deleteApplication(id, csrfToken),
+      onSuccess: invalidate,
+    }),
+    removeAll: useMutation({
+      mutationFn: (board: "active" | "archive" | "blacklist") => removeAllApplications({ board }, csrfToken),
       onSuccess: invalidate,
     }),
     blacklist: useMutation({

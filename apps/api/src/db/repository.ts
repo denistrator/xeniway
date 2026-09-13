@@ -1,4 +1,5 @@
 import {
+  type ApplicationBoard,
   type BlacklistInput,
   type CreateApplicationInput,
   formPresentationSchema,
@@ -65,6 +66,7 @@ export interface ApplicationRepository {
   archive(userId: number, id: number): Promise<boolean>;
   restore(userId: number, id: number): Promise<boolean>;
   permanentDelete(userId: number, id: number): Promise<boolean>;
+  removeAll(userId: number, board: ApplicationBoard): Promise<number>;
   listBlacklisted(userId: number): Promise<JobApplication[]>;
   blacklist(userId: number, id: number, reason: BlacklistInput["reason"]): Promise<boolean>;
   unblacklist(userId: number, id: number): Promise<boolean>;
@@ -291,6 +293,19 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   async permanentDelete(userId: number, id: number): Promise<boolean> {
     const result = await this.database.delete(jobApplications).where(ownedApplication(userId, id));
     return result.count > 0;
+  }
+
+  async removeAll(userId: number, board: ApplicationBoard): Promise<number> {
+    const boardFilter =
+      board === "archive"
+        ? isNotNull(jobApplications.archivedAt)
+        : board === "blacklist"
+          ? isNotNull(jobApplications.blacklistedAt)
+          : and(isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt));
+    const result = await this.database
+      .delete(jobApplications)
+      .where(and(eq(jobApplications.userId, userId), boardFilter));
+    return result.count;
   }
 
   async listBlacklisted(userId: number): Promise<JobApplication[]> {

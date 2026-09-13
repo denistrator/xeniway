@@ -11,6 +11,7 @@ import { applicationUpdateRoute } from "./routes/application-update";
 import { applicationsArchiveRoute } from "./routes/applications-archive";
 import { applicationsBlacklistRoute } from "./routes/applications-blacklist";
 import { applicationsListRoute } from "./routes/applications-list";
+import { applicationsRemoveAllRoute } from "./routes/applications-remove-all";
 import { applicationsReorderRoute } from "./routes/applications-reorder";
 import { authCsrfRoute } from "./routes/auth-csrf";
 import { authLoginRoute } from "./routes/auth-login";
@@ -94,7 +95,8 @@ export function createApp(dependencies: AppDependencies) {
     .use(applicationBlacklistRoute(routeDependencies))
     .use(applicationUnblacklistRoute(routeDependencies))
     .use(applicationRestoreRoute(routeDependencies))
-    .use(applicationDeleteRoute(routeDependencies));
+    .use(applicationDeleteRoute(routeDependencies))
+    .use(applicationsRemoveAllRoute(routeDependencies));
 
   if (passwordReset) {
     app.use(authPasswordResetRequestRoute(routeDependencies));

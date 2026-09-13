@@ -15,6 +15,7 @@ import type {
   PasswordResetConfirmInput,
   PasswordResetRequestInput,
   RegisterInput,
+  RemoveAllApplicationsInput,
   ReorderApplicationsInput,
   UpdateApplicationInput,
   UpdateUserPreferencesInput,
@@ -218,6 +219,17 @@ export function restoreApplication(id: number, csrfToken: string): Promise<ApiSu
 
 export function deleteApplication(id: number, csrfToken: string): Promise<ApiSuccess<MessageResponse["data"]>> {
   return requestJson<ApiSuccess<MessageResponse["data"]>>(`/api/applications/${id}`, { method: "DELETE" }, csrfToken);
+}
+
+export function removeAllApplications(
+  input: RemoveAllApplicationsInput,
+  csrfToken: string,
+): Promise<ApiSuccess<MessageResponse["data"]>> {
+  return requestJson<ApiSuccess<MessageResponse["data"]>>(
+    "/api/applications/remove-all",
+    { method: "POST", body: JSON.stringify(input) },
+    csrfToken,
+  );
 }
 
 export function blacklistApplication(

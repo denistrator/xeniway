@@ -21,6 +21,7 @@ export function ArchivePage() {
     [archived.data, search],
   );
   const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
+  const [removeAllOpen, setRemoveAllOpen] = useState(false);
   async function remove() {
     if (!pendingRemoval) return;
     await mutations.remove.mutateAsync(pendingRemoval.id);
@@ -45,6 +46,8 @@ export function ArchivePage() {
         loading={archived.isPending}
         isEmpty={Boolean(archived.data && !archived.data.length)}
         hasResults={items.length > 0}
+        removeAllLabel={t("common.actions.removeAll")}
+        onRemoveAll={() => setRemoveAllOpen(true)}
       >
         {items.map((job) => (
           <ApplicationCollectionCard
@@ -73,6 +76,19 @@ export function ArchivePage() {
           noLabel={t("common.actions.no")}
           onYes={remove}
           onNo={() => setPendingRemoval(null)}
+        />
+      )}
+      {removeAllOpen && (
+        <ConfirmationModal
+          title={t("applications.confirmation.title")}
+          text={t("common.actions.deleteAllConfirmation")}
+          yesLabel={t("common.actions.yes")}
+          noLabel={t("common.actions.no")}
+          onYes={async () => {
+            await mutations.removeAll.mutateAsync("archive");
+            setRemoveAllOpen(false);
+          }}
+          onNo={() => setRemoveAllOpen(false)}
         />
       )}
     </>

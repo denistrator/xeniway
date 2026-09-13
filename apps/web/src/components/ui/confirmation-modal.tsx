@@ -8,6 +8,7 @@ export function ConfirmationModal({
   noLabel,
   onYes,
   onNo,
+  yesDisabled = false,
 }: {
   title: string;
   text?: string;
@@ -15,6 +16,7 @@ export function ConfirmationModal({
   noLabel: string;
   onYes: () => void;
   onNo: () => void;
+  yesDisabled?: boolean;
 }) {
   const noButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -58,7 +60,9 @@ export function ConfirmationModal({
           <Button ref={noButtonRef} variant="outline" onClick={onNo}>
             {noLabel}
           </Button>
-          <Button onClick={onYes}>{yesLabel}</Button>
+          <Button onClick={onYes} disabled={yesDisabled}>
+            {yesLabel}
+          </Button>
         </div>
       </div>
     </div>

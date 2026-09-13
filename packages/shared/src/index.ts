@@ -5,6 +5,8 @@ export const jobStatusSchema = z.enum(["saved", "applied", "interview", "offer",
 export const supportedLocaleSchema = z.enum(["en", "ru", "uk"]);
 export const themePreferenceSchema = z.enum(["light", "dark", "system"]);
 export const formPresentationSchema = z.enum(["drawer", "modal"]);
+export const applicationBoardSchema = z.enum(["active", "archive", "blacklist"]);
+export type ApplicationBoard = z.infer<typeof applicationBoardSchema>;
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 
@@ -64,6 +66,8 @@ export type CreateApplicationInput = z.infer<typeof createApplicationInputSchema
 export type UpdateApplicationInput = z.infer<typeof updateApplicationInputSchema>;
 export type BlacklistInput = z.infer<typeof blacklistInputSchema>;
 export type ReorderApplicationsInput = z.infer<typeof reorderApplicationsInputSchema>;
+export const removeAllApplicationsInputSchema = z.object({ board: applicationBoardSchema });
+export type RemoveAllApplicationsInput = z.infer<typeof removeAllApplicationsInputSchema>;
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestInputSchema>;

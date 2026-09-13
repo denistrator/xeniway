@@ -21,6 +21,7 @@ export function BlacklistPage() {
     [blacklisted.data, search],
   );
   const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
+  const [removeAllOpen, setRemoveAllOpen] = useState(false);
   async function remove() {
     if (!pendingRemoval) return;
     await mutations.remove.mutateAsync(pendingRemoval.id);
@@ -42,6 +43,8 @@ export function BlacklistPage() {
         loading={blacklisted.isPending}
         isEmpty={Boolean(blacklisted.data && !blacklisted.data.length)}
         hasResults={items.length > 0}
+        removeAllLabel={t("common.actions.removeAll")}
+        onRemoveAll={() => setRemoveAllOpen(true)}
       >
         {items.map((job) => (
           <ApplicationCollectionCard
@@ -77,6 +80,19 @@ export function BlacklistPage() {
           noLabel={t("common.actions.no")}
           onYes={remove}
           onNo={() => setPendingRemoval(null)}
+        />
+      )}
+      {removeAllOpen && (
+        <ConfirmationModal
+          title={t("applications.confirmation.title")}
+          text={t("common.actions.deleteAllConfirmation")}
+          yesLabel={t("common.actions.yes")}
+          noLabel={t("common.actions.no")}
+          onYes={async () => {
+            await mutations.removeAll.mutateAsync("blacklist");
+            setRemoveAllOpen(false);
+          }}
+          onNo={() => setRemoveAllOpen(false)}
         />
       )}
     </>

@@ -13,6 +13,8 @@ export function ApplicationCollection({
   isEmpty,
   hasResults,
   children,
+  removeAllLabel,
+  onRemoveAll,
 }: {
   title: string;
   description: string;
@@ -24,12 +26,21 @@ export function ApplicationCollection({
   isEmpty: boolean;
   hasResults: boolean;
   children: ReactNode;
+  removeAllLabel: string;
+  onRemoveAll: () => void;
 }) {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
       <PageIntro title={title} description={description} />
       <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <ApplicationSearch />
+        <button
+          type="button"
+          className="h-10 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          onClick={onRemoveAll}
+        >
+          {removeAllLabel}
+        </button>
       </div>
       {loading && (
         <p role="status" aria-live="polite" className="py-10 text-center text-sm leading-6 text-muted">
