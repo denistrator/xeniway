@@ -13,6 +13,7 @@
     "typecheck": "bun run --cwd packages/shared typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/web typecheck",
     "build": "bun run --cwd apps/web build && bun run --cwd apps/api typecheck",
     "check:public": "bun scripts/check-public-repository.ts",
+    "check:seo": "bun test scripts/check-seo.test.ts",
     "up": "docker compose -p xeniway -f infra/docker-compose.yml up -d --remove-orphans postgres redis mailpit",
     "down": "docker compose -p xeniway -f infra/docker-compose.yml down --remove-orphans",
     "check": "bun run db:check && bun run redis:check && bun run mailpit:check",
