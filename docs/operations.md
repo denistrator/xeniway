@@ -80,6 +80,17 @@ Command prerequisites:
 | `bun run dev` | Running PostgreSQL and Redis for complete API behavior; Mailpit when using the example SMTP configuration |
 | `bun run test:e2e` | Running PostgreSQL and Redis, applied migrations, development fixtures, and Playwright Chromium; the command starts API/web servers |
 
+### Bundle analysis
+
+`vite-bundle-analyzer` is installed as a development dependency for inspecting the production web bundle. Run the build and then start the analyzer from the repository root:
+
+```bash
+bun run build
+npx vite-bundle-analyzer
+```
+
+The command opens an interactive treemap in the browser. Run `npx vite-bundle-analyzer --help` for CLI options.
+
 ## Password recovery
 
 The forgot-password form returns the same generic success for an unknown account and for a known account after its reset message is delivered. A storage or mail-delivery failure for a known account returns `PASSWORD_RESET_ERROR` (`500`), while an unknown account still succeeds, so operational failures can reveal that the two paths differ. A known account receives a one-hour, single-use link containing a token generated from 32 random bytes. Only its SHA-256 hash is stored in PostgreSQL, and successful use changes the Argon2id password and invalidates every existing session. Older outstanding tokens are invalidated when a new request is created.
