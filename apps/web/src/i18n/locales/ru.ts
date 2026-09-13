@@ -69,7 +69,7 @@ const ru = {
       empty: "Чёрный список пуст.",
       status: "Статус: {{status}}",
       blacklisted: "В чёрном списке с {{date}}",
-      remove: "Удалить",
+      restore: "Восстановить",
       delete: "Удалить",
       deleteConfirmation: "Удалить навсегда {{company}} — {{position}}? Это действие нельзя отменить.",
       noMatch: "Нет вакансий по текущему поиску.",

@@ -1,21 +1,29 @@
 import type { JobApplication } from "@xeniway/shared";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent } from "../../../components/ui/card";
-import { formatDate } from "../../../i18n/format";
-import { ApplicationCollectionActions } from "../application-collection-actions";
+import { Card, CardContent } from "../../components/ui/card";
+import { ApplicationCollectionActions } from "./application-collection-actions";
+import { getStatusLabel } from "./job-status";
 
-export function ArchiveApplicationCard({
+export function ApplicationCollectionCard({
   job,
+  details,
+  restoreLabel,
+  deleteLabel,
   onRestore,
   onDelete,
   busy,
 }: {
   job: JobApplication;
+  details: ReactNode;
+  restoreLabel: ReactNode;
+  deleteLabel: ReactNode;
   onRestore: () => void;
   onDelete: () => void;
   busy: boolean;
 }) {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardContent className="space-y-4 p-5">
@@ -24,14 +32,13 @@ export function ArchiveApplicationCard({
           <p className="break-words text-sm leading-6 text-muted">{job.position}</p>
           {job.location && <p className="mt-1 break-words text-sm leading-6 text-muted">{job.location}</p>}
           <p className="mt-2 text-sm leading-6 text-muted">
-            {t("applications.archive.archived", {
-              date: job.archivedAt ? formatDate(job.archivedAt, i18n.resolvedLanguage ?? "en") : "—",
-            })}
+            {t("applications.blacklist.status", { status: getStatusLabel(t, job.status) })}
           </p>
+          {details}
         </div>
         <ApplicationCollectionActions
-          restoreLabel={t("applications.archive.restore")}
-          deleteLabel={t("applications.archive.delete")}
+          restoreLabel={restoreLabel}
+          deleteLabel={deleteLabel}
           onRestore={onRestore}
           onDelete={onDelete}
           busy={busy}

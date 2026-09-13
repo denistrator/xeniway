@@ -67,7 +67,7 @@ export const en = {
       empty: "Your blacklist is empty.",
       status: "Status: {{status}}",
       blacklisted: "Blacklisted {{date}}",
-      remove: "Remove",
+      restore: "Restore",
       delete: "Delete",
       deleteConfirmation: "Permanently delete {{company}} — {{position}}? This cannot be undone.",
       noMatch: "No blacklisted applications match the current search.",

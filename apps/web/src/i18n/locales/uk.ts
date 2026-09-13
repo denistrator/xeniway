@@ -69,7 +69,7 @@ const uk = {
       empty: "Чорний список порожній.",
       status: "Статус: {{status}}",
       blacklisted: "У чорному списку з {{date}}",
-      remove: "Видалити",
+      restore: "Відновити",
       delete: "Видалити",
       deleteConfirmation: "Видалити назавжди {{company}} — {{position}}? Цю дію не можна скасувати.",
       noMatch: "Немає вакансій за поточним пошуком.",

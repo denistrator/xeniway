@@ -2,16 +2,16 @@ import type { JobApplication } from "@xeniway/shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { getApiErrorKey } from "../../../i18n/format";
+import { formatDate, getApiErrorKey } from "../../../i18n/format";
 import { ApiRequestError } from "../../../lib/api";
 import { matchesApplicationSearch } from "../../../lib/application-filters";
 import { useApplicationMutations, useArchivedApplications } from "../../../lib/queries";
 import type { RootState } from "../../../store";
 import { ApplicationCollection } from "../application-collection";
-import { ArchiveApplicationCard } from "./archive-application-card";
+import { ApplicationCollectionCard } from "../application-collection-card";
 
 export function ArchivePage() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const archived = useArchivedApplications();
   const mutations = useApplicationMutations();
   const search = useSelector((state: RootState) => state.ui.search);
@@ -19,11 +19,11 @@ export function ArchivePage() {
     () => archived.data?.filter((job) => matchesApplicationSearch(job, search)) ?? [],
     [archived.data, search],
   );
-  async function restore(id: number) {
-    await mutations.restore.mutateAsync(id);
-  }
   async function remove(job: JobApplication) {
     if (window.confirm(t("applications.archive.deleteConfirmation", job))) await mutations.remove.mutateAsync(job.id);
+  }
+  async function restore(id: number) {
+    await mutations.restore.mutateAsync(id);
   }
   const error = mutations.restore.error || mutations.remove.error || archived.error;
   const errorMessage = error
@@ -42,9 +42,18 @@ export function ArchivePage() {
       hasResults={items.length > 0}
     >
       {items.map((job) => (
-        <ArchiveApplicationCard
+        <ApplicationCollectionCard
           key={job.id}
           job={job}
+          details={
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {t("applications.archive.archived", {
+                date: job.archivedAt ? formatDate(job.archivedAt, i18n.resolvedLanguage ?? "en") : "—",
+              })}
+            </p>
+          }
+          restoreLabel={t("applications.archive.restore")}
+          deleteLabel={t("applications.archive.delete")}
           onRestore={() => restore(job.id)}
           onDelete={() => remove(job)}
           busy={mutations.restore.isPending || mutations.remove.isPending}
