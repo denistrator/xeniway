@@ -8,10 +8,13 @@
 - `apps/web/src/features/welcome/welcome-modal.test.tsx` covers localized welcome content, completion actions, backdrop/Escape behavior, and the language control.
 - `apps/web/src/i18n/i18n.test.ts`, `apps/web/src/i18n/format.test.ts`, and `apps/web/src/features/preferences/language-selector.test.tsx` cover locale resolution, lazy resource selection, browser persistence, date formatting, compact labels, and accessible language names.
 - `apps/web/src/features/applications/job-status.test.ts` protects the shared six-status display order and translated labels used by the board, filters, and form.
+- `apps/web/src/features/applications/activity/*.test.tsx` covers localized timeline rendering, immutable system history, and manual activity form submission.
 - `apps/web/src/features/auth/password-reset/password-reset-page.test.tsx` verifies a user-visible validation message after switching locale.
-- `tests/e2e/xeniway.spec.ts` covers language switching and reload persistence, public password recovery navigation and validation, welcome behavior after login and registration, immediate local preference updates, server persistence after reload, theme/language/form-presentation selectors, server-authoritative account values, and account isolation. It then logs in with development seed credentials and exercises the board, six statuses, search, create, blacklist with reason, blacklist restore, blacklisted deletion, native drag-and-drop, archive, and permanent deletion.
+- `tests/e2e/xeniway.spec.ts` covers language switching and reload persistence, public password recovery navigation and validation, welcome behavior after login and registration, immediate local preference updates, server persistence after reload, theme/language/form-presentation selectors, server-authoritative account values, and account isolation. It then logs in with development seed credentials and exercises the board, six statuses, search, create, activity history, manual follow-up create/edit/delete across reloads, blacklist with reason, blacklist restore, blacklisted deletion, native drag-and-drop, archive, and permanent deletion.
 
 The application drawer and modal use the shared translated “Close dialog” label for their backdrop controls. Browser coverage checks both accessible names alongside focus management and Escape handling.
+
+The activity browser workflow checks both form presentations, focus entry and return, safe rendering and Axe for the activity view, immutable system events, archive/blacklist history, manual event persistence, and legacy creation-marker behavior through the API test fixture.
 
 ## Commands
 

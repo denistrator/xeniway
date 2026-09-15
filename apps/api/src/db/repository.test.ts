@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  DrizzleApplicationRepository,
   DrizzlePasswordResetTokenRepository,
   DrizzleSessionRepository,
   DrizzleUserPreferencesRepository,
   DrizzleUserRepository,
+  toApplicationEvent,
   toJobApplication,
   toUser,
   toUserPreferences,
 } from "./repository";
-import type { jobApplications, users } from "./schema";
-import { userPreferences } from "./schema";
+import type { applicationEvents, users } from "./schema";
+import { jobApplications, userPreferences } from "./schema";
 
 const preferenceTimestamps = {
   createdAt: new Date("2026-09-01T10:00:00.000Z"),
@@ -31,6 +33,35 @@ function createPreferenceRow(
 }
 
 describe("database row mapping", () => {
+  it("maps a system activity event without exposing its owner", () => {
+    const event: typeof applicationEvents.$inferSelect = {
+      id: 8,
+      userId: 7,
+      applicationId: 3,
+      type: "status_changed",
+      title: "Status changed",
+      description: null,
+      occurredAt: new Date("2026-09-02T10:00:00.000Z"),
+      createdAt: new Date("2026-09-02T10:00:00.000Z"),
+      updatedAt: new Date("2026-09-02T10:00:00.000Z"),
+      metadata: { from: "saved", to: "applied" },
+      isSystem: true,
+    };
+
+    expect(toApplicationEvent(event)).toEqual({
+      id: 8,
+      applicationId: 3,
+      type: "status_changed",
+      title: "Status changed",
+      description: null,
+      occurredAt: "2026-09-02T10:00:00.000Z",
+      createdAt: "2026-09-02T10:00:00.000Z",
+      updatedAt: "2026-09-02T10:00:00.000Z",
+      metadata: { from: "saved", to: "applied" },
+      isSystem: true,
+    });
+    expect(toApplicationEvent(event)).not.toHaveProperty("userId");
+  });
   it("maps a user without exposing its password hash", () => {
     const user: typeof users.$inferSelect = {
       id: 7,
@@ -109,6 +140,44 @@ describe("database row mapping", () => {
       blacklistedAt: null,
       blacklistReason: null,
     });
+  });
+});
+
+describe("application history transactions", () => {
+  it("does not complete application creation when recording history fails", async () => {
+    let completed = false;
+    const database = {
+      transaction: async (callback: (transaction: unknown) => Promise<unknown>) => {
+        const transaction = {
+          insert: (table: unknown) => ({
+            values: () =>
+              table === jobApplications
+                ? {
+                    returning: async () => [
+                      {
+                        id: 9,
+                        userId: 7,
+                        company: "Acme",
+                        position: "Engineer",
+                        status: "saved",
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                      },
+                    ],
+                  }
+                : Promise.reject(new Error("event write failed")),
+          }),
+        };
+        const result = await callback(transaction);
+        completed = true;
+        return result;
+      },
+    } as never;
+
+    await expect(
+      new DrizzleApplicationRepository(database).create(7, { company: "Acme", position: "Engineer", status: "saved" }),
+    ).rejects.toThrow("event write failed");
+    expect(completed).toBe(false);
   });
 });
 

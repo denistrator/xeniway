@@ -1,5 +1,8 @@
 import {
   type ApplicationBoard,
+  type ApplicationEvent,
+  type ApplicationEventInput,
+  type ApplicationEventType,
   type BlacklistInput,
   type CreateApplicationInput,
   formPresentationSchema,
@@ -7,6 +10,7 @@ import {
   type JobStatus,
   supportedLocaleSchema,
   themePreferenceSchema,
+  type UpdateApplicationEventInput,
   type UpdateApplicationInput,
   type UpdateUserPreferencesInput,
   type User,
@@ -14,9 +18,10 @@ import {
 } from "@xeniway/shared";
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { createDatabase } from "./client";
-import { jobApplications, passwordResetTokens, sessions, userPreferences, users } from "./schema";
+import { applicationEvents, jobApplications, passwordResetTokens, sessions, userPreferences, users } from "./schema";
 
 type Database = ReturnType<typeof createDatabase>;
+type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type UserRow = typeof users.$inferSelect;
 type SessionRow = typeof sessions.$inferSelect;
 type UserPreferencesRow = typeof userPreferences.$inferSelect;
@@ -59,7 +64,11 @@ export interface PasswordResetTokenRepository {
 
 export interface ApplicationRepository {
   list(userId: number, options?: { status?: JobStatus; archived?: boolean }): Promise<JobApplication[]>;
-  findById(userId: number, id: number, options?: { archived?: boolean }): Promise<JobApplication | null>;
+  findById(
+    userId: number,
+    id: number,
+    options?: { archived?: boolean; anyState?: boolean },
+  ): Promise<JobApplication | null>;
   create(userId: number, input: CreateApplicationInput): Promise<JobApplication>;
   update(userId: number, id: number, input: UpdateApplicationInput): Promise<JobApplication | null>;
   reorder(userId: number, status: JobStatus, applicationIds: number[]): Promise<boolean>;
@@ -70,6 +79,15 @@ export interface ApplicationRepository {
   listBlacklisted(userId: number): Promise<JobApplication[]>;
   blacklist(userId: number, id: number, reason: BlacklistInput["reason"]): Promise<boolean>;
   unblacklist(userId: number, id: number): Promise<boolean>;
+  listEvents(userId: number, applicationId: number): Promise<ApplicationEvent[]>;
+  createEvent(userId: number, applicationId: number, input: ApplicationEventInput): Promise<ApplicationEvent | null>;
+  updateEvent(
+    userId: number,
+    applicationId: number,
+    eventId: number,
+    input: UpdateApplicationEventInput,
+  ): Promise<ApplicationEvent | null>;
+  deleteEvent(userId: number, applicationId: number, eventId: number): Promise<boolean>;
 }
 
 export class DrizzleUserRepository implements UserRepository {
@@ -200,6 +218,103 @@ export class DrizzlePasswordResetTokenRepository implements PasswordResetTokenRe
 export class DrizzleApplicationRepository implements ApplicationRepository {
   constructor(private readonly database: Database) {}
 
+  private async recordSystemEvent(
+    transaction: Transaction,
+    userId: number,
+    applicationId: number,
+    type: ApplicationEventType,
+    metadata: { from: JobStatus; to: JobStatus } | null = null,
+  ): Promise<void> {
+    await transaction.insert(applicationEvents).values({
+      userId,
+      applicationId,
+      type,
+      title: type.replaceAll("_", " "),
+      occurredAt: new Date(),
+      metadata,
+      isSystem: true,
+    });
+  }
+
+  async listEvents(userId: number, applicationId: number): Promise<ApplicationEvent[]> {
+    const rows = await this.database
+      .select()
+      .from(applicationEvents)
+      .where(and(eq(applicationEvents.userId, userId), eq(applicationEvents.applicationId, applicationId)))
+      .orderBy(desc(applicationEvents.occurredAt), desc(applicationEvents.id));
+    return rows.map(toApplicationEvent);
+  }
+
+  async createEvent(
+    userId: number,
+    applicationId: number,
+    input: ApplicationEventInput,
+  ): Promise<ApplicationEvent | null> {
+    return this.database.transaction(async (transaction) => {
+      const [application] = await transaction
+        .select({ id: jobApplications.id })
+        .from(jobApplications)
+        .where(ownedApplication(userId, applicationId))
+        .for("share")
+        .limit(1);
+      if (!application) return null;
+      const [row] = await transaction
+        .insert(applicationEvents)
+        .values({
+          userId,
+          applicationId,
+          type: input.type,
+          title: input.title,
+          description: input.description ?? null,
+          occurredAt: new Date(input.occurredAt),
+          metadata: null,
+          isSystem: false,
+        })
+        .returning();
+      if (!row) throw new Error("Unable to create application event");
+      return toApplicationEvent(row);
+    });
+  }
+
+  async updateEvent(
+    userId: number,
+    applicationId: number,
+    eventId: number,
+    input: UpdateApplicationEventInput,
+  ): Promise<ApplicationEvent | null> {
+    const [row] = await this.database
+      .update(applicationEvents)
+      .set({
+        ...input,
+        occurredAt: input.occurredAt ? new Date(input.occurredAt) : undefined,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(applicationEvents.userId, userId),
+          eq(applicationEvents.applicationId, applicationId),
+          eq(applicationEvents.id, eventId),
+          eq(applicationEvents.isSystem, false),
+        ),
+      )
+      .returning();
+    return row ? toApplicationEvent(row) : null;
+  }
+
+  async deleteEvent(userId: number, applicationId: number, eventId: number): Promise<boolean> {
+    const result = await this.database
+      .delete(applicationEvents)
+      .where(
+        and(
+          eq(applicationEvents.userId, userId),
+          eq(applicationEvents.applicationId, applicationId),
+          eq(applicationEvents.id, eventId),
+          eq(applicationEvents.isSystem, false),
+        ),
+      );
+    return result.count > 0;
+  }
+
   async list(userId: number, options: { status?: JobStatus; archived?: boolean } = {}) {
     const conditions = [eq(jobApplications.userId, userId)];
     if (options.status) conditions.push(eq(jobApplications.status, options.status));
@@ -217,15 +332,19 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     return rows.map(toJobApplication);
   }
 
-  async findById(userId: number, id: number, options: { archived?: boolean } = {}) {
+  async findById(userId: number, id: number, options: { archived?: boolean; anyState?: boolean } = {}) {
     const [row] = await this.database
       .select()
       .from(jobApplications)
       .where(
         and(
           ownedApplication(userId, id),
-          options.archived ? isNotNull(jobApplications.archivedAt) : isNull(jobApplications.archivedAt),
-          isNull(jobApplications.blacklistedAt),
+          ...(options.anyState
+            ? []
+            : [
+                options.archived ? isNotNull(jobApplications.archivedAt) : isNull(jobApplications.archivedAt),
+                isNull(jobApplications.blacklistedAt),
+              ]),
         ),
       )
       .limit(1);
@@ -233,21 +352,44 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   }
 
   async create(userId: number, input: CreateApplicationInput): Promise<JobApplication> {
-    const [row] = await this.database
-      .insert(jobApplications)
-      .values({ ...input, userId })
-      .returning();
-    if (!row) throw new Error("Unable to create application");
-    return toJobApplication(row);
+    return this.database.transaction(async (transaction) => {
+      const [row] = await transaction
+        .insert(jobApplications)
+        .values({ ...input, userId })
+        .returning();
+      if (!row) throw new Error("Unable to create application");
+      await this.recordSystemEvent(transaction, userId, row.id, "application_created");
+      return toJobApplication(row);
+    });
   }
 
   async update(userId: number, id: number, input: UpdateApplicationInput): Promise<JobApplication | null> {
-    const [row] = await this.database
-      .update(jobApplications)
-      .set({ ...input, updatedAt: new Date() })
-      .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)))
-      .returning();
-    return row ? toJobApplication(row) : null;
+    return this.database.transaction(async (transaction) => {
+      const [before] = await transaction
+        .select()
+        .from(jobApplications)
+        .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)))
+        .for("update")
+        .limit(1);
+      if (!before) return null;
+      const [row] = await transaction
+        .update(jobApplications)
+        .set({ ...input, updatedAt: new Date() })
+        .where(ownedApplication(userId, id))
+        .returning();
+      if (!row) return null;
+      if (row.status !== before.status) {
+        await this.recordSystemEvent(transaction, userId, id, "status_changed", {
+          from: before.status,
+          to: row.status,
+        });
+      }
+      const fieldsChanged = Object.entries(input).some(
+        ([key, value]) => key !== "status" && value !== undefined && before[key as keyof typeof before] !== value,
+      );
+      if (fieldsChanged) await this.recordSystemEvent(transaction, userId, id, "application_edited");
+      return toJobApplication(row);
+    });
   }
 
   async reorder(userId: number, status: JobStatus, applicationIds: number[]): Promise<boolean> {
@@ -275,19 +417,29 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   }
 
   async archive(userId: number, id: number): Promise<boolean> {
-    const result = await this.database
-      .update(jobApplications)
-      .set({ archivedAt: new Date(), updatedAt: new Date() })
-      .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)));
-    return result.count > 0;
+    return this.database.transaction(async (transaction) => {
+      const [row] = await transaction
+        .update(jobApplications)
+        .set({ archivedAt: new Date(), updatedAt: new Date() })
+        .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)))
+        .returning({ id: jobApplications.id });
+      if (!row) return false;
+      await this.recordSystemEvent(transaction, userId, id, "archived");
+      return true;
+    });
   }
 
   async restore(userId: number, id: number): Promise<boolean> {
-    const result = await this.database
-      .update(jobApplications)
-      .set({ archivedAt: null, updatedAt: new Date() })
-      .where(and(ownedApplication(userId, id), isNotNull(jobApplications.archivedAt)));
-    return result.count > 0;
+    return this.database.transaction(async (transaction) => {
+      const [row] = await transaction
+        .update(jobApplications)
+        .set({ archivedAt: null, updatedAt: new Date() })
+        .where(and(ownedApplication(userId, id), isNotNull(jobApplications.archivedAt)))
+        .returning({ id: jobApplications.id });
+      if (!row) return false;
+      await this.recordSystemEvent(transaction, userId, id, "restored_from_archive");
+      return true;
+    });
   }
 
   async permanentDelete(userId: number, id: number): Promise<boolean> {
@@ -318,21 +470,31 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   }
 
   async blacklist(userId: number, id: number, reason: BlacklistInput["reason"]): Promise<boolean> {
-    const result = await this.database
-      .update(jobApplications)
-      .set({ blacklistedAt: new Date(), blacklistReason: reason ?? null, updatedAt: new Date() })
-      .where(
-        and(ownedApplication(userId, id), isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt)),
-      );
-    return result.count > 0;
+    return this.database.transaction(async (transaction) => {
+      const [row] = await transaction
+        .update(jobApplications)
+        .set({ blacklistedAt: new Date(), blacklistReason: reason ?? null, updatedAt: new Date() })
+        .where(
+          and(ownedApplication(userId, id), isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt)),
+        )
+        .returning({ id: jobApplications.id });
+      if (!row) return false;
+      await this.recordSystemEvent(transaction, userId, id, "blacklisted");
+      return true;
+    });
   }
 
   async unblacklist(userId: number, id: number): Promise<boolean> {
-    const result = await this.database
-      .update(jobApplications)
-      .set({ blacklistedAt: null, blacklistReason: null, updatedAt: new Date() })
-      .where(and(ownedApplication(userId, id), isNotNull(jobApplications.blacklistedAt)));
-    return result.count > 0;
+    return this.database.transaction(async (transaction) => {
+      const [row] = await transaction
+        .update(jobApplications)
+        .set({ blacklistedAt: null, blacklistReason: null, updatedAt: new Date() })
+        .where(and(ownedApplication(userId, id), isNotNull(jobApplications.blacklistedAt)))
+        .returning({ id: jobApplications.id });
+      if (!row) return false;
+      await this.recordSystemEvent(transaction, userId, id, "restored_from_blacklist");
+      return true;
+    });
   }
 }
 
@@ -377,5 +539,20 @@ export function toJobApplication(row: typeof jobApplications.$inferSelect): JobA
     archivedAt: row.archivedAt?.toISOString() ?? null,
     blacklistedAt: row.blacklistedAt?.toISOString() ?? null,
     blacklistReason: row.blacklistReason,
+  };
+}
+
+export function toApplicationEvent(row: typeof applicationEvents.$inferSelect): ApplicationEvent {
+  return {
+    id: row.id,
+    applicationId: row.applicationId,
+    type: row.type,
+    title: row.title,
+    description: row.description,
+    occurredAt: row.occurredAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    metadata: row.metadata,
+    isSystem: row.isSystem,
   };
 }

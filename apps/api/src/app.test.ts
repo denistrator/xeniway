@@ -1,4 +1,5 @@
 import type {
+  ApplicationEvent,
   ApplicationResponse,
   AuthResponse,
   JobApplication,
@@ -30,6 +31,7 @@ function createDependencies(): AppDependencies {
   const sessions = new Map<string, { id: string; userId: number | null; csrfToken: string; expiresAt: Date }>();
   const resetTokens: Array<{ userId: number; tokenHash: string; expiresAt: Date; usedAt: Date | null }> = [];
   const applications: JobApplication[] = [];
+  const events: ApplicationEvent[] = [];
 
   const userRepository: UserRepository = {
     async findByEmail(email) {
@@ -78,6 +80,51 @@ function createDependencies(): AppDependencies {
   };
 
   const applicationRepository: ApplicationRepository = {
+    async listEvents(userId, applicationId) {
+      if (applicationUserIds.get(applicationId) !== userId) return [];
+      return events
+        .filter((event) => event.applicationId === applicationId)
+        .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id - left.id);
+    },
+    async createEvent(userId, applicationId, input) {
+      if (applicationUserIds.get(applicationId) !== userId) return null;
+      const now = new Date().toISOString();
+      const event: ApplicationEvent = {
+        id: events.length + 1,
+        applicationId,
+        type: input.type,
+        title: input.title,
+        description: input.description ?? null,
+        occurredAt: new Date(input.occurredAt).toISOString(),
+        createdAt: now,
+        updatedAt: now,
+        metadata: null,
+        isSystem: false,
+      };
+      events.push(event);
+      return event;
+    },
+    async updateEvent(userId, applicationId, eventId, input) {
+      if (applicationUserIds.get(applicationId) !== userId) return null;
+      const event = events.find(
+        (candidate) => candidate.id === eventId && candidate.applicationId === applicationId && !candidate.isSystem,
+      );
+      if (!event) return null;
+      Object.assign(event, input, {
+        occurredAt: input.occurredAt ? new Date(input.occurredAt).toISOString() : event.occurredAt,
+        updatedAt: new Date().toISOString(),
+      });
+      return event;
+    },
+    async deleteEvent(userId, applicationId, eventId) {
+      if (applicationUserIds.get(applicationId) !== userId) return false;
+      const index = events.findIndex(
+        (candidate) => candidate.id === eventId && candidate.applicationId === applicationId && !candidate.isSystem,
+      );
+      if (index === -1) return false;
+      events.splice(index, 1);
+      return true;
+    },
     async list(userId, options = {}) {
       return applications
         .filter(
@@ -97,8 +144,8 @@ function createDependencies(): AppDependencies {
           (application) =>
             application.id === id &&
             applicationUserIds.get(id) === userId &&
-            (options.archived ? !!application.archivedAt : !application.archivedAt) &&
-            !application.blacklistedAt,
+            (options.anyState ||
+              ((options.archived ? !!application.archivedAt : !application.archivedAt) && !application.blacklistedAt)),
         ) ?? null
       );
     },
@@ -344,6 +391,109 @@ function jsonRequest(url: string, init: RequestInit, sessionId: string, csrfToke
 }
 
 describe("application API", () => {
+  it("returns activity in application detail and supports owned manual event CRUD", async () => {
+    const app = createApp(createDependencies());
+    const owner = await register(app, "activity-owner@example.com");
+    const other = await register(app, "activity-other@example.com");
+    const created = await app.handle(
+      jsonRequest(
+        "http://localhost/api/applications",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ company: "Acme", position: "Engineer" }),
+        },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    const applicationId = ((await created.json()) as ApplicationResponse).data.application.id;
+    const legacyDetail = await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${applicationId}`,
+        {},
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    expect(((await legacyDetail.json()) as { data: { events: ApplicationEvent[] } }).data.events).toMatchObject([
+      { type: "application_created", isSystem: true },
+    ]);
+    const url = `http://localhost/api/applications/${applicationId}/events`;
+    const input = { type: "follow_up", title: "Send a note", occurredAt: "2026-09-01T12:00:00+00:00" };
+    const forbidden = await app.handle(
+      jsonRequest(url, { method: "POST", body: JSON.stringify(input) }, other.sessionId, other.payload.data.csrfToken),
+    );
+    expect(forbidden.status).toBe(404);
+    const noCsrf = await app.handle(
+      new Request(url, {
+        method: "POST",
+        headers: { cookie: `session_id=${owner.sessionId}`, "content-type": "application/json" },
+        body: JSON.stringify(input),
+      }),
+    );
+    expect(noCsrf.status).toBe(403);
+    const invalid = await app.handle(
+      jsonRequest(
+        url,
+        {
+          method: "POST",
+          body: JSON.stringify({ ...input, title: " " }),
+          headers: { "content-type": "application/json" },
+        },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    expect(invalid.status).toBe(422);
+    const response = await app.handle(
+      jsonRequest(
+        url,
+        { method: "POST", body: JSON.stringify(input), headers: { "content-type": "application/json" } },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    expect(response.status).toBe(201);
+    const eventId = ((await response.json()) as { data: { event: ApplicationEvent } }).data.event.id;
+    const crossUserUpdate = await app.handle(
+      jsonRequest(
+        `${url}/${eventId}`,
+        { method: "PATCH", body: JSON.stringify({ title: "Stolen" }), headers: { "content-type": "application/json" } },
+        other.sessionId,
+        other.payload.data.csrfToken,
+      ),
+    );
+    expect(crossUserUpdate.status).toBe(404);
+    const detail = await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${applicationId}`,
+        {},
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    expect(((await detail.json()) as { data: { events: ApplicationEvent[] } }).data.events).toContainEqual(
+      expect.objectContaining({ id: eventId, title: "Send a note" }),
+    );
+    const updated = await app.handle(
+      jsonRequest(
+        `${url}/${eventId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ title: "Sent the note" }),
+          headers: { "content-type": "application/json" },
+        },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    expect(((await updated.json()) as { data: { event: ApplicationEvent } }).data.event.title).toBe("Sent the note");
+    const deleted = await app.handle(
+      jsonRequest(`${url}/${eventId}`, { method: "DELETE" }, owner.sessionId, owner.payload.data.csrfToken),
+    );
+    expect(deleted.status).toBe(200);
+  });
   it("uses the validated production mode for secure session cookies", async () => {
     const app = createApp({ ...createDependencies(), secureCookies: true });
 

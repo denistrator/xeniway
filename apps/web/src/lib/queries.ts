@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  ApplicationEventInput,
   ApplicationListResponse,
   BlacklistInput,
   CreateApplicationInput,
@@ -9,6 +10,7 @@ import type {
   PasswordResetConfirmInput,
   PasswordResetRequestInput,
   RegisterInput,
+  UpdateApplicationEventInput,
   UpdateApplicationInput,
   UpdateUserPreferencesInput,
 } from "@xeniway/shared";
@@ -22,7 +24,10 @@ import {
   blacklistApplication,
   confirmPasswordReset,
   createApplication,
+  createApplicationEvent,
   deleteApplication,
+  deleteApplicationEvent,
+  getApplicationDetail,
   getCsrfToken,
   getCurrentUser,
   getUserPreferences,
@@ -39,6 +44,7 @@ import {
   restoreApplication,
   unblacklistApplication,
   updateApplication,
+  updateApplicationEvent,
   updateUserPreferences,
   userPreferencesKeys,
 } from "./api";
@@ -169,6 +175,37 @@ export function usePasswordResetMutations() {
 
 export function useApplications() {
   return useApplicationList("active", () => listApplications());
+}
+
+export function useApplicationDetail(id: number | null) {
+  return useQuery({
+    queryKey: applicationKeys.detail(id ?? 0),
+    queryFn: () => getApplicationDetail(id as number),
+    enabled: id !== null,
+    retry: false,
+    select: (response) => response.data,
+  });
+}
+
+export function useApplicationEventMutations(applicationId: number) {
+  const queryClient = useQueryClient();
+  const csrfToken = useCsrfToken().data ?? "";
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: applicationKeys.detail(applicationId) });
+  return {
+    create: useMutation({
+      mutationFn: (input: ApplicationEventInput) => createApplicationEvent(applicationId, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({ eventId, input }: { eventId: number; input: UpdateApplicationEventInput }) =>
+        updateApplicationEvent(applicationId, eventId, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (eventId: number) => deleteApplicationEvent(applicationId, eventId, csrfToken),
+      onSuccess: invalidate,
+    }),
+  };
 }
 
 export function useArchivedApplications() {

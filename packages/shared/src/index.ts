@@ -10,6 +10,55 @@ export type ApplicationBoard = z.infer<typeof applicationBoardSchema>;
 
 export type JobStatus = z.infer<typeof jobStatusSchema>;
 
+export const manualApplicationEventTypeSchema = z.enum([
+  "note",
+  "email_sent",
+  "email_received",
+  "phone_call",
+  "interview_scheduled",
+  "interview_completed",
+  "offer_received",
+  "rejection_received",
+  "follow_up",
+  "custom",
+]);
+export const applicationEventTypeSchema = z.enum([
+  "application_created",
+  "application_edited",
+  "status_changed",
+  "archived",
+  "restored_from_archive",
+  "blacklisted",
+  "restored_from_blacklist",
+  ...manualApplicationEventTypeSchema.options,
+]);
+export type ApplicationEventType = z.infer<typeof applicationEventTypeSchema>;
+
+export const applicationEventInputSchema = z.strictObject({
+  type: manualApplicationEventTypeSchema,
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(10_000).nullable().optional(),
+  occurredAt: z.iso.datetime({ offset: true }),
+});
+export const updateApplicationEventInputSchema = applicationEventInputSchema
+  .partial()
+  .refine((input) => Object.keys(input).length > 0, { message: "At least one event field must be provided" });
+export type ApplicationEventInput = z.infer<typeof applicationEventInputSchema>;
+export type UpdateApplicationEventInput = z.infer<typeof updateApplicationEventInputSchema>;
+
+export type ApplicationEvent = {
+  id: number;
+  applicationId: number;
+  type: ApplicationEventType;
+  title: string;
+  description: string | null;
+  occurredAt: string;
+  createdAt: string;
+  updatedAt: string;
+  metadata: { from: JobStatus; to: JobStatus } | null;
+  isSystem: boolean;
+};
+
 const nullableTrimmedString = z.string().trim().max(500).nullable().optional();
 
 export const createApplicationInputSchema = z.object({
@@ -144,6 +193,8 @@ export type AuthResponse = ApiSuccess<{ user: User; csrfToken: string }>;
 export type CurrentUserResponse = ApiSuccess<{ user: User }>;
 export type UserPreferencesResponse = ApiSuccess<{ preferences: UserPreferences }>;
 export type ApplicationResponse = ApiSuccess<{ application: JobApplication }>;
+export type ApplicationDetailResponse = ApiSuccess<{ application: JobApplication; events: ApplicationEvent[] }>;
+export type ApplicationEventResponse = ApiSuccess<{ event: ApplicationEvent }>;
 export type ApplicationListResponse = ApiSuccess<{ applications: JobApplication[] }>;
 export type MessageResponse = ApiSuccess<{ message: string }>;
 export type CsrfResponse = ApiSuccess<{ csrfToken: string }>;

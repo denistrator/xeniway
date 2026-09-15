@@ -22,6 +22,7 @@ Keep schema changes data-empty. Do not insert accounts, application records, pre
 - `job_status` has exactly six values: `saved`, `applied`, `interview`, `offer`, `rejected`, and `withdrawn`.
 - Archive and blacklist are independent columns and query paths outside the status workflow.
 - Every application row has an owning `user_id`, and application repository operations must include the authenticated owner.
+- Every activity row has an owning `user_id` and a cascading application foreign key. Manual event mutations are owner-scoped; system events are written transactionally with application mutations.
 - `user_preferences` stores `selected_language`, `selected_theme`, `selected_form_presentation`, and `was_introduced`; selected values are nullable until the user explicitly chooses them.
 - Password-reset rows store only token hashes and their expiry/use state.
 

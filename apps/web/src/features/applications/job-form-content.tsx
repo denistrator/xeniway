@@ -1,6 +1,7 @@
 import type { CreateApplicationInput, JobApplication } from "@xeniway/shared";
 import type { RefObject } from "react";
 import type { JobFormPresentation } from "../../store";
+import { ApplicationActivity } from "./activity/application-activity";
 import { JobForm } from "./job-form";
 import { JobFormHeader } from "./job-form-header";
 
@@ -49,6 +50,7 @@ export function JobFormContent({
         onBlacklist={mode === "edit" ? onBlacklist : undefined}
         blacklisting={blacklisting}
       />
+      {mode === "edit" && job && <ApplicationActivity applicationId={job.id} />}
     </>
   );
 }

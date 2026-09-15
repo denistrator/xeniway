@@ -1,7 +1,8 @@
 import type { JobApplication } from "@xeniway/shared";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "../../components/ui/card";
+import { ApplicationActivity } from "./activity/application-activity";
 import { ApplicationCollectionActions } from "./application-collection-actions";
 import { getStatusLabel } from "./job-status";
 
@@ -23,6 +24,7 @@ export function ApplicationCollectionCard({
   busy: boolean;
 }) {
   const { t } = useTranslation();
+  const [activityOpen, setActivityOpen] = useState(false);
 
   return (
     <Card>
@@ -43,6 +45,20 @@ export function ApplicationCollectionCard({
           onDelete={onDelete}
           busy={busy}
         />
+        <button
+          type="button"
+          aria-expanded={activityOpen}
+          aria-controls={`application-activity-${job.id}`}
+          className="rounded-lg border border-line px-3 py-2 text-sm text-ink hover:bg-surface-hover focus-visible:outline-2"
+          onClick={() => setActivityOpen((open) => !open)}
+        >
+          {t(activityOpen ? "applications.activity.hide" : "applications.activity.view")}
+        </button>
+        {activityOpen && (
+          <div id={`application-activity-${job.id}`}>
+            <ApplicationActivity applicationId={job.id} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

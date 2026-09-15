@@ -4,7 +4,7 @@
 
 The browser runs a React/Vite single-page application. In development, Vite proxies `/api` to the Bun/Elysia server. The API owns authentication, authorization, validation, and persistence. PostgreSQL is the source of truth for users, sessions, applications, and password-reset tokens. Redis is a supporting dependency used only to rate-limit login, registration, and password-reset requests. SMTP is an outbound delivery dependency behind an injectable mailer interface.
 
-The product boundary is a private candidate workspace for employer conversations, application progress, follow-ups, and outcomes. The shared workflow has exactly six statuses—`saved`, `applied`, `interview`, `offer`, `rejected`, and `withdrawn`. Archive and blacklist remain separate lifecycle states, not status values.
+The product boundary is a private candidate workspace for employer conversations, application progress, follow-ups, and outcomes. The shared workflow has exactly six statuses—`saved`, `applied`, `interview`, `offer`, `rejected`, and `withdrawn`. Archive and blacklist remain separate lifecycle states, not status values. Each application detail view combines the application with a newest-first activity timeline.
 
 ```text
 React + React Router
@@ -22,7 +22,7 @@ React + React Router
 
 ## Workspace boundaries
 
-`packages/shared` is the contract boundary. It defines the six-status enum, registration/login schemas, application create/update schemas, and public response types. The web and API packages import these definitions instead of duplicating validation or JSON shapes.
+`packages/shared` is the contract boundary. It defines the six-status enum, registration/login schemas, application and manual-event input schemas, and public response types. The web and API packages import these definitions instead of duplicating validation or JSON shapes.
 
 `apps/api/src/app.ts` is an injectable Elysia app factory. Its dependencies are typed repository interfaces, which allows route behavior to be tested with in-memory implementations. `apps/api/src/server.ts` wires the production Drizzle repositories, Redis rate limiter, and independent database/Redis health checks.
 
@@ -41,16 +41,18 @@ The UI language is owned by i18next/react-i18next. English is initialized before
 3. `GET /api/auth/me` restores the current user on page load.
 4. Application reads require a valid session and are filtered by `userId` in the repository.
 5. Application mutations require both a valid session and the CSRF token belonging to that session.
-6. TanStack Query invalidates active/archive lists after mutations so the UI reflects the server state.
+6. TanStack Query invalidates application lists and detail data after mutations so the UI reflects the server state. System events are inserted inside the same PostgreSQL transaction as their application mutation; manual event mutations invalidate only the relevant detail query.
 7. After authentication, the preferences query applies the current account's non-null language, theme, and job-form presentation values to the UI and browser cache. Explicit preference changes update local storage and the UI first, then use `PATCH /api/user/preferences` with the authenticated session's CSRF token in the background. Account changes clear account-specific preference query state.
 
 Locale-neutral API values are translated only at the presentation boundary. Application statuses and error codes remain canonical, candidate-entered data is never machine-translated, and displayed dates are formatted with the active locale while stored ISO timestamps remain unchanged.
+
+Pre-feature applications have no persisted creation event because schema migrations do not insert application data. The detail route derives a read-only creation marker from their existing creation timestamp; all subsequent system history is persisted transactionally. Archived and blacklisted cards expose an expandable Activity section backed by the same detail query.
 
 Login, registration, and password-reset requests consume an atomic Redis counter with a fifteen-minute fixed window and a limit of five attempts per normalized email. Counter keys contain a SHA-256 digest rather than the raw email. If Redis is unavailable, these flows fail closed with a `503` response instead of bypassing abuse protection.
 
 ## Data ownership
 
-Applications are never addressed without an authenticated owner in repository calls. Archive is a state transition represented by `archivedAt`; blacklist is an independent exclusion state represented by `blacklistedAt` and `blacklistReason`. Active, archive, and blacklist lists are separate queries. Blacklisting preserves the six-status workflow and restores the job to its previous active status when removed from the blacklist. Permanent deletion is accepted only for an archived application.
+Applications and activity events are never addressed without an authenticated owner in repository calls. Archive is a state transition represented by `archivedAt`; blacklist is an independent exclusion state represented by `blacklistedAt` and `blacklistReason`. Active, archive, and blacklist lists are separate queries. Blacklisting preserves the six-status workflow and restores the job to its previous active status when removed from the blacklist. Permanent deletion is accepted for any owned application; the UI exposes it from archive and blacklist views, and database cascading deletion removes its activity history.
 
 ## Production security boundary
 

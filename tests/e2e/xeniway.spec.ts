@@ -154,6 +154,131 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await expect(registeredWelcome).toHaveCount(0);
 });
 
+test("records and edits application activity across reloads", async ({ page }) => {
+  await page.goto("/register");
+  await page.getByLabel("Email").fill(`activity-${Date.now()}@example.com`);
+  await page.getByLabel("Password", { exact: true }).fill("password123");
+  await page.getByLabel("Confirm password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  await expect(welcome).toBeVisible();
+  await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
+
+  const company = `Activity Company ${Date.now()}`;
+  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByLabel("Company *").fill(company);
+  await page.getByLabel("Position *").fill("Engineer");
+  await page.getByRole("button", { name: "Save application" }).click();
+  const detailResponse = page.waitForResponse(
+    (response) =>
+      /\/api\/applications\/\d+$/.test(new URL(response.url()).pathname) && response.request().method() === "GET",
+  );
+  await page.getByRole("button", { name: new RegExp(company) }).click();
+  const detailResult = await detailResponse;
+  const detailUrl = detailResult.url();
+  const createdEvent = (
+    (await detailResult.json()) as { data: { events: Array<{ id: number; type: string }> } }
+  ).data.events.find((event) => event.type === "application_created");
+  expect(createdEvent).toBeDefined();
+  const csrfResult = await page.request.get("/api/auth/csrf");
+  const csrfToken = ((await csrfResult.json()) as { data: { csrfToken: string } }).data.csrfToken;
+  const immutableUpdate = await page.request.patch(`${detailUrl}/events/${createdEvent?.id}`, {
+    headers: { "x-csrf-token": csrfToken },
+    data: { title: "Tampered" },
+  });
+  expect(immutableUpdate.status()).toBe(404);
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("list", { name: "Activity timeline" })).toContainText("Application created");
+  const activityAxe = await new AxeBuilder({ page }).include("[role='dialog']").analyze();
+  expect(activityAxe.violations).toEqual([]);
+  await dialog.getByRole("button", { name: "Switch to modal" }).click();
+  await expect(page.locator(".job-modal").getByRole("list", { name: "Activity timeline" })).toContainText(
+    "Application created",
+  );
+  await dialog.getByRole("button", { name: "Switch to drawer" }).click();
+  await dialog.getByRole("button", { name: "Add activity" }).click();
+  await expect(dialog.getByRole("combobox", { name: "Activity type" })).toBeFocused();
+  await dialog.getByRole("combobox", { name: "Activity type" }).selectOption("follow_up");
+  await dialog.getByRole("textbox", { name: "Title" }).fill("Contact recruiter");
+  await dialog.getByRole("textbox", { name: "Description (optional)" }).fill("Send a short update");
+  await dialog.getByRole("button", { name: "Save activity" }).click();
+  await expect(dialog.getByRole("list", { name: "Activity timeline" })).toContainText("Contact recruiter");
+  await expect(dialog.getByRole("button", { name: "Add activity" })).toBeFocused();
+  await dialog.getByRole("combobox", { name: "Status" }).selectOption("applied");
+  await dialog.getByRole("button", { name: "Save application" }).click();
+  await page.reload();
+  await page.getByRole("button", { name: new RegExp(company) }).click();
+  const reopened = page.getByRole("dialog");
+  await expect(reopened.getByRole("list", { name: "Activity timeline" })).toContainText("Saved → Applied");
+  await reopened.getByRole("button", { name: "Edit Contact recruiter" }).click();
+  await expect(reopened.getByRole("combobox", { name: "Activity type" })).toBeFocused();
+  await reopened.getByRole("textbox", { name: "Title" }).fill("Contact recruiter again");
+  await reopened.getByRole("button", { name: "Save activity" }).click();
+  await expect(reopened.getByText("Contact recruiter again")).toBeVisible();
+  await expect(reopened.getByRole("button", { name: "Edit Contact recruiter again" })).toBeFocused();
+  await reopened.getByRole("button", { name: "Delete Contact recruiter again" }).click();
+  await page.keyboard.press("Escape");
+  await expect(reopened).toBeVisible();
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  await reopened.getByRole("button", { name: "Delete Contact recruiter again" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
+  await expect(reopened.getByText("Contact recruiter again")).toHaveCount(0);
+
+  const archived = page.waitForResponse((response) => response.url().endsWith("/archive") && response.status() === 200);
+  await reopened.getByRole("button", { name: "Archive application" }).click();
+  await archived;
+  const archivedDetail = await page.request.get(detailUrl);
+  expect(archivedDetail.ok()).toBe(true);
+  expect(
+    ((await archivedDetail.json()) as { data: { events: Array<{ type: string }> } }).data.events.map(
+      (event) => event.type,
+    ),
+  ).toContain("archived");
+  await page.getByRole("link", { name: "Archive" }).click();
+  const archivedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
+  await archivedCard.getByRole("button", { name: "View activity" }).click();
+  await expect(archivedCard.getByRole("list", { name: "Activity timeline" })).toContainText("Archived");
+  const restored = page.waitForResponse((response) => response.url().endsWith("/restore") && response.status() === 200);
+  await archivedCard.getByRole("button", { name: "Restore" }).click();
+  await restored;
+  const restoredDetail = await page.request.get(detailUrl);
+  expect(
+    ((await restoredDetail.json()) as { data: { events: Array<{ type: string }> } }).data.events.map(
+      (event) => event.type,
+    ),
+  ).toContain("restored_from_archive");
+  await page.getByRole("link", { name: "Applications" }).click();
+  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Blacklist", exact: true }).click();
+  const blacklisted = page.waitForResponse(
+    (response) => response.url().endsWith("/blacklist") && response.status() === 200,
+  );
+  await page.getByRole("button", { name: "Confirm blacklist" }).click();
+  await blacklisted;
+  const blacklistedDetail = await page.request.get(detailUrl);
+  expect(
+    ((await blacklistedDetail.json()) as { data: { events: Array<{ type: string }> } }).data.events.map(
+      (event) => event.type,
+    ),
+  ).toContain("blacklisted");
+  await page.getByRole("link", { name: "Blacklist" }).click();
+  const blacklistedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
+  await blacklistedCard.getByRole("button", { name: "View activity" }).click();
+  await expect(blacklistedCard.getByRole("list", { name: "Activity timeline" })).toContainText("Blacklisted");
+  const unblacklisted = page.waitForResponse(
+    (response) => response.url().endsWith("/unblacklist") && response.status() === 200,
+  );
+  await blacklistedCard.getByRole("button", { name: "Restore" }).click();
+  await unblacklisted;
+  const unblacklistedDetail = await page.request.get(detailUrl);
+  expect(
+    ((await unblacklistedDetail.json()) as { data: { events: Array<{ type: string }> } }).data.events.map(
+      (event) => event.type,
+    ),
+  ).toContain("restored_from_blacklist");
+});
+
 test("syncs browser preferences with each authenticated account", async ({ page }) => {
   const accountA = `preferences-a-${Date.now()}@example.com`;
   const accountB = `preferences-b-${Date.now()}@example.com`;

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  applicationEventInputSchema,
+  applicationEventTypeSchema,
   blacklistInputSchema,
   createApplicationInputSchema,
   loginInputSchema,
@@ -8,9 +10,65 @@ import {
   registerInputSchema,
   supportedLocaleSchema,
   themePreferenceSchema,
+  updateApplicationEventInputSchema,
   updateApplicationInputSchema,
   updateUserPreferencesInputSchema,
 } from "./index";
+
+describe("activity event contracts", () => {
+  it("accepts a dated manual note and trims its title", () => {
+    expect(
+      applicationEventInputSchema.parse({
+        type: "note",
+        title: "  Call recap  ",
+        occurredAt: "2026-09-23T12:00:00.000Z",
+      }),
+    ).toEqual({
+      type: "note",
+      title: "Call recap",
+      occurredAt: "2026-09-23T12:00:00.000Z",
+    });
+  });
+
+  it("accepts every supported activity type and rejects unknown ones", () => {
+    expect(applicationEventTypeSchema.options).toContain("status_changed");
+    expect(applicationEventTypeSchema.options).toContain("follow_up");
+    expect(applicationEventTypeSchema.safeParse("unknown").success).toBe(false);
+    expect(
+      applicationEventInputSchema.safeParse({
+        type: "status_changed",
+        title: "Changed",
+        occurredAt: "2026-09-23T12:00:00Z",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects empty titles, invalid dates, and ownership fields", () => {
+    expect(
+      applicationEventInputSchema.safeParse({ type: "note", title: "  ", occurredAt: "2026-09-23T12:00:00Z" }).success,
+    ).toBe(false);
+    expect(
+      applicationEventInputSchema.safeParse({ type: "note", title: "Note", occurredAt: "yesterday" }).success,
+    ).toBe(false);
+    expect(
+      applicationEventInputSchema.safeParse({
+        type: "note",
+        title: "Note",
+        occurredAt: "2026-09-23T12:00:00Z",
+        applicationId: 2,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts partial edits but blocks system and ownership fields", () => {
+    expect(updateApplicationEventInputSchema.parse({ title: " Edited ", description: null })).toEqual({
+      title: "Edited",
+      description: null,
+    });
+    expect(updateApplicationEventInputSchema.safeParse({}).success).toBe(false);
+    expect(updateApplicationEventInputSchema.safeParse({ isSystem: false }).success).toBe(false);
+  });
+});
 
 describe("application contracts", () => {
   it("normalizes an optional blacklist reason and enforces its limit", () => {

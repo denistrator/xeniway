@@ -48,7 +48,7 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 | `GET` | `/api/applications` | Session | Lists active applications; optional `?status=` filter |
 | `GET` | `/api/applications/archive` | Session | Lists the current user's archived applications |
 | `GET` | `/api/applications/blacklist` | Session | Lists the current user's blacklisted applications |
-| `GET` | `/api/applications/:id` | Session | Reads one active application |
+| `GET` | `/api/applications/:id` | Session | Reads one owned application in any board, with newest-first activity events |
 | `POST` | `/api/applications` | Session + CSRF | Creates an active application; returns `201` |
 | `PUT` | `/api/applications/:id` | Session + CSRF | Updates an active application |
 | `POST` | `/api/applications/:id/archive` | Session + CSRF | Archives an active application |
@@ -56,6 +56,9 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 | `POST` | `/api/applications/:id/restore` | Session + CSRF | Restores an archived application |
 | `POST` | `/api/applications/:id/unblacklist` | Session + CSRF | Restores a blacklisted application to the active list |
 | `DELETE` | `/api/applications/:id` | Session + CSRF | Permanently deletes an application owned by the current user |
+| `POST` | `/api/applications/:id/events` | Session + CSRF | Creates a manual activity event; returns `201` |
+| `PATCH` | `/api/applications/:id/events/:eventId` | Session + CSRF | Updates an owned manual event |
+| `DELETE` | `/api/applications/:id/events/:eventId` | Session + CSRF | Deletes an owned manual event |
 
 Application create/update fields:
 
@@ -76,6 +79,16 @@ Application create/update fields:
 `company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date. Archive and blacklist are independent lifecycle states, not additional status values. Blacklisting preserves the application's status and data; removing it from the blacklist returns it to the active list. Permanent deletion is available to the owner for any application; the UI exposes it from archive and blacklist views.
 
 Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
+
+## Application activity
+
+The detail response is `{ "data": { "application": { ... }, "events": [ ... ] } }`. Events are sorted by `occurredAt` descending, with ID descending for ties. An event has `id`, `applicationId`, `type`, `title`, nullable `description`, ISO `occurredAt`, `createdAt`, `updatedAt`, nullable `metadata`, and `isSystem`. `userId` is never exposed. For `status_changed`, metadata records the canonical `{ "from": "saved", "to": "applied" }` status values.
+
+Creation, meaningful field edits, status changes, archive/restore, and blacklist/unblacklist transitions append immutable system events in the same database transaction as the application change. Reordering is not an activity event. Deleting an application permanently cascades to its events.
+
+For an application created before this feature, the detail response derives a read-only `application_created` marker from the application's existing `createdAt` timestamp when no persisted creation event exists. This marker has a stable negative ID and is not stored or accepted by event mutation routes. Earlier edits and state transitions cannot be reconstructed; the persisted history begins when the feature is deployed. Archived and blacklisted applications can be read through the same detail route and their cards expose the Activity section.
+
+Manual event `type` is one of `note`, `email_sent`, `email_received`, `phone_call`, `interview_scheduled`, `interview_completed`, `offer_received`, `rejection_received`, `follow_up`, or `custom`. POST requires a trimmed 1–255 character `title` and an ISO datetime with timezone offset in `occurredAt`; nullable `description` is optional and limited to 10,000 characters. PATCH accepts a nonempty subset of `type`, `title`, `description`, and `occurredAt`. Event IDs and parent IDs must be positive integers. The server refuses updates or deletion of system events and reports missing or non-owned records as `NOT_FOUND`. User text is rendered as plain text.
 
 ## User preferences
 

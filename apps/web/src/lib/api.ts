@@ -1,6 +1,9 @@
 import type {
   ApiError,
   ApiSuccess,
+  ApplicationDetailResponse,
+  ApplicationEventInput,
+  ApplicationEventResponse,
   ApplicationListResponse,
   ApplicationResponse,
   AuthResponse,
@@ -17,6 +20,7 @@ import type {
   RegisterInput,
   RemoveAllApplicationsInput,
   ReorderApplicationsInput,
+  UpdateApplicationEventInput,
   UpdateApplicationInput,
   UpdateUserPreferencesInput,
   UserPreferencesResponse,
@@ -27,6 +31,7 @@ export type ApplicationList = "active" | "archive" | "blacklist";
 export const applicationKeys = {
   all: ["applications"] as const,
   list: (list: ApplicationList) => ["applications", "list", list] as const,
+  detail: (id: number) => ["applications", "detail", id] as const,
 };
 
 export const userPreferencesKeys = {
@@ -154,6 +159,47 @@ export function logout(csrfToken: string): Promise<ApiSuccess<MessageResponse["d
 export function listApplications(status?: JobStatus): Promise<ApplicationListResponse> {
   const query = status ? `?status=${encodeURIComponent(status)}` : "";
   return requestJson<ApplicationListResponse>(`/api/applications${query}`);
+}
+
+export function getApplicationDetail(id: number): Promise<ApplicationDetailResponse> {
+  return requestJson<ApplicationDetailResponse>(`/api/applications/${id}`);
+}
+
+export function createApplicationEvent(
+  applicationId: number,
+  input: ApplicationEventInput,
+  csrfToken: string,
+): Promise<ApplicationEventResponse> {
+  return requestJson<ApplicationEventResponse>(
+    `/api/applications/${applicationId}/events`,
+    { method: "POST", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function updateApplicationEvent(
+  applicationId: number,
+  eventId: number,
+  input: UpdateApplicationEventInput,
+  csrfToken: string,
+): Promise<ApplicationEventResponse> {
+  return requestJson<ApplicationEventResponse>(
+    `/api/applications/${applicationId}/events/${eventId}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function deleteApplicationEvent(
+  applicationId: number,
+  eventId: number,
+  csrfToken: string,
+): Promise<MessageResponse> {
+  return requestJson<MessageResponse>(
+    `/api/applications/${applicationId}/events/${eventId}`,
+    { method: "DELETE" },
+    csrfToken,
+  );
 }
 
 export function listArchivedApplications(): Promise<ApplicationListResponse> {

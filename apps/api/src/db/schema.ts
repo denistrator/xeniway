@@ -1,8 +1,10 @@
+import type { ApplicationEventType, JobStatus } from "@xeniway/shared";
 import {
   boolean,
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   serial,
@@ -98,5 +100,34 @@ export const jobApplications = pgTable(
     index("job_applications_user_archive_idx").on(table.userId, table.archivedAt),
     index("job_applications_user_blacklist_idx").on(table.userId, table.blacklistedAt),
     uniqueIndex("job_applications_seed_key_unique").on(table.seedKey),
+  ],
+);
+
+export const applicationEvents = pgTable(
+  "application_events",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    applicationId: integer("application_id")
+      .notNull()
+      .references(() => jobApplications.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 40 }).$type<ApplicationEventType>().notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    metadata: jsonb("metadata").$type<{ from: JobStatus; to: JobStatus } | null>(),
+    isSystem: boolean("is_system").notNull(),
+  },
+  (table) => [
+    index("application_events_application_occurred_idx").on(
+      table.applicationId,
+      table.occurredAt.desc(),
+      table.id.desc(),
+    ),
+    index("application_events_user_occurred_idx").on(table.userId, table.occurredAt.desc()),
   ],
 );

@@ -20,14 +20,16 @@ export function useJobDialog(open: boolean, onClose: () => void) {
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
+      const activeConfirmation = dialogRef.current?.querySelector<HTMLElement>("[role='alertdialog']");
       if (event.key === "Escape") {
+        if (activeConfirmation) return;
         event.preventDefault();
         onClose();
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
       const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
+        (activeConfirmation ?? dialogRef.current).querySelectorAll<HTMLElement>(
           "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])",
         ),
       );

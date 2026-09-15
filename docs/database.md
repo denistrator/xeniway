@@ -35,6 +35,12 @@ Stores the owning user, company, position, optional job details, one of the six 
 
 `seed_key` is nullable and unique. It is used only by the development seed command to make fixture replacement idempotent; normal application-created rows leave it null.
 
+### `application_events`
+
+Stores one application's system history and user-entered activity. Each row has an explicit `user_id` ownership scope and cascading foreign keys to `users` and `job_applications`. `type`, nonempty `title`, nullable plain-text `description`, timezone-aware `occurred_at`, audit timestamps, constrained JSONB status-change `metadata`, and `is_system` distinguish immutable system history from editable manual events. The `(application_id, occurred_at DESC, id DESC)` index supports stable timeline order; `(user_id, occurred_at DESC)` supports owner-scoped reads. Deleting an application removes its events through the foreign key cascade.
+
+The migration is schema-only: it does not backfill event rows. The detail API derives a read-only creation marker from `job_applications.created_at` for pre-existing records, without claiming to reconstruct their earlier edits or transitions.
+
 ## Migrations
 
 Checked-in SQL migrations live in `apps/api/drizzle`. The migration runner uses a manually ordered ID/file registry, records applied IDs in `schema_migrations`, supports incremental migrations, and can safely be rerun. Apply them with:
@@ -46,7 +52,7 @@ bun run db:migrate
 
 Before iterating the registry, a compatibility branch checks for an existing `users` table or a predecessor initial-migration marker. If either exists, it records `0000_create_xeniway` with conflict-safe insertion. The normal loop then skips that registered ID, so the current initial SQL file is not necessarily executed by this runner even though its current ID is recorded. For all other unrecorded registry entries, the runner executes the paired SQL in a transaction and records the ID only after success.
 
-Migrations create or evolve schema only and do not insert users, applications, or other fixture data. `0006_user_preference_values.sql` adds the nullable language and theme selections, and `0007_user_preference_form_presentation.sql` adds the nullable drawer/modal selection. Rerunning the runner skips recorded IDs.
+Migrations create or evolve schema only and do not insert users, applications, or other fixture data. `0006_user_preference_values.sql` adds the nullable language and theme selections, `0007_user_preference_form_presentation.sql` adds the nullable drawer/modal selection, and `0009_application_events.sql` creates the activity table. Rerunning the runner skips recorded IDs.
 
 ## Development seed
 

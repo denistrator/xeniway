@@ -5,6 +5,7 @@ import { applicationBlacklistRoute } from "./routes/application-blacklist";
 import { applicationCreateRoute } from "./routes/application-create";
 import { applicationDeleteRoute } from "./routes/application-delete";
 import { applicationDetailRoute } from "./routes/application-detail";
+import { applicationEventsRoute } from "./routes/application-events";
 import { applicationRestoreRoute } from "./routes/application-restore";
 import { applicationUnblacklistRoute } from "./routes/application-unblacklist";
 import { applicationUpdateRoute } from "./routes/application-update";
@@ -89,6 +90,7 @@ export function createApp(dependencies: AppDependencies) {
     .use(applicationsListRoute(routeDependencies))
     .use(applicationsReorderRoute(routeDependencies))
     .use(applicationDetailRoute(routeDependencies))
+    .use(applicationEventsRoute(routeDependencies))
     .use(applicationCreateRoute(routeDependencies))
     .use(applicationUpdateRoute(routeDependencies))
     .use(applicationArchiveRoute(routeDependencies))
