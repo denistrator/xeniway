@@ -79,3 +79,7 @@ Do not add new product features, pages, or infrastructure outside the documented
 ## Documentation
 
 When changing product behavior, setup, commands, environment variables, API contracts, schema, security behavior, tests, or supported locales, update the relevant current documentation and README links in the same change. Keep current documentation grounded in source, shared contracts, checked-in configuration, and executable commands.
+
+## Refactoring backlog
+
+Use `docs/refactoring-backlog.md` to track worthwhile refactoring opportunities discovered during development. When an opportunity is outside the scope of the current task, do not expand the task to implement it: add a concise backlog record describing the affected area, why the refactor may help, a possible direction, and relevant behavior or test guardrails. Check for an existing entry first and update it instead of duplicating it. Keep entries evidence-based and non-prescriptive; the backlog is not authorization to implement future work. Remove or revise entries when they are completed or no longer relevant.
