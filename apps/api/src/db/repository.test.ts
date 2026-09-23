@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createDatabase, createPostgresClient } from "./client";
 import {
   DrizzleApplicationRepository,
   DrizzlePasswordResetTokenRepository,
@@ -10,8 +12,15 @@ import {
   toUser,
   toUserPreferences,
 } from "./repository";
-import type { applicationEvents, users } from "./schema";
-import { jobApplications, userPreferences } from "./schema";
+import type { applicationEvents } from "./schema";
+import {
+  applicationContacts,
+  applicationFollowUpTasks,
+  applicationWorkspaces,
+  jobApplications,
+  userPreferences,
+  users,
+} from "./schema";
 
 const preferenceTimestamps = {
   createdAt: new Date("2026-09-01T10:00:00.000Z"),
@@ -330,5 +339,232 @@ describe("user preference repository operations", () => {
     const result = await new DrizzleUserPreferencesRepository(database).update(7, { selectedTheme: null });
 
     expect(result).toMatchObject({ selectedLanguage: "uk", selectedTheme: null });
+  });
+});
+
+const databaseDescribe = process.env.DATABASE_URL ? describe : describe.skip;
+
+function required<T>(value: T | null): T {
+  if (value === null) throw new Error("Expected repository to create a record");
+  return value;
+}
+
+databaseDescribe("application workspace persistence", () => {
+  const client = createPostgresClient(process.env.DATABASE_URL ?? "");
+  const database = createDatabase(client);
+  const repository = new DrizzleApplicationRepository(database);
+  let ownerId: number;
+  let otherId: number;
+  let applicationId: number;
+  let otherApplicationId: number;
+  let foreignApplicationId: number;
+
+  beforeAll(async () => {
+    // A missing migration is a setup failure, not an application behavior failure.
+    await database.select({ applicationId: applicationWorkspaces.applicationId }).from(applicationWorkspaces).limit(1);
+  });
+
+  beforeEach(async () => {
+    const suffix = crypto.randomUUID();
+    const [owner, other] = await database
+      .insert(users)
+      .values([
+        { email: `workspace-owner-${suffix}@example.test`, passwordHash: "test-hash" },
+        { email: `workspace-other-${suffix}@example.test`, passwordHash: "test-hash" },
+      ])
+      .returning({ id: users.id });
+    ownerId = owner.id;
+    otherId = other.id;
+    const [application, second, foreign] = await database
+      .insert(jobApplications)
+      .values([
+        { userId: ownerId, company: "First", position: "Engineer" },
+        { userId: ownerId, company: "Second", position: "Designer", archivedAt: new Date() },
+        { userId: otherId, company: "Foreign", position: "Manager", blacklistedAt: new Date() },
+      ])
+      .returning({ id: jobApplications.id });
+    applicationId = application.id;
+    otherApplicationId = second.id;
+    foreignApplicationId = foreign.id;
+  });
+
+  afterEach(async () => {
+    if (ownerId) await database.delete(users).where(eq(users.id, ownerId));
+    if (otherId) await database.delete(users).where(eq(users.id, otherId));
+  });
+
+  afterAll(async () => {
+    await client.end();
+  });
+
+  it("loads empty sections and hides another owner's application", async () => {
+    expect(await repository.loadWorkspace(ownerId, applicationId)).toEqual({
+      preparation: { companyResearch: null, talkingPoints: null, interviewerQuestions: null, updatedAt: null },
+      contacts: [],
+      followUpTasks: [],
+    });
+    expect(await repository.loadWorkspace(ownerId, foreignApplicationId)).toBeNull();
+  });
+
+  it("upserts preparation for archived and blacklisted parents, preserving omitted fields and explicit null", async () => {
+    const first = await repository.updatePreparation(ownerId, otherApplicationId, {
+      companyResearch: "Research",
+      talkingPoints: "Discuss team",
+    });
+    expect(first).toMatchObject({ companyResearch: "Research", talkingPoints: "Discuss team" });
+    expect(first?.updatedAt).toEqual(expect.any(String));
+    expect(await repository.updatePreparation(ownerId, otherApplicationId, { companyResearch: null })).toMatchObject({
+      companyResearch: null,
+      talkingPoints: "Discuss team",
+    });
+    expect(await repository.updatePreparation(ownerId, foreignApplicationId, { companyResearch: "Leak" })).toBeNull();
+    expect(await repository.loadWorkspace(ownerId, foreignApplicationId)).toBeNull();
+    expect(
+      await repository.updatePreparation(otherId, foreignApplicationId, { companyResearch: "Allowed" }),
+    ).toMatchObject({
+      companyResearch: "Allowed",
+    });
+  });
+
+  it("orders contacts by creation time and ID and maps server timestamps", async () => {
+    const later = required(
+      await repository.createContact(ownerId, applicationId, { name: "Later", role: "Recruiter" }),
+    );
+    const earlier = required(
+      await repository.createContact(ownerId, applicationId, { name: "Earlier", role: "Manager" }),
+    );
+    expect(later.createdAt).toEqual(expect.any(String));
+    await database
+      .update(applicationContacts)
+      .set({ createdAt: new Date("2025-01-01T00:00:00.000Z") })
+      .where(eq(applicationContacts.id, earlier.id));
+    const contacts = (await repository.loadWorkspace(ownerId, applicationId))?.contacts;
+    expect(contacts?.map((contact) => contact.name)).toEqual(["Earlier", "Later"]);
+    expect(contacts?.[0]).toMatchObject({ applicationId, email: null, phone: null, profileUrl: null, notes: null });
+    expect(contacts?.[0].createdAt).toBe("2025-01-01T00:00:00.000Z");
+  });
+
+  it("orders incomplete tasks by due date and ID, then completed tasks by completion time and ID", async () => {
+    const late = required(
+      await repository.createFollowUpTask(ownerId, applicationId, { title: "Late", dueDate: "2026-12-10" }),
+    );
+    const early = required(
+      await repository.createFollowUpTask(ownerId, applicationId, {
+        title: "Early",
+        dueDate: "2026-10-01",
+      }),
+    );
+    const tie = required(
+      await repository.createFollowUpTask(ownerId, applicationId, { title: "Tie", dueDate: "2026-10-01" }),
+    );
+    const completedFirst = required(
+      await repository.createFollowUpTask(ownerId, applicationId, {
+        title: "Completed first",
+        dueDate: "2026-01-01",
+      }),
+    );
+    const completedLast = required(
+      await repository.createFollowUpTask(ownerId, applicationId, {
+        title: "Completed last",
+        dueDate: "2026-01-01",
+      }),
+    );
+    await repository.completeFollowUpTask(ownerId, applicationId, completedFirst.id);
+    await repository.completeFollowUpTask(ownerId, applicationId, completedLast.id);
+    await database
+      .update(applicationFollowUpTasks)
+      .set({ completedAt: new Date("2026-09-01T00:00:00.000Z") })
+      .where(eq(applicationFollowUpTasks.id, completedFirst.id));
+    await database
+      .update(applicationFollowUpTasks)
+      .set({ completedAt: new Date("2026-09-02T00:00:00.000Z") })
+      .where(eq(applicationFollowUpTasks.id, completedLast.id));
+    const tasks = (await repository.loadWorkspace(ownerId, applicationId))?.followUpTasks;
+    expect(tasks?.map((task) => task.id)).toEqual([early.id, tie.id, late.id, completedFirst.id, completedLast.id]);
+    expect(tasks?.[0].dueDate).toBe("2026-10-01");
+    expect(tasks?.[0].completedAt).toBeNull();
+    expect(tasks?.[3].completedAt).toBe("2026-09-01T00:00:00.000Z");
+  });
+
+  it("requires parent ownership on creates, including malformed cross-owner child rows", async () => {
+    expect(await repository.createContact(ownerId, foreignApplicationId, { name: "No", role: "No" })).toBeNull();
+    expect(
+      await repository.createFollowUpTask(ownerId, foreignApplicationId, { title: "No", dueDate: "2026-10-01" }),
+    ).toBeNull();
+    const [mismatched] = await database
+      .insert(applicationContacts)
+      .values({ userId: ownerId, applicationId: foreignApplicationId, name: "Mismatched", role: "Recruiter" })
+      .returning({ id: applicationContacts.id });
+    expect(await repository.loadWorkspace(ownerId, foreignApplicationId)).toBeNull();
+    expect(
+      await repository.updateContact(ownerId, foreignApplicationId, mismatched.id, { name: "Changed" }),
+    ).toBeNull();
+    expect(await repository.deleteContact(ownerId, foreignApplicationId, mismatched.id)).toBe(false);
+  });
+
+  it("scopes contact mutations to both owner and parent and preserves omitted fields", async () => {
+    const contact = required(
+      await repository.createContact(ownerId, applicationId, {
+        name: "Alex",
+        role: "Recruiter",
+        email: "alex@example.test",
+      }),
+    );
+    expect(await repository.updateContact(ownerId, otherApplicationId, contact.id, { role: "Manager" })).toBeNull();
+    expect(await repository.updateContact(otherId, applicationId, contact.id, { role: "Manager" })).toBeNull();
+    expect(await repository.deleteContact(ownerId, otherApplicationId, contact.id)).toBe(false);
+    expect(
+      await repository.updateContact(ownerId, applicationId, contact.id, { role: "Manager", email: null }),
+    ).toMatchObject({
+      name: "Alex",
+      role: "Manager",
+      email: null,
+    });
+    expect(await repository.deleteContact(ownerId, applicationId, contact.id)).toBe(true);
+    expect(await repository.deleteContact(ownerId, applicationId, contact.id)).toBe(false);
+  });
+
+  it("scopes task mutation and completion to owner and parent and completes only once", async () => {
+    const task = required(
+      await repository.createFollowUpTask(ownerId, applicationId, {
+        title: "Call",
+        dueDate: "2026-10-01",
+        notes: "Ask about team",
+      }),
+    );
+    expect(await repository.updateFollowUpTask(ownerId, otherApplicationId, task.id, { title: "No" })).toBeNull();
+    expect(await repository.completeFollowUpTask(otherId, applicationId, task.id)).toBeNull();
+    expect(await repository.deleteFollowUpTask(ownerId, otherApplicationId, task.id)).toBe(false);
+    expect(
+      await repository.updateFollowUpTask(ownerId, applicationId, task.id, { title: "Email", notes: null }),
+    ).toMatchObject({
+      title: "Email",
+      dueDate: "2026-10-01",
+      notes: null,
+    });
+    const completed = await repository.completeFollowUpTask(ownerId, applicationId, task.id);
+    expect(completed?.completedAt).toEqual(expect.any(String));
+    expect(await repository.completeFollowUpTask(ownerId, applicationId, task.id)).toEqual(completed);
+    expect(await repository.deleteFollowUpTask(ownerId, applicationId, task.id)).toBe(true);
+    expect(await repository.deleteFollowUpTask(ownerId, applicationId, task.id)).toBe(false);
+  });
+
+  it("cascades workspace, contacts, and tasks on permanent application deletion", async () => {
+    await repository.updatePreparation(ownerId, applicationId, { companyResearch: "Company" });
+    await repository.createContact(ownerId, applicationId, { name: "Alex", role: "Recruiter" });
+    await repository.createFollowUpTask(ownerId, applicationId, { title: "Email", dueDate: "2026-10-01" });
+    expect(await repository.permanentDelete(ownerId, applicationId)).toBe(true);
+    expect(
+      await database.select().from(applicationWorkspaces).where(eq(applicationWorkspaces.applicationId, applicationId)),
+    ).toEqual([]);
+    expect(
+      await database.select().from(applicationContacts).where(eq(applicationContacts.applicationId, applicationId)),
+    ).toEqual([]);
+    expect(
+      await database
+        .select()
+        .from(applicationFollowUpTasks)
+        .where(eq(applicationFollowUpTasks.applicationId, applicationId)),
+    ).toEqual([]);
   });
 });

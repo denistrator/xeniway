@@ -1,23 +1,48 @@
 import type {
   ApplicationBoard,
+  ApplicationContact,
   ApplicationEvent,
   ApplicationEventInput,
+  ApplicationFollowUpTask,
+  ApplicationPreparation,
   BlacklistInput,
+  CreateApplicationContactInput,
+  CreateApplicationFollowUpTaskInput,
   CreateApplicationInput,
   JobApplication,
   JobStatus,
+  UpdateApplicationContactInput,
   UpdateApplicationEventInput,
+  UpdateApplicationFollowUpTaskInput,
   UpdateApplicationInput,
+  UpdateApplicationPreparationInput,
   UpdateUserPreferencesInput,
 } from "@xeniway/shared";
-import type { applicationEvents, jobApplications, sessions, userPreferences, users } from "../schema";
+import type {
+  applicationContacts,
+  applicationEvents,
+  applicationFollowUpTasks,
+  applicationWorkspaces,
+  jobApplications,
+  sessions,
+  userPreferences,
+  users,
+} from "../schema";
 
 export type UserRow = typeof users.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type UserPreferencesRow = typeof userPreferences.$inferSelect;
 export type ApplicationEventRow = typeof applicationEvents.$inferSelect;
+export type ApplicationWorkspaceRow = typeof applicationWorkspaces.$inferSelect;
+export type ApplicationContactRow = typeof applicationContacts.$inferSelect;
+export type ApplicationFollowUpTaskRow = typeof applicationFollowUpTasks.$inferSelect;
 export type JobApplicationRow = typeof jobApplications.$inferSelect;
 export type ApplicationExportRecord = { application: JobApplication; events: ApplicationEvent[] };
+export type ApplicationWorkspaceData = {
+  preparation: ApplicationPreparation;
+  contacts: ApplicationContact[];
+  followUpTasks: ApplicationFollowUpTask[];
+};
 export interface UserRepository {
   findByEmail(email: string): Promise<UserRow | null>;
   findById(id: number): Promise<UserRow | null>;
@@ -51,6 +76,37 @@ export interface PasswordResetTokenRepository {
 }
 
 export interface ApplicationRepository {
+  loadWorkspace(userId: number, applicationId: number): Promise<ApplicationWorkspaceData | null>;
+  updatePreparation(
+    userId: number,
+    applicationId: number,
+    input: UpdateApplicationPreparationInput,
+  ): Promise<ApplicationPreparation | null>;
+  createContact(
+    userId: number,
+    applicationId: number,
+    input: CreateApplicationContactInput,
+  ): Promise<ApplicationContact | null>;
+  updateContact(
+    userId: number,
+    applicationId: number,
+    contactId: number,
+    input: UpdateApplicationContactInput,
+  ): Promise<ApplicationContact | null>;
+  deleteContact(userId: number, applicationId: number, contactId: number): Promise<boolean>;
+  createFollowUpTask(
+    userId: number,
+    applicationId: number,
+    input: CreateApplicationFollowUpTaskInput,
+  ): Promise<ApplicationFollowUpTask | null>;
+  updateFollowUpTask(
+    userId: number,
+    applicationId: number,
+    taskId: number,
+    input: UpdateApplicationFollowUpTaskInput,
+  ): Promise<ApplicationFollowUpTask | null>;
+  completeFollowUpTask(userId: number, applicationId: number, taskId: number): Promise<ApplicationFollowUpTask | null>;
+  deleteFollowUpTask(userId: number, applicationId: number, taskId: number): Promise<boolean>;
   listForExport(userId: number): Promise<ApplicationExportRecord[]>;
   list(userId: number, options?: { status?: JobStatus; archived?: boolean }): Promise<JobApplication[]>;
   findById(

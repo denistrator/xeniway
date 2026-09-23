@@ -1,24 +1,245 @@
 import type {
   ApplicationBoard,
+  ApplicationContact,
   ApplicationEvent,
   ApplicationEventInput,
   ApplicationEventType,
+  ApplicationFollowUpTask,
+  ApplicationPreparation,
   BlacklistInput,
+  CreateApplicationContactInput,
+  CreateApplicationFollowUpTaskInput,
   CreateApplicationInput,
   JobApplication,
   JobStatus,
+  UpdateApplicationContactInput,
   UpdateApplicationEventInput,
+  UpdateApplicationFollowUpTaskInput,
   UpdateApplicationInput,
+  UpdateApplicationPreparationInput,
 } from "@xeniway/shared";
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, exists, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { withApplicationCreationEvent } from "../../application-history";
-import { applicationEvents, jobApplications } from "../schema";
-import { toApplicationEvent, toJobApplication } from "./mappers";
+import {
+  applicationContacts,
+  applicationEvents,
+  applicationFollowUpTasks,
+  applicationWorkspaces,
+  jobApplications,
+} from "../schema";
+import {
+  toApplicationContact,
+  toApplicationEvent,
+  toApplicationFollowUpTask,
+  toApplicationPreparation,
+  toJobApplication,
+} from "./mappers";
 import type { Database, Transaction } from "./shared";
 import { ownedApplication } from "./shared";
-import type { ApplicationExportRecord, ApplicationRepository } from "./types";
+import type { ApplicationExportRecord, ApplicationRepository, ApplicationWorkspaceData } from "./types";
 export class DrizzleApplicationRepository implements ApplicationRepository {
   constructor(private readonly database: Database) {}
+
+  private ownedParentExists(userId: number, applicationId: number) {
+    return exists(
+      this.database
+        .select({ id: jobApplications.id })
+        .from(jobApplications)
+        .where(ownedApplication(userId, applicationId)),
+    );
+  }
+
+  private async hasOwnedParent(transaction: Transaction, userId: number, applicationId: number): Promise<boolean> {
+    const [application] = await transaction
+      .select({ id: jobApplications.id })
+      .from(jobApplications)
+      .where(ownedApplication(userId, applicationId))
+      .for("share")
+      .limit(1);
+    return Boolean(application);
+  }
+
+  async loadWorkspace(userId: number, applicationId: number): Promise<ApplicationWorkspaceData | null> {
+    const [application] = await this.database
+      .select({ id: jobApplications.id })
+      .from(jobApplications)
+      .where(ownedApplication(userId, applicationId))
+      .limit(1);
+    if (!application) return null;
+
+    const [preparationRows, contactRows, taskRows] = await Promise.all([
+      this.database
+        .select()
+        .from(applicationWorkspaces)
+        .where(and(eq(applicationWorkspaces.userId, userId), eq(applicationWorkspaces.applicationId, applicationId)))
+        .limit(1),
+      this.database
+        .select()
+        .from(applicationContacts)
+        .where(and(eq(applicationContacts.userId, userId), eq(applicationContacts.applicationId, applicationId)))
+        .orderBy(asc(applicationContacts.createdAt), asc(applicationContacts.id)),
+      this.database
+        .select()
+        .from(applicationFollowUpTasks)
+        .where(
+          and(eq(applicationFollowUpTasks.userId, userId), eq(applicationFollowUpTasks.applicationId, applicationId)),
+        )
+        .orderBy(
+          sql`case when ${applicationFollowUpTasks.completedAt} is null then 0 else 1 end`,
+          sql`case when ${applicationFollowUpTasks.completedAt} is null then ${applicationFollowUpTasks.dueDate} end`,
+          asc(applicationFollowUpTasks.completedAt),
+          asc(applicationFollowUpTasks.id),
+        ),
+    ]);
+    return {
+      preparation: toApplicationPreparation(preparationRows[0] ?? null),
+      contacts: contactRows.map(toApplicationContact),
+      followUpTasks: taskRows.map(toApplicationFollowUpTask),
+    };
+  }
+
+  async updatePreparation(
+    userId: number,
+    applicationId: number,
+    input: UpdateApplicationPreparationInput,
+  ): Promise<ApplicationPreparation | null> {
+    return this.database.transaction(async (transaction) => {
+      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
+      const [row] = await transaction
+        .insert(applicationWorkspaces)
+        .values({ applicationId, userId, ...input })
+        .onConflictDoUpdate({
+          target: applicationWorkspaces.applicationId,
+          set: { ...input, updatedAt: new Date() },
+          setWhere: eq(applicationWorkspaces.userId, userId),
+        })
+        .returning();
+      return row ? toApplicationPreparation(row) : null;
+    });
+  }
+
+  async createContact(
+    userId: number,
+    applicationId: number,
+    input: CreateApplicationContactInput,
+  ): Promise<ApplicationContact | null> {
+    return this.database.transaction(async (transaction) => {
+      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
+      const [row] = await transaction
+        .insert(applicationContacts)
+        .values({ ...input, userId, applicationId })
+        .returning();
+      if (!row) throw new Error("Unable to create application contact");
+      return toApplicationContact(row);
+    });
+  }
+
+  async updateContact(
+    userId: number,
+    applicationId: number,
+    contactId: number,
+    input: UpdateApplicationContactInput,
+  ): Promise<ApplicationContact | null> {
+    const [row] = await this.database
+      .update(applicationContacts)
+      .set({ ...input, updatedAt: new Date() })
+      .where(
+        and(
+          eq(applicationContacts.userId, userId),
+          eq(applicationContacts.applicationId, applicationId),
+          eq(applicationContacts.id, contactId),
+          this.ownedParentExists(userId, applicationId),
+        ),
+      )
+      .returning();
+    return row ? toApplicationContact(row) : null;
+  }
+
+  async deleteContact(userId: number, applicationId: number, contactId: number): Promise<boolean> {
+    const result = await this.database
+      .delete(applicationContacts)
+      .where(
+        and(
+          eq(applicationContacts.userId, userId),
+          eq(applicationContacts.applicationId, applicationId),
+          eq(applicationContacts.id, contactId),
+          this.ownedParentExists(userId, applicationId),
+        ),
+      );
+    return result.count > 0;
+  }
+
+  async createFollowUpTask(
+    userId: number,
+    applicationId: number,
+    input: CreateApplicationFollowUpTaskInput,
+  ): Promise<ApplicationFollowUpTask | null> {
+    return this.database.transaction(async (transaction) => {
+      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
+      const [row] = await transaction
+        .insert(applicationFollowUpTasks)
+        .values({ ...input, userId, applicationId })
+        .returning();
+      if (!row) throw new Error("Unable to create follow-up task");
+      return toApplicationFollowUpTask(row);
+    });
+  }
+
+  async updateFollowUpTask(
+    userId: number,
+    applicationId: number,
+    taskId: number,
+    input: UpdateApplicationFollowUpTaskInput,
+  ): Promise<ApplicationFollowUpTask | null> {
+    const [row] = await this.database
+      .update(applicationFollowUpTasks)
+      .set({ ...input, updatedAt: new Date() })
+      .where(
+        and(
+          eq(applicationFollowUpTasks.userId, userId),
+          eq(applicationFollowUpTasks.applicationId, applicationId),
+          eq(applicationFollowUpTasks.id, taskId),
+          this.ownedParentExists(userId, applicationId),
+        ),
+      )
+      .returning();
+    return row ? toApplicationFollowUpTask(row) : null;
+  }
+
+  async completeFollowUpTask(
+    userId: number,
+    applicationId: number,
+    taskId: number,
+  ): Promise<ApplicationFollowUpTask | null> {
+    const scope = and(
+      eq(applicationFollowUpTasks.userId, userId),
+      eq(applicationFollowUpTasks.applicationId, applicationId),
+      eq(applicationFollowUpTasks.id, taskId),
+      this.ownedParentExists(userId, applicationId),
+    );
+    const [completed] = await this.database
+      .update(applicationFollowUpTasks)
+      .set({ completedAt: new Date(), updatedAt: new Date() })
+      .where(and(scope, isNull(applicationFollowUpTasks.completedAt)))
+      .returning();
+    if (completed) return toApplicationFollowUpTask(completed);
+    const [existing] = await this.database.select().from(applicationFollowUpTasks).where(scope).limit(1);
+    return existing ? toApplicationFollowUpTask(existing) : null;
+  }
+
+  async deleteFollowUpTask(userId: number, applicationId: number, taskId: number): Promise<boolean> {
+    const result = await this.database
+      .delete(applicationFollowUpTasks)
+      .where(
+        and(
+          eq(applicationFollowUpTasks.userId, userId),
+          eq(applicationFollowUpTasks.applicationId, applicationId),
+          eq(applicationFollowUpTasks.id, taskId),
+          this.ownedParentExists(userId, applicationId),
+        ),
+      );
+    return result.count > 0;
+  }
 
   async listForExport(userId: number): Promise<ApplicationExportRecord[]> {
     const rows = await this.database

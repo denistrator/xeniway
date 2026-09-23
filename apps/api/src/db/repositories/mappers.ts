@@ -1,5 +1,8 @@
 import {
+  type ApplicationContact,
   type ApplicationEvent,
+  type ApplicationFollowUpTask,
+  type ApplicationPreparation,
   formPresentationSchema,
   type JobApplication,
   supportedLocaleSchema,
@@ -7,7 +10,52 @@ import {
   type User,
   type UserPreferences,
 } from "@xeniway/shared";
-import type { ApplicationEventRow, JobApplicationRow, UserPreferencesRow, UserRow } from "./types";
+import type {
+  ApplicationContactRow,
+  ApplicationEventRow,
+  ApplicationFollowUpTaskRow,
+  ApplicationWorkspaceRow,
+  JobApplicationRow,
+  UserPreferencesRow,
+  UserRow,
+} from "./types";
+
+export function toApplicationPreparation(row: ApplicationWorkspaceRow | null): ApplicationPreparation {
+  return {
+    companyResearch: row?.companyResearch ?? null,
+    talkingPoints: row?.talkingPoints ?? null,
+    interviewerQuestions: row?.interviewerQuestions ?? null,
+    updatedAt: row?.updatedAt.toISOString() ?? null,
+  };
+}
+
+export function toApplicationContact(row: ApplicationContactRow): ApplicationContact {
+  return {
+    id: row.id,
+    applicationId: row.applicationId,
+    name: row.name,
+    role: row.role,
+    email: row.email,
+    phone: row.phone,
+    profileUrl: row.profileUrl,
+    notes: row.notes,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export function toApplicationFollowUpTask(row: ApplicationFollowUpTaskRow): ApplicationFollowUpTask {
+  return {
+    id: row.id,
+    applicationId: row.applicationId,
+    title: row.title,
+    dueDate: row.dueDate,
+    notes: row.notes,
+    completedAt: row.completedAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
 export function toUser(row: UserRow): User {
   return {
     id: row.id,
