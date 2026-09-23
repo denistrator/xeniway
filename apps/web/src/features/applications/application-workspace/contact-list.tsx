@@ -1,0 +1,33 @@
+import type { ApplicationContact } from "@xeniway/shared";
+import { useTranslation } from "react-i18next";
+import { ContactCard } from "./contact-card";
+
+export function ContactList({
+  contacts,
+  onEdit,
+  onRemove,
+}: {
+  contacts: ApplicationContact[];
+  onEdit: (contact: ApplicationContact) => void;
+  onRemove: (contact: ApplicationContact) => void;
+}) {
+  const { t } = useTranslation();
+  if (!contacts.length)
+    return (
+      <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">
+        {t("applications.workspace.contacts.empty")}
+      </p>
+    );
+  return (
+    <ul className="grid gap-3 md:grid-cols-2">
+      {contacts.map((contact) => (
+        <ContactCard
+          key={contact.id}
+          contact={contact}
+          onEdit={() => onEdit(contact)}
+          onRemove={() => onRemove(contact)}
+        />
+      ))}
+    </ul>
+  );
+}
