@@ -59,6 +59,88 @@ export type ApplicationEvent = {
   isSystem: boolean;
 };
 
+const preparationFields = {
+  companyResearch: z.string().trim().max(10_000).nullable(),
+  talkingPoints: z.string().trim().max(10_000).nullable(),
+  interviewerQuestions: z.string().trim().max(10_000).nullable(),
+};
+
+export const updateApplicationPreparationInputSchema = z
+  .strictObject(preparationFields)
+  .partial()
+  .refine((input) => Object.keys(input).length > 0, { message: "At least one preparation field must be provided" });
+
+export type UpdateApplicationPreparationInput = z.infer<typeof updateApplicationPreparationInputSchema>;
+
+export const createApplicationContactInputSchema = z.strictObject({
+  name: z.string().trim().min(1).max(255),
+  role: z.string().trim().min(1).max(255),
+  email: z.string().trim().email().max(255).nullable().optional(),
+  phone: z.string().trim().max(100).nullable().optional(),
+  profileUrl: z
+    .string()
+    .trim()
+    .url()
+    .max(500)
+    .refine((value) => ["http:", "https:"].includes(new URL(value).protocol), {
+      message: "Profile URL must use HTTP or HTTPS",
+    })
+    .nullable()
+    .optional(),
+  notes: z.string().trim().max(10_000).nullable().optional(),
+});
+
+export const updateApplicationContactInputSchema = createApplicationContactInputSchema
+  .partial()
+  .refine((input) => Object.keys(input).length > 0, { message: "At least one contact field must be provided" });
+
+export type CreateApplicationContactInput = z.infer<typeof createApplicationContactInputSchema>;
+export type UpdateApplicationContactInput = z.infer<typeof updateApplicationContactInputSchema>;
+
+export const createApplicationFollowUpTaskInputSchema = z.strictObject({
+  title: z.string().trim().min(1).max(255),
+  dueDate: z.iso.date(),
+  notes: z.string().trim().max(10_000).nullable().optional(),
+});
+
+export const updateApplicationFollowUpTaskInputSchema = createApplicationFollowUpTaskInputSchema
+  .partial()
+  .refine((input) => Object.keys(input).length > 0, { message: "At least one follow-up field must be provided" });
+
+export type CreateApplicationFollowUpTaskInput = z.infer<typeof createApplicationFollowUpTaskInputSchema>;
+export type UpdateApplicationFollowUpTaskInput = z.infer<typeof updateApplicationFollowUpTaskInputSchema>;
+
+export type ApplicationPreparation = {
+  companyResearch: string | null;
+  talkingPoints: string | null;
+  interviewerQuestions: string | null;
+  updatedAt: string | null;
+};
+
+export type ApplicationContact = {
+  id: number;
+  applicationId: number;
+  name: string;
+  role: string;
+  email: string | null;
+  phone: string | null;
+  profileUrl: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ApplicationFollowUpTask = {
+  id: number;
+  applicationId: number;
+  title: string;
+  dueDate: string;
+  notes: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 const nullableTrimmedString = z.string().trim().max(500).nullable().optional();
 
 export const createApplicationInputSchema = z.object({
@@ -193,7 +275,13 @@ export type AuthResponse = ApiSuccess<{ user: User; csrfToken: string }>;
 export type CurrentUserResponse = ApiSuccess<{ user: User }>;
 export type UserPreferencesResponse = ApiSuccess<{ preferences: UserPreferences }>;
 export type ApplicationResponse = ApiSuccess<{ application: JobApplication }>;
-export type ApplicationDetailResponse = ApiSuccess<{ application: JobApplication; events: ApplicationEvent[] }>;
+export type ApplicationDetailResponse = ApiSuccess<{
+  application: JobApplication;
+  events: ApplicationEvent[];
+  preparation: ApplicationPreparation;
+  contacts: ApplicationContact[];
+  followUpTasks: ApplicationFollowUpTask[];
+}>;
 export type ApplicationEventResponse = ApiSuccess<{ event: ApplicationEvent }>;
 export type ApplicationListResponse = ApiSuccess<{ applications: JobApplication[] }>;
 export type MessageResponse = ApiSuccess<{ message: string }>;
