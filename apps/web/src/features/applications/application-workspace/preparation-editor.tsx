@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../components/ui/button";
 import type { PreparationKey, usePreparationField } from "./use-preparation-field";
@@ -14,6 +15,8 @@ export function PreparationEditor({
   form: ReturnType<typeof usePreparationField>;
 }) {
   const { t } = useTranslation();
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => textarea.current?.focus(), []);
   return (
     <form
       onSubmit={(event) => {
@@ -27,6 +30,7 @@ export function PreparationEditor({
       </label>
       <textarea
         id={id}
+        ref={textarea}
         name={field}
         value={form.draft}
         onChange={(event) => form.setDraft(event.target.value)}

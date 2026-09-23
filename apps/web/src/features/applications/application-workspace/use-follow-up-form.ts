@@ -1,9 +1,6 @@
-import {
-  type ApplicationFollowUpTask,
-  type CreateApplicationFollowUpTaskInput,
-  createApplicationFollowUpTaskInputSchema,
-} from "@xeniway/shared";
+import type { ApplicationFollowUpTask, CreateApplicationFollowUpTaskInput } from "@xeniway/shared";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FollowUpErrors, validateFollowUpDraft } from "./workspace-validation";
 
 export function useFollowUpForm(
   task: ApplicationFollowUpTask | undefined,
@@ -12,34 +9,46 @@ export function useFollowUpForm(
   const [title, setTitle] = useState(task?.title ?? "");
   const [dueDate, setDueDate] = useState(task?.dueDate ?? "");
   const [notes, setNotes] = useState(task?.notes ?? "");
-  const [error, setError] = useState<"taskRequired" | "dateRequired" | "invalidDate" | "invalid" | null>(null);
+  const [errors, setErrors] = useState<FollowUpErrors>({});
   const titleRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = createApplicationFollowUpTaskInputSchema.safeParse({ title, dueDate, notes: notes || null });
-    if (!parsed.success) {
-      const field = parsed.error.issues[0]?.path[0];
-      setError(
-        field === "title"
-          ? "taskRequired"
-          : field === "dueDate" && !dueDate
-            ? "dateRequired"
-            : field === "dueDate"
-              ? "invalidDate"
-              : "invalid",
-      );
-      if (field === "title") titleRef.current?.focus();
-      else if (field === "dueDate") dateRef.current?.focus();
-      return;
-    }
-    setError(null);
-    await onSave(parsed.data);
+  function changeTitle(value: string) {
+    setTitle(value);
+    setErrors((current) => ({ ...current, title: undefined }));
   }
 
-  return { title, setTitle, dueDate, setDueDate, notes, setNotes, error, titleRef, dateRef, submit };
+  function changeDueDate(value: string) {
+    setDueDate(value);
+    setErrors((current) => ({ ...current, dueDate: undefined }));
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const result = validateFollowUpDraft({ title, dueDate, notes });
+    if (!result.input) {
+      setErrors(result.errors);
+      if (result.firstField === "title") titleRef.current?.focus();
+      else if (result.firstField === "dueDate") dateRef.current?.focus();
+      return;
+    }
+    setErrors({});
+    await onSave(result.input);
+  }
+
+  return {
+    title,
+    setTitle: changeTitle,
+    dueDate,
+    setDueDate: changeDueDate,
+    notes,
+    setNotes,
+    errors,
+    titleRef,
+    dateRef,
+    submit,
+  };
 }

@@ -42,13 +42,14 @@ export const en = {
     workspace: {
       actions: { edit: "Edit", save: "Save", cancel: "Cancel", remove: "Remove", delete: "Delete", saving: "Saving…" },
       validation: {
-        required: "Enter a name and role.",
-        email: "Enter a valid email address.",
-        profile: "Enter a valid HTTP or HTTPS profile URL.",
-        invalid: "Check the highlighted fields.",
-        tooLong: "This note is too long.",
-        taskRequired: "Enter a task and due date.",
-        dateRequired: "Enter a task and due date.",
+        nameRequired: "Name is required.",
+        roleRequired: "Role is required.",
+        emailInvalid: "Enter a valid email address.",
+        phoneInvalid: "Enter a valid phone number.",
+        profileInvalid: "Enter a valid HTTP or HTTPS profile URL.",
+        notesTooLong: "Notes must be 10,000 characters or fewer.",
+        titleRequired: "Task title is required.",
+        dateRequired: "Due date is required.",
         invalidDate: "Enter a valid due date.",
       },
       preparation: {

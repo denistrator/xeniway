@@ -1,5 +1,5 @@
 import type { ApplicationContact, CreateApplicationContactInput } from "@xeniway/shared";
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../components/ui/button";
 import { ContactFormFields } from "./contact-form-fields";
@@ -19,6 +19,9 @@ export function ContactForm({
   const { t } = useTranslation();
   const id = useId();
   const form = useContactForm(contact, onSave);
+  useEffect(() => {
+    form.firstField.current?.focus();
+  }, [form.firstField]);
   return (
     <form
       ref={form.formRef}
@@ -32,11 +35,6 @@ export function ContactForm({
         {t(contact ? "applications.workspace.contacts.edit" : "applications.workspace.contacts.add")}
       </h3>
       <ContactFormFields id={id} form={form} />
-      {form.error && (
-        <p role="alert" className="text-sm text-rose-600">
-          {t(`applications.workspace.validation.${form.error}`)}
-        </p>
-      )}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" size="sm" disabled={pending}>
           {t(pending ? "applications.workspace.actions.saving" : "applications.workspace.contacts.save")}

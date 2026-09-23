@@ -1,6 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { ApplicationDetailResponse, UserPreferences, UserPreferencesResponse } from "@xeniway/shared";
+import type {
+  ApplicationDetailResponse,
+  ApplicationFollowUpTask,
+  UserPreferences,
+  UserPreferencesResponse,
+} from "@xeniway/shared";
 import { Provider } from "react-redux";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { store } from "../store";
@@ -346,6 +351,44 @@ test("selects application, activity, preparation, contacts and follow-ups from t
 
   await waitFor(() => expect(result.current.data).toEqual(detail));
   expect(fetchMock.mock.calls[0]?.[0]).toBe(`/api/applications/${applicationId}`);
+});
+
+test("stores the server completion timestamp in the application detail cache", async () => {
+  const original: ApplicationFollowUpTask = {
+    id: taskId,
+    applicationId,
+    title: "Send portfolio",
+    dueDate: "2026-10-01",
+    notes: null,
+    completedAt: null,
+    createdAt: "2026-09-20T10:00:00.000Z",
+    updatedAt: "2026-09-20T10:00:00.000Z",
+  };
+  const completed = { ...original, completedAt: "2026-09-23T12:34:56.000Z", updatedAt: "2026-09-23T12:34:56.000Z" };
+  const detail = {
+    data: {
+      application: { id: applicationId },
+      events: [],
+      preparation: { companyResearch: null, talkingPoints: null, interviewerQuestions: null, updatedAt: null },
+      contacts: [],
+      followUpTasks: [original],
+    },
+  } as unknown as ApplicationDetailResponse;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { followUpTask: completed } }), { status: 200 })),
+  );
+  const { queryClient, wrapper } = setup();
+  queryClient.setQueryData(applicationKeys.detail(applicationId), detail);
+  const { result } = renderHook(() => useApplicationFollowUpMutations(applicationId), { wrapper });
+
+  act(() => result.current.complete.mutate(taskId));
+  await waitFor(() => expect(result.current.complete.isSuccess).toBe(true));
+
+  expect(
+    queryClient.getQueryData<ApplicationDetailResponse>(applicationKeys.detail(applicationId))?.data.followUpTasks[0]
+      ?.completedAt,
+  ).toBe(completed.completedAt);
 });
 
 test.each([

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  ApplicationDetailResponse,
   ApplicationEventInput,
   ApplicationListResponse,
   BlacklistInput,
@@ -253,7 +254,21 @@ export function useApplicationFollowUpMutations(applicationId: number) {
     }),
     complete: useMutation({
       mutationFn: (taskId: number) => completeApplicationFollowUpTask(applicationId, taskId, csrfToken),
-      onSuccess: invalidate,
+      onSuccess: (response, taskId) => {
+        queryClient.setQueryData<ApplicationDetailResponse>(applicationKeys.detail(applicationId), (current) => {
+          if (!current || !Array.isArray(current.data.followUpTasks)) return current;
+          return {
+            ...current,
+            data: {
+              ...current.data,
+              followUpTasks: current.data.followUpTasks.map((task) =>
+                task.id === taskId ? response.data.followUpTask : task,
+              ),
+            },
+          };
+        });
+        return invalidate();
+      },
     }),
     remove: useMutation({
       mutationFn: (taskId: number) => deleteApplicationFollowUpTask(applicationId, taskId, csrfToken),

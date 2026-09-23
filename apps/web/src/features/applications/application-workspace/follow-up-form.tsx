@@ -31,11 +31,6 @@ export function FollowUpForm({
         {t(task ? "applications.workspace.followUps.edit" : "applications.workspace.followUps.add")}
       </h3>
       <FollowUpFormFields id={id} form={form} />
-      {form.error && (
-        <p role="alert" className="text-sm text-rose-600">
-          {t(`applications.workspace.validation.${form.error}`)}
-        </p>
-      )}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" size="sm" disabled={pending}>
           {t(pending ? "applications.workspace.actions.saving" : "applications.workspace.followUps.save")}

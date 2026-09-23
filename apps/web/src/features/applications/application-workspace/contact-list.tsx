@@ -8,11 +8,11 @@ export function ContactList({
   onRemove,
 }: {
   contacts: ApplicationContact[];
-  onEdit: (contact: ApplicationContact) => void;
-  onRemove: (contact: ApplicationContact) => void;
+  onEdit: (contact: ApplicationContact, trigger: HTMLButtonElement) => void;
+  onRemove: (contact: ApplicationContact, trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation();
-  if (!contacts.length)
+  if (contacts.length === 0)
     return (
       <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">
         {t("applications.workspace.contacts.empty")}
@@ -24,8 +24,8 @@ export function ContactList({
         <ContactCard
           key={contact.id}
           contact={contact}
-          onEdit={() => onEdit(contact)}
-          onRemove={() => onRemove(contact)}
+          onEdit={(trigger) => onEdit(contact, trigger)}
+          onRemove={(trigger) => onRemove(contact, trigger)}
         />
       ))}
     </ul>

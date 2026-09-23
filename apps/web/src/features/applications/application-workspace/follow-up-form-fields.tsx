@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Input } from "../../../components/ui/input";
 import type { useFollowUpForm } from "./use-follow-up-form";
+import { WorkspaceFieldError } from "./workspace-field-error";
 
 export function FollowUpFormFields({ id, form }: { id: string; form: ReturnType<typeof useFollowUpForm> }) {
   const { t } = useTranslation();
@@ -18,7 +19,14 @@ export function FollowUpFormFields({ id, form }: { id: string; form: ReturnType<
             required
             maxLength={255}
             value={form.title}
+            className={form.errors.title ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : undefined}
+            aria-invalid={Boolean(form.errors.title) || undefined}
+            aria-describedby={form.errors.title ? `${id}-title-error` : undefined}
             onChange={(event) => form.setTitle(event.target.value)}
+          />
+          <WorkspaceFieldError
+            id={`${id}-title-error`}
+            message={form.errors.title ? t(`applications.workspace.validation.${form.errors.title}`) : undefined}
           />
         </div>
         <div>
@@ -32,7 +40,14 @@ export function FollowUpFormFields({ id, form }: { id: string; form: ReturnType<
             type="date"
             required
             value={form.dueDate}
+            className={form.errors.dueDate ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : undefined}
+            aria-invalid={Boolean(form.errors.dueDate) || undefined}
+            aria-describedby={form.errors.dueDate ? `${id}-dueDate-error` : undefined}
             onChange={(event) => form.setDueDate(event.target.value)}
+          />
+          <WorkspaceFieldError
+            id={`${id}-dueDate-error`}
+            message={form.errors.dueDate ? t(`applications.workspace.validation.${form.errors.dueDate}`) : undefined}
           />
         </div>
       </div>

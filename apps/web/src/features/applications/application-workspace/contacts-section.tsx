@@ -1,5 +1,5 @@
 import type { ApplicationContact } from "@xeniway/shared";
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -7,6 +7,7 @@ import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
 import { ContactForm } from "./contact-form";
 import { ContactList } from "./contact-list";
 import { useContactsSection } from "./use-contacts-section";
+import { useReturnFocus } from "./use-return-focus";
 import { WorkspaceStatus } from "./workspace-status";
 
 export function ContactsSection({
@@ -19,6 +20,8 @@ export function ContactsSection({
   const { t } = useTranslation();
   const headingId = useId();
   const section = useContactsSection(applicationId);
+  const addButton = useRef<HTMLButtonElement>(null);
+  const rememberFocus = useReturnFocus(Boolean(section.editing || section.deleting), addButton);
   return (
     <section aria-labelledby={headingId}>
       <Card>
@@ -29,11 +32,18 @@ export function ContactsSection({
             </CardTitle>
             <p className="mt-1 text-sm text-muted">{t("applications.workspace.contacts.help")}</p>
           </div>
-          {!section.editing && (
-            <Button type="button" size="sm" onClick={() => section.setEditing("new")}>
-              {t("applications.workspace.contacts.add")}
-            </Button>
-          )}
+          <Button
+            ref={addButton}
+            type="button"
+            size="sm"
+            disabled={Boolean(section.editing)}
+            onClick={(event) => {
+              rememberFocus(event.currentTarget);
+              section.setEditing("new");
+            }}
+          >
+            {t("applications.workspace.contacts.add")}
+          </Button>
         </CardHeader>
         <CardContent>
           {section.editing && (
@@ -45,7 +55,17 @@ export function ContactsSection({
               pending={section.pending}
             />
           )}
-          <ContactList contacts={contacts} onEdit={section.setEditing} onRemove={section.setDeleting} />
+          <ContactList
+            contacts={contacts}
+            onEdit={(contact, trigger) => {
+              rememberFocus(trigger);
+              section.setEditing(contact);
+            }}
+            onRemove={(contact, trigger) => {
+              rememberFocus(trigger);
+              section.setDeleting(contact);
+            }}
+          />
           <WorkspaceStatus section="contacts" pending={section.pending} status={section.status} />
         </CardContent>
       </Card>

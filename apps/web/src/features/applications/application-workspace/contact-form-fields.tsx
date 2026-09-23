@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Input } from "../../../components/ui/input";
 import type { useContactForm } from "./use-contact-form";
+import { WorkspaceFieldError } from "./workspace-field-error";
 
 export function ContactFormFields({ id, form }: { id: string; form: ReturnType<typeof useContactForm> }) {
   const { t } = useTranslation();
@@ -22,7 +23,14 @@ export function ContactFormFields({ id, form }: { id: string; form: ReturnType<t
               required={field === "name" || field === "role"}
               maxLength={field === "profileUrl" ? 500 : field === "phone" ? 100 : 255}
               value={form.draft[field]}
+              className={form.errors[field] ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : undefined}
+              aria-invalid={Boolean(form.errors[field]) || undefined}
+              aria-describedby={form.errors[field] ? `${id}-${field}-error` : undefined}
               onChange={(event) => form.setField(field, event.target.value)}
+            />
+            <WorkspaceFieldError
+              id={`${id}-${field}-error`}
+              message={form.errors[field] ? t(`applications.workspace.validation.${form.errors[field]}`) : undefined}
             />
           </div>
         ))}
@@ -37,8 +45,14 @@ export function ContactFormFields({ id, form }: { id: string; form: ReturnType<t
           rows={3}
           maxLength={10000}
           value={form.draft.notes}
+          aria-invalid={Boolean(form.errors.notes) || undefined}
+          aria-describedby={form.errors.notes ? `${id}-notes-error` : undefined}
           onChange={(event) => form.setField("notes", event.target.value)}
-          className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+          className={`w-full rounded-xl border bg-surface px-3 py-2 text-sm text-ink outline-none focus:ring-2 ${form.errors.notes ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : "border-line focus:border-accent focus:ring-accent-soft"}`}
+        />
+        <WorkspaceFieldError
+          id={`${id}-notes-error`}
+          message={form.errors.notes ? t(`applications.workspace.validation.${form.errors.notes}`) : undefined}
         />
       </div>
     </>

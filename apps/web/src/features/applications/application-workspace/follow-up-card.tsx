@@ -14,9 +14,9 @@ export function FollowUpCard({
   task: ApplicationFollowUpTask;
   completed: boolean;
   pending: boolean;
-  onEdit: () => void;
+  onEdit: (trigger: HTMLButtonElement) => void;
   onComplete: () => void;
-  onDelete: () => void;
+  onDelete: (trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -38,7 +38,7 @@ export function FollowUpCard({
               size="sm"
               variant="outline"
               aria-label={t("applications.workspace.followUps.editNamed", { name: task.title })}
-              onClick={onEdit}
+              onClick={(event) => onEdit(event.currentTarget)}
             >
               {t("applications.workspace.actions.edit")}
             </Button>
@@ -47,7 +47,7 @@ export function FollowUpCard({
               size="sm"
               variant="ghost"
               aria-label={t("applications.workspace.followUps.deleteNamed", { name: task.title })}
-              onClick={onDelete}
+              onClick={(event) => onDelete(event.currentTarget)}
             >
               {t("applications.workspace.actions.delete")}
             </Button>

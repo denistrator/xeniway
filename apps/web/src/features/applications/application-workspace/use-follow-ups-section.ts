@@ -14,7 +14,6 @@ export function useFollowUpsSection(applicationId: number) {
   const [status, setStatus] = useState<
     "saved" | "completed" | "deleted" | "saveFailed" | "completeFailed" | "deleteFailed" | null
   >(null);
-  const [locallyCompleted, setLocallyCompleted] = useState<number[]>([]);
   const pending =
     mutations.create.isPending ||
     mutations.update.isPending ||
@@ -41,7 +40,6 @@ export function useFollowUpsSection(applicationId: number) {
     setStatus(null);
     try {
       await mutations.complete.mutateAsync(taskId);
-      setLocallyCompleted((ids) => [...ids, taskId]);
       setStatus("completed");
     } catch {
       setStatus("completeFailed");
@@ -61,5 +59,5 @@ export function useFollowUpsSection(applicationId: number) {
     }
   }
 
-  return { editing, setEditing, deleting, setDeleting, status, locallyCompleted, pending, save, complete, remove };
+  return { editing, setEditing, deleting, setDeleting, status, pending, save, complete, remove };
 }

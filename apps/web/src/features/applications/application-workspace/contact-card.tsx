@@ -9,8 +9,8 @@ export function ContactCard({
   onRemove,
 }: {
   contact: ApplicationContact;
-  onEdit: () => void;
-  onRemove: () => void;
+  onEdit: (trigger: HTMLButtonElement) => void;
+  onRemove: (trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation();
   const profileUrl = safeProfileUrl(contact.profileUrl);
@@ -27,7 +27,7 @@ export function ContactCard({
             size="sm"
             variant="outline"
             aria-label={t("applications.workspace.contacts.editNamed", { name: contact.name })}
-            onClick={onEdit}
+            onClick={(event) => onEdit(event.currentTarget)}
           >
             {t("applications.workspace.actions.edit")}
           </Button>
@@ -36,7 +36,7 @@ export function ContactCard({
             size="sm"
             variant="ghost"
             aria-label={t("applications.workspace.contacts.removeNamed", { name: contact.name })}
-            onClick={onRemove}
+            onClick={(event) => onRemove(event.currentTarget)}
           >
             {t("applications.workspace.actions.remove")}
           </Button>

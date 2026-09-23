@@ -4,18 +4,16 @@ import { FollowUpCard } from "./follow-up-card";
 
 export function FollowUpList({
   tasks,
-  locallyCompleted,
   pending,
   onEdit,
   onComplete,
   onDelete,
 }: {
   tasks: ApplicationFollowUpTask[];
-  locallyCompleted: number[];
   pending: boolean;
-  onEdit: (task: ApplicationFollowUpTask) => void;
+  onEdit: (task: ApplicationFollowUpTask, trigger: HTMLButtonElement) => void;
   onComplete: (id: number) => void;
-  onDelete: (task: ApplicationFollowUpTask) => void;
+  onDelete: (task: ApplicationFollowUpTask, trigger: HTMLButtonElement) => void;
 }) {
   const { t } = useTranslation();
   if (!tasks.length)
@@ -30,11 +28,11 @@ export function FollowUpList({
         <FollowUpCard
           key={task.id}
           task={task}
-          completed={Boolean(task.completedAt || locallyCompleted.includes(task.id))}
+          completed={Boolean(task.completedAt)}
           pending={pending}
-          onEdit={() => onEdit(task)}
+          onEdit={(trigger) => onEdit(task, trigger)}
           onComplete={() => onComplete(task.id)}
-          onDelete={() => onDelete(task)}
+          onDelete={(trigger) => onDelete(task, trigger)}
         />
       ))}
     </ul>

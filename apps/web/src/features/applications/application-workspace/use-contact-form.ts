@@ -1,11 +1,8 @@
-import {
-  type ApplicationContact,
-  type CreateApplicationContactInput,
-  createApplicationContactInputSchema,
-} from "@xeniway/shared";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import type { ApplicationContact, CreateApplicationContactInput } from "@xeniway/shared";
+import { type FormEvent, useRef, useState } from "react";
+import { type ContactErrors, validateContactDraft } from "./workspace-validation";
 
-type ContactDraft = { name: string; role: string; email: string; phone: string; profileUrl: string; notes: string };
+type ContactDraft = Parameters<typeof validateContactDraft>[0];
 const empty: ContactDraft = { name: "", role: "", email: "", phone: "", profileUrl: "", notes: "" };
 
 export function useContactForm(
@@ -24,45 +21,31 @@ export function useContactForm(
         }
       : empty,
   );
-  const [error, setError] = useState<"required" | "email" | "profile" | "invalid" | null>(null);
+  const [errors, setErrors] = useState<ContactErrors>({});
   const formRef = useRef<HTMLFormElement>(null);
   const firstField = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    firstField.current?.focus();
-  }, []);
 
   function setField(field: keyof ContactDraft, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
-    setError(null);
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const parsed = createApplicationContactInputSchema.safeParse({
-      name: draft.name,
-      role: draft.role,
-      email: draft.email || null,
-      phone: draft.phone || null,
-      profileUrl: draft.profileUrl || null,
-      notes: draft.notes || null,
-    });
-    if (!parsed.success) {
-      const field = String(parsed.error.issues[0]?.path[0] ?? "name");
-      setError(
-        field === "name" || field === "role"
-          ? "required"
-          : field === "email"
-            ? "email"
-            : field === "profileUrl"
-              ? "profile"
-              : "invalid",
-      );
-      formRef.current?.querySelector<HTMLInputElement>(`[name="${field}"]`)?.focus();
+    const result = validateContactDraft(draft);
+    if (!result.input) {
+      setErrors(result.errors);
+      const field = result.firstField ?? "name";
+      formRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${field}"]`)?.focus();
       return;
     }
-    setError(null);
-    await onSave(parsed.data);
+    setErrors({});
+    await onSave(result.input);
   }
 
-  return { draft, setField, error, formRef, firstField, submit };
+  return { draft, setField, errors, formRef, firstField, submit };
 }

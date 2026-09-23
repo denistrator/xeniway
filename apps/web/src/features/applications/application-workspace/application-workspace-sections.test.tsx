@@ -9,6 +9,7 @@ import { authKeys } from "../../../lib/queries";
 import { ContactsSection } from "./contacts-section";
 import { FollowUpsSection } from "./follow-ups-section";
 import { PreparationSection } from "./preparation-section";
+import { validateFollowUpDraft } from "./workspace-validation";
 
 const preparation: ApplicationPreparation = {
   companyResearch: "Existing research",
@@ -61,14 +62,17 @@ test("preparation saves only the edited field and cancel restores its previous v
 
   await user.click(screen.getByRole("button", { name: "Edit company research" }));
   const research = screen.getByRole("textbox", { name: "Company research" });
+  expect(document.activeElement).toBe(research);
   await user.clear(research);
   await user.type(research, "New research");
   await user.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit company research" }));
   expect(screen.getByText("Existing research")).toBeVisible();
 
   await user.click(screen.getByRole("button", { name: "Edit talking points" }));
   await user.type(screen.getByRole("textbox", { name: "Talking points" }), "Ask about growth");
   await user.click(screen.getByRole("button", { name: "Save talking points" }));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit talking points" })));
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ talkingPoints: "Ask about growth" });
   expect(await screen.findByText("Talking points saved.")).toBeVisible();
@@ -124,13 +128,27 @@ test("contacts validate required fields and save a new contact", async () => {
   setup(<ContactsSection applicationId={3} contacts={[]} />);
   expect(screen.getByText("No contacts yet. Add someone you may speak with.")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Add contact" }));
+  expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Name" }));
   await user.click(screen.getByRole("button", { name: "Save contact" }));
-  expect(screen.getByRole("alert")).toHaveTextContent("Enter a name and role.");
+  expect(screen.getByText("Name is required.")).toBeVisible();
+  expect(screen.getByText("Role is required.")).toBeVisible();
+  const nameField = screen.getByRole("textbox", { name: "Name" });
+  const roleField = screen.getByRole("textbox", { name: "Role" });
+  expect(nameField).toHaveAttribute("aria-invalid", "true");
+  expect(document.getElementById(nameField.getAttribute("aria-describedby") ?? "")).toHaveTextContent(
+    "Name is required.",
+  );
+  expect(roleField).toHaveAttribute("aria-invalid", "true");
   await user.type(screen.getByRole("textbox", { name: "Name" }), "Ari Cole");
   await user.type(screen.getByRole("textbox", { name: "Role" }), "Recruiter");
+  await user.type(screen.getByRole("textbox", { name: "Email" }), "not-an-email");
   await user.type(screen.getByRole("textbox", { name: "Profile URL" }), "javascript:alert(1)");
   await user.click(screen.getByRole("button", { name: "Save contact" }));
-  expect(screen.getByRole("alert")).toHaveTextContent("Enter a valid HTTP or HTTPS profile URL.");
+  expect(screen.getByText("Enter a valid email address.")).toBeVisible();
+  expect(screen.getByText("Enter a valid HTTP or HTTPS profile URL.")).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Email" })).toHaveAttribute("aria-invalid", "true");
+  expect(screen.getByRole("textbox", { name: "Profile URL" })).toHaveAttribute("aria-invalid", "true");
+  await user.clear(screen.getByRole("textbox", { name: "Email" }));
   await user.clear(screen.getByRole("textbox", { name: "Profile URL" }));
   await user.click(screen.getByRole("button", { name: "Save contact" }));
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
@@ -140,6 +158,7 @@ test("contacts validate required fields and save a new contact", async () => {
     profileUrl: null,
   });
   expect(await screen.findByText("Contact saved.")).toBeVisible();
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Add contact" })));
 });
 
 test("contacts edit, cancel, confirm removal, and announce server errors", async () => {
@@ -151,10 +170,12 @@ test("contacts edit, cancel, confirm removal, and announce server errors", async
   await user.clear(screen.getByRole("textbox", { name: "Role" }));
   await user.type(screen.getByRole("textbox", { name: "Role" }), "Lead recruiter");
   await user.click(screen.getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit Ari Cole" })));
   expect(screen.getByText("Recruiter")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Remove Ari Cole" }));
   expect(screen.getByRole("alertdialog")).toBeVisible();
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "No" }));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove Ari Cole" })));
   expect(fetcher).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Remove Ari Cole" }));
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes" }));
@@ -168,10 +189,12 @@ test("contacts save edits through the owned contact endpoint", async () => {
   vi.stubGlobal("fetch", fetcher);
   setup(<ContactsSection applicationId={3} contacts={[contact]} />);
   await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Name" }));
   await user.clear(screen.getByRole("textbox", { name: "Role" }));
   await user.type(screen.getByRole("textbox", { name: "Role" }), "Hiring manager");
   await user.click(screen.getByRole("button", { name: "Save contact" }));
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit Ari Cole" })));
   expect(fetcher.mock.calls[0][0]).toContain("/applications/3/contacts/7");
   expect(fetcher.mock.calls[0][1].method).toBe("PATCH");
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({ role: "Hiring manager" });
@@ -184,9 +207,26 @@ test("follow-ups require a valid date and display the due date as a calendar mar
   expect(screen.getByText("Sep")).toBeVisible();
   expect(screen.getByText("Open")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Add follow-up" }));
+  await user.click(screen.getByRole("button", { name: "Save follow-up" }));
+  expect(screen.getByText("Task title is required.")).toBeVisible();
+  expect(screen.getByText("Due date is required.")).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Task" })).toHaveAttribute("aria-invalid", "true");
   await user.type(screen.getByRole("textbox", { name: "Task" }), "Send update");
   await user.click(screen.getByRole("button", { name: "Save follow-up" }));
-  expect(screen.getByRole("alert")).toHaveTextContent("Enter a task and due date.");
+  expect(screen.getByText("Due date is required.")).toBeVisible();
+  const dueDateField = screen.getByLabelText("Due date");
+  expect(dueDateField).toHaveAttribute("aria-invalid", "true");
+  expect(document.getElementById(dueDateField.getAttribute("aria-describedby") ?? "")).toHaveTextContent(
+    "Due date is required.",
+  );
+});
+
+test("follow-up calendar dates are validated by the shared schema", () => {
+  expect(validateFollowUpDraft({ title: "Send update", dueDate: "2026-02-30", notes: "" })).toMatchObject({
+    input: null,
+    errors: { dueDate: "invalidDate" },
+    firstField: "dueDate",
+  });
 });
 
 test("follow-ups show an empty state and save a dated task", async () => {
@@ -202,6 +242,7 @@ test("follow-ups show an empty state and save a dated task", async () => {
   await user.type(screen.getByLabelText("Due date"), "2026-09-26");
   await user.click(screen.getByRole("button", { name: "Save follow-up" }));
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Add follow-up" })));
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({ title: "Write to Ari", dueDate: "2026-09-26" });
   expect(await screen.findByText("Follow-up saved.")).toBeVisible();
 });
@@ -214,10 +255,12 @@ test("follow-ups save edits without changing completion state", async () => {
   vi.stubGlobal("fetch", fetcher);
   setup(<FollowUpsSection applicationId={3} tasks={[task]} />);
   await user.click(screen.getByRole("button", { name: "Edit Write to Ari" }));
+  expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Task" }));
   await user.clear(screen.getByRole("textbox", { name: "Task" }));
   await user.type(screen.getByRole("textbox", { name: "Task" }), "Call Ari");
   await user.click(screen.getByRole("button", { name: "Save follow-up" }));
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit Write to Ari" })));
   expect(fetcher.mock.calls[0][0]).toContain("/follow-ups/8");
   expect(fetcher.mock.calls[0][1].method).toBe("PATCH");
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).not.toHaveProperty("completedAt");
@@ -251,6 +294,7 @@ test("follow-ups confirm deletion and report failures", async () => {
   await user.click(screen.getByRole("button", { name: "Delete Write to Ari" }));
   expect(screen.getByRole("alertdialog")).toBeVisible();
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes" }));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Delete Write to Ari" })));
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not delete follow-up.");
 });
 

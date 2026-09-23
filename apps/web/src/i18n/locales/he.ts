@@ -28,14 +28,15 @@ const he = {
     workspace: {
       actions: { edit: "עריכה", save: "שמירה", cancel: "ביטול", remove: "הסרה", delete: "מחיקה", saving: "שומר…" },
       validation: {
-        required: "יש להזין שם ותפקיד.",
-        email: "יש להזין כתובת דוא״ל תקינה.",
-        profile: "יש להזין קישור לפרופיל עם HTTP או HTTPS.",
-        invalid: "יש לבדוק את השדות המסומנים.",
-        tooLong: "ההערה ארוכה מדי.",
-        taskRequired: "יש להזין משימה ותאריך יעד.",
-        dateRequired: "יש להזין משימה ותאריך יעד.",
-        invalidDate: "יש להזין תאריך יעד תקין.",
+        nameRequired: "צריך להזין שם.",
+        roleRequired: "צריך להזין תפקיד.",
+        emailInvalid: "צריך להזין כתובת דוא״ל תקינה.",
+        phoneInvalid: "צריך להזין מספר טלפון תקין.",
+        profileInvalid: "צריך להזין קישור פרופיל תקין עם HTTP או HTTPS.",
+        notesTooLong: "אפשר להזין עד 10,000 תווים בהערות.",
+        titleRequired: "צריך להזין כותרת למשימה.",
+        dateRequired: "צריך להזין תאריך יעד.",
+        invalidDate: "צריך להזין תאריך יעד תקין.",
       },
       preparation: {
         heading: "הכנה לראיון",
