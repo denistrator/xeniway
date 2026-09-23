@@ -4,6 +4,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
+### Extend the application workspace
+
+- **Area:** Application management.
+- **Why:** The first application workspace should focus on contacts, interview preparation, dated follow-up tasks, and the existing activity timeline. Related capabilities may be useful later but are intentionally outside that first scope.
+- **Possible direction:** Consider attaching files and links, integrating calendar or email workflows, and sending scheduled reminders for due follow-up tasks.
+- **Guardrails:** Reassess user needs and privacy/security implications before implementation. Keep integrations opt-in, owner-scoped, and separately approved; do not imply attachments, external sync, or automatic reminders exist until implemented.
+
 ### Complete data portability with import and JSON
 
 - **Area:** User data portability.

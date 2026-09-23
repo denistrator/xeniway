@@ -51,7 +51,7 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 | `GET` | `/api/applications` | Session | Lists active applications; optional `?status=` filter |
 | `GET` | `/api/applications/archive` | Session | Lists the current user's archived applications |
 | `GET` | `/api/applications/blacklist` | Session | Lists the current user's blacklisted applications |
-| `GET` | `/api/applications/:id` | Session | Reads one owned application in any board, with newest-first activity events |
+| `GET` | `/api/applications/:id` | Session | Reads one owned application in any board, with activity, interview preparation, contacts, and follow-ups |
 | `POST` | `/api/applications` | Session + CSRF | Creates an active application; returns `201` |
 | `PUT` | `/api/applications/:id` | Session + CSRF | Updates an active application |
 | `POST` | `/api/applications/:id/archive` | Session + CSRF | Archives an active application |
@@ -62,6 +62,14 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 | `POST` | `/api/applications/:id/events` | Session + CSRF | Creates a manual activity event; returns `201` |
 | `PATCH` | `/api/applications/:id/events/:eventId` | Session + CSRF | Updates an owned manual event |
 | `DELETE` | `/api/applications/:id/events/:eventId` | Session + CSRF | Deletes an owned manual event |
+| `PUT` | `/api/applications/:id/preparation` | Session + CSRF | Saves company research, talking points, and interviewer questions |
+| `POST` | `/api/applications/:id/contacts` | Session + CSRF | Adds a contact; returns `201` |
+| `PATCH` | `/api/applications/:id/contacts/:contactId` | Session + CSRF | Updates an owned contact |
+| `DELETE` | `/api/applications/:id/contacts/:contactId` | Session + CSRF | Removes an owned contact |
+| `POST` | `/api/applications/:id/follow-ups` | Session + CSRF | Adds a dated follow-up task; returns `201` |
+| `PATCH` | `/api/applications/:id/follow-ups/:taskId` | Session + CSRF | Updates an owned follow-up task |
+| `POST` | `/api/applications/:id/follow-ups/:taskId/complete` | Session + CSRF | Marks an owned follow-up complete; takes no body |
+| `DELETE` | `/api/applications/:id/follow-ups/:taskId` | Session + CSRF | Deletes an owned follow-up task |
 
 Application create/update fields:
 
@@ -87,7 +95,29 @@ Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" 
 
 ## Application activity
 
-The detail response is `{ "data": { "application": { ... }, "events": [ ... ] } }`. Events are sorted by `occurredAt` descending, with ID descending for ties. An event has `id`, `applicationId`, `type`, `title`, nullable `description`, ISO `occurredAt`, `createdAt`, `updatedAt`, nullable `metadata`, and `isSystem`. `userId` is never exposed. For `status_changed`, metadata records the canonical `{ "from": "saved", "to": "applied" }` status values.
+The detail response is `{ "data": { "application": { ... }, "events": [ ... ], "preparation": { ... }, "contacts": [ ... ], "followUpTasks": [ ... ] } }`. Events are sorted by `occurredAt` descending, with ID descending for ties. An event has `id`, `applicationId`, `type`, `title`, nullable `description`, ISO `occurredAt`, `createdAt`, `updatedAt`, nullable `metadata`, and `isSystem`. `userId` is never exposed. For `status_changed`, metadata records the canonical `{ "from": "saved", "to": "applied" }` status values.
+
+Preparation contains nullable `companyResearch`, `talkingPoints`, and `interviewerQuestions` fields. Contacts contain `id`, `applicationId`, `name`, `role`, nullable `email`, `phone`, `profileUrl`, and `notes`, plus timestamps. Follow-up tasks contain `id`, `applicationId`, `title`, ISO calendar `dueDate`, nullable `notes`, nullable completion timestamp, and timestamps. The detail endpoint returns empty/default values when no workspace data has been saved yet. Mutations are owner-scoped and return the changed resource under `data`; validation failures use the standard field-error envelope. Contact and follow-up creation return `201`. Preparation text and notes are limited to 10,000 characters; contact names and roles are required, and profile URLs must use HTTP or HTTPS. Follow-up title and due date are required; completion is an idempotent state change.
+
+Mutation bodies are JSON. Preparation uses a nonempty partial object and accepts explicit `null` to clear a field:
+
+```json
+{ "companyResearch": "Recent product launches", "talkingPoints": null }
+```
+
+Contact creation requires `name` and `role`; the remaining fields are optional and may be omitted or null:
+
+```json
+{ "name": "Jordan Lee", "role": "Recruiter", "email": "jordan@example.com", "phone": null, "profileUrl": "https://example.com/jordan", "notes": null }
+```
+
+Contact PATCH accepts a nonempty subset of those fields. Follow-up creation requires an ISO calendar `dueDate` and a nonempty `title`; `notes` is optional:
+
+```json
+{ "title": "Send a thank-you note", "dueDate": "2026-10-02", "notes": "Mention the platform discussion" }
+```
+
+Follow-up PATCH accepts a nonempty subset of `title`, `dueDate`, and `notes`. Completion takes no body and sets `completedAt` server-side; ordinary create/update inputs cannot set completion state. Contacts are returned by creation time then ID ascending. Follow-ups are returned with incomplete tasks first, ordered by due date then ID, followed by completed tasks ordered by completion time then ID. Workspace preparation, contact, and follow-up mutations do not create activity events; the existing timeline remains for application lifecycle events and candidate-recorded interactions.
 
 Creation, meaningful field edits, status changes, archive/restore, and blacklist/unblacklist transitions append immutable system events in the same database transaction as the application change. Reordering is not an activity event. Deleting an application permanently cascades to its events.
 

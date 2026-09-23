@@ -196,7 +196,7 @@ test("records and edits application activity across reloads", async ({ page }) =
   await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
 
   const company = `Activity Company ${Date.now()}`;
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   await page.getByLabel("Company *").fill(company);
   await page.getByLabel("Position *").fill("Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
@@ -219,45 +219,40 @@ test("records and edits application activity across reloads", async ({ page }) =
   });
   expect(immutableUpdate.status()).toBe(404);
 
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByRole("list", { name: "Activity timeline" })).toContainText("Application created");
-  const activityAxe = await new AxeBuilder({ page }).include("[role='dialog']").analyze();
+  await expect(page.getByRole("heading", { name: company })).toBeFocused();
+  const activity = page.getByRole("list", { name: "Activity timeline" });
+  await expect(activity).toContainText("Application created");
+  const activityAxe = await new AxeBuilder({ page }).include("main").analyze();
   expect(activityAxe.violations).toEqual([]);
-  await dialog.getByRole("button", { name: "Switch to modal" }).click();
-  await expect(page.locator(".job-modal").getByRole("list", { name: "Activity timeline" })).toContainText(
-    "Application created",
-  );
-  await dialog.getByRole("button", { name: "Switch to drawer" }).click();
-  await dialog.getByRole("button", { name: "Add activity" }).click();
-  await expect(dialog.getByRole("combobox", { name: "Activity type" })).toBeFocused();
-  await dialog.getByRole("combobox", { name: "Activity type" }).selectOption("follow_up");
-  await dialog.getByRole("textbox", { name: "Title" }).fill("Contact recruiter");
-  await dialog.getByRole("textbox", { name: "Description (optional)" }).fill("Send a short update");
-  await dialog.getByRole("button", { name: "Save activity" }).click();
-  await expect(dialog.getByRole("list", { name: "Activity timeline" })).toContainText("Contact recruiter");
-  await expect(dialog.getByRole("button", { name: "Add activity" })).toBeFocused();
-  await dialog.getByRole("combobox", { name: "Status" }).selectOption("applied");
-  await dialog.getByRole("button", { name: "Save application" }).click();
+  await page.getByRole("button", { name: "Add activity" }).click();
+  await expect(page.getByRole("combobox", { name: "Activity type" })).toBeFocused();
+  await page.getByRole("combobox", { name: "Activity type" }).selectOption("follow_up");
+  await page.getByRole("textbox", { name: "Title" }).fill("Contact recruiter");
+  await page.getByRole("textbox", { name: "Description (optional)" }).fill("Send a short update");
+  await page.getByRole("button", { name: "Save activity" }).click();
+  await expect(activity).toContainText("Contact recruiter");
+  await expect(page.getByRole("button", { name: "Add activity" })).toBeFocused();
+  await page.getByRole("button", { name: "Edit application" }).click();
+  await page.getByRole("combobox", { name: "Status" }).selectOption("applied");
+  await page.getByRole("button", { name: "Save application" }).click();
   await page.reload();
-  await page.getByRole("button", { name: new RegExp(company) }).click();
-  const reopened = page.getByRole("dialog");
-  await expect(reopened.getByRole("list", { name: "Activity timeline" })).toContainText("Saved → Applied");
-  await reopened.getByRole("button", { name: "Edit Contact recruiter" }).click();
-  await expect(reopened.getByRole("combobox", { name: "Activity type" })).toBeFocused();
-  await reopened.getByRole("textbox", { name: "Title" }).fill("Contact recruiter again");
-  await reopened.getByRole("button", { name: "Save activity" }).click();
-  await expect(reopened.getByText("Contact recruiter again")).toBeVisible();
-  await expect(reopened.getByRole("button", { name: "Edit Contact recruiter again" })).toBeFocused();
-  await reopened.getByRole("button", { name: "Delete Contact recruiter again" }).click();
+  await expect(page.getByRole("list", { name: "Activity timeline" })).toContainText("Saved → Applied");
+  await page.getByRole("button", { name: "Edit Contact recruiter" }).click();
+  await expect(page.getByRole("combobox", { name: "Activity type" })).toBeFocused();
+  await page.getByRole("textbox", { name: "Title" }).fill("Contact recruiter again");
+  await page.getByRole("button", { name: "Save activity" }).click();
+  await expect(page.getByText("Contact recruiter again")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit Contact recruiter again" })).toBeFocused();
+  await page.getByRole("button", { name: "Delete Contact recruiter again" }).click();
   await page.keyboard.press("Escape");
-  await expect(reopened).toBeVisible();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
-  await reopened.getByRole("button", { name: "Delete Contact recruiter again" }).click();
+  await page.getByRole("button", { name: "Delete Contact recruiter again" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
-  await expect(reopened.getByText("Contact recruiter again")).toHaveCount(0);
+  await expect(page.getByText("Contact recruiter again")).toHaveCount(0);
 
   const archived = page.waitForResponse((response) => response.url().endsWith("/archive") && response.status() === 200);
-  await reopened.getByRole("button", { name: "Archive application" }).click();
+  await page.getByRole("button", { name: "Archive application" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Archive application" }).click();
   await archived;
   const archivedDetail = await page.request.get(detailUrl);
   expect(archivedDetail.ok()).toBe(true);
@@ -266,7 +261,7 @@ test("records and edits application activity across reloads", async ({ page }) =
       (event) => event.type,
     ),
   ).toContain("archived");
-  await page.getByRole("link", { name: "Archive" }).click();
+  await page.getByRole("link", { name: "Archive", exact: true }).click();
   const archivedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
   await archivedCard.getByRole("button", { name: "View activity" }).click();
   await expect(archivedCard.getByRole("list", { name: "Activity timeline" })).toContainText("Archived");
@@ -279,13 +274,13 @@ test("records and edits application activity across reloads", async ({ page }) =
       (event) => event.type,
     ),
   ).toContain("restored_from_archive");
-  await page.getByRole("link", { name: "Applications" }).click();
+  await page.getByRole("link", { name: "Applications", exact: true }).click();
   await page.getByRole("button", { name: new RegExp(company) }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Blacklist", exact: true }).click();
+  await page.getByRole("button", { name: "Add to blacklist" }).click();
   const blacklisted = page.waitForResponse(
     (response) => response.url().endsWith("/blacklist") && response.status() === 200,
   );
-  await page.getByRole("button", { name: "Confirm blacklist" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Add to blacklist" }).click();
   await blacklisted;
   const blacklistedDetail = await page.request.get(detailUrl);
   expect(
@@ -308,6 +303,30 @@ test("records and edits application activity across reloads", async ({ page }) =
       (event) => event.type,
     ),
   ).toContain("restored_from_blacklist");
+
+  const currentCsrf = await page.request.get("/api/auth/csrf");
+  const currentToken = ((await currentCsrf.json()) as { data: { csrfToken: string } }).data.csrfToken;
+  await page.request.post("/api/auth/logout", { headers: { "x-csrf-token": currentToken } });
+  const anonymousCsrf = await page.request.get("/api/auth/csrf");
+  const anonymousToken = ((await anonymousCsrf.json()) as { data: { csrfToken: string } }).data.csrfToken;
+  const otherLogin = await page.request.post("/api/auth/login", {
+    headers: { "x-csrf-token": anonymousToken },
+    data: { email: "admin@example.com", password: "password" },
+  });
+  expect(otherLogin.ok()).toBe(true);
+  const otherCsrf = await page.request.get("/api/auth/csrf");
+  const otherToken = ((await otherCsrf.json()) as { data: { csrfToken: string } }).data.csrfToken;
+  expect((await page.request.get(detailUrl)).status()).toBe(404);
+  const foreignPreparation = await page.request.put(`${detailUrl}/preparation`, {
+    headers: { "x-csrf-token": otherToken },
+    data: { companyResearch: "Unauthorized update" },
+  });
+  expect(foreignPreparation.status()).toBe(404);
+  const foreignContact = await page.request.post(`${detailUrl}/contacts`, {
+    headers: { "x-csrf-token": otherToken },
+    data: { name: "Unauthorized", role: "Access attempt" },
+  });
+  expect(foreignContact.status()).toBe(404);
 });
 
 test("syncs browser preferences with each authenticated account", async ({ page }) => {
@@ -442,7 +461,7 @@ test("has no automated accessibility violations across key workflows", async ({ 
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -461,7 +480,7 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
-  const addJob = page.getByRole("button", { name: "+ Add job" });
+  const addJob = page.getByRole("button", { name: "Add job" });
   await addJob.click();
   const closeButton = page.getByRole("button", { name: "Close", exact: true });
   await expect(closeButton).toBeFocused();
@@ -575,7 +594,7 @@ test("focuses and announces application form validation errors", async ({ page }
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   await page.getByLabel("Company *").fill(" ");
   await page.getByLabel("Position *").fill("Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
@@ -596,7 +615,7 @@ test("uses floating labels for search and application fields", async ({ page }) 
   await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(1);
   await expect(page.getByLabel("Search applications")).toHaveAttribute("placeholder", " ");
 
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.locator(".floating-label > input")).toHaveCount(6);
   await expect(dialog.locator(".floating-label > textarea")).toHaveCount(2);
@@ -624,14 +643,14 @@ test("switches and persists the job form presentation mode", async ({ page }) =>
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   await expect(page.getByRole("button", { name: "Switch to modal" })).toBeVisible();
   await page.getByRole("button", { name: "Switch to modal" }).click();
   await expect(page.locator(".job-modal")).toBeVisible();
   await expect(page.getByRole("button", { name: "Switch to drawer" })).toBeVisible();
 
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   await expect(page.locator(".job-modal")).toBeVisible();
 });
 
@@ -676,13 +695,13 @@ test("permanently deletes a blacklisted application", async ({ page }) => {
   if (await welcome.isVisible()) await welcome.getByRole("button", { name: "Go to board" }).click();
 
   const company = `Blacklisted deletion ${Date.now()}`;
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   await page.getByLabel("Company *").fill(company);
   await page.getByLabel("Position *").fill("Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
   await page.getByRole("button", { name: new RegExp(company) }).click();
-  await page.getByRole("button", { name: "Blacklist", exact: true }).click();
-  await page.getByRole("button", { name: "Confirm blacklist" }).click();
+  await page.getByRole("button", { name: "Add to blacklist" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Add to blacklist" }).click();
   await page.getByRole("link", { name: "Blacklist" }).click();
   await expect(page.getByRole("heading", { name: company })).toBeVisible();
 
@@ -711,22 +730,65 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   }
 
   const company = `E2E Company ${Date.now()}`;
-  await page.getByRole("button", { name: "+ Add job" }).click();
+  await page.getByRole("button", { name: "Add job" }).click();
   await page.getByLabel("Company *").fill(company);
   await page.getByLabel("Position *").fill("E2E Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
   await expect(page.getByRole("button", { name: new RegExp(company) })).toBeVisible();
 
   await page.getByRole("button", { name: new RegExp(company) }).click();
-  await page.getByRole("button", { name: "Blacklist", exact: true }).click();
-  await expect(page.getByLabel("Reason")).toBeVisible();
-  await page.getByLabel("Reason").fill("Duplicate employer");
-  await page.getByRole("button", { name: "Confirm blacklist" }).click();
+  await expect(page).toHaveURL(/\/applications\/\d+$/);
+  await expect(page.getByRole("heading", { name: company })).toBeFocused();
+  await page.getByRole("heading", { name: "Interview preparation" }).waitFor();
+  await page.getByRole("button", { name: "Edit company research" }).click();
+  await page.getByRole("textbox", { name: "Company research" }).fill("Recent product launches and team structure");
+  await page.getByRole("button", { name: "Save company research" }).click();
+  await expect(page.getByText("Recent product launches and team structure")).toBeVisible();
+
+  await page.getByRole("button", { name: "Add contact" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Jordan Recruiter");
+  await page.getByLabel("Role", { exact: true }).fill("Talent Partner");
+  await page.getByLabel("Email", { exact: true }).fill("jordan@example.com");
+  await page.getByRole("button", { name: "Save contact" }).click();
+  await expect(page.getByText("Jordan Recruiter", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Edit Jordan Recruiter" }).click();
+  await page.getByLabel("Role", { exact: true }).fill("Senior Talent Partner");
+  await page.getByRole("button", { name: "Save contact" }).click();
+  await expect(page.getByText("Senior Talent Partner", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Add follow-up" }).click();
+  await page.getByLabel("Task", { exact: true }).fill("Send interview thank-you");
+  await page.getByLabel("Due date").fill("2030-01-15");
+  await page.getByRole("button", { name: "Save follow-up" }).click();
+  await expect(page.getByText("Send interview thank-you", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Edit Send interview thank-you" }).click();
+  await page.getByLabel("Task", { exact: true }).fill("Send recruiter thank-you");
+  await page.getByRole("button", { name: "Save follow-up" }).click();
+  await page.getByRole("button", { name: "Complete Send recruiter thank-you" }).click();
+  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Recent product launches and team structure")).toBeVisible();
+  await expect(page.getByText("Jordan Recruiter", { exact: true })).toBeVisible();
+  await expect(page.getByText("Senior Talent Partner", { exact: true })).toBeVisible();
+  await expect(page.getByText("Send recruiter thank-you", { exact: true })).toBeVisible();
+  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Remove Jordan Recruiter" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
+  await expect(page.getByText("Jordan Recruiter", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Delete Send recruiter thank-you" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
+  await expect(page.getByText("Send recruiter thank-you", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Add to blacklist" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Add to blacklist" }).click();
   await page.getByRole("link", { name: "Blacklist" }).click();
   await expect(page).toHaveURL(/\/blacklist$/);
   const blacklistedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
   await expect(blacklistedCard).toBeVisible();
-  await expect(blacklistedCard.getByText("Duplicate employer", { exact: true })).toBeVisible();
+  await blacklistedCard.getByRole("link", { name: "Open workspace" }).click();
+  await expect(page).toHaveURL(/\/applications\/\d+$/);
+  await expect(page.getByRole("heading", { name: company })).toBeVisible();
+  await page.getByRole("link", { name: "Back to Blacklist" }).click();
   await blacklistedCard.getByRole("button", { name: "Restore" }).click();
   await expect(page.getByText(company, { exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: "Applications" }).click();
@@ -756,16 +818,19 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   ).toBeVisible();
 
   await applicationCard.click();
+  await expect(page).toHaveURL(/\/applications\/\d+$/);
   await page.getByRole("button", { name: "Archive application" }).click();
-  await page.getByRole("link", { name: "Archive" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Archive application" }).click();
+  await page.getByRole("link", { name: "Archive", exact: true }).click();
   await expect(page).toHaveURL(/\/archive$/);
   await expect(page.getByText(company, { exact: true })).toBeVisible();
+  const archivedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
+  await archivedCard.getByRole("link", { name: "Open workspace" }).click();
+  await expect(page).toHaveURL(/\/applications\/\d+$/);
+  await expect(page.getByRole("heading", { name: company })).toBeVisible();
+  await page.getByRole("link", { name: "Back to Archive" }).click();
 
-  await page
-    .getByRole("heading", { name: company })
-    .locator("xpath=../..")
-    .getByRole("button", { name: "Delete" })
-    .click();
+  await archivedCard.getByRole("button", { name: "Delete" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Yes" }).click();
   await expect(page.getByText(company, { exact: true })).toHaveCount(0);
 });

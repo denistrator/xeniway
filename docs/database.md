@@ -41,6 +41,12 @@ Stores one application's system history and user-entered activity. Each row has 
 
 The migration is schema-only: it does not backfill event rows. The detail API derives a read-only creation marker from `job_applications.created_at` for pre-existing records, without claiming to reconstruct their earlier edits or transitions.
 
+### Application workspace tables
+
+`application_workspaces` stores one optional preparation record per application: company research, talking points, and interviewer questions. Its application ID is the primary key; both application and user foreign keys cascade on deletion.
+
+`application_contacts` stores a candidate's people associated with an application, including name, role, optional email, phone, HTTP(S) profile URL, and notes. `application_follow_up_tasks` stores a required title and due date, optional notes, and nullable completion time. Both tables include explicit `user_id` ownership, cascading application/user foreign keys, timestamps, and indexes for ordered application reads and owner-scoped access. Deleting an application cascades to its workspace, contacts, and follow-ups. Repository operations also scope by authenticated user ID; the explicit owner columns do not replace those checks.
+
 ## Migrations
 
 Checked-in SQL migrations live in `apps/api/drizzle`. The migration runner uses a manually ordered ID/file registry, records applied IDs in `schema_migrations`, supports incremental migrations, and can safely be rerun. Apply them with:
@@ -52,7 +58,7 @@ bun run db:migrate
 
 Before iterating the registry, a compatibility branch checks for an existing `users` table or a predecessor initial-migration marker. If either exists, it records `0000_create_xeniway` with conflict-safe insertion. The normal loop then skips that registered ID, so the current initial SQL file is not necessarily executed by this runner even though its current ID is recorded. For all other unrecorded registry entries, the runner executes the paired SQL in a transaction and records the ID only after success.
 
-Migrations create or evolve schema only and do not insert users, applications, or other fixture data. `0006_user_preference_values.sql` adds the nullable language and theme selections, `0007_user_preference_form_presentation.sql` adds the nullable drawer/modal selection, and `0009_application_events.sql` creates the activity table. Rerunning the runner skips recorded IDs.
+Migrations create or evolve schema only and do not insert users, applications, or other fixture data. `0006_user_preference_values.sql` adds the nullable language and theme selections, `0007_user_preference_form_presentation.sql` adds the nullable drawer/modal selection, `0009_application_events.sql` creates the activity table, and `0010_application_workspace.sql` creates preparation, contact, and follow-up storage. Rerunning the runner skips recorded IDs.
 
 ## Development seed
 

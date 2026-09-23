@@ -9,6 +9,7 @@ The repository describes the candidate-tracking product and its local developmen
 ## Structure
 
 - `apps/web` contains the React/Vite SPA, routes, Redux Toolkit UI state, TanStack Query hooks, API client, Tailwind styles, and reusable primitives.
+- `apps/web/src/features/applications/application-workspace` contains the per-application workspace for preparation, contacts, follow-ups, and activity; it shares the application's authenticated lifecycle and ownership rules.
 - `apps/api` contains the Bun/Elysia server, domain-grouped routers under `src/routes/`, authentication and CSRF services, repositories, Drizzle schema, migrations, and development seed command. `src/routes/index.ts` composes health, auth, preferences, and application routers; application routes are grouped into collection, item, events, and board operations.
 - `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
 - `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.
@@ -55,6 +56,8 @@ For frontend work, prefer semantic controls over ARIA recreation, associate ever
 ## Testing expectations
 
 Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, user-visible workflows, and accessibility behavior require focused regression coverage where practical. Exercise keyboard navigation and responsive states for changed UI.
+
+Application workspace changes must preserve owner-scoped API access, archive/blacklist behavior, saved preparation/contact/follow-up data, keyboard navigation, and focus entry/return behavior. Update the API, database, and testing docs when those contracts or workflows change.
 
 Locale changes require focused dictionary/selector tests and a browser test covering language switching, `html[lang]`, `html[dir]`, and reload persistence. Keep all four dictionaries structurally aligned with the English source dictionary.
 
