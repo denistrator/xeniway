@@ -183,6 +183,16 @@ test("contacts edit, cancel, confirm removal, and announce server errors", async
   expect(screen.getByRole("alert")).toHaveClass("text-rose-600");
 });
 
+test("closing a contact removal confirmation while editing restores focus to its trigger", async () => {
+  const user = userEvent.setup();
+  setup(<ContactsSection applicationId={3} contacts={[contact]} />);
+  await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  await user.click(screen.getByRole("button", { name: "Remove Ari Cole" }));
+  expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "No" }));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove Ari Cole" })));
+});
+
 test("contacts save edits through the owned contact endpoint", async () => {
   const user = userEvent.setup();
   const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { contact } }), { status: 200 }));
@@ -296,6 +306,21 @@ test("follow-ups confirm deletion and report failures", async () => {
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes" }));
   await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Delete Write to Ari" })));
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not delete follow-up.");
+});
+
+test("successful follow-up deletion while editing closes the editor and restores focus", async () => {
+  const user = userEvent.setup();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { message: "Deleted" } }), { status: 200 })),
+  );
+  setup(<FollowUpsSection applicationId={3} tasks={[task]} />);
+  await user.click(screen.getByRole("button", { name: "Edit Write to Ari" }));
+  await user.click(screen.getByRole("button", { name: "Delete Write to Ari" }));
+  expect(screen.queryByRole("textbox", { name: "Task" })).toBeNull();
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes" }));
+  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Delete Write to Ari" })));
+  expect(await screen.findByText("Follow-up deleted.")).toBeVisible();
 });
 
 test("workspace section labels render in Hebrew with right-to-left document direction", async () => {

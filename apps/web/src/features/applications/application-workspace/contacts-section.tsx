@@ -21,7 +21,8 @@ export function ContactsSection({
   const headingId = useId();
   const section = useContactsSection(applicationId);
   const addButton = useRef<HTMLButtonElement>(null);
-  const rememberFocus = useReturnFocus(Boolean(section.editing || section.deleting), addButton);
+  const rememberEditorFocus = useReturnFocus(Boolean(section.editing), addButton);
+  const rememberConfirmationFocus = useReturnFocus(Boolean(section.deleting), addButton);
   return (
     <section aria-labelledby={headingId}>
       <Card>
@@ -38,7 +39,7 @@ export function ContactsSection({
             size="sm"
             disabled={Boolean(section.editing)}
             onClick={(event) => {
-              rememberFocus(event.currentTarget);
+              rememberEditorFocus(event.currentTarget);
               section.setEditing("new");
             }}
           >
@@ -58,11 +59,12 @@ export function ContactsSection({
           <ContactList
             contacts={contacts}
             onEdit={(contact, trigger) => {
-              rememberFocus(trigger);
+              rememberEditorFocus(trigger);
               section.setEditing(contact);
             }}
             onRemove={(contact, trigger) => {
-              rememberFocus(trigger);
+              rememberConfirmationFocus(trigger);
+              section.setEditing(null);
               section.setDeleting(contact);
             }}
           />

@@ -22,7 +22,8 @@ export function FollowUpsSection({
   const headingId = useId();
   const section = useFollowUpsSection(applicationId);
   const addButton = useRef<HTMLButtonElement>(null);
-  const rememberFocus = useReturnFocus(Boolean(section.editing || section.deleting), addButton);
+  const rememberEditorFocus = useReturnFocus(Boolean(section.editing), addButton);
+  const rememberConfirmationFocus = useReturnFocus(Boolean(section.deleting), addButton);
   const sorted = sortFollowUps(tasks);
   return (
     <section aria-labelledby={headingId}>
@@ -40,7 +41,7 @@ export function FollowUpsSection({
             size="sm"
             disabled={Boolean(section.editing)}
             onClick={(event) => {
-              rememberFocus(event.currentTarget);
+              rememberEditorFocus(event.currentTarget);
               section.setEditing("new");
             }}
           >
@@ -61,14 +62,15 @@ export function FollowUpsSection({
             tasks={sorted}
             pending={section.pending}
             onEdit={(task, trigger) => {
-              rememberFocus(trigger);
+              rememberEditorFocus(trigger);
               section.setEditing(task);
             }}
             onComplete={(id) => {
               void section.complete(id);
             }}
             onDelete={(task, trigger) => {
-              rememberFocus(trigger);
+              rememberConfirmationFocus(trigger);
+              section.setEditing(null);
               section.setDeleting(task);
             }}
           />
