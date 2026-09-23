@@ -1,11 +1,31 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
-import type { UserPreferences, UserPreferencesResponse } from "@xeniway/shared";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import type { ApplicationDetailResponse, UserPreferences, UserPreferencesResponse } from "@xeniway/shared";
 import { Provider } from "react-redux";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { store } from "../store";
-import { userPreferencesKeys } from "./api";
-import { authKeys, useAuthMutations, useUpdateUserPreferences, useUserPreferences } from "./queries";
+import {
+  applicationKeys,
+  completeApplicationFollowUpTask,
+  createApplicationContact,
+  createApplicationFollowUpTask,
+  deleteApplicationContact,
+  deleteApplicationFollowUpTask,
+  updateApplicationContact,
+  updateApplicationFollowUpTask,
+  updateApplicationPreparation,
+  userPreferencesKeys,
+} from "./api";
+import {
+  authKeys,
+  useApplicationContactMutations,
+  useApplicationDetail,
+  useApplicationFollowUpMutations,
+  useApplicationPreparationMutation,
+  useAuthMutations,
+  useUpdateUserPreferences,
+  useUserPreferences,
+} from "./queries";
 import { userPreferencesStorageKey } from "./user-preferences";
 
 const { getUserPreferences, logout, updateUserPreferences } = vi.hoisted(() => ({
@@ -51,6 +71,8 @@ beforeEach(() => {
   logout.mockReset();
   updateUserPreferences.mockReset();
 });
+
+afterEach(() => vi.unstubAllGlobals());
 
 test("removes all user preference cache entries after successful logout", async () => {
   logout.mockResolvedValue({ data: { message: "Logged out" } });
@@ -225,4 +247,180 @@ test("ignores a late failure after leaving and returning to the same account", a
   rejectRequest(new Error("offline"));
 
   await waitFor(() => expect(result.current.isError).toBe(true));
+});
+
+const applicationId = 42;
+const contactId = 7;
+const taskId = 8;
+const contactInput = { name: "Alex", role: "Recruiter", email: "alex@example.com" };
+const taskInput = { title: "Send portfolio", dueDate: "2026-10-01", notes: null };
+
+test.each([
+  {
+    name: "preparation update",
+    call: () => updateApplicationPreparation(applicationId, { companyResearch: "Research" }, "csrf"),
+    path: `/api/applications/${applicationId}/preparation`,
+    method: "PUT",
+    body: { companyResearch: "Research" },
+  },
+  {
+    name: "contact creation",
+    call: () => createApplicationContact(applicationId, contactInput, "csrf"),
+    path: `/api/applications/${applicationId}/contacts`,
+    method: "POST",
+    body: contactInput,
+  },
+  {
+    name: "contact update",
+    call: () => updateApplicationContact(applicationId, contactId, { phone: "+123" }, "csrf"),
+    path: `/api/applications/${applicationId}/contacts/${contactId}`,
+    method: "PATCH",
+    body: { phone: "+123" },
+  },
+  {
+    name: "contact deletion",
+    call: () => deleteApplicationContact(applicationId, contactId, "csrf"),
+    path: `/api/applications/${applicationId}/contacts/${contactId}`,
+    method: "DELETE",
+    body: undefined,
+  },
+  {
+    name: "follow-up creation",
+    call: () => createApplicationFollowUpTask(applicationId, taskInput, "csrf"),
+    path: `/api/applications/${applicationId}/follow-ups`,
+    method: "POST",
+    body: taskInput,
+  },
+  {
+    name: "follow-up update",
+    call: () => updateApplicationFollowUpTask(applicationId, taskId, { dueDate: "2026-10-02" }, "csrf"),
+    path: `/api/applications/${applicationId}/follow-ups/${taskId}`,
+    method: "PATCH",
+    body: { dueDate: "2026-10-02" },
+  },
+  {
+    name: "follow-up completion",
+    call: () => completeApplicationFollowUpTask(applicationId, taskId, "csrf"),
+    path: `/api/applications/${applicationId}/follow-ups/${taskId}/complete`,
+    method: "POST",
+    body: undefined,
+  },
+  {
+    name: "follow-up deletion",
+    call: () => deleteApplicationFollowUpTask(applicationId, taskId, "csrf"),
+    path: `/api/applications/${applicationId}/follow-ups/${taskId}`,
+    method: "DELETE",
+    body: undefined,
+  },
+])("sends $name with the expected path, method, body and CSRF token", async ({ call, path, method, body }) => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ data: { message: "ok" } }), { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+
+  await call();
+
+  expect(fetchMock).toHaveBeenCalledOnce();
+  const [requestedPath, request] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(requestedPath).toBe(path);
+  expect(request.method).toBe(method);
+  expect(request.credentials).toBe("include");
+  expect((request.headers as Headers).get("x-csrf-token")).toBe("csrf");
+  expect((request.headers as Headers).get("content-type")).toBe(body === undefined ? null : "application/json");
+  expect(request.body).toBe(body === undefined ? undefined : JSON.stringify(body));
+});
+
+test("selects application, activity, preparation, contacts and follow-ups from the detail response", async () => {
+  const detail = {
+    application: { id: applicationId },
+    events: [{ id: 1 }],
+    preparation: { companyResearch: "Research", talkingPoints: null, interviewerQuestions: null, updatedAt: null },
+    contacts: [{ id: contactId }],
+    followUpTasks: [{ id: taskId }],
+  } as ApplicationDetailResponse["data"];
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: detail }), { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+  const { wrapper } = setup();
+
+  const { result } = renderHook(() => useApplicationDetail(applicationId), { wrapper });
+
+  await waitFor(() => expect(result.current.data).toEqual(detail));
+  expect(fetchMock.mock.calls[0]?.[0]).toBe(`/api/applications/${applicationId}`);
+});
+
+test.each([
+  {
+    name: "preparation update",
+    useAction: () => {
+      const mutation = useApplicationPreparationMutation(applicationId);
+      return () => mutation.mutate({ companyResearch: "Research" });
+    },
+  },
+  {
+    name: "contact creation",
+    useAction: () => {
+      const mutations = useApplicationContactMutations(applicationId);
+      return () => mutations.create.mutate(contactInput);
+    },
+  },
+  {
+    name: "contact update",
+    useAction: () => {
+      const mutations = useApplicationContactMutations(applicationId);
+      return () => mutations.update.mutate({ contactId, input: { role: "Hiring manager" } });
+    },
+  },
+  {
+    name: "contact deletion",
+    useAction: () => {
+      const mutations = useApplicationContactMutations(applicationId);
+      return () => mutations.remove.mutate(contactId);
+    },
+  },
+  {
+    name: "follow-up creation",
+    useAction: () => {
+      const mutations = useApplicationFollowUpMutations(applicationId);
+      return () => mutations.create.mutate(taskInput);
+    },
+  },
+  {
+    name: "follow-up update",
+    useAction: () => {
+      const mutations = useApplicationFollowUpMutations(applicationId);
+      return () => mutations.update.mutate({ taskId, input: { title: "Follow up" } });
+    },
+  },
+  {
+    name: "follow-up completion",
+    useAction: () => {
+      const mutations = useApplicationFollowUpMutations(applicationId);
+      return () => mutations.complete.mutate(taskId);
+    },
+  },
+  {
+    name: "follow-up deletion",
+    useAction: () => {
+      const mutations = useApplicationFollowUpMutations(applicationId);
+      return () => mutations.remove.mutate(taskId);
+    },
+  },
+])("invalidates only the matching detail after successful $name", async ({ useAction }) => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ data: { message: "ok" } }), { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+  const { queryClient, wrapper } = setup();
+  queryClient.setQueryData(applicationKeys.detail(applicationId), { data: { application: { id: applicationId } } });
+  queryClient.setQueryData(applicationKeys.detail(99), { data: { application: { id: 99 } } });
+  queryClient.setQueryData(applicationKeys.list("active"), { data: { applications: [] } });
+  const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+  const { result } = renderHook(useAction, { wrapper });
+
+  act(() => result.current());
+
+  await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: applicationKeys.detail(applicationId) }));
+  expect(queryClient.getQueryState(applicationKeys.detail(applicationId))?.isInvalidated).toBe(true);
+  expect(queryClient.getQueryState(applicationKeys.detail(99))?.isInvalidated).toBe(false);
+  expect(queryClient.getQueryState(applicationKeys.list("active"))?.isInvalidated).toBe(false);
 });

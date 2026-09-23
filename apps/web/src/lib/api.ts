@@ -1,13 +1,18 @@
 import type {
   ApiError,
   ApiSuccess,
+  ApplicationContactResponse,
   ApplicationDetailResponse,
   ApplicationEventInput,
   ApplicationEventResponse,
+  ApplicationFollowUpTaskResponse,
   ApplicationListResponse,
+  ApplicationPreparationResponse,
   ApplicationResponse,
   AuthResponse,
   BlacklistInput,
+  CreateApplicationContactInput,
+  CreateApplicationFollowUpTaskInput,
   CreateApplicationInput,
   CsrfResponse,
   CurrentUserResponse,
@@ -20,8 +25,11 @@ import type {
   RegisterInput,
   RemoveAllApplicationsInput,
   ReorderApplicationsInput,
+  UpdateApplicationContactInput,
   UpdateApplicationEventInput,
+  UpdateApplicationFollowUpTaskInput,
   UpdateApplicationInput,
+  UpdateApplicationPreparationInput,
   UpdateUserPreferencesInput,
   UserPreferencesResponse,
 } from "@xeniway/shared";
@@ -185,6 +193,104 @@ export async function exportApplicationsCsv(): Promise<{ blob: Blob; filename: s
 
 export function getApplicationDetail(id: number): Promise<ApplicationDetailResponse> {
   return requestJson<ApplicationDetailResponse>(`/api/applications/${id}`);
+}
+
+export function updateApplicationPreparation(
+  applicationId: number,
+  input: UpdateApplicationPreparationInput,
+  csrfToken: string,
+): Promise<ApplicationPreparationResponse> {
+  return requestJson<ApplicationPreparationResponse>(
+    `/api/applications/${applicationId}/preparation`,
+    { method: "PUT", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function createApplicationContact(
+  applicationId: number,
+  input: CreateApplicationContactInput,
+  csrfToken: string,
+): Promise<ApplicationContactResponse> {
+  return requestJson<ApplicationContactResponse>(
+    `/api/applications/${applicationId}/contacts`,
+    { method: "POST", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function updateApplicationContact(
+  applicationId: number,
+  contactId: number,
+  input: UpdateApplicationContactInput,
+  csrfToken: string,
+): Promise<ApplicationContactResponse> {
+  return requestJson<ApplicationContactResponse>(
+    `/api/applications/${applicationId}/contacts/${contactId}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function deleteApplicationContact(
+  applicationId: number,
+  contactId: number,
+  csrfToken: string,
+): Promise<MessageResponse> {
+  return requestJson<MessageResponse>(
+    `/api/applications/${applicationId}/contacts/${contactId}`,
+    { method: "DELETE" },
+    csrfToken,
+  );
+}
+
+export function createApplicationFollowUpTask(
+  applicationId: number,
+  input: CreateApplicationFollowUpTaskInput,
+  csrfToken: string,
+): Promise<ApplicationFollowUpTaskResponse> {
+  return requestJson<ApplicationFollowUpTaskResponse>(
+    `/api/applications/${applicationId}/follow-ups`,
+    { method: "POST", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function updateApplicationFollowUpTask(
+  applicationId: number,
+  taskId: number,
+  input: UpdateApplicationFollowUpTaskInput,
+  csrfToken: string,
+): Promise<ApplicationFollowUpTaskResponse> {
+  return requestJson<ApplicationFollowUpTaskResponse>(
+    `/api/applications/${applicationId}/follow-ups/${taskId}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+    csrfToken,
+  );
+}
+
+export function completeApplicationFollowUpTask(
+  applicationId: number,
+  taskId: number,
+  csrfToken: string,
+): Promise<ApplicationFollowUpTaskResponse> {
+  return requestJson<ApplicationFollowUpTaskResponse>(
+    `/api/applications/${applicationId}/follow-ups/${taskId}/complete`,
+    { method: "POST" },
+    csrfToken,
+  );
+}
+
+export function deleteApplicationFollowUpTask(
+  applicationId: number,
+  taskId: number,
+  csrfToken: string,
+): Promise<MessageResponse> {
+  return requestJson<MessageResponse>(
+    `/api/applications/${applicationId}/follow-ups/${taskId}`,
+    { method: "DELETE" },
+    csrfToken,
+  );
 }
 
 export function createApplicationEvent(

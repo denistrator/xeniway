@@ -3,6 +3,8 @@ import type {
   ApplicationEventInput,
   ApplicationListResponse,
   BlacklistInput,
+  CreateApplicationContactInput,
+  CreateApplicationFollowUpTaskInput,
   CreateApplicationInput,
   CurrentUserResponse,
   JobApplication,
@@ -10,8 +12,11 @@ import type {
   PasswordResetConfirmInput,
   PasswordResetRequestInput,
   RegisterInput,
+  UpdateApplicationContactInput,
   UpdateApplicationEventInput,
+  UpdateApplicationFollowUpTaskInput,
   UpdateApplicationInput,
+  UpdateApplicationPreparationInput,
   UpdateUserPreferencesInput,
 } from "@xeniway/shared";
 import { useCallback, useEffect, useRef } from "react";
@@ -22,11 +27,16 @@ import {
   applicationKeys,
   archiveApplication,
   blacklistApplication,
+  completeApplicationFollowUpTask,
   confirmPasswordReset,
   createApplication,
+  createApplicationContact,
   createApplicationEvent,
+  createApplicationFollowUpTask,
   deleteApplication,
+  deleteApplicationContact,
   deleteApplicationEvent,
+  deleteApplicationFollowUpTask,
   exportApplicationsCsv,
   getApplicationDetail,
   getCsrfToken,
@@ -45,7 +55,10 @@ import {
   restoreApplication,
   unblacklistApplication,
   updateApplication,
+  updateApplicationContact,
   updateApplicationEvent,
+  updateApplicationFollowUpTask,
+  updateApplicationPreparation,
   updateUserPreferences,
   userPreferencesKeys,
 } from "./api";
@@ -190,6 +203,63 @@ export function useApplicationDetail(id: number | null) {
     retry: false,
     select: (response) => response.data,
   });
+}
+
+export function useApplicationPreparationMutation(applicationId: number) {
+  const queryClient = useQueryClient();
+  const csrfToken = useCsrfToken().data ?? "";
+  return useMutation({
+    mutationFn: (input: UpdateApplicationPreparationInput) =>
+      updateApplicationPreparation(applicationId, input, csrfToken),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: applicationKeys.detail(applicationId) }),
+  });
+}
+
+export function useApplicationContactMutations(applicationId: number) {
+  const queryClient = useQueryClient();
+  const csrfToken = useCsrfToken().data ?? "";
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: applicationKeys.detail(applicationId) });
+  return {
+    create: useMutation({
+      mutationFn: (input: CreateApplicationContactInput) => createApplicationContact(applicationId, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({ contactId, input }: { contactId: number; input: UpdateApplicationContactInput }) =>
+        updateApplicationContact(applicationId, contactId, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (contactId: number) => deleteApplicationContact(applicationId, contactId, csrfToken),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
+export function useApplicationFollowUpMutations(applicationId: number) {
+  const queryClient = useQueryClient();
+  const csrfToken = useCsrfToken().data ?? "";
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: applicationKeys.detail(applicationId) });
+  return {
+    create: useMutation({
+      mutationFn: (input: CreateApplicationFollowUpTaskInput) =>
+        createApplicationFollowUpTask(applicationId, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({ taskId, input }: { taskId: number; input: UpdateApplicationFollowUpTaskInput }) =>
+        updateApplicationFollowUpTask(applicationId, taskId, input, csrfToken),
+      onSuccess: invalidate,
+    }),
+    complete: useMutation({
+      mutationFn: (taskId: number) => completeApplicationFollowUpTask(applicationId, taskId, csrfToken),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (taskId: number) => deleteApplicationFollowUpTask(applicationId, taskId, csrfToken),
+      onSuccess: invalidate,
+    }),
+  };
 }
 
 export function useApplicationEventMutations(applicationId: number) {
