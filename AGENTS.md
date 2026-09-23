@@ -57,6 +57,8 @@ For frontend work, prefer semantic controls over ARIA recreation, associate ever
 
 Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, user-visible workflows, and accessibility behavior require focused regression coverage where practical. Exercise keyboard navigation and responsive states for changed UI.
 
+Keep development seed data deterministic and aligned with the current application and workspace schema. When fixture counts or content change, update seed invariant tests and the setup/database documentation.
+
 Application workspace changes must preserve owner-scoped API access, archive/blacklist behavior, saved preparation/contact/follow-up data, keyboard navigation, and focus entry/return behavior. Update the API, database, and testing docs when those contracts or workflows change.
 
 Locale changes require focused dictionary/selector tests and a browser test covering language switching, `html[lang]`, `html[dir]`, and reload persistence. Keep all four dictionaries structurally aligned with the English source dictionary.

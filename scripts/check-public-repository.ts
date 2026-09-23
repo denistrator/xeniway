@@ -180,6 +180,7 @@ export function formatFinding(finding: Finding): string {
 }
 
 function runGit(args: string[], cwd?: string): Uint8Array {
+  // @ts-ignore
   const result = Bun.spawnSync(["git", ...args], {
     cwd,
     stderr: "pipe",

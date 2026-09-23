@@ -80,6 +80,8 @@ The seed step is optional for ordinary development, but it provides realistic da
 | `admin@example.com` | `password` |
 | `test_user@example.com` | `password` |
 
+Each account receives 32 applications: 20 on the active board, six archived, and six blacklisted. The saved column includes `MINIMAL` and `MAXED` examples; workspace fixtures cover interview preparation, contacts, follow-ups, and dated activity.
+
 Open:
 
 - web app: [http://localhost:5173](http://localhost:5173)

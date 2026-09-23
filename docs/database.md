@@ -69,4 +69,8 @@ Run `bun run db:seed` after migrations. The command is for local development onl
 
 The seed command resets all three selected values to `NULL` and `was_introduced` to `false` for these development accounts, making preference and welcome tests repeatable.
 
-It creates 36 applications: three per status for each account. Re-running the command replaces only rows identified by its development seed keys. The seed command does not represent production data and should never be run against a production database.
+It creates 32 applications per account (64 total): 20 active applications, six archived applications, and six blacklisted applications. The active board has three examples per status plus two extra saved records: `MINIMAL` has only its required company and position, while `MAXED` fills the applicable application and workspace fields with realistic detail. Each account's archive and blacklist contain one application per status.
+
+Workspace fixtures vary deterministically: interview-preparation fields may be empty, contacts and follow-ups range from zero to three, and follow-ups span overdue, due-today, and future dates with both open and completed states. Activity events range from zero to three per application, have dates, and include descriptions for roughly half of ordinary events; `MAXED` fills them all. The `MINIMAL` record has no preparation row, contacts, follow-ups, or stored activity. Follow-up and activity dates are based on the date the seed is run, while record selection and optional-field variation remain deterministic.
+
+Re-running the command replaces the seeded applications and their cascading workspace records using development seed keys. The operation does not touch non-seed application records. The seed command does not represent production data and should never be run against a production database.
