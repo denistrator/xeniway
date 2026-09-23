@@ -1,4 +1,13 @@
-import type { ApplicationEvent, AuthResponse, JobApplication, SupportedLocale, ThemePreference } from "@xeniway/shared";
+import type {
+  ApplicationContact,
+  ApplicationEvent,
+  ApplicationFollowUpTask,
+  ApplicationPreparation,
+  AuthResponse,
+  JobApplication,
+  SupportedLocale,
+  ThemePreference,
+} from "@xeniway/shared";
 import type { AppDependencies, createApp } from "./app";
 import { withApplicationCreationEvent } from "./application-history";
 import type {
@@ -24,6 +33,18 @@ export function createDependencies(): AppDependencies {
   const resetTokens: Array<{ userId: number; tokenHash: string; expiresAt: Date; usedAt: Date | null }> = [];
   const applications: JobApplication[] = [];
   const events: ApplicationEvent[] = [];
+  const preparations = new Map<number, ApplicationPreparation>();
+  const contacts: ApplicationContact[] = [];
+  const followUpTasks: ApplicationFollowUpTask[] = [];
+  let nextContactId = 1;
+  let nextTaskId = 1;
+
+  const emptyPreparation = (): ApplicationPreparation => ({
+    companyResearch: null,
+    talkingPoints: null,
+    interviewerQuestions: null,
+    updatedAt: null,
+  });
 
   const userRepository: UserRepository = {
     async findByEmail(email) {
@@ -72,6 +93,114 @@ export function createDependencies(): AppDependencies {
   };
 
   const applicationRepository: ApplicationRepository = {
+    async loadWorkspace(userId, applicationId) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      return {
+        preparation: preparations.get(applicationId) ?? emptyPreparation(),
+        contacts: contacts
+          .filter((contact) => contact.applicationId === applicationId)
+          .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id - right.id),
+        followUpTasks: followUpTasks
+          .filter((task) => task.applicationId === applicationId)
+          .sort((left, right) => {
+            if (!!left.completedAt !== !!right.completedAt) return left.completedAt ? 1 : -1;
+            if (!left.completedAt && !right.completedAt)
+              return left.dueDate.localeCompare(right.dueDate) || left.id - right.id;
+            return (left.completedAt ?? "").localeCompare(right.completedAt ?? "") || left.id - right.id;
+          }),
+      };
+    },
+    async updatePreparation(userId, applicationId, input) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      const previous = preparations.get(applicationId) ?? emptyPreparation();
+      const preparation: ApplicationPreparation = {
+        companyResearch: input.companyResearch === undefined ? previous.companyResearch : input.companyResearch,
+        talkingPoints: input.talkingPoints === undefined ? previous.talkingPoints : input.talkingPoints,
+        interviewerQuestions:
+          input.interviewerQuestions === undefined ? previous.interviewerQuestions : input.interviewerQuestions,
+        updatedAt: new Date().toISOString(),
+      };
+      preparations.set(applicationId, preparation);
+      return preparation;
+    },
+    async createContact(userId, applicationId, input) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      const now = new Date().toISOString();
+      const contact: ApplicationContact = {
+        id: nextContactId++,
+        applicationId,
+        name: input.name,
+        role: input.role,
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        profileUrl: input.profileUrl ?? null,
+        notes: input.notes ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      contacts.push(contact);
+      return contact;
+    },
+    async updateContact(userId, applicationId, contactId, input) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      const contact = contacts.find((item) => item.id === contactId && item.applicationId === applicationId);
+      if (!contact) return null;
+      if (input.name !== undefined) contact.name = input.name;
+      if (input.role !== undefined) contact.role = input.role;
+      if (input.email !== undefined) contact.email = input.email;
+      if (input.phone !== undefined) contact.phone = input.phone;
+      if (input.profileUrl !== undefined) contact.profileUrl = input.profileUrl;
+      if (input.notes !== undefined) contact.notes = input.notes;
+      contact.updatedAt = new Date().toISOString();
+      return contact;
+    },
+    async deleteContact(userId, applicationId, contactId) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return false;
+      const index = contacts.findIndex((item) => item.id === contactId && item.applicationId === applicationId);
+      if (index === -1) return false;
+      contacts.splice(index, 1);
+      return true;
+    },
+    async createFollowUpTask(userId, applicationId, input) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      const now = new Date().toISOString();
+      const task: ApplicationFollowUpTask = {
+        id: nextTaskId++,
+        applicationId,
+        title: input.title,
+        dueDate: input.dueDate,
+        notes: input.notes ?? null,
+        completedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      followUpTasks.push(task);
+      return task;
+    },
+    async updateFollowUpTask(userId, applicationId, taskId, input) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      const task = followUpTasks.find((item) => item.id === taskId && item.applicationId === applicationId);
+      if (!task) return null;
+      if (input.title !== undefined) task.title = input.title;
+      if (input.dueDate !== undefined) task.dueDate = input.dueDate;
+      if (input.notes !== undefined) task.notes = input.notes;
+      task.updatedAt = new Date().toISOString();
+      return task;
+    },
+    async completeFollowUpTask(userId, applicationId, taskId) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      const task = followUpTasks.find((item) => item.id === taskId && item.applicationId === applicationId);
+      if (!task) return null;
+      if (!task.completedAt) task.completedAt = task.updatedAt = new Date().toISOString();
+      return task;
+    },
+    async deleteFollowUpTask(userId, applicationId, taskId) {
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) return false;
+      const index = followUpTasks.findIndex((item) => item.id === taskId && item.applicationId === applicationId);
+      if (index === -1) return false;
+      followUpTasks.splice(index, 1);
+      return true;
+    },
     async listForExport(userId): Promise<ApplicationExportRecord[]> {
       return applications
         .filter((application) => applicationUserIds.get(application.id) === userId)
@@ -217,6 +346,11 @@ export function createDependencies(): AppDependencies {
       if (!application) return false;
       applications.splice(applications.indexOf(application), 1);
       applicationUserIds.delete(id);
+      preparations.delete(id);
+      for (const contact of contacts.filter((item) => item.applicationId === id))
+        contacts.splice(contacts.indexOf(contact), 1);
+      for (const task of followUpTasks.filter((item) => item.applicationId === id))
+        followUpTasks.splice(followUpTasks.indexOf(task), 1);
       return true;
     },
     async removeAll(userId, board) {

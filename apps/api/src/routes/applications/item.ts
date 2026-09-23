@@ -21,8 +21,13 @@ export function applicationItemRoutes({ applications, auth }: ApplicationRouteDe
       if (id === null) return errorResponse("INVALID_ID", "Application id must be a positive integer");
       const application = await applications.findById(userId, id, { anyState: true });
       if (!application) return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
-      const events = withApplicationCreationEvent(application, await applications.listEvents(userId, id));
-      const response: ApplicationDetailResponse = { data: { application, events } };
+      const [storedEvents, workspace] = await Promise.all([
+        applications.listEvents(userId, id),
+        applications.loadWorkspace(userId, id),
+      ]);
+      if (!workspace) return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
+      const events = withApplicationCreationEvent(application, storedEvents);
+      const response: ApplicationDetailResponse = { data: { application, events, ...workspace } };
       return response;
     })
     .post("/api/applications", async ({ body, request, set }) => {

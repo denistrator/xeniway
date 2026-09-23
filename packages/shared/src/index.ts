@@ -282,6 +282,9 @@ export type ApplicationDetailResponse = ApiSuccess<{
   contacts: ApplicationContact[];
   followUpTasks: ApplicationFollowUpTask[];
 }>;
+export type ApplicationPreparationResponse = ApiSuccess<{ preparation: ApplicationPreparation }>;
+export type ApplicationContactResponse = ApiSuccess<{ contact: ApplicationContact }>;
+export type ApplicationFollowUpTaskResponse = ApiSuccess<{ followUpTask: ApplicationFollowUpTask }>;
 export type ApplicationEventResponse = ApiSuccess<{ event: ApplicationEvent }>;
 export type ApplicationListResponse = ApiSuccess<{ applications: JobApplication[] }>;
 export type MessageResponse = ApiSuccess<{ message: string }>;
