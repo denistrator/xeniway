@@ -426,6 +426,101 @@ databaseDescribe("application workspace persistence", () => {
     });
   });
 
+  it("ignores protected runtime fields in preparation, contact, and follow-up writes", async () => {
+    const forgedTimestamp = new Date("2000-01-01T00:00:00.000Z");
+    const preparation = await repository.updatePreparation(ownerId, applicationId, {
+      companyResearch: "Owned research",
+      userId: otherId,
+      applicationId: foreignApplicationId,
+      createdAt: forgedTimestamp,
+      updatedAt: forgedTimestamp,
+    } as never);
+    expect(preparation?.companyResearch).toBe("Owned research");
+    expect(preparation?.updatedAt).not.toBe(forgedTimestamp.toISOString());
+    const [preparationRow] = await database
+      .select()
+      .from(applicationWorkspaces)
+      .where(eq(applicationWorkspaces.applicationId, applicationId));
+    expect(preparationRow).toMatchObject({ userId: ownerId, applicationId, companyResearch: "Owned research" });
+    expect(preparationRow.createdAt).not.toEqual(forgedTimestamp);
+    const updatedPreparation = await repository.updatePreparation(ownerId, applicationId, {
+      talkingPoints: "Also owned",
+      userId: otherId,
+      applicationId: foreignApplicationId,
+      createdAt: forgedTimestamp,
+      updatedAt: forgedTimestamp,
+    } as never);
+    expect(updatedPreparation).toMatchObject({ companyResearch: "Owned research", talkingPoints: "Also owned" });
+    expect(updatedPreparation?.updatedAt).not.toBe(forgedTimestamp.toISOString());
+    const [updatedPreparationRow] = await database
+      .select()
+      .from(applicationWorkspaces)
+      .where(eq(applicationWorkspaces.applicationId, applicationId));
+    expect(updatedPreparationRow).toMatchObject({ userId: ownerId, applicationId });
+    expect(updatedPreparationRow.createdAt).not.toEqual(forgedTimestamp);
+
+    const contact = required(
+      await repository.createContact(ownerId, applicationId, {
+        name: "Original contact",
+        role: "Recruiter",
+        userId: otherId,
+        applicationId: foreignApplicationId,
+        createdAt: forgedTimestamp,
+        updatedAt: forgedTimestamp,
+      } as never),
+    );
+    expect(contact.updatedAt).not.toBe(forgedTimestamp.toISOString());
+    const updatedContact = await repository.updateContact(ownerId, applicationId, contact.id, {
+      name: "Updated contact",
+      id: contact.id + 10_000,
+      userId: otherId,
+      applicationId: foreignApplicationId,
+      createdAt: forgedTimestamp,
+      updatedAt: forgedTimestamp,
+    } as never);
+    expect(updatedContact).toMatchObject({ id: contact.id, applicationId, name: "Updated contact" });
+    expect(updatedContact?.createdAt).not.toBe(forgedTimestamp.toISOString());
+    expect(updatedContact?.updatedAt).not.toBe(forgedTimestamp.toISOString());
+    const [contactRow] = await database
+      .select()
+      .from(applicationContacts)
+      .where(eq(applicationContacts.id, contact.id));
+    expect(contactRow).toMatchObject({ id: contact.id, userId: ownerId, applicationId });
+    expect(contactRow.createdAt).not.toEqual(forgedTimestamp);
+
+    const task = required(
+      await repository.createFollowUpTask(ownerId, applicationId, {
+        title: "Original follow-up",
+        dueDate: "2026-10-01",
+        completedAt: forgedTimestamp,
+        userId: otherId,
+        applicationId: foreignApplicationId,
+        createdAt: forgedTimestamp,
+        updatedAt: forgedTimestamp,
+      } as never),
+    );
+    expect(task.completedAt).toBeNull();
+    expect(task.updatedAt).not.toBe(forgedTimestamp.toISOString());
+    const updatedTask = await repository.updateFollowUpTask(ownerId, applicationId, task.id, {
+      title: "Updated follow-up",
+      id: task.id + 10_000,
+      userId: otherId,
+      applicationId: foreignApplicationId,
+      completedAt: forgedTimestamp,
+      createdAt: forgedTimestamp,
+      updatedAt: forgedTimestamp,
+    } as never);
+    expect(updatedTask).toMatchObject({ id: task.id, applicationId, title: "Updated follow-up", completedAt: null });
+    expect(updatedTask?.createdAt).not.toBe(forgedTimestamp.toISOString());
+    expect(updatedTask?.updatedAt).not.toBe(forgedTimestamp.toISOString());
+    const [taskRow] = await database
+      .select()
+      .from(applicationFollowUpTasks)
+      .where(eq(applicationFollowUpTasks.id, task.id));
+    expect(taskRow).toMatchObject({ id: task.id, userId: ownerId, applicationId, completedAt: null });
+    expect(taskRow.createdAt).not.toEqual(forgedTimestamp);
+  });
+
   it("orders contacts by creation time and ID and maps server timestamps", async () => {
     const later = required(
       await repository.createContact(ownerId, applicationId, { name: "Later", role: "Recruiter" }),

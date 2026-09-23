@@ -107,10 +107,21 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
       const [row] = await transaction
         .insert(applicationWorkspaces)
-        .values({ applicationId, userId, ...input })
+        .values({
+          applicationId,
+          userId,
+          companyResearch: input.companyResearch,
+          talkingPoints: input.talkingPoints,
+          interviewerQuestions: input.interviewerQuestions,
+        })
         .onConflictDoUpdate({
           target: applicationWorkspaces.applicationId,
-          set: { ...input, updatedAt: new Date() },
+          set: {
+            companyResearch: input.companyResearch,
+            talkingPoints: input.talkingPoints,
+            interviewerQuestions: input.interviewerQuestions,
+            updatedAt: new Date(),
+          },
           setWhere: eq(applicationWorkspaces.userId, userId),
         })
         .returning();
@@ -127,7 +138,16 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
       const [row] = await transaction
         .insert(applicationContacts)
-        .values({ ...input, userId, applicationId })
+        .values({
+          userId,
+          applicationId,
+          name: input.name,
+          role: input.role,
+          email: input.email,
+          phone: input.phone,
+          profileUrl: input.profileUrl,
+          notes: input.notes,
+        })
         .returning();
       if (!row) throw new Error("Unable to create application contact");
       return toApplicationContact(row);
@@ -142,7 +162,15 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   ): Promise<ApplicationContact | null> {
     const [row] = await this.database
       .update(applicationContacts)
-      .set({ ...input, updatedAt: new Date() })
+      .set({
+        name: input.name,
+        role: input.role,
+        email: input.email,
+        phone: input.phone,
+        profileUrl: input.profileUrl,
+        notes: input.notes,
+        updatedAt: new Date(),
+      })
       .where(
         and(
           eq(applicationContacts.userId, userId),
@@ -178,7 +206,13 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
       const [row] = await transaction
         .insert(applicationFollowUpTasks)
-        .values({ ...input, userId, applicationId })
+        .values({
+          userId,
+          applicationId,
+          title: input.title,
+          dueDate: input.dueDate,
+          notes: input.notes,
+        })
         .returning();
       if (!row) throw new Error("Unable to create follow-up task");
       return toApplicationFollowUpTask(row);
@@ -193,7 +227,12 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   ): Promise<ApplicationFollowUpTask | null> {
     const [row] = await this.database
       .update(applicationFollowUpTasks)
-      .set({ ...input, updatedAt: new Date() })
+      .set({
+        title: input.title,
+        dueDate: input.dueDate,
+        notes: input.notes,
+        updatedAt: new Date(),
+      })
       .where(
         and(
           eq(applicationFollowUpTasks.userId, userId),
