@@ -26,6 +26,27 @@ const he = {
   footer: { description: "© {{year}} Xenia Way · נבנה לחיפוש עבודה ממוקד" },
   applications: {
     workspace: {
+      open: "פתיחת סביבת העבודה",
+      backTo: "חזרה אל {{board}}",
+      actionsHeading: "פעולות למשרה",
+      actionsLabel: "פעולות למשרה",
+      edit: "עריכת המשרה",
+      archive: "העברה לארכיון",
+      blacklist: "הוספה לרשימה השחורה",
+      restore: "שחזור המשרה",
+      delete: "מחיקה לצמיתות",
+      location: "מיקום",
+      salary: "שכר",
+      appliedAt: "מועד הגשת המועמדות",
+      jobUrl: "מודעת המשרה",
+      notProvided: "לא צוין",
+      applicationNotes: "הערות על המועמדות",
+      confirm: {
+        archive: "להעביר את המועמדות לארכיון? אפשר לשחזר אותה בהמשך.",
+        blacklist: "להוסיף את המועמדות לרשימה השחורה? אפשר לשחזר אותה בהמשך.",
+        restore: "לשחזר את המועמדות ללוח הראשי?",
+        delete: "למחוק לצמיתות את המועמדות ואת נתוני סביבת העבודה שלה? אי אפשר לבטל את הפעולה.",
+      },
       actions: { edit: "עריכה", save: "שמירה", cancel: "ביטול", remove: "הסרה", delete: "מחיקה", saving: "שומר…" },
       validation: {
         nameRequired: "צריך להזין שם.",
@@ -215,6 +236,7 @@ const he = {
       switchToDrawer: "מעבר לחלונית צד",
     },
     board: {
+      openDetails: "פתיחת סביבת העבודה של המועמדות",
       dropHere: "שחררו מועמדויות כאן",
       noMatch: "אין מועמדויות שתואמות לחיפוש ולמסנני הסטטוס הנוכחיים.",
       applied: "הוגשה ב־{{date}}",

@@ -40,6 +40,27 @@ export const en = {
   },
   applications: {
     workspace: {
+      open: "Open workspace",
+      backTo: "Back to {{board}}",
+      actionsHeading: "Application actions",
+      actionsLabel: "Application actions",
+      edit: "Edit application",
+      archive: "Archive application",
+      blacklist: "Add to blacklist",
+      restore: "Restore application",
+      delete: "Delete permanently",
+      location: "Location",
+      salary: "Salary",
+      appliedAt: "Applied",
+      jobUrl: "Job listing",
+      notProvided: "Not provided",
+      applicationNotes: "Application notes",
+      confirm: {
+        archive: "Archive this application? You can restore it later.",
+        blacklist: "Add this application to your blacklist? You can restore it later.",
+        restore: "Restore this application to the main board?",
+        delete: "Permanently delete this application and its workspace data? This cannot be undone.",
+      },
       actions: { edit: "Edit", save: "Save", cancel: "Cancel", remove: "Remove", delete: "Delete", saving: "Saving…" },
       validation: {
         nameRequired: "Name is required.",
@@ -229,6 +250,7 @@ export const en = {
       switchToDrawer: "Switch to drawer",
     },
     board: {
+      openDetails: "Activate to open application workspace",
       dropHere: "Drop applications here",
       noMatch: "No applications match the current search and status filters.",
       applied: "Applied {{date}}",

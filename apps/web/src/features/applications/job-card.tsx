@@ -56,7 +56,7 @@ export function JobCard({
         onKeyboardMove(direction);
       }}
       aria-keyshortcuts="ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight"
-      aria-label={`${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`}
+      aria-label={`${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. ${t("applications.board.openDetails")}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`}
       className="w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-3">

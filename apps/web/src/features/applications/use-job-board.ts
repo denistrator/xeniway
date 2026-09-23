@@ -1,6 +1,6 @@
 import type { JobApplication, JobStatus } from "@xeniway/shared";
 import { useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { matchesApplicationSearch } from "../../lib/application-filters";
 import type { RootState } from "../../store";
 import { insertApplication, type MoveDirection, moveApplication } from "./application-order";
@@ -16,7 +16,6 @@ export function useJobBoard({
   onStatusChange: (id: number, status: JobStatus) => void;
   onReorder: (status: JobStatus, applicationIds: number[]) => void;
 }) {
-  const dispatch = useDispatch();
   const { search, visibleStatuses } = useSelector((state: RootState) => state.ui);
   const draggedIdRef = useRef<number | null>(null);
   const [dropTarget, setDropTarget] = useState<{ status: JobStatus; index: number } | null>(null);
@@ -74,7 +73,6 @@ export function useJobBoard({
   }
 
   return {
-    dispatch,
     visibleStatuses,
     filteredJobs,
     draggedIdRef,

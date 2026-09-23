@@ -1,6 +1,6 @@
 import type { JobApplication, JobStatus } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
-import { openEditDrawer } from "../../store";
+import { useNavigate } from "react-router-dom";
 import { JobBoardColumn } from "./job-board-column";
 import { jobStatuses } from "./job-status";
 import { useJobBoard } from "./use-job-board";
@@ -17,6 +17,7 @@ export function JobBoard({
   onReorder: (status: JobStatus, applicationIds: number[]) => void;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const board = useJobBoard({ jobs, onStatusChange, onReorder });
   return (
     <div className="job-board-scroll w-full overflow-x-auto">
@@ -38,7 +39,7 @@ export function JobBoard({
                   board.moveToAdjacentStatus(id, currentStatus, direction);
                 else board.reorderWithinStatus(currentStatus, id, direction);
               }}
-              onOpen={(id) => board.dispatch(openEditDrawer(id))}
+              onOpen={(id) => navigate(`/applications/${id}`)}
             />
           ))}
       </div>

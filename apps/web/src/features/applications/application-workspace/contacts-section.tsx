@@ -1,13 +1,13 @@
 import type { ApplicationContact } from "@xeniway/shared";
 import { useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
+import { Card, CardContent } from "../../../components/ui/card";
 import { ContactForm } from "./contact-form";
 import { ContactList } from "./contact-list";
 import { useContactsSection } from "./use-contacts-section";
 import { useReturnFocus } from "./use-return-focus";
+import { WorkspaceDeleteConfirmation } from "./workspace-delete-confirmation";
+import { WorkspaceSectionHeader } from "./workspace-section-header";
 import { WorkspaceStatus } from "./workspace-status";
 
 export function ContactsSection({
@@ -26,26 +26,18 @@ export function ContactsSection({
   return (
     <section aria-labelledby={headingId}>
       <Card>
-        <CardHeader className="flex flex-wrap flex-row items-start justify-between gap-3">
-          <div>
-            <CardTitle id={headingId} className="font-display text-xl">
-              {t("applications.workspace.contacts.heading")}
-            </CardTitle>
-            <p className="mt-1 text-sm text-muted">{t("applications.workspace.contacts.help")}</p>
-          </div>
-          <Button
-            ref={addButton}
-            type="button"
-            size="sm"
-            disabled={Boolean(section.editing)}
-            onClick={(event) => {
-              rememberEditorFocus(event.currentTarget);
-              section.setEditing("new");
-            }}
-          >
-            {t("applications.workspace.contacts.add")}
-          </Button>
-        </CardHeader>
+        <WorkspaceSectionHeader
+          headingId={headingId}
+          title={t("applications.workspace.contacts.heading")}
+          help={t("applications.workspace.contacts.help")}
+          addLabel={t("applications.workspace.contacts.add")}
+          addButton={addButton}
+          disabled={Boolean(section.editing)}
+          onAdd={(trigger) => {
+            rememberEditorFocus(trigger);
+            section.setEditing("new");
+          }}
+        />
         <CardContent>
           {section.editing && (
             <ContactForm
@@ -72,16 +64,14 @@ export function ContactsSection({
         </CardContent>
       </Card>
       {section.deleting && (
-        <ConfirmationModal
+        <WorkspaceDeleteConfirmation
           title={t("applications.workspace.contacts.removeTitle")}
           text={t("applications.workspace.contacts.removeConfirmation", { name: section.deleting.name })}
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
-          onYes={() => {
-            void section.remove();
-          }}
+          onYes={() => void section.remove()}
           onNo={() => section.setDeleting(null)}
-          yesDisabled={section.pending}
+          pending={section.pending}
         />
       )}
     </section>

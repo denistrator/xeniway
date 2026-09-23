@@ -1,6 +1,7 @@
 import type { JobApplication } from "@xeniway/shared";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "../../components/ui/card";
 import { ApplicationActivity } from "./activity/application-activity";
 import { ApplicationCollectionActions } from "./application-collection-actions";
@@ -36,6 +37,12 @@ export function ApplicationCollectionCard({
           <p className="mt-2 text-sm leading-6 text-muted">
             {t("applications.blacklist.status", { status: getStatusLabel(t, job.status) })}
           </p>
+          <Link
+            className="mt-2 inline-flex rounded-lg text-sm font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2"
+            to={`/applications/${job.id}`}
+          >
+            {t("applications.workspace.open")}
+          </Link>
           {details}
         </div>
         <ApplicationCollectionActions

@@ -1,14 +1,14 @@
 import type { ApplicationFollowUpTask } from "@xeniway/shared";
 import { useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
+import { Card, CardContent } from "../../../components/ui/card";
+import { FollowUpDeleteDialog } from "./follow-up-delete-dialog";
 import { FollowUpForm } from "./follow-up-form";
 import { FollowUpList } from "./follow-up-list";
 import { sortFollowUps } from "./sort-follow-ups";
 import { useFollowUpsSection } from "./use-follow-ups-section";
 import { useReturnFocus } from "./use-return-focus";
+import { WorkspaceSectionHeader } from "./workspace-section-header";
 import { WorkspaceStatus } from "./workspace-status";
 
 export function FollowUpsSection({
@@ -28,26 +28,18 @@ export function FollowUpsSection({
   return (
     <section aria-labelledby={headingId}>
       <Card>
-        <CardHeader className="flex flex-wrap flex-row items-start justify-between gap-3">
-          <div>
-            <CardTitle id={headingId} className="font-display text-xl">
-              {t("applications.workspace.followUps.heading")}
-            </CardTitle>
-            <p className="mt-1 text-sm text-muted">{t("applications.workspace.followUps.help")}</p>
-          </div>
-          <Button
-            ref={addButton}
-            type="button"
-            size="sm"
-            disabled={Boolean(section.editing)}
-            onClick={(event) => {
-              rememberEditorFocus(event.currentTarget);
-              section.setEditing("new");
-            }}
-          >
-            {t("applications.workspace.followUps.add")}
-          </Button>
-        </CardHeader>
+        <WorkspaceSectionHeader
+          headingId={headingId}
+          title={t("applications.workspace.followUps.heading")}
+          help={t("applications.workspace.followUps.help")}
+          addLabel={t("applications.workspace.followUps.add")}
+          addButton={addButton}
+          disabled={Boolean(section.editing)}
+          onAdd={(trigger) => {
+            rememberEditorFocus(trigger);
+            section.setEditing("new");
+          }}
+        />
         <CardContent>
           {section.editing && (
             <FollowUpForm
@@ -65,9 +57,7 @@ export function FollowUpsSection({
               rememberEditorFocus(trigger);
               section.setEditing(task);
             }}
-            onComplete={(id) => {
-              void section.complete(id);
-            }}
+            onComplete={(id) => void section.complete(id)}
             onDelete={(task, trigger) => {
               rememberConfirmationFocus(trigger);
               section.setEditing(null);
@@ -78,16 +68,11 @@ export function FollowUpsSection({
         </CardContent>
       </Card>
       {section.deleting && (
-        <ConfirmationModal
-          title={t("applications.workspace.followUps.deleteTitle")}
-          text={t("applications.workspace.followUps.deleteConfirmation", { title: section.deleting.title })}
-          yesLabel={t("common.actions.yes")}
-          noLabel={t("common.actions.no")}
-          onYes={() => {
-            void section.remove();
-          }}
-          onNo={() => section.setDeleting(null)}
-          yesDisabled={section.pending}
+        <FollowUpDeleteDialog
+          task={section.deleting}
+          pending={section.pending}
+          onDelete={() => void section.remove()}
+          onCancel={() => section.setDeleting(null)}
         />
       )}
     </section>

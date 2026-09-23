@@ -1,7 +1,4 @@
-import {
-  createApplicationContactInputSchema,
-  createApplicationFollowUpTaskInputSchema,
-} from "@xeniway/shared";
+import { createApplicationContactInputSchema, createApplicationFollowUpTaskInputSchema } from "@xeniway/shared";
 
 export type ContactDraft = {
   name: string;

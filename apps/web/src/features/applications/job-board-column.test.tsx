@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { JobApplication } from "@xeniway/shared";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeI18n } from "../../i18n/i18n";
@@ -69,6 +69,31 @@ test("handles a card drop once across nested drop targets", () => {
   }
 
   expect(onDrop).toHaveBeenCalledTimes(1);
+});
+
+test("opens the application workspace by click while preserving keyboard reordering", () => {
+  const onOpen = vi.fn();
+  const onKeyboardMove = vi.fn();
+  render(
+    <JobBoardColumn
+      status="saved"
+      columnJobs={[job]}
+      onDrop={vi.fn()}
+      onJobDrop={vi.fn()}
+      onDragStart={vi.fn()}
+      dropTarget={null}
+      setDropTarget={vi.fn()}
+      onKeyboardMove={onKeyboardMove}
+      onOpen={onOpen}
+    />,
+  );
+
+  const card = screen.getByRole("button", { name: /Activate to open application workspace/ });
+  fireEvent.click(card);
+  fireEvent.keyDown(card, { key: "ArrowUp" });
+
+  expect(onOpen).toHaveBeenCalledWith(job.id);
+  expect(onKeyboardMove).toHaveBeenCalledWith(job.id, "saved", "up");
 });
 
 test("preserves the hovered insertion point when dropping on the placeholder", () => {

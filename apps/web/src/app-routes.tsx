@@ -17,6 +17,11 @@ const ForgotPasswordPage = lazy(() =>
   })),
 );
 const HomePage = lazy(() => import("./pages/home-page").then(({ HomePage }) => ({ default: HomePage })));
+const ApplicationWorkspacePage = lazy(() =>
+  import("./features/applications/application-workspace/application-workspace-page").then(
+    ({ ApplicationWorkspacePage }) => ({ default: ApplicationWorkspacePage }),
+  ),
+);
 const LoginPage = lazy(() =>
   import("./features/auth/login/login-page").then(({ LoginPage }) => ({ default: LoginPage })),
 );
@@ -42,6 +47,7 @@ export function AppRoutes() {
             <Route path="/" element={<HomePage />} />
             <Route path="/archive" element={<ArchivePage />} />
             <Route path="/blacklist" element={<BlacklistPage />} />
+            <Route path="/applications/:id" element={<ApplicationWorkspacePage />} />
           </Route>
           <Route element={<GuestOnly />}>
             <Route path="/login" element={<LoginPage />} />
