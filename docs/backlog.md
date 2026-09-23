@@ -1,8 +1,17 @@
-# Refactoring backlog
+# Project backlog
 
-This is a shortlist of possible future refactors, not approval to change behavior. Re-check the current code before starting an item; keep each change scoped, behavior-preserving, and covered by focused tests. Update or remove entries when the code changes.
+This document tracks worthwhile future tasks across product features, bugs, documentation, security, operations, and refactoring. Entries are ideas, not approval to implement them. Re-check the current code and requirements before starting an item; keep implementation scoped and covered by focused tests. Update or remove entries when the code or project direction changes.
 
-## Open
+## Open tasks
+
+### Data portability: import and export format choice
+
+- **Area:** User data portability.
+- **Why:** CSV export is the first planned step; future import and export should support both CSV and JSON and let the user choose a format.
+- **Possible direction:** After the CSV export is established, design a consistent format-selection experience for import and export. Define JSON as the structured backup/restore format and CSV as the spreadsheet-friendly format, subject to product review.
+- **Guardrails:** Keep all imports and exports scoped to the authenticated user. Define validation, duplicate handling, and failure behavior before implementing import. Never include credentials, sessions, or CSRF tokens in exported data.
+
+## Open refactoring tasks
 
 ### Split API in-memory test support by domain
 
