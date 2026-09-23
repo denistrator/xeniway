@@ -10,7 +10,7 @@ import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
 const JobManagerHost = lazy(() =>
-  import("../features/applications/job-manager-host").then(({ JobManagerHost }) => ({ default: JobManagerHost })),
+  import("../features/applications/form/job-manager-host").then(({ JobManagerHost }) => ({ default: JobManagerHost })),
 );
 
 export function Layout() {

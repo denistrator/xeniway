@@ -7,9 +7,9 @@
 - `apps/web/src/lib/api.test.ts` covers client error parsing, query-key separation, and CSRF headers on password-reset mutations.
 - `apps/web/src/features/welcome/welcome-modal.test.tsx` covers localized welcome content, completion actions, backdrop/Escape behavior, and the language control.
 - `apps/web/src/i18n/i18n.test.ts`, `apps/web/src/i18n/format.test.ts`, and `apps/web/src/features/preferences/language-selector.test.tsx` cover locale resolution, lazy resource selection, browser persistence, date formatting, compact labels, and accessible language names.
-- `apps/web/src/features/applications/job-status.test.ts` protects the shared six-status display order and translated labels used by the board, filters, and form.
+- `apps/web/src/features/applications/board/job-status.test.ts` protects the shared six-status display order and translated labels used by the board, filters, and form.
 - `apps/web/src/features/applications/activity/*.test.tsx` covers localized timeline rendering, immutable system history, and manual activity form submission.
-- `apps/web/src/features/applications/application-workspace/*.test.tsx` covers workspace navigation, lifecycle routing, forms, validation, persistence updates, and focus behavior for workspace sections.
+- `apps/web/src/features/applications/application-workspace/page/*.test.tsx` covers workspace navigation and lifecycle routing; the workspace section test covers forms, validation, persistence updates, and focus behavior.
 - `apps/web/src/features/auth/password-reset/password-reset-page.test.tsx` verifies a user-visible validation message after switching locale.
 - `tests/e2e/xeniway.spec.ts` covers language switching and reload persistence, public password recovery navigation and validation, welcome behavior after login and registration, immediate local preference updates, server persistence after reload, theme/language/form-presentation selectors, server-authoritative account values, and account isolation. It exercises the board, six statuses, search, create, activity history, and the application workspace: preparation edits, contact creation, dated follow-up completion and persistence after reload, navigation from active/archive/blacklist, board-specific lifecycle actions, and cross-account workspace read/write isolation. It also covers native drag-and-drop and permanent deletion.
 

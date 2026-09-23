@@ -9,7 +9,7 @@ The repository describes the candidate-tracking product and its local developmen
 ## Structure
 
 - `apps/web` contains the React/Vite SPA, routes, Redux Toolkit UI state, TanStack Query hooks, API client, Tailwind styles, and reusable primitives.
-- `apps/web/src/features/applications/application-workspace` contains the per-application workspace for preparation, contacts, follow-ups, and activity; it shares the application's authenticated lifecycle and ownership rules.
+- `apps/web/src/features/applications` groups board, collection, form, activity, archive, blacklist, and filter concerns by responsibility. `application-workspace` contains the per-application workspace, organized into `page`, `contacts`, `follow-ups`, `preparation`, and `shared`; it shares the application's authenticated lifecycle and ownership rules.
 - `apps/api` contains the Bun/Elysia server, domain-grouped routers under `src/routes/`, authentication and CSRF services, repositories, Drizzle schema, migrations, and development seed command. `src/routes/index.ts` composes health, auth, preferences, and application routers; application routes are grouped into collection, item, events, and board operations.
 - `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
 - `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.

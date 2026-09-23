@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import type { RootState } from "../../../store";
-import { getStatusLabel, jobStatuses } from "../job-status";
+import { getStatusLabel, jobStatuses } from "../board/job-status";
 
 export function StatusFilterOptions({
   selectAllRef,

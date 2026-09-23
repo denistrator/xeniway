@@ -18,7 +18,7 @@ const ForgotPasswordPage = lazy(() =>
 );
 const HomePage = lazy(() => import("./pages/home-page").then(({ HomePage }) => ({ default: HomePage })));
 const ApplicationWorkspacePage = lazy(() =>
-  import("./features/applications/application-workspace/application-workspace-page").then(
+  import("./features/applications/application-workspace/page/application-workspace-page").then(
     ({ ApplicationWorkspacePage }) => ({ default: ApplicationWorkspacePage }),
   ),
 );

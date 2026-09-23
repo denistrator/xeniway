@@ -8,8 +8,8 @@ import { ApiRequestError } from "../../../lib/api";
 import { matchesApplicationSearch } from "../../../lib/application-filters";
 import { useApplicationMutations, useBlacklistedApplications } from "../../../lib/queries";
 import type { RootState } from "../../../store";
-import { ApplicationCollection } from "../application-collection";
-import { ApplicationCollectionCard } from "../application-collection-card";
+import { ApplicationCollection } from "../collection/application-collection";
+import { ApplicationCollectionCard } from "../collection/application-collection-card";
 
 export function BlacklistPage() {
   const { i18n, t } = useTranslation();
