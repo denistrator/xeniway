@@ -9,7 +9,7 @@ The repository describes the candidate-tracking product and its local developmen
 ## Structure
 
 - `apps/web` contains the React/Vite SPA, routes, Redux Toolkit UI state, TanStack Query hooks, API client, Tailwind styles, and reusable primitives.
-- `apps/api` contains the Bun/Elysia server, authentication and CSRF services, repositories, Drizzle schema, migrations, and development seed command.
+- `apps/api` contains the Bun/Elysia server, domain-grouped routers under `src/routes/`, authentication and CSRF services, repositories, Drizzle schema, migrations, and development seed command. `src/routes/index.ts` composes health, auth, preferences, and application routers; application routes are grouped into collection, item, events, and board operations.
 - `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
 - `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.
 - `docs` contains human and AI-facing architecture, API, database, operations, testing, and schema-change documentation.
@@ -39,6 +39,8 @@ The newcomer setup sequence and current command table live in `README.md`; keep 
 Use TypeScript with two-space indentation, double-quoted imports and strings, semicolons, and trailing commas consistent with the existing source. Use `camelCase` for values and functions, `PascalCase` for React components and types, and kebab-case for route/page filenames. Keep API JSON camelCase and wrapped in the documented `data` or `error` envelope, except for the direct `/api/health` response. Prefer the shared Zod schemas at all browser/API boundaries.
 
 Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for the supported TypeScript and TSX files.
+
+Add API endpoints to the matching domain router and register domain routers through `apps/api/src/routes/index.ts`; keep `apps/api/src/app.ts` focused on service construction, global middleware, and error handling. Reuse typed guards from `routes/support/auth-guard.ts` for authenticated reads and authenticated mutations. Use the CSRF-only guard for public credential/password-reset flows and logout, which may operate without an authenticated user context. Keep the public health probe and CSRF-session bootstrap outside authenticated guards, and leave route-specific validation, repository operations, response schemas, and exceptional error handling visible in their endpoint handlers. Do not add generic CRUD route factories.
 
 Keep server state in TanStack Query and local presentation state in Redux Toolkit. Keep database access behind typed repositories. Every application repository operation must be scoped by authenticated user ID. Mutating authenticated requests require the session CSRF token.
 

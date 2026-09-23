@@ -9,6 +9,8 @@ The `GET /api/health` endpoint is the exception: it returns a direct health obje
 
 The API uses camelCase JSON. Session authentication is carried by the `session_id` HttpOnly, SameSite=Lax cookie; production also marks it `Secure`. Mutating requests send the server-issued token for that session in `x-csrf-token`.
 
+Routes are composed through `apps/api/src/routes/index.ts`: health, auth, preferences, and applications are separate domain routers. Application handlers are grouped into collection, item, event, and board operations. Shared authentication/CSRF guards live under `apps/api/src/routes/support/`; endpoint handlers retain their own schemas, repository calls, and route-specific response behavior.
+
 Xenia Way records employer conversations and application progress for one authenticated candidate at a time. Application status is always one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`; archive and blacklist are independent lifecycle states outside that status set.
 
 ## Health and authentication

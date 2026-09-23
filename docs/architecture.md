@@ -24,7 +24,7 @@ React + React Router
 
 `packages/shared` is the contract boundary. It defines the six-status enum, registration/login schemas, application and manual-event input schemas, and public response types. The web and API packages import these definitions instead of duplicating validation or JSON shapes.
 
-`apps/api/src/app.ts` is an injectable Elysia app factory. Its dependencies are typed repository interfaces, which allows route behavior to be tested with in-memory implementations. `apps/api/src/server.ts` wires the production Drizzle repositories, Redis rate limiter, and independent database/Redis health checks.
+`apps/api/src/app.ts` is an injectable Elysia app factory. It owns dependency construction, global middleware, and error handling, then mounts the domain composition in `apps/api/src/routes/index.ts`. Health, auth, preferences, and application endpoints live in their own routers; application routes are grouped by collection, item, event, and board responsibilities. Shared request guards and cookie/response helpers live under `apps/api/src/routes/support/`. Typed repository dependencies allow route behavior to be tested with in-memory implementations. `apps/api/src/server.ts` wires the production Drizzle repositories, Redis rate limiter, and independent database/Redis health checks.
 
 `apps/web/src/lib/api.ts` provides the typed HTTP client. `apps/web/src/lib/queries.ts` owns TanStack Query keys, authentication queries, CSRF acquisition, mutations, and cache invalidation. TanStack Query owns the server preference record; Redux contains immediate presentation state such as the active theme and welcome dialog.
 

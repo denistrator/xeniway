@@ -1,15 +1,16 @@
 import { type UserPreferencesResponse, updateUserPreferencesInputSchema } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { toUserPreferences } from "../db/repository";
-import { errorResponseWithStatus, requireAuth, validationError, verifyRequestCsrf } from "./support";
-import type { RouteDependencies } from "./types";
+import { validationError } from "./support";
+import { requireAuthenticatedMutation, requireAuthenticatedUser } from "./support/auth-guard";
+import type { PreferencesRouteDependencies } from "./types";
 
-export function userPreferencesRoute({ preferences, auth }: RouteDependencies) {
+export function preferencesRoute({ preferences, auth }: PreferencesRouteDependencies) {
   return new Elysia()
     .get("/api/user/preferences", async ({ request, set }) => {
-      const context = await requireAuth(auth, set, request);
-      if (!context) return errorResponseWithStatus(set, 401, "UNAUTHENTICATED", "Unauthenticated");
-      const row = await preferences.findByUserId(context.userId);
+      const authorization = await requireAuthenticatedUser(auth, set, request);
+      if (!authorization.ok) return authorization.response;
+      const row = await preferences.findByUserId(authorization.context.userId);
       const response: UserPreferencesResponse = {
         data: {
           preferences: row
@@ -27,23 +28,19 @@ export function userPreferencesRoute({ preferences, auth }: RouteDependencies) {
       return response;
     })
     .patch("/api/user/preferences", async ({ request, set }) => {
-      const context = await requireAuth(auth, set, request);
-      if (!context) return errorResponseWithStatus(set, 401, "UNAUTHENTICATED", "Unauthenticated");
-      if (!(await verifyRequestCsrf(auth, set, request)))
-        return errorResponseWithStatus(set, 403, "CSRF_ERROR", "Invalid CSRF token");
+      const authorization = await requireAuthenticatedMutation(auth, set, request);
+      if (!authorization.ok) return authorization.response;
       const body = await request.json().catch(() => null);
       const parsed = updateUserPreferencesInputSchema.safeParse(body);
       if (!parsed.success) return validationError(set, parsed.error);
-      const row = await preferences.update(context.userId, parsed.data);
+      const row = await preferences.update(authorization.context.userId, parsed.data);
       const response: UserPreferencesResponse = { data: { preferences: toUserPreferences(row) } };
       return response;
     })
     .post("/api/user/preferences/introduced", async ({ request, set }) => {
-      const context = await requireAuth(auth, set, request);
-      if (!context) return errorResponseWithStatus(set, 401, "UNAUTHENTICATED", "Unauthenticated");
-      if (!(await verifyRequestCsrf(auth, set, request)))
-        return errorResponseWithStatus(set, 403, "CSRF_ERROR", "Invalid CSRF token");
-      const row = await preferences.markIntroduced(context.userId);
+      const authorization = await requireAuthenticatedMutation(auth, set, request);
+      if (!authorization.ok) return authorization.response;
+      const row = await preferences.markIntroduced(authorization.context.userId);
       const response: UserPreferencesResponse = { data: { preferences: toUserPreferences(row) } };
       return response;
     });

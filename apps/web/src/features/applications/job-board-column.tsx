@@ -39,7 +39,10 @@ export function JobBoardColumn({
       canDrop: ({ source }) => source.data.type === "job-application",
       getData: () => ({ status, index: columnJobs.length }),
       onDragEnter: () => setDropTarget({ status, index: columnJobs.length }),
-      onDrop: ({ source }) => onDrop(Number(source.data.applicationId), status, columnJobs),
+      onDrop: ({ source, location, self }) => {
+        if (location.current.dropTargets[0]?.element !== self.element) return;
+        onDrop(Number(source.data.applicationId), status, columnJobs);
+      },
     });
   }, [columnJobs, onDrop, setDropTarget, status]);
   return (
@@ -57,7 +60,13 @@ export function JobBoardColumn({
       <ul className="list-none space-y-3 p-0">
         {columnJobs.map((job, index) => (
           <Fragment key={job.id}>
-            {dropTarget?.status === status && dropTarget.index === index && <DropPlaceholder />}
+            {dropTarget?.status === status && dropTarget.index === index && (
+              <DropPlaceholder
+                status={status}
+                targetId={job.id}
+                onDrop={(id) => onJobDrop(id, status, job.id, columnJobs)}
+              />
+            )}
             <DropTargetItem
               status={status}
               index={index}
@@ -73,17 +82,11 @@ export function JobBoardColumn({
                 onOpen={() => onOpen(job.id)}
                 onKeyboardMove={(direction) => onKeyboardMove(job.id, status, direction)}
                 onDragStart={() => onDragStart(job.id)}
-                dropTarget={{
-                  status,
-                  index,
-                  onEnter: () => setDropTarget({ status, index }),
-                  onDrop: (id) => onJobDrop(id, status, job.id, columnJobs),
-                }}
               />
             </DropTargetItem>
           </Fragment>
         ))}
-        {dropTarget?.status === status && dropTarget.index === columnJobs.length && <DropPlaceholder />}
+        {dropTarget?.status === status && dropTarget.index === columnJobs.length && <DropPlaceholder status={status} />}
         {!columnJobs.length && (
           <li>
             <p className="rounded-xl border border-dashed border-line px-3 py-8 text-center text-sm leading-6 text-muted">
@@ -127,6 +130,30 @@ function DropTargetItem({
   return <li ref={itemRef}>{children}</li>;
 }
 
-function DropPlaceholder() {
-  return <li aria-hidden="true" className="h-20 rounded-xl border-2 border-dashed border-accent bg-accent-soft" />;
+function DropPlaceholder({
+  status,
+  targetId,
+  onDrop,
+}: {
+  status: JobStatus;
+  targetId?: number;
+  onDrop?: (id: number) => void;
+}) {
+  const placeholderRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (!placeholderRef.current || targetId === undefined || !onDrop) return;
+    return dropTargetForElements({
+      element: placeholderRef.current,
+      canDrop: ({ source }) => source.data.type === "job-application",
+      getData: () => ({ status, targetId }),
+      onDrop: ({ source }) => onDrop(Number(source.data.applicationId)),
+    });
+  }, [onDrop, status, targetId]);
+  return (
+    <li
+      ref={placeholderRef}
+      aria-hidden="true"
+      className="h-20 rounded-xl border-2 border-dashed border-accent bg-accent-soft"
+    />
+  );
 }

@@ -1,30 +1,8 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
-import { applicationArchiveRoute } from "./routes/application-archive";
-import { applicationBlacklistRoute } from "./routes/application-blacklist";
-import { applicationCreateRoute } from "./routes/application-create";
-import { applicationDeleteRoute } from "./routes/application-delete";
-import { applicationDetailRoute } from "./routes/application-detail";
-import { applicationEventsRoute } from "./routes/application-events";
-import { applicationRestoreRoute } from "./routes/application-restore";
-import { applicationUnblacklistRoute } from "./routes/application-unblacklist";
-import { applicationUpdateRoute } from "./routes/application-update";
-import { applicationsArchiveRoute } from "./routes/applications-archive";
-import { applicationsBlacklistRoute } from "./routes/applications-blacklist";
-import { applicationsListRoute } from "./routes/applications-list";
-import { applicationsRemoveAllRoute } from "./routes/applications-remove-all";
-import { applicationsReorderRoute } from "./routes/applications-reorder";
-import { authCsrfRoute } from "./routes/auth-csrf";
-import { authLoginRoute } from "./routes/auth-login";
-import { authLogoutRoute } from "./routes/auth-logout";
-import { authMeRoute } from "./routes/auth-me";
-import { authPasswordResetConfirmRoute } from "./routes/auth-password-reset-confirm";
-import { authPasswordResetRequestRoute } from "./routes/auth-password-reset-request";
-import { authRegisterRoute } from "./routes/auth-register";
-import { healthRoute } from "./routes/health";
+import { apiRoutes } from "./routes";
 import { CSRF_HEADER, errorResponse } from "./routes/support";
 import type { AppDependencies, RouteDependencies } from "./routes/types";
-import { userPreferencesRoute } from "./routes/user-preferences";
 import { AuthService } from "./services/auth";
 import { PasswordResetService } from "./services/password-reset";
 import { SlidingWindowRateLimiter } from "./services/rate-limit";
@@ -78,32 +56,7 @@ export function createApp(dependencies: AppDependencies) {
       set.status = 500;
       return errorResponse("INTERNAL_ERROR", "Internal server error");
     })
-    .use(healthRoute(routeDependencies))
-    .use(authCsrfRoute(routeDependencies))
-    .use(authRegisterRoute(routeDependencies))
-    .use(authLoginRoute(routeDependencies))
-    .use(authLogoutRoute(routeDependencies))
-    .use(authMeRoute(routeDependencies))
-    .use(userPreferencesRoute(routeDependencies))
-    .use(applicationsArchiveRoute(routeDependencies))
-    .use(applicationsBlacklistRoute(routeDependencies))
-    .use(applicationsListRoute(routeDependencies))
-    .use(applicationsReorderRoute(routeDependencies))
-    .use(applicationDetailRoute(routeDependencies))
-    .use(applicationEventsRoute(routeDependencies))
-    .use(applicationCreateRoute(routeDependencies))
-    .use(applicationUpdateRoute(routeDependencies))
-    .use(applicationArchiveRoute(routeDependencies))
-    .use(applicationBlacklistRoute(routeDependencies))
-    .use(applicationUnblacklistRoute(routeDependencies))
-    .use(applicationRestoreRoute(routeDependencies))
-    .use(applicationDeleteRoute(routeDependencies))
-    .use(applicationsRemoveAllRoute(routeDependencies));
-
-  if (passwordReset) {
-    app.use(authPasswordResetRequestRoute(routeDependencies));
-    app.use(authPasswordResetConfirmRoute(routeDependencies));
-  }
+    .use(apiRoutes(routeDependencies));
 
   return app;
 }

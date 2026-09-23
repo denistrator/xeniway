@@ -1,9 +1,9 @@
 import type { CsrfResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
-import { readSessionId, setSessionCookie } from "./support";
-import type { RouteDependencies } from "./types";
+import { readSessionId, setSessionCookie } from "../support";
+import type { CsrfRouteDependencies } from "../types";
 
-export function authCsrfRoute({ auth, secureCookies }: RouteDependencies) {
+export function csrfRoute({ auth, secureCookies }: CsrfRouteDependencies) {
   return new Elysia().get("/api/auth/csrf", async ({ request, set }) => {
     const currentSessionId = await readSessionId(set, request);
     const currentToken = await auth.getCsrfToken(currentSessionId);

@@ -1,9 +1,9 @@
 import type { HealthResponse } from "@xeniway/shared";
 import { Elysia } from "elysia";
 import { errorResponse } from "./support";
-import type { RouteDependencies } from "./types";
+import type { HealthRouteDependencies } from "./types";
 
-export function healthRoute({ databaseHealth, redisHealth }: RouteDependencies) {
+export function healthRoute({ databaseHealth, redisHealth }: HealthRouteDependencies) {
   return new Elysia().get("/api/health", async ({ set }) => {
     const [databaseIsHealthy, redisIsHealthy] = await Promise.all([databaseHealth(), redisHealth()]);
     if (!databaseIsHealthy) {

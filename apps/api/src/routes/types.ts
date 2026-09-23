@@ -38,3 +38,13 @@ export type RouteDependencies = {
   redisHealth: () => Promise<boolean>;
   secureCookies: boolean;
 };
+
+export type ApplicationRouteDependencies = Pick<RouteDependencies, "applications" | "auth">;
+export type HealthRouteDependencies = Pick<RouteDependencies, "databaseHealth" | "redisHealth">;
+export type PreferencesRouteDependencies = Pick<RouteDependencies, "auth" | "preferences">;
+export type AuthSessionRouteDependencies = Pick<RouteDependencies, "auth" | "authRateLimiter" | "secureCookies">;
+export type CsrfRouteDependencies = Pick<RouteDependencies, "auth" | "secureCookies">;
+export type PasswordResetRouteDependencies = Pick<RouteDependencies, "auth" | "passwordReset">;
+export type AuthRoutesDependencies = AuthSessionRouteDependencies &
+  CsrfRouteDependencies &
+  PasswordResetRouteDependencies;
