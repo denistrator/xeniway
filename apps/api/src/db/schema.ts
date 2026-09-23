@@ -131,3 +131,74 @@ export const applicationEvents = pgTable(
     index("application_events_user_occurred_idx").on(table.userId, table.occurredAt.desc()),
   ],
 );
+
+export const applicationWorkspaces = pgTable(
+  "application_workspaces",
+  {
+    applicationId: integer("application_id")
+      .primaryKey()
+      .references(() => jobApplications.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    companyResearch: text("company_research"),
+    talkingPoints: text("talking_points"),
+    interviewerQuestions: text("interviewer_questions"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("application_workspaces_user_id_idx").on(table.userId)],
+);
+
+export const applicationContacts = pgTable(
+  "application_contacts",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    applicationId: integer("application_id")
+      .notNull()
+      .references(() => jobApplications.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 255 }).notNull(),
+    role: varchar("role", { length: 255 }).notNull(),
+    email: varchar("email", { length: 255 }),
+    phone: varchar("phone", { length: 100 }),
+    profileUrl: varchar("profile_url", { length: 500 }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("application_contacts_application_created_idx").on(table.applicationId, table.createdAt, table.id),
+    index("application_contacts_user_id_idx").on(table.userId),
+  ],
+);
+
+export const applicationFollowUpTasks = pgTable(
+  "application_follow_up_tasks",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    applicationId: integer("application_id")
+      .notNull()
+      .references(() => jobApplications.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    dueDate: date("due_date", { mode: "string" }).notNull(),
+    notes: text("notes"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("application_follow_up_tasks_application_completion_due_idx").on(
+      table.applicationId,
+      table.completedAt,
+      table.dueDate,
+      table.id,
+    ),
+    index("application_follow_up_tasks_user_id_idx").on(table.userId),
+  ],
+);

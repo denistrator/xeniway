@@ -19,6 +19,7 @@ const migrations = [
   { id: "0007_user_preference_form_presentation", file: "0007_user_preference_form_presentation.sql" },
   { id: "0008_add_hebrew_locale", file: "0008_add_hebrew_locale.sql" },
   { id: "0009_application_events", file: "0009_application_events.sql" },
+  { id: "0010_application_workspace", file: "0010_application_workspace.sql" },
 ];
 
 try {
