@@ -17,6 +17,7 @@ export type SessionRow = typeof sessions.$inferSelect;
 export type UserPreferencesRow = typeof userPreferences.$inferSelect;
 export type ApplicationEventRow = typeof applicationEvents.$inferSelect;
 export type JobApplicationRow = typeof jobApplications.$inferSelect;
+export type ApplicationExportRecord = { application: JobApplication; events: ApplicationEvent[] };
 export interface UserRepository {
   findByEmail(email: string): Promise<UserRow | null>;
   findById(id: number): Promise<UserRow | null>;
@@ -50,6 +51,7 @@ export interface PasswordResetTokenRepository {
 }
 
 export interface ApplicationRepository {
+  listForExport(userId: number): Promise<ApplicationExportRecord[]>;
   list(userId: number, options?: { status?: JobStatus; archived?: boolean }): Promise<JobApplication[]>;
   findById(
     userId: number,

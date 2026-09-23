@@ -3,6 +3,7 @@ import {
   ApiRequestError,
   applicationKeys,
   confirmPasswordReset,
+  exportApplicationsCsv,
   getUserPreferences,
   listApplications,
   markUserIntroduced,
@@ -15,6 +16,31 @@ import {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("web API helpers", () => {
+  it("downloads the authenticated CSV export as a blob with its server filename", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response("\uFEFFcompany\r\nAcme\r\n", {
+          status: 200,
+          headers: {
+            "content-disposition": 'attachment; filename="xenia-way-export-2026-09-23.csv"',
+            "content-type": "text/csv; charset=utf-8",
+          },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await exportApplicationsCsv();
+
+    expect(await result.blob.text()).toBe("company\r\nAcme\r\n");
+    expect(result.filename).toBe("xenia-way-export-2026-09-23.csv");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/applications/export.csv",
+      expect.objectContaining({
+        credentials: "include",
+      }),
+    );
+  });
+
   it("extracts the stable API error message", () => {
     expect(parseApiError({ error: { code: "VALIDATION_ERROR", message: "Validation failed" } })).toEqual({
       code: "VALIDATION_ERROR",

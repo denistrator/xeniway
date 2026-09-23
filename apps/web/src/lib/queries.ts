@@ -27,6 +27,7 @@ import {
   createApplicationEvent,
   deleteApplication,
   deleteApplicationEvent,
+  exportApplicationsCsv,
   getApplicationDetail,
   getCsrfToken,
   getCurrentUser,
@@ -175,6 +176,10 @@ export function usePasswordResetMutations() {
 
 export function useApplications() {
   return useApplicationList("active", () => listApplications());
+}
+
+export function useApplicationsCsvExport() {
+  return useMutation({ mutationFn: exportApplicationsCsv });
 }
 
 export function useApplicationDetail(id: number | null) {

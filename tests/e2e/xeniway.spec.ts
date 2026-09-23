@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 import { createRedisClient } from "../../apps/api/src/redis/client";
@@ -152,6 +153,36 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await registeredWelcome.getByRole("button", { name: "About Xenia Way" }).click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(registeredWelcome).toHaveCount(0);
+});
+
+test("downloads the authenticated application data as CSV", async ({ page }) => {
+  await page.goto("/register");
+  await page.getByLabel("Email").fill(`csv-export-${Date.now()}@example.com`);
+  await page.getByLabel("Password", { exact: true }).fill("password123");
+  await page.getByLabel("Confirm password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  await expect(welcome).toBeVisible();
+  await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
+
+  const headerActionLabels = await page
+    .locator("header button")
+    .evaluateAll((buttons) =>
+      buttons.map((button) => button.getAttribute("aria-label") || button.textContent?.trim() || ""),
+    );
+  const addJobIndex = headerActionLabels.findIndex((label) => label.includes("Add job"));
+  expect(headerActionLabels[addJobIndex + 1]).toBe("Export CSV");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV" }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+  expect(download.suggestedFilename()).toMatch(/^xenia-way-export-\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(downloadPath).not.toBeNull();
+  if (!downloadPath) throw new Error("CSV download did not produce a local file");
+  const csv = await readFile(downloadPath, "utf8");
+  expect(csv).toContain('"company"');
+  expect(csv).toContain('"activity"');
 });
 
 test("records and edits application activity across reloads", async ({ page }) => {

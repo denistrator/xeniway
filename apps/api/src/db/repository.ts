@@ -12,6 +12,7 @@ export {
 } from "./repositories/mappers";
 export { DrizzlePasswordResetTokenRepository } from "./repositories/password-reset";
 export type {
+  ApplicationExportRecord,
   ApplicationRepository,
   PasswordResetTokenRepository,
   SessionRepository,

@@ -1,7 +1,8 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Plus} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { CsvExportButton } from "../features/data-export/csv-export-button";
 import { LanguageSelector } from "../features/preferences/language-selector";
 import { ThemeSelector } from "../features/preferences/theme-selector";
 import { useAuthMutations, useCurrentUser } from "../lib/queries";
@@ -67,9 +68,10 @@ export function SiteHeader() {
           <div className="ms-2 flex items-center gap-2">
             {user.data && (
               <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
-                + {t("common.actions.addJob")}
+                <Plus aria-hidden="true" size={15} /> {t("common.actions.addJob")}
               </Button>
             )}
+            {user.data && <CsvExportButton />}
             <ThemeSelector />
             <LanguageSelector />
           </div>

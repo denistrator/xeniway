@@ -15,6 +15,7 @@ Xenia Way is an actively developed, server-backed candidate-tracking application
 - Create and edit applications with company, position, location, salary, job URL, description, applied date, notes, and status.
 - Review each application's activity timeline, including automatic history for creation, edits, status changes, archive, and blacklist transitions. Add, edit, and remove dated notes, emails, calls, interviews, offers, rejections, and follow-ups.
 - Expand activity directly from archived and blacklisted cards without restoring the application first.
+- Export all of your active, archived, and blacklisted applications with their activity history to a CSV file.
 - Search applications and filter the board by status.
 - Reorder applications within a status using drag-and-drop or keyboard controls.
 - Archive applications, restore them, or permanently delete them from the archive.
@@ -140,7 +141,7 @@ bun run db:seed
 bun run test:e2e
 ```
 
-The browser workflow covers language switching and reload persistence, server preference persistence and account override, account isolation, theme/language/form-presentation selectors, welcome completion after login and registration, public password recovery navigation and validation, authentication, the six statuses, search, create/edit flows, activity history and manual events, blacklist and restore, drag-and-drop, archive, and permanent deletion.
+The browser workflow covers language switching and reload persistence, server preference persistence and account override, account isolation, theme/language/form-presentation selectors, welcome completion after login and registration, public password recovery navigation and validation, authentication, the six statuses, search, create/edit flows, activity history and manual events, CSV export, blacklist and restore, drag-and-drop, archive, and permanent deletion.
 
 ## Repository map
 

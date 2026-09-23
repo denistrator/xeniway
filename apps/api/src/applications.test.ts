@@ -4,6 +4,94 @@ import { createApp } from "./app";
 import { createDependencies, jsonRequest, register } from "./app-test-support";
 
 describe("application API", () => {
+  it("exports every owned board and its activity as a downloadable CSV", async () => {
+    const app = createApp(createDependencies());
+    const owner = await register(app, "csv-owner@example.com");
+    const other = await register(app, "csv-other@example.com");
+
+    async function createApplication(email: string, company: string) {
+      const account = email === owner.payload.data.user.email ? owner : other;
+      const response = await app.handle(
+        jsonRequest(
+          "http://localhost/api/applications",
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ company, position: "Engineer", location: "Remote", notes: "CSV note" }),
+          },
+          account.sessionId,
+          account.payload.data.csrfToken,
+        ),
+      );
+      return ((await response.json()) as ApplicationResponse).data.application.id;
+    }
+
+    const activeId = await createApplication(owner.payload.data.user.email, "CSV Active");
+    const archivedId = await createApplication(owner.payload.data.user.email, "CSV Archived");
+    const blacklistedId = await createApplication(owner.payload.data.user.email, "CSV Blacklisted");
+    await createApplication(other.payload.data.user.email, "Other Account Secret");
+
+    await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${archivedId}/archive`,
+        { method: "POST" },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${blacklistedId}/blacklist`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ reason: "Not a fit" }),
+        },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${activeId}/events`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ type: "follow_up", title: "Email recruiter", occurredAt: "2026-09-02T09:00:00Z" }),
+        },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+
+    const response = await app.handle(
+      new Request("http://localhost/api/applications/export.csv", {
+        headers: { cookie: `session_id=${owner.sessionId}` },
+      }),
+    );
+    const csv = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/csv");
+    expect(response.headers.get("content-disposition")).toMatch(/attachment; filename="xenia-way-export-.*\.csv"/);
+    expect(csv).toContain("CSV Active");
+    expect(csv).toContain("CSV Archived");
+    expect(csv).toContain("CSV Blacklisted");
+    expect(csv).toContain('"active"');
+    expect(csv).toContain('"archive"');
+    expect(csv).toContain('"blacklist"');
+    expect(csv).toContain("Email recruiter");
+    expect(csv).not.toContain("Other Account Secret");
+  });
+
+  it("requires authentication to export applications", async () => {
+    const response = await createApp(createDependencies()).handle(
+      new Request("http://localhost/api/applications/export.csv"),
+    );
+
+    expect(response.status).toBe(401);
+  });
+
   it("returns activity in application detail and supports owned manual event CRUD", async () => {
     const app = createApp(createDependencies());
     const owner = await register(app, "activity-owner@example.com");

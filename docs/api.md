@@ -47,6 +47,7 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 
 | Method | Path | Auth/CSRF | Purpose |
 | --- | --- | --- | --- |
+| `GET` | `/api/applications/export.csv` | Session | Downloads the current user's applications and activity history as CSV |
 | `GET` | `/api/applications` | Session | Lists active applications; optional `?status=` filter |
 | `GET` | `/api/applications/archive` | Session | Lists the current user's archived applications |
 | `GET` | `/api/applications/blacklist` | Session | Lists the current user's blacklisted applications |
@@ -79,6 +80,8 @@ Application create/update fields:
 ```
 
 `company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date. Archive and blacklist are independent lifecycle states, not additional status values. Blacklisting preserves the application's status and data; removing it from the blacklist returns it to the active list. Permanent deletion is available to the owner for any application; the UI exposes it from archive and blacklist views.
+
+The CSV export is a UTF-8 file with a byte-order mark for spreadsheet compatibility. It includes one row per application across the active, archive, and blacklist boards, with all candidate-entered application fields and board timestamps. `activity` is a JSON-encoded cell containing event type, title, description, occurrence time, status metadata, and whether the event is system-generated; it omits internal event and application IDs. Legacy applications receive the same derived creation marker as the application detail response. Cells that could be interpreted as spreadsheet formulas are prefixed with an apostrophe. The endpoint is authenticated, owner-scoped, and returned with private no-store caching; it never includes credentials, sessions, or CSRF tokens.
 
 Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
 

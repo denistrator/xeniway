@@ -4,11 +4,11 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
-### Data portability: import and export format choice
+### Complete data portability with import and JSON
 
 - **Area:** User data portability.
-- **Why:** CSV export is the first planned step; future import and export should support both CSV and JSON and let the user choose a format.
-- **Possible direction:** After the CSV export is established, design a consistent format-selection experience for import and export. Define JSON as the structured backup/restore format and CSV as the spreadsheet-friendly format, subject to product review.
+- **Why:** The first CSV export is implemented. The planned portability feature will also support JSON and user-selected formats for import and export.
+- **Possible direction:** Add JSON as the structured backup/restore format alongside CSV for spreadsheet use, then provide a consistent format choice for import and export.
 - **Guardrails:** Keep all imports and exports scoped to the authenticated user. Define validation, duplicate handling, and failure behavior before implementing import. Never include credentials, sessions, or CSRF tokens in exported data.
 
 ## Open refactoring tasks

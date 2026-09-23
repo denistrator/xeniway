@@ -161,6 +161,28 @@ export function listApplications(status?: JobStatus): Promise<ApplicationListRes
   return requestJson<ApplicationListResponse>(`/api/applications${query}`);
 }
 
+export async function exportApplicationsCsv(): Promise<{ blob: Blob; filename: string }> {
+  const path = "/api/applications/export.csv";
+  const response = await fetch(path, { credentials: "include" });
+  if (!response.ok) {
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+    const error = parseApiError(payload);
+    if (response.status === 401 && typeof window !== "undefined") {
+      window.dispatchEvent(new Event("xeniway:auth-expired"));
+    }
+    throw new ApiRequestError(error.message, error.code, response.status);
+  }
+
+  const disposition = response.headers.get("content-disposition");
+  const filename = disposition?.match(/filename="(xenia-way-export-\d{4}-\d{2}-\d{2}\.csv)"/)?.[1];
+  return { blob: await response.blob(), filename: filename ?? "xenia-way-export.csv" };
+}
+
 export function getApplicationDetail(id: number): Promise<ApplicationDetailResponse> {
   return requestJson<ApplicationDetailResponse>(`/api/applications/${id}`);
 }

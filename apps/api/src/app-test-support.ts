@@ -1,6 +1,8 @@
 import type { ApplicationEvent, AuthResponse, JobApplication, SupportedLocale, ThemePreference } from "@xeniway/shared";
 import type { AppDependencies, createApp } from "./app";
+import { withApplicationCreationEvent } from "./application-history";
 import type {
+  ApplicationExportRecord,
   ApplicationRepository,
   PasswordResetTokenRepository,
   SessionRepository,
@@ -70,6 +72,17 @@ export function createDependencies(): AppDependencies {
   };
 
   const applicationRepository: ApplicationRepository = {
+    async listForExport(userId): Promise<ApplicationExportRecord[]> {
+      return applications
+        .filter((application) => applicationUserIds.get(application.id) === userId)
+        .map((application) => ({
+          application,
+          events: withApplicationCreationEvent(
+            application,
+            events.filter((event) => event.applicationId === application.id),
+          ),
+        }));
+    },
     async listEvents(userId, applicationId) {
       if (applicationUserIds.get(applicationId) !== userId) return [];
       return events
