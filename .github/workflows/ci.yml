@@ -90,6 +90,7 @@ jobs:
         run: bun scripts/run-ci-check.ts "Database seed" bun run db:seed
       - name: Browser tests
         env:
+          ALLOW_DEVELOPMENT_SEED: "true"
           DATABASE_URL: postgres://xeniway:xeniway@localhost:5432/xeniway
           REDIS_URL: redis://localhost:6379
         run: bun scripts/run-ci-check.ts "Browser tests" bun run test:e2e

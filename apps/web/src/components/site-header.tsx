@@ -1,4 +1,4 @@
-import { LogOut, Plus} from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
