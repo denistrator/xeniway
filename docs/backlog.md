@@ -20,11 +20,18 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open refactoring tasks
 
+### Reassess CSV export memory use for larger boards
+
+- **Where:** `apps/api/src/db/repositories/applications.ts` (`listForExport`) and `apps/api/src/routes/applications/export-csv.ts` (`serializeApplicationsCsv`).
+- **Why:** Export currently loads every owned application and event, then builds a second in-memory CSV string. This is simple for current board sizes but scales memory with the full export.
+- **Possible direction:** If board sizes or export latency become a concern, consider a database cursor/batched read and streamed CSV response while keeping event grouping bounded per application.
+- **Guardrails:** Preserve user scoping, stable column/order semantics, CSV quoting and formula-injection protection, and inclusion of the derived application-created event. Keep failure handling from returning a misleading partial export.
+
 ### Split API in-memory test support by domain
 
-- **Where:** `apps/api/src/app-test-support.ts` (currently a 381-line module).
+- **Where:** `apps/api/src/app-test-support.ts` (currently a 538-line module).
 - **Why:** `createDependencies()` builds in-memory implementations for accounts, sessions, applications and their events, password resets, and preferences in one function. The size makes it harder to locate a fixture's state and behavior.
-- **Possible direction:** Keep one explicit shared state store for cross-domain invariants, and move domain-specific repository implementations or builders into focused modules. Avoid splitting every small helper into its own file.
+- **Possible direction:** Keep one explicit shared state store for cross-domain invariants, and move application/workspace repository behavior and other cohesive domains into focused modules. Avoid splitting every small helper into its own file.
 - **Guardrails:** Preserve application ownership checks, event history behavior, and the dependency factory used by API tests. Run the API test suite and retain cross-account isolation coverage.
 
 ### Reassess database repository test organization if it grows

@@ -22,8 +22,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const { userId } = authorization.context;
       const id = parseId(params.id, set);
       if (id === null) return errorResponse("INVALID_ID", "Application id must be a positive integer");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       const parsed = updateApplicationPreparationInputSchema.safeParse(body);
       if (!parsed.success) return validationError(set, parsed.error);
       const preparation = await applications.updatePreparation(userId, id, parsed.data);
@@ -37,8 +35,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const { userId } = authorization.context;
       const id = parseId(params.id, set);
       if (id === null) return errorResponse("INVALID_ID", "Application id must be a positive integer");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       const parsed = createApplicationContactInputSchema.safeParse(body);
       if (!parsed.success) return validationError(set, parsed.error);
       const contact = await applications.createContact(userId, id, parsed.data);
@@ -55,8 +51,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const contactId = parseId(params.contactId, set);
       if (id === null || contactId === null)
         return errorResponse("INVALID_ID", "Application and contact ids must be positive integers");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       const parsed = updateApplicationContactInputSchema.safeParse(body);
       if (!parsed.success) return validationError(set, parsed.error);
       const contact = await applications.updateContact(userId, id, contactId, parsed.data);
@@ -72,8 +66,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const contactId = parseId(params.contactId, set);
       if (id === null || contactId === null)
         return errorResponse("INVALID_ID", "Application and contact ids must be positive integers");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       if (!(await applications.deleteContact(userId, id, contactId)))
         return errorResponseWithStatus(set, 404, "NOT_FOUND", "Contact not found");
       const response: MessageResponse = { data: { message: "Contact deleted" } };
@@ -85,8 +77,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const { userId } = authorization.context;
       const id = parseId(params.id, set);
       if (id === null) return errorResponse("INVALID_ID", "Application id must be a positive integer");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       const parsed = createApplicationFollowUpTaskInputSchema.safeParse(body);
       if (!parsed.success) return validationError(set, parsed.error);
       const followUpTask = await applications.createFollowUpTask(userId, id, parsed.data);
@@ -103,8 +93,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const taskId = parseId(params.taskId, set);
       if (id === null || taskId === null)
         return errorResponse("INVALID_ID", "Application and task ids must be positive integers");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       const parsed = updateApplicationFollowUpTaskInputSchema.safeParse(body);
       if (!parsed.success) return validationError(set, parsed.error);
       const followUpTask = await applications.updateFollowUpTask(userId, id, taskId, parsed.data);
@@ -120,8 +108,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const taskId = parseId(params.taskId, set);
       if (id === null || taskId === null)
         return errorResponse("INVALID_ID", "Application and task ids must be positive integers");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       if (body !== undefined)
         return validationError(set, { issues: [{ path: ["form"], message: "Completion takes no body" }] });
       const followUpTask = await applications.completeFollowUpTask(userId, id, taskId);
@@ -137,8 +123,6 @@ export function applicationWorkspaceRoutes({ applications, auth }: ApplicationRo
       const taskId = parseId(params.taskId, set);
       if (id === null || taskId === null)
         return errorResponse("INVALID_ID", "Application and task ids must be positive integers");
-      if (!(await applications.findById(userId, id, { anyState: true })))
-        return errorResponseWithStatus(set, 404, "NOT_FOUND", "Application not found");
       if (!(await applications.deleteFollowUpTask(userId, id, taskId)))
         return errorResponseWithStatus(set, 404, "NOT_FOUND", "Follow-up not found");
       const response: MessageResponse = { data: { message: "Follow-up deleted" } };

@@ -6,6 +6,7 @@ import {
 } from "@xeniway/shared";
 import { useState } from "react";
 import { useApplicationContactMutations } from "../../../lib/queries";
+import { runWorkspaceMutation } from "./run-workspace-mutation";
 
 export function useContactsSection(applicationId: number) {
   const mutations = useApplicationContactMutations(applicationId);
@@ -19,28 +20,22 @@ export function useContactsSection(applicationId: number) {
       editing === "new" ? createApplicationContactInputSchema : updateApplicationContactInputSchema
     ).safeParse(input);
     if (!parsed.success) return;
-    setStatus(null);
-    try {
-      if (editing === "new") await mutations.create.mutateAsync(parsed.data as CreateApplicationContactInput);
-      else if (editing) await mutations.update.mutateAsync({ contactId: editing.id, input: parsed.data });
-      setEditing(null);
-      setStatus("saved");
-    } catch {
-      setStatus("saveFailed");
-    }
+    const saved = await runWorkspaceMutation(
+      async () => {
+        if (editing === "new") await mutations.create.mutateAsync(parsed.data as CreateApplicationContactInput);
+        else if (editing) await mutations.update.mutateAsync({ contactId: editing.id, input: parsed.data });
+      },
+      setStatus,
+      "saved",
+      "saveFailed",
+    );
+    if (saved) setEditing(null);
   }
 
   async function remove() {
     if (!deleting) return;
-    setStatus(null);
-    try {
-      await mutations.remove.mutateAsync(deleting.id);
-      setDeleting(null);
-      setStatus("removed");
-    } catch {
-      setDeleting(null);
-      setStatus("removeFailed");
-    }
+    await runWorkspaceMutation(() => mutations.remove.mutateAsync(deleting.id), setStatus, "removed", "removeFailed");
+    setDeleting(null);
   }
 
   return { editing, setEditing, deleting, setDeleting, status, pending, save, remove };

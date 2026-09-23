@@ -103,6 +103,7 @@ describe("development seed", () => {
       expect(new Set(accountFixtures.map((fixture) => fixture.events.length))).toEqual(new Set([0, 1, 2, 3]));
 
       const minimal = accountFixtures.find((fixture) => fixture.application.company === "MINIMAL");
+      expect(minimal?.scenario).toBe("minimal");
       expect(minimal?.application).toEqual({
         userKey: account.key,
         seedKey: `development-${account.key}-saved-minimal`,
@@ -119,6 +120,7 @@ describe("development seed", () => {
       expect(minimal?.events).toEqual([]);
 
       const maxed = accountFixtures.find((fixture) => fixture.application.company === "MAXED");
+      expect(maxed?.scenario).toBe("maxed");
       expect(maxed?.application).toMatchObject({
         status: "saved",
         location: expect.any(String),

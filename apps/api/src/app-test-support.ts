@@ -36,8 +36,24 @@ export function createDependencies(): AppDependencies {
   const preparations = new Map<number, ApplicationPreparation>();
   const contacts: ApplicationContact[] = [];
   const followUpTasks: ApplicationFollowUpTask[] = [];
+  const applicationUserIds = new Map<number, number>();
+  let nextApplicationId = 1;
   let nextContactId = 1;
   let nextTaskId = 1;
+
+  function removeForApplication<T extends { applicationId: number }>(records: T[], applicationId: number): void {
+    for (let index = records.length - 1; index >= 0; index--) {
+      if (records[index]?.applicationId === applicationId) records.splice(index, 1);
+    }
+  }
+
+  function removeApplicationData(applicationId: number): void {
+    applicationUserIds.delete(applicationId);
+    preparations.delete(applicationId);
+    removeForApplication(events, applicationId);
+    removeForApplication(contacts, applicationId);
+    removeForApplication(followUpTasks, applicationId);
+  }
 
   const emptyPreparation = (): ApplicationPreparation => ({
     companyResearch: null,
@@ -261,11 +277,9 @@ export function createDependencies(): AppDependencies {
       return applications
         .filter(
           (application) =>
-            application.id > 0 &&
             (options.archived ? application.archivedAt : !application.archivedAt) &&
             !application.blacklistedAt &&
             (!options.status || application.status === options.status) &&
-            applications.find((candidate) => candidate.id === application.id)?.id === application.id &&
             applicationUserIds.get(application.id) === userId,
         )
         .sort((left, right) => left.sortOrder - right.sortOrder);
@@ -284,7 +298,7 @@ export function createDependencies(): AppDependencies {
     async create(userId, input) {
       const now = new Date().toISOString();
       const application: JobApplication = {
-        id: applications.length + 1,
+        id: nextApplicationId++,
         company: input.company,
         position: input.position,
         location: input.location ?? null,
@@ -345,12 +359,7 @@ export function createDependencies(): AppDependencies {
       );
       if (!application) return false;
       applications.splice(applications.indexOf(application), 1);
-      applicationUserIds.delete(id);
-      preparations.delete(id);
-      for (const contact of contacts.filter((item) => item.applicationId === id))
-        contacts.splice(contacts.indexOf(contact), 1);
-      for (const task of followUpTasks.filter((item) => item.applicationId === id))
-        followUpTasks.splice(followUpTasks.indexOf(task), 1);
+      removeApplicationData(id);
       return true;
     },
     async removeAll(userId, board) {
@@ -362,7 +371,7 @@ export function createDependencies(): AppDependencies {
       });
       for (const application of matches) {
         applications.splice(applications.indexOf(application), 1);
-        applicationUserIds.delete(application.id);
+        removeApplicationData(application.id);
       }
       return matches.length;
     },
@@ -395,7 +404,6 @@ export function createDependencies(): AppDependencies {
     },
   };
 
-  const applicationUserIds = new Map<number, number>();
   const passwordResetTokens: PasswordResetTokenRepository = {
     async invalidateForUser(userId) {
       for (const token of resetTokens) if (token.userId === userId && !token.usedAt) token.usedAt = new Date();

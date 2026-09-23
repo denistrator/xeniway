@@ -205,6 +205,67 @@ describe("application API", () => {
     expect(deleted.status).toBe(200);
   });
 
+  it("does not leak deleted application activity into a newly created application", async () => {
+    const app = createApp(createDependencies());
+    const owner = await register(app, "activity-reuse@example.com");
+    const createApplication = async (company: string) => {
+      const response = await app.handle(
+        jsonRequest(
+          "http://localhost/api/applications",
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ company, position: "Engineer" }),
+          },
+          owner.sessionId,
+          owner.payload.data.csrfToken,
+        ),
+      );
+      return ((await response.json()) as ApplicationResponse).data.application;
+    };
+
+    const deletedApplication = await createApplication("Deleted application");
+    await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${deletedApplication.id}/events`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            type: "follow_up",
+            title: "Private stale activity",
+            occurredAt: "2026-09-01T12:00:00Z",
+          }),
+        },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+    await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${deletedApplication.id}`,
+        { method: "DELETE" },
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+
+    const nextApplication = await createApplication("New application");
+    const detail = await app.handle(
+      jsonRequest(
+        `http://localhost/api/applications/${nextApplication.id}`,
+        {},
+        owner.sessionId,
+        owner.payload.data.csrfToken,
+      ),
+    );
+
+    expect(nextApplication.id).not.toBe(deletedApplication.id);
+    expect(((await detail.json()) as ApplicationDetailResponse).data.events).not.toContainEqual(
+      expect.objectContaining({ title: "Private stale activity" }),
+    );
+  });
+
   it("rejects unauthenticated application access", async () => {
     const response = await createApp(createDependencies()).handle(new Request("http://localhost/api/applications"));
     expect(response.status).toBe(401);
@@ -678,6 +739,14 @@ describe("application workspace API", () => {
     const after = (await (await request(app, owner, String(id))).json()) as ApplicationDetailResponse;
     expect(after.data.contacts).toEqual([]);
     expect(after.data.followUpTasks).toEqual([]);
+  });
+
+  it("validates workspace input before looking up its application", async () => {
+    const { app, owner } = await fixture();
+    const response = await request(app, owner, "999999/preparation", "PUT", { unknownField: true });
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ error: { code: "VALIDATION_ERROR" } });
   });
 
   it("orders contacts and incomplete tasks before completed tasks", async () => {

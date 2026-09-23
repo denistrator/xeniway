@@ -48,6 +48,7 @@ type SeedEvent = {
 };
 
 export type SeedFixture = {
+  scenario: "standard" | "minimal" | "maxed";
   application: SeedApplication;
   preparation: SeedPreparation | null;
   contacts: CreateApplicationContactInput[];
@@ -306,18 +307,23 @@ function buildEvents(index: number, today: Date, specialName?: "MINIMAL" | "MAXE
 
 export function buildSeedFixtures(userKeys: string[], today = new Date()): SeedFixture[] {
   return userKeys.flatMap((userKey) => {
-    const activeApplications = buildSeedApplications([userKey]);
-    const applications = [
-      ...activeApplications,
-      buildSpecialApplication(userKey, "MINIMAL"),
-      buildSpecialApplication(userKey, "MAXED"),
-      ...seedStatuses.map((status, index) => buildLifecycleApplication(userKey, "archive", status, today, index)),
-      ...seedStatuses.map((status, index) => buildLifecycleApplication(userKey, "blacklist", status, today, index)),
+    const applications: Array<{ application: SeedApplication; scenario: SeedFixture["scenario"] }> = [
+      ...buildSeedApplications([userKey]).map((application) => ({ application, scenario: "standard" as const })),
+      { application: buildSpecialApplication(userKey, "MINIMAL"), scenario: "minimal" },
+      { application: buildSpecialApplication(userKey, "MAXED"), scenario: "maxed" },
+      ...seedStatuses.map((status, index) => ({
+        application: buildLifecycleApplication(userKey, "archive", status, today, index),
+        scenario: "standard" as const,
+      })),
+      ...seedStatuses.map((status, index) => ({
+        application: buildLifecycleApplication(userKey, "blacklist", status, today, index),
+        scenario: "standard" as const,
+      })),
     ];
-    return applications.map((application, index) => {
-      const specialName =
-        application.company === "MINIMAL" || application.company === "MAXED" ? application.company : undefined;
+    return applications.map(({ application, scenario }, index) => {
+      const specialName = scenario === "minimal" ? "MINIMAL" : scenario === "maxed" ? "MAXED" : undefined;
       return {
+        scenario,
         application,
         preparation: buildPreparation(index, specialName),
         contacts: buildContacts(index, specialName),
