@@ -18,6 +18,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Possible direction:** Add JSON as the structured backup/restore format alongside CSV for spreadsheet use, then provide a consistent format choice for import and export.
 - **Guardrails:** Keep all imports and exports scoped to the authenticated user. Define validation, duplicate handling, and failure behavior before implementing import. Never include credentials, sessions, or CSRF tokens in exported data.
 
+### Clean up old read notifications
+
+- **Area:** Backend notification retention.
+- **Why:** A persistent notification center will accumulate read notification records over time.
+- **Possible direction:** Add a backend cleanup task that deletes notifications read more than 10 days ago.
+- **Guardrails:** Never delete unread notifications; test the exact age cutoff and ensure cleanup is safe to run repeatedly. Keep retention cleanup independent from the user-facing notification center workflow.
+
 ## Open refactoring tasks
 
 ### Reassess CSV export memory use for larger boards
