@@ -1,0 +1,14 @@
+/* Atlaskit's read view includes an empty accessible button. Give that button
+   a real focus/touch target over our visible Edit affordance. */
+.workspace-inline-edit div:has(> [data-read-view-fit-container-width]) {
+  position: relative;
+}
+
+.workspace-inline-edit button[aria-label]:has(+ [data-read-view-fit-container-width]) {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  z-index: 1;
+  inline-size: 44px;
+  block-size: 44px;
+}

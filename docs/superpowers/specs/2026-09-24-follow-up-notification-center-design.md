@@ -37,7 +37,7 @@ This is an in-app feature only. It does not use browser push, email, a notificat
 - Provide **All** and **Unread** filters and a **Mark all as read** action.
 - Sort notifications newest first. Use server pagination so the page does not need to load an unbounded number of retained unread records.
 - Each follow-up reminder shows the task title, company and position, due date, overdue state, and the application's current board context. Archived and blacklisted applications remain eligible and are identified as such in the UI.
-- Opening a notification marks it read and navigates to `/applications/:id`. An unread, unresolved notification can be marked unread again from the center.
+- Opening a notification marks it read and navigates to `/applications/:id`. A read, unresolved notification can be marked unread again from the center.
 - Read notifications remain in **All** for history until the separately planned retention cleanup removes read rows older than 10 days. Unread notifications are not automatically deleted.
 - Provide translated loading, empty, error, and retry states.
 

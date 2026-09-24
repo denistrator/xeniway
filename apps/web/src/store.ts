@@ -13,7 +13,7 @@ type UiState = {
   jobFormPresentation: JobFormPresentation;
   search: string;
   visibleStatuses: JobStatus[];
-  drawer: { open: boolean; mode: "create" | "edit"; jobId: number | null };
+  drawer: { open: boolean };
   welcome: { open: boolean };
 };
 
@@ -22,7 +22,7 @@ const initialState: UiState = {
   jobFormPresentation: localPreferences.formPresentation,
   search: "",
   visibleStatuses: ["saved", "applied", "interview", "offer", "rejected", "withdrawn"],
-  drawer: { open: false, mode: "create", jobId: null },
+  drawer: { open: false },
   welcome: { open: false },
 };
 
@@ -48,10 +48,7 @@ const uiSlice = createSlice({
       state.visibleStatuses = action.payload ? ["saved", "applied", "interview", "offer", "rejected", "withdrawn"] : [];
     },
     openCreateDrawer: (state) => {
-      state.drawer = { open: true, mode: "create", jobId: null };
-    },
-    openEditDrawer: (state, action: PayloadAction<number>) => {
-      state.drawer = { open: true, mode: "edit", jobId: action.payload };
+      state.drawer.open = true;
     },
     closeDrawer: (state) => {
       state.drawer.open = false;
@@ -72,7 +69,6 @@ export const {
   toggleStatus,
   setAllStatuses,
   openCreateDrawer,
-  openEditDrawer,
   closeDrawer,
   openWelcome,
   closeWelcome,

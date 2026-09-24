@@ -2,21 +2,41 @@ import { type ApplicationPreparation, updateApplicationPreparationInputSchema } 
 import { useEffect, useState } from "react";
 import { useApplicationPreparationMutation } from "../../../../lib/queries";
 
-export type PreparationKey = keyof Pick<
+export type PreparationField = keyof Pick<
   ApplicationPreparation,
   "companyResearch" | "talkingPoints" | "interviewerQuestions"
 >;
 
-export function usePreparationField(applicationId: number, field: PreparationKey, value: string | null) {
+export type PreparationFieldController = {
+  savedValue: string | null;
+  draft: string;
+  editing: boolean;
+  pending: boolean;
+  state: "error" | "invalid" | null;
+  setDraft(value: string): void;
+  beginEdit(): void;
+  cancel(): void;
+  save(value?: string): Promise<void>;
+};
+
+export function usePreparationField(
+  applicationId: number,
+  field: PreparationField,
+  value: string | null,
+): PreparationFieldController {
   const mutation = useApplicationPreparationMutation(applicationId);
   const [savedValue, setSavedValue] = useState(value);
   const [draft, setDraft] = useState(value ?? "");
   const [editing, setEditing] = useState(false);
-  const [state, setState] = useState<"saved" | "error" | "invalid" | null>(null);
+  const [state, setState] = useState<"error" | "invalid" | null>(null);
 
-  useEffect(() => {
-    setSavedValue(value);
-  }, [value]);
+  useEffect(() => setSavedValue(value), [value]);
+
+  function beginEdit() {
+    setDraft(savedValue ?? "");
+    setState(null);
+    setEditing(true);
+  }
 
   function cancel() {
     setDraft(savedValue ?? "");
@@ -24,8 +44,8 @@ export function usePreparationField(applicationId: number, field: PreparationKey
     setState(null);
   }
 
-  async function save() {
-    const parsed = updateApplicationPreparationInputSchema.safeParse({ [field]: draft.trim() || null });
+  async function save(valueToSave = draft) {
+    const parsed = updateApplicationPreparationInputSchema.safeParse({ [field]: valueToSave.trim() || null });
     if (!parsed.success) {
       setState("invalid");
       return;
@@ -35,17 +55,21 @@ export function usePreparationField(applicationId: number, field: PreparationKey
       await mutation.mutateAsync(parsed.data);
       setSavedValue(parsed.data[field] ?? null);
       setEditing(false);
-      setState("saved");
+      setState(null);
     } catch {
       setState("error");
     }
   }
 
-  function beginEdit() {
-    setDraft(savedValue ?? "");
-    setState(null);
-    setEditing(true);
-  }
-
-  return { savedValue, draft, setDraft, editing, beginEdit, state, cancel, save, pending: mutation.isPending };
+  return {
+    savedValue,
+    draft,
+    editing,
+    pending: mutation.isPending,
+    state,
+    setDraft,
+    beginEdit,
+    cancel,
+    save,
+  };
 }

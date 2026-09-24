@@ -1,31 +1,23 @@
-import { describe, expect, it, vi } from "vitest";
+import { expect, test, vi } from "vitest";
 import { runWorkspaceMutation } from "./run-workspace-mutation";
 
-describe("runWorkspaceMutation", () => {
-  it("clears the previous status and reports success", async () => {
-    const setStatus = vi.fn();
+test("workspace mutation status reports success and failure without leaking errors", async () => {
+  const successStatus = vi.fn();
+  expect(await runWorkspaceMutation(async () => {}, successStatus, "saved", "saveFailed")).toBe(true);
+  expect(successStatus).toHaveBeenNthCalledWith(1, null);
+  expect(successStatus).toHaveBeenNthCalledWith(2, "saved");
 
-    const succeeded = await runWorkspaceMutation(async () => {}, setStatus, "saved", "saveFailed");
-
-    expect(succeeded).toBe(true);
-    expect(setStatus).toHaveBeenNthCalledWith(1, null);
-    expect(setStatus).toHaveBeenNthCalledWith(2, "saved");
-  });
-
-  it("reports failure without rethrowing the mutation error", async () => {
-    const setStatus = vi.fn();
-
-    const succeeded = await runWorkspaceMutation(
+  const failureStatus = vi.fn();
+  expect(
+    await runWorkspaceMutation(
       async () => {
         throw new Error("request failed");
       },
-      setStatus,
+      failureStatus,
       "saved",
       "saveFailed",
-    );
-
-    expect(succeeded).toBe(false);
-    expect(setStatus).toHaveBeenNthCalledWith(1, null);
-    expect(setStatus).toHaveBeenNthCalledWith(2, "saveFailed");
-  });
+    ),
+  ).toBe(false);
+  expect(failureStatus).toHaveBeenNthCalledWith(1, null);
+  expect(failureStatus).toHaveBeenNthCalledWith(2, "saveFailed");
 });

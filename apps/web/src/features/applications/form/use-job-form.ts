@@ -1,25 +1,16 @@
-import { type CreateApplicationInput, createApplicationInputSchema, type JobApplication } from "@xeniway/shared";
+import { type CreateApplicationInput, createApplicationInputSchema } from "@xeniway/shared";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type ApplicationFormState, applicationToForm, normalizeApplicationForm } from "./application-form";
+import { type ApplicationFormState, emptyApplicationForm, normalizeApplicationForm } from "./application-form";
 
 export type FormState = ApplicationFormState;
 
-export function useJobForm({
-  job,
-  onSubmit,
-}: {
-  job?: JobApplication | null;
-  onSubmit: (input: CreateApplicationInput) => void;
-}) {
+export function useJobForm({ onSubmit }: { onSubmit: (input: CreateApplicationInput) => void }) {
   const { t } = useTranslation();
-  const [form, setForm] = useState<FormState>(() => applicationToForm(job));
+  const [form, setForm] = useState<FormState>(emptyApplicationForm);
   const [error, setError] = useState<string | null>(null);
-  const [blacklistOpen, setBlacklistOpen] = useState(false);
-  const [blacklistReason, setBlacklistReason] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
 
-  useEffect(() => setForm(applicationToForm(job)), [job]);
   useEffect(() => {
     if (error) errorRef.current?.focus();
   }, [error]);
@@ -45,9 +36,5 @@ export function useJobForm({
     handleSubmit,
     error,
     errorRef,
-    blacklistOpen,
-    setBlacklistOpen,
-    blacklistReason,
-    setBlacklistReason,
   };
 }

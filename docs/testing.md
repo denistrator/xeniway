@@ -17,7 +17,7 @@ The application drawer and modal use the shared translated “Close dialog” la
 
 The activity browser workflow checks both form presentations, focus entry and return, safe rendering and Axe for the activity view, immutable system events, archive/blacklist history, manual event persistence, and legacy creation-marker behavior through the API test fixture.
 
-The application-workspace browser workflow checks heading focus on navigation, accessible preparation editing, contact and follow-up creation, follow-up completion, server persistence after reload, and lifecycle transitions while retaining the same workspace data.
+The application-workspace browser workflow checks heading focus on navigation, Atlaskit inline editing and focus return, accessible preparation editing, contact and follow-up creation, follow-up completion, server persistence after reload, and lifecycle transitions while retaining the same workspace data. Workspace unit tests cover one-field updates, the dirty compact-field warning, direct confirmation, multiline editing, and immediate status selection.
 
 ## Commands
 

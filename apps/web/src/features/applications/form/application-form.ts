@@ -1,4 +1,4 @@
-import type { CreateApplicationInput, JobApplication } from "@xeniway/shared";
+import type { CreateApplicationInput } from "@xeniway/shared";
 
 export type ApplicationFormState = {
   company: string;
@@ -23,22 +23,6 @@ export const emptyApplicationForm: ApplicationFormState = {
   appliedAt: "",
   notes: "",
 };
-
-export function applicationToForm(job?: JobApplication | null): ApplicationFormState {
-  return job
-    ? {
-        company: job.company,
-        position: job.position,
-        location: job.location ?? "",
-        salary: job.salary ?? "",
-        jobUrl: job.jobUrl ?? "",
-        description: job.description ?? "",
-        status: job.status,
-        appliedAt: job.appliedAt ?? "",
-        notes: job.notes ?? "",
-      }
-    : emptyApplicationForm;
-}
 
 export function normalizeApplicationForm(form: ApplicationFormState): CreateApplicationInput {
   return {

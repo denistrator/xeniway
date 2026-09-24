@@ -232,9 +232,8 @@ test("records and edits application activity across reloads", async ({ page }) =
   await page.getByRole("button", { name: "Save activity" }).click();
   await expect(activity).toContainText("Contact recruiter");
   await expect(page.getByRole("button", { name: "Add activity" })).toBeFocused();
-  await page.getByRole("button", { name: "Edit application" }).click();
-  await page.getByRole("combobox", { name: "Status" }).selectOption("applied");
-  await page.getByRole("button", { name: "Save application" }).click();
+  await page.getByRole("button", { name: /Change status/ }).click();
+  await page.getByRole("radio", { name: "Applied" }).click();
   await page.reload();
   await expect(page.getByRole("list", { name: "Activity timeline" })).toContainText("Saved → Applied");
   await page.getByRole("button", { name: "Edit Contact recruiter" }).click();
@@ -288,7 +287,7 @@ test("records and edits application activity across reloads", async ({ page }) =
       (event) => event.type,
     ),
   ).toContain("blacklisted");
-  await page.getByRole("link", { name: "Blacklist" }).click();
+  await page.getByRole("link", { name: "Blacklist", exact: true }).click();
   const blacklistedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
   await blacklistedCard.getByRole("button", { name: "View activity" }).click();
   await expect(blacklistedCard.getByRole("list", { name: "Activity timeline" })).toContainText("Blacklisted");
@@ -702,7 +701,7 @@ test("permanently deletes a blacklisted application", async ({ page }) => {
   await page.getByRole("button", { name: new RegExp(company) }).click();
   await page.getByRole("button", { name: "Add to blacklist" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Add to blacklist" }).click();
-  await page.getByRole("link", { name: "Blacklist" }).click();
+  await page.getByRole("link", { name: "Blacklist", exact: true }).click();
   await expect(page.getByRole("heading", { name: company })).toBeVisible();
 
   await page
@@ -740,7 +739,7 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await expect(page).toHaveURL(/\/applications\/\d+$/);
   await expect(page.getByRole("heading", { name: company })).toBeFocused();
   await page.getByRole("heading", { name: "Interview preparation" }).waitFor();
-  await page.getByRole("button", { name: "Edit company research" }).click();
+  await page.getByRole("button", { name: "Company research, Edit" }).click();
   await page.getByRole("textbox", { name: "Company research" }).fill("Recent product launches and team structure");
   await page.getByRole("button", { name: "Save company research" }).click();
   await expect(page.getByText("Recent product launches and team structure")).toBeVisible();
@@ -781,7 +780,7 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
 
   await page.getByRole("button", { name: "Add to blacklist" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Add to blacklist" }).click();
-  await page.getByRole("link", { name: "Blacklist" }).click();
+  await page.getByRole("link", { name: "Blacklist", exact: true }).click();
   await expect(page).toHaveURL(/\/blacklist$/);
   const blacklistedCard = page.getByRole("heading", { name: company }).locator("xpath=../..");
   await expect(blacklistedCard).toBeVisible();

@@ -2,172 +2,104 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { afterEach, expect, test, vi } from "vitest";
-import { initializeI18n } from "../../../../i18n/i18n";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { changeLocale, initializeI18n } from "../../../../i18n/i18n";
 import { authKeys } from "../../../../lib/queries";
 import { store } from "../../../../store";
+import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
 import { ApplicationWorkspacePage } from "./application-workspace-page";
 
-test("invalid IDs render not found without issuing a request", async () => {
+beforeEach(async () => {
+  vi.restoreAllMocks();
   await initializeI18n();
+  await changeLocale("en");
+});
+
+afterEach(() => vi.unstubAllGlobals());
+
+test("invalid IDs render not found without issuing a request", async () => {
   const fetcher = vi.fn();
   vi.stubGlobal("fetch", fetcher);
+
   renderPage("/applications/0");
+
   expect(await screen.findByRole("heading", { name: "Page not found" })).toBeVisible();
-  expect(fetcher).not.toHaveBeenCalledWith("/api/applications/0", expect.anything());
-  vi.unstubAllGlobals();
+  expect(fetcher).not.toHaveBeenCalled();
 });
 
 test("API not-found responses render the not-found page", async () => {
-  await initializeI18n();
   vi.stubGlobal(
     "fetch",
-    vi.fn((input: RequestInfo | URL) =>
-      Promise.resolve(
-        String(input) === "/api/auth/csrf"
-          ? new Response(JSON.stringify({ data: { csrfToken: "csrf" } }), { status: 200 })
-          : new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "Not found" } }), { status: 404 }),
+    vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "Not found" } }), { status: 404 }),
       ),
-    ),
   );
+
   renderPage("/applications/999");
+
   expect(await screen.findByRole("heading", { name: "Page not found" })).toBeVisible();
 });
 
-test.each([
-  { status: "saved", back: "Back to Applications", href: "/", action: "Archive application" },
-  {
-    status: "saved",
-    archivedAt: "2026-09-20T00:00:00.000Z",
-    back: "Back to Archive",
-    href: "/archive",
-    action: "Restore application",
-  },
-  {
-    status: "saved",
-    blacklistedAt: "2026-09-20T00:00:00.000Z",
-    back: "Back to Blacklist",
-    href: "/blacklist",
-    action: "Restore application",
-  },
-  {
-    status: "saved",
-    archivedAt: "2026-09-19T00:00:00.000Z",
-    blacklistedAt: "2026-09-20T00:00:00.000Z",
-    back: "Back to Blacklist",
-    href: "/blacklist",
-    action: "Restore application",
-  },
-])("shows state-appropriate navigation and lifecycle action", async (application) => {
-  await initializeI18n();
+test("renders a loading state while the application request is pending", () => {
   vi.stubGlobal(
     "fetch",
-    vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            application: {
-              id: 7,
-              company: "Northwind",
-              position: "Engineer",
-              location: "Remote",
-              salary: null,
-              jobUrl: null,
-              description: null,
-              appliedAt: null,
-              notes: null,
-              createdAt: "2026-09-01T00:00:00.000Z",
-              updatedAt: "2026-09-01T00:00:00.000Z",
-              sortOrder: 0,
-              archivedAt: null,
-              blacklistedAt: null,
-              blacklistReason: null,
-              ...application,
-            },
-            events: [],
-            preparation: { companyResearch: null, talkingPoints: null, interviewerQuestions: null, updatedAt: null },
-            contacts: [],
-            followUpTasks: [],
-          },
-        }),
-        { status: 200 },
-      ),
-    ),
+    vi.fn(() => new Promise<Response>(() => undefined)),
   );
-  renderPage("/applications/7");
-  expect(await screen.findByRole("heading", { name: "Northwind" })).toBeVisible();
-  expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Northwind" }));
-  expect(screen.getByRole("link", { name: application.back })).toHaveAttribute("href", application.href);
-  expect(screen.getByRole("button", { name: application.action })).toBeVisible();
-  if (application.back === "Back to Applications") {
-    expect(screen.getByRole("button", { name: "Edit application" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Add to blacklist" })).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Delete permanently" })).toBeNull();
-  } else {
-    expect(screen.getByRole("button", { name: "Delete permanently" })).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Edit application" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Archive application" })).toBeNull();
-  }
-  vi.unstubAllGlobals();
+
+  renderPage("/applications/3");
+
+  expect(screen.getByText("Loading…")).toBeVisible();
 });
 
-test("restoring a blacklisted application that is also archived returns to Archive", async () => {
-  await initializeI18n();
-  const fetcher = vi.fn((input: RequestInfo | URL) => {
-    const url = String(input);
-    if (url === "/api/auth/csrf")
-      return Promise.resolve(new Response(JSON.stringify({ data: { csrfToken: "csrf" } }), { status: 200 }));
-    if (url === "/api/applications/7/unblacklist")
-      return Promise.resolve(new Response(JSON.stringify({ data: { message: "Restored" } }), { status: 200 }));
-    const application = {
-      id: 7,
-      company: "Northwind",
-      position: "Engineer",
-      status: "saved",
-      location: null,
-      salary: null,
-      jobUrl: null,
-      description: null,
-      appliedAt: null,
-      notes: null,
-      createdAt: "2026-09-01T00:00:00.000Z",
-      updatedAt: "2026-09-01T00:00:00.000Z",
-      sortOrder: 0,
-      archivedAt: "2026-09-20T00:00:00.000Z",
-      blacklistedAt: "2026-09-21T00:00:00.000Z",
-      blacklistReason: null,
-    };
-    return Promise.resolve(
-      new Response(
-        JSON.stringify({
-          data: {
-            application,
-            events: [],
-            preparation: { companyResearch: null, talkingPoints: null, interviewerQuestions: null, updatedAt: null },
-            contacts: [],
-            followUpTasks: [],
-          },
-        }),
-        { status: 200 },
-      ),
-    );
-  });
+test("retries a failed request and renders the workspace", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: { code: "REQUEST_FAILED", message: "Request failed" } }), { status: 500 }),
+    )
+    .mockResolvedValueOnce(workspaceResponse());
   vi.stubGlobal("fetch", fetcher);
-  renderPage("/applications/7");
-  await userEvent.setup().click(await screen.findByRole("button", { name: "Restore application" }));
-  await waitFor(() => expect(screen.getByTestId("pathname")).toHaveTextContent("/archive"));
-  expect(fetcher).toHaveBeenCalledWith("/api/applications/7/unblacklist", expect.anything());
+  renderPage("/applications/3");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  await user.click(screen.getByRole("button", { name: "Retry" }));
+
+  expect(await screen.findByRole("heading", { name: "Northwind" })).toBeVisible();
+  expect(fetcher).toHaveBeenCalledTimes(2);
 });
+
+test("composes every workspace domain from one application-detail request", async () => {
+  const fetcher = vi.fn().mockResolvedValue(workspaceResponse());
+  vi.stubGlobal("fetch", fetcher);
+  const { container } = renderPage("/applications/3");
+
+  expect(await screen.findByRole("heading", { name: "Northwind" })).toHaveFocus();
+  expect(screen.getByRole("region", { name: "About" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Interview preparation" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Contacts" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Follow-ups" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Activity" })).toBeVisible();
+  expect(container.querySelector("main")).toBeNull();
+  await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  expect(fetcher).toHaveBeenCalledWith("/api/applications/3", expect.anything());
+});
+
+function workspaceResponse() {
+  return new Response(JSON.stringify({ data: createApplicationWorkspaceData() }), { status: 200 });
+}
 
 function renderPage(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(authKeys.me, { data: { user: { id: 1, email: "test@example.com" } } });
+  queryClient.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
   return render(
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
         <MemoryRouter initialEntries={[path]}>
-          <LocationProbe />
           <Routes>
             <Route path="/applications/:id" element={<ApplicationWorkspacePage />} />
           </Routes>
@@ -176,10 +108,3 @@ function renderPage(path: string) {
     </QueryClientProvider>,
   );
 }
-
-function LocationProbe() {
-  const location = useLocation();
-  return <output data-testid="pathname">{location.pathname}</output>;
-}
-
-afterEach(() => vi.unstubAllGlobals());

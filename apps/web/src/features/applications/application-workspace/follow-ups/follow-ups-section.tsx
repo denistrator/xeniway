@@ -1,80 +1,159 @@
 import type { ApplicationFollowUpTask } from "@xeniway/shared";
-import { useId, useRef } from "react";
+import { memo, useId, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
-import { useReturnFocus } from "../shared/use-return-focus";
-import { WorkspaceSectionHeader } from "../shared/workspace-section-header";
-import { WorkspaceStatus } from "../shared/workspace-status";
-import { FollowUpDeleteDialog } from "./follow-up-delete-dialog";
+import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
+import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui";
 import { FollowUpForm } from "./follow-up-form";
-import { FollowUpList } from "./follow-up-list";
-import { sortFollowUps } from "./sort-follow-ups";
-import { useFollowUpsSection } from "./use-follow-ups-section";
+import { useFollowUpsController } from "./use-follow-ups-controller";
 
-export function FollowUpsSection({
+function sortFollowUps(tasks: ApplicationFollowUpTask[]) {
+  return [...tasks].sort((left, right) => {
+    const leftCompleted = Boolean(left.completedAt);
+    const rightCompleted = Boolean(right.completedAt);
+    return (
+      Number(leftCompleted) - Number(rightCompleted) ||
+      (leftCompleted
+        ? (left.completedAt ?? "").localeCompare(right.completedAt ?? "")
+        : left.dueDate.localeCompare(right.dueDate)) ||
+      left.id - right.id
+    );
+  });
+}
+
+export const FollowUpsSection = memo(function FollowUpsSection({
   applicationId,
   tasks,
 }: {
   applicationId: number;
   tasks: ApplicationFollowUpTask[];
 }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? "en";
   const headingId = useId();
-  const section = useFollowUpsSection(applicationId);
-  const addButton = useRef<HTMLButtonElement>(null);
-  const rememberEditorFocus = useReturnFocus(Boolean(section.editing), addButton);
-  const rememberConfirmationFocus = useReturnFocus(Boolean(section.deleting), addButton);
-  const sorted = sortFollowUps(tasks);
+  const controller = useFollowUpsController(applicationId);
+  const sortedTasks = useMemo(() => sortFollowUps(tasks), [tasks]);
+  const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }), [locale]);
+  const fullDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }),
+    [locale],
+  );
+  const statusIsError = controller.status?.endsWith("Failed") ?? false;
+
   return (
     <section aria-labelledby={headingId}>
       <Card>
         <WorkspaceSectionHeader
           headingId={headingId}
           title={t("applications.workspace.followUps.heading")}
-          help={t("applications.workspace.followUps.help")}
-          addLabel={t("applications.workspace.followUps.add")}
-          addButton={addButton}
-          disabled={Boolean(section.editing)}
-          onAdd={(trigger) => {
-            rememberEditorFocus(trigger);
-            section.setEditing("new");
-          }}
+          actionLabel={t("applications.workspace.followUps.add")}
+          actionRef={controller.addButtonRef}
+          actionDisabled={controller.editor.target !== null}
+          onAction={controller.editor.openNew}
         />
         <CardContent>
-          {section.editing && (
-            <FollowUpForm
-              key={section.editing === "new" ? "new" : section.editing.id}
-              task={section.editing === "new" ? undefined : section.editing}
-              onSave={section.save}
-              onCancel={() => section.setEditing(null)}
-              pending={section.pending}
-            />
+          <FollowUpForm controller={controller} />
+          {sortedTasks.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">
+              {t("applications.workspace.followUps.empty")}
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {sortedTasks.map((task) => {
+                const isCompleted = Boolean(task.completedAt);
+                const dueDate = new Date(`${task.dueDate}T00:00:00Z`);
+                return (
+                  <li
+                    key={task.id}
+                    className={`flex flex-wrap items-start gap-4 rounded-xl border border-line p-4 ${
+                      isCompleted ? "bg-surface-tint" : "bg-surface"
+                    }`}
+                  >
+                    <time
+                      dateTime={task.dueDate}
+                      title={fullDateFormatter.format(dueDate)}
+                      className="flex min-w-14 flex-col items-center rounded-lg border border-accent-warm/40 bg-surface-tint px-2 py-1 text-center text-ink"
+                    >
+                      <span className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted">
+                        {monthFormatter.format(dueDate)}
+                      </span>
+                      <span className="font-display text-2xl leading-none">{dueDate.getUTCDate()}</span>
+                      <span className="text-[0.65rem] text-muted">{dueDate.getUTCFullYear()}</span>
+                    </time>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-display text-lg text-ink">{task.title}</h3>
+                          <span className="text-xs font-semibold text-muted">
+                            {t(
+                              isCompleted
+                                ? "applications.workspace.followUps.done"
+                                : "applications.workspace.followUps.open",
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            aria-label={t("applications.workspace.followUps.editNamed", { name: task.title })}
+                            onClick={(event) => controller.editor.openExisting(task, event.currentTarget)}
+                          >
+                            {t("applications.workspace.actions.edit")}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            aria-label={t("applications.workspace.followUps.deleteNamed", { name: task.title })}
+                            onClick={(event) => controller.deletion.request(task, event.currentTarget)}
+                          >
+                            {t("applications.workspace.actions.delete")}
+                          </Button>
+                        </div>
+                      </div>
+                      {task.notes && (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">{task.notes}</p>
+                      )}
+                      {!isCompleted && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="mt-3"
+                          disabled={controller.pending}
+                          aria-label={t("applications.workspace.followUps.completeNamed", { name: task.title })}
+                          onClick={() => void controller.complete(task.id)}
+                        >
+                          {t("applications.workspace.followUps.complete")}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-          <FollowUpList
-            tasks={sorted}
-            pending={section.pending}
-            onEdit={(task, trigger) => {
-              rememberEditorFocus(trigger);
-              section.setEditing(task);
-            }}
-            onComplete={(id) => void section.complete(id)}
-            onDelete={(task, trigger) => {
-              rememberConfirmationFocus(trigger);
-              section.setEditing(null);
-              section.setDeleting(task);
-            }}
+          <WorkspaceMutationStatus
+            pending={controller.pending}
+            pendingText={t("applications.workspace.actions.saving")}
+            text={controller.status ? t(`applications.workspace.followUps.${controller.status}`) : null}
+            isError={statusIsError}
           />
-          <WorkspaceStatus section="followUps" pending={section.pending} status={section.status} />
         </CardContent>
       </Card>
-      {section.deleting && (
-        <FollowUpDeleteDialog
-          task={section.deleting}
-          pending={section.pending}
-          onDelete={() => void section.remove()}
-          onCancel={() => section.setDeleting(null)}
+      {controller.deletion.target && (
+        <ConfirmationModal
+          title={t("applications.workspace.followUps.deleteTitle")}
+          text={t("applications.workspace.followUps.deleteConfirmation", { title: controller.deletion.target.title })}
+          yesLabel={t("common.actions.yes")}
+          noLabel={t("common.actions.no")}
+          onYes={() => void controller.deletion.confirm()}
+          onNo={controller.deletion.cancel}
+          yesDisabled={controller.pending}
         />
       )}
     </section>
   );
-}
+});

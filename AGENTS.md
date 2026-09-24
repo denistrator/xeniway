@@ -9,7 +9,7 @@ The repository describes the candidate-tracking product and its local developmen
 ## Structure
 
 - `apps/web` contains the React/Vite SPA, routes, Redux Toolkit UI state, TanStack Query hooks, API client, Tailwind styles, and reusable primitives.
-- `apps/web/src/features/applications` groups board, collection, form, activity, archive, blacklist, and filter concerns by responsibility. `application-workspace` contains the per-application workspace, organized into `page`, `contacts`, `follow-ups`, `preparation`, and `shared`; it shares the application's authenticated lifecycle and ownership rules.
+- `apps/web/src/features/applications` groups board, collection, form, activity, archive, blacklist, and filter concerns by responsibility. `application-workspace` contains the per-application workspace, organized into `page`, `overview`, `lifecycle`, `preparation`, `contacts`, `follow-ups`, `shared`, and `test-support`; it shares the application's authenticated lifecycle and ownership rules. The sibling `activity` feature owns both the query-backed collection-card activity view and the controlled workspace activity section.
 - `apps/api` contains the Bun/Elysia server, domain-grouped routers under `src/routes/`, authentication and CSRF services, repositories, Drizzle schema, migrations, and development seed command. `src/routes/index.ts` composes health, auth, preferences, and application routers; application routes are grouped into collection, item, events, and board operations.
 - `packages/shared` contains Zod input schemas and public TypeScript response types consumed by both applications.
 - `tests/e2e` contains Playwright browser workflows; package tests live beside source files as `*.test.ts`.
@@ -60,6 +60,8 @@ Use Vitest for shared contracts, authentication, repository mapping, seed invari
 Keep development seed data deterministic and aligned with the current application and workspace schema. When fixture counts or content change, update seed invariant tests and the setup/database documentation.
 
 Application workspace changes must preserve owner-scoped API access, archive/blacklist behavior, saved preparation/contact/follow-up data, keyboard navigation, and focus entry/return behavior. Update the API, database, and testing docs when those contracts or workflows change.
+
+Application and preparation fields in the workspace use `@atlaskit/inline-edit` for read/edit views and confirm/cancel controls. Keep persistence in the existing field hooks, send one-field application patches, and preserve the dirty compact-field warning and immediate status selection. Do not restore the former custom compact or reusable text editor components. The create-application modal/drawer is separate from workspace editing.
 
 Locale changes require focused dictionary/selector tests and a browser test covering language switching, `html[lang]`, `html[dir]`, and reload persistence. Keep all four dictionaries structurally aligned with the English source dictionary.
 

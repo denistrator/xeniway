@@ -27,6 +27,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open refactoring tasks
 
+### Measure frontend bundle costs
+
+- **Where:** The shared web entry chunk and `apps/web/src/features/applications/application-workspace` workspace chunk.
+- **Why:** The production build currently emits a shared entry chunk of about 513 KB before gzip (about 159 KB gzip), which exceeds Vite's 500 KB warning threshold. Replacing the custom editors with `@atlaskit/inline-edit` also increased the lazy-loaded workspace JavaScript chunk from about 38 KB to about 332 KB before gzip (about 93 KB gzip) and pulls Atlaskit styling/theme modules into the build.
+- **Possible direction:** Run `npx vite-bundle-analyzer`, measure real entry/workspace load and interaction performance, then reduce unused dependencies or introduce evidence-backed code splitting. Inspect Atlaskit theme/runtime code separately from shared application dependencies.
+- **Guardrails:** Preserve accessible read/edit controls, keyboard focus, status selection, validation, and the compact-field unsaved-change warning. Treat a different editor library or return to custom controls as a separate product/architecture decision.
+
 ### Reassess CSV export memory use for larger boards
 
 - **Where:** `apps/api/src/db/repositories/applications.ts` (`listForExport`) and `apps/api/src/routes/applications/export-csv.ts` (`serializeApplicationsCsv`).

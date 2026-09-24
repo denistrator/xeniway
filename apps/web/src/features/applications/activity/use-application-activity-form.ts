@@ -15,9 +15,9 @@ function toLocalDateTime(value: string) {
 export function useApplicationActivityForm(
   event: ApplicationEvent | undefined,
   onSubmit: (input: ApplicationEventInput) => Promise<void>,
+  editorKey: string | null = "mounted",
 ) {
   const initialFocus = useRef<HTMLSelectElement>(null);
-  useEffect(() => initialFocus.current?.focus(), []);
   const [type, setType] = useState<(typeof manualApplicationEventTypeSchema.options)[number]>(
     event?.isSystem ? "note" : ((event?.type as (typeof manualApplicationEventTypeSchema.options)[number]) ?? "note"),
   );
@@ -26,6 +26,16 @@ export function useApplicationActivityForm(
   const [occurredAt, setOccurredAt] = useState(toLocalDateTime(event?.occurredAt ?? new Date().toISOString()));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<"invalid" | "saveFailed" | null>(null);
+
+  useEffect(() => {
+    if (!editorKey) return;
+    setType(event?.isSystem ? "note" : ((event?.type as typeof type) ?? "note"));
+    setTitle(event?.title ?? "");
+    setDescription(event?.description ?? "");
+    setOccurredAt(toLocalDateTime(event?.occurredAt ?? new Date().toISOString()));
+    setError(null);
+    initialFocus.current?.focus();
+  }, [editorKey, event]);
 
   const submit = async (formEvent: FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();

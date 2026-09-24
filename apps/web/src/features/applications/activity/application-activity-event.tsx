@@ -3,14 +3,16 @@ import { useTranslation } from "react-i18next";
 
 export function ApplicationActivityEvent({
   event,
+  formattedOccurredAt,
   onEdit,
   onDelete,
 }: {
   event: ApplicationEvent;
+  formattedOccurredAt: string;
   onEdit: (event: ApplicationEvent) => void;
   onDelete: (event: ApplicationEvent) => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const label = t(`applications.activity.types.${event.type}`);
   return (
     <article
@@ -29,9 +31,7 @@ export function ApplicationActivityEvent({
             <p className="mt-2 whitespace-pre-wrap break-words text-sm text-ink">{event.description}</p>
           )}
           <time className="mt-2 block text-xs text-muted" dateTime={event.occurredAt}>
-            {new Intl.DateTimeFormat(i18n.resolvedLanguage ?? "en", { dateStyle: "medium", timeStyle: "short" }).format(
-              new Date(event.occurredAt),
-            )}
+            {formattedOccurredAt}
           </time>
         </div>
         {!event.isSystem && (

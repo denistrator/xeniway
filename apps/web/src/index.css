@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./components/ui/floating-label.css";
+@import "./features/applications/application-workspace/shared/workspace-inline-edit.css";
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {

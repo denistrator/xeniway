@@ -2,14 +2,9 @@ import { useTranslation } from "react-i18next";
 import { JobFormContent, type JobFormDialogProps } from "./job-form-content";
 
 export function JobModal({
-  job,
-  mode,
   presentation,
   submitting,
   onSave,
-  onArchive,
-  onBlacklist,
-  blacklisting,
   onClose,
   onSwitchPresentation,
   dialogRef,
@@ -36,13 +31,8 @@ export function JobModal({
       >
         <JobFormContent
           presentation={presentation}
-          mode={mode}
-          job={job}
           submitting={submitting}
           onSave={onSave}
-          onArchive={onArchive}
-          onBlacklist={onBlacklist}
-          blacklisting={blacklisting}
           onClose={onClose}
           onSwitchPresentation={onSwitchPresentation}
         />

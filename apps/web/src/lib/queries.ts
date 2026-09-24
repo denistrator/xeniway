@@ -306,6 +306,21 @@ export function useBlacklistedApplications() {
   return useApplicationList("blacklist", listBlacklistedApplications);
 }
 
+export function useUpdateApplicationMutation() {
+  const queryClient = useQueryClient();
+  const csrfToken = useCsrfToken().data ?? "";
+  return useMutation({
+    mutationFn: ({ id, input }: { id: number; input: UpdateApplicationInput }) =>
+      updateApplication(id, input, csrfToken),
+    onSuccess: async (_response, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: applicationKeys.all }),
+        queryClient.invalidateQueries({ queryKey: applicationKeys.detail(id) }),
+      ]);
+    },
+  });
+}
+
 function useApplicationList(list: ApplicationList, queryFn: () => Promise<ApplicationListResponse>) {
   return useQuery({
     queryKey: applicationKeys.list(list),
@@ -318,6 +333,7 @@ function useApplicationList(list: ApplicationList, queryFn: () => Promise<Applic
 export function useApplicationMutations() {
   const queryClient = useQueryClient();
   const csrfToken = useCsrfToken().data ?? "";
+  const update = useUpdateApplicationMutation();
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: applicationKeys.all });
   };
@@ -327,11 +343,7 @@ export function useApplicationMutations() {
       mutationFn: (input: CreateApplicationInput) => createApplication(input, csrfToken),
       onSuccess: invalidate,
     }),
-    update: useMutation({
-      mutationFn: ({ id, input }: { id: number; input: UpdateApplicationInput }) =>
-        updateApplication(id, input, csrfToken),
-      onSuccess: invalidate,
-    }),
+    update,
     reorder: useMutation({
       mutationFn: (input: { status: JobApplication["status"]; applicationIds: number[] }) =>
         reorderApplications(input, csrfToken),

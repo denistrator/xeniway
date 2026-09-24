@@ -4,12 +4,10 @@ import { Button } from "../../../components/ui/button";
 import type { JobFormPresentation } from "../../../store";
 
 export function JobFormHeader({
-  mode,
   presentation,
   onClose,
   onSwitchPresentation,
 }: {
-  mode: "create" | "edit";
   presentation: JobFormPresentation;
   onClose: () => void;
   onSwitchPresentation: () => void;
@@ -20,7 +18,7 @@ export function JobFormHeader({
   return (
     <div className="mb-6 flex items-center justify-between gap-4">
       <h2 id="job-form-title" className="font-display text-2xl font-bold tracking-tight text-ink">
-        {mode === "create" ? t("applications.editor.add") : t("applications.editor.edit")}
+        {t("applications.editor.add")}
       </h2>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" aria-label={switchLabel} title={switchLabel} onClick={onSwitchPresentation}>
