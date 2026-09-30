@@ -9,9 +9,7 @@ import type {
   ThemePreference,
 } from "@xeniway/shared";
 import type { AppDependencies, createApp } from "./app";
-import { withApplicationCreationEvent } from "./application-history";
 import type {
-  ApplicationExportRecord,
   ApplicationRepository,
   PasswordResetTokenRepository,
   SessionRepository,
@@ -217,15 +215,12 @@ export function createDependencies(): AppDependencies {
       followUpTasks.splice(index, 1);
       return true;
     },
-    async listForExport(userId): Promise<ApplicationExportRecord[]> {
+    async listForExport(userId) {
       return applications
         .filter((application) => applicationUserIds.get(application.id) === userId)
         .map((application) => ({
-          application,
-          events: withApplicationCreationEvent(
-            application,
-            events.filter((event) => event.applicationId === application.id),
-          ),
+          application: { ...application },
+          preparation: preparations.get(application.id) ?? emptyPreparation(),
         }));
     },
     async listEvents(userId, applicationId) {

@@ -60,6 +60,8 @@ Login, registration, and password-reset requests consume an atomic Redis counter
 
 ## Data ownership
 
+CSV export uses one ordered field allowlist in `apps/api/src/routes/applications/export-csv.ts`, pairing each column name with its value reader. The same definition generates headers and row cells, including the derived board value, and all cells pass through the spreadsheet-safe serializer.
+
 Applications and activity events are never addressed without an authenticated owner in repository calls. Archive is a state transition represented by `archivedAt`; blacklist is an independent exclusion state represented by `blacklistedAt` and `blacklistReason`. Active, archive, and blacklist lists are separate queries. Blacklisting preserves the six-status workflow and restores the job to its previous active status when removed from the blacklist. Permanent deletion is accepted for any owned application; the UI exposes it from archive and blacklist views, and database cascading deletion removes its activity history.
 
 ## Production security boundary

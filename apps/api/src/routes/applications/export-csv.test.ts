@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { serializeApplicationsCsv } from "./export-csv";
 
 describe("application CSV export", () => {
-  it("serializes all application fields and activity as spreadsheet-safe CSV", () => {
+  it("serializes the explicit application field allowlist as spreadsheet-safe CSV", () => {
     const csv = serializeApplicationsCsv([
       {
         application: {
@@ -23,29 +23,26 @@ describe("application CSV export", () => {
           blacklistedAt: null,
           blacklistReason: null,
         },
-        events: [
-          {
-            id: 7,
-            applicationId: 3,
-            type: "interview_scheduled",
-            title: "First round",
-            description: "Discussed the role",
-            occurredAt: "2026-09-02T09:00:00.000Z",
-            createdAt: "2026-09-02T09:00:00.000Z",
-            updatedAt: "2026-09-02T09:00:00.000Z",
-            metadata: null,
-            isSystem: false,
-          },
-        ],
+        preparation: {
+          companyResearch: "Research the platform roadmap",
+          talkingPoints: "Ask about incident response",
+          interviewerQuestions: "How does the team make decisions?",
+        },
       },
     ]);
 
-    expect(csv).toContain('"company","position","status","board"');
+    expect(csv).toContain('"Company","Position","Status","Board"');
     expect(csv).toContain('"\'=HYPERLINK(""https://bad.example"")"');
     expect(csv).toContain('"Engineer, Platform"');
     expect(csv).toContain('"Line one\nLine two"');
-    expect(csv).toContain('"[{""type"":""interview_scheduled""');
-    expect(csv).not.toContain('"id"');
+    expect(csv.split("\r\n")[0]).toBe(
+      '﻿"Company","Position","Status","Board","Location","Job URL","Description","Applied at","Notes","Company research","Talking points","Interviewer questions","Created at","Updated at"',
+    );
+    expect(csv).toContain('"Research the platform roadmap"');
+    expect(csv).toContain('"Ask about incident response"');
+    expect(csv).toContain('"How does the team make decisions?"');
+    expect(csv).not.toContain('"salary"');
+    expect(csv).not.toContain('"activity"');
     expect(csv.startsWith("\uFEFF")).toBe(true);
   });
 
@@ -53,6 +50,34 @@ describe("application CSV export", () => {
     const csv = serializeApplicationsCsv([]);
 
     expect(csv.split("\r\n")).toHaveLength(2);
-    expect(csv.split("\r\n")[0]).toContain("activity");
+    expect(csv.split("\r\n")[0]).toContain("Updated at");
+  });
+
+  it("leaves preparation columns blank when an application has no workspace record", () => {
+    const csv = serializeApplicationsCsv([
+      {
+        application: {
+          id: 4,
+          company: "No workspace",
+          position: "Engineer",
+          location: null,
+          salary: null,
+          jobUrl: null,
+          description: null,
+          status: "saved",
+          sortOrder: 0,
+          appliedAt: null,
+          notes: null,
+          createdAt: "2026-09-01T10:00:00.000Z",
+          updatedAt: "2026-09-01T10:00:00.000Z",
+          archivedAt: null,
+          blacklistedAt: null,
+          blacklistReason: null,
+        },
+        preparation: { companyResearch: null, talkingPoints: null, interviewerQuestions: null },
+      },
+    ]);
+
+    expect(csv.split("\r\n")[1]).toContain(',"","","","2026-09-01T10:00:00.000Z","2026-09-01T10:00:00.000Z"');
   });
 });

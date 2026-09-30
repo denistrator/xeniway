@@ -19,7 +19,6 @@ import type {
   UpdateApplicationPreparationInput,
 } from "@xeniway/shared";
 import { and, asc, desc, eq, exists, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { withApplicationCreationEvent } from "../../application-history";
 import {
   applicationContacts,
   applicationEvents,
@@ -282,28 +281,21 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
 
   async listForExport(userId: number): Promise<ApplicationExportRecord[]> {
     const rows = await this.database
-      .select({ application: jobApplications, event: applicationEvents })
+      .select({ application: jobApplications, workspace: applicationWorkspaces })
       .from(jobApplications)
       .leftJoin(
-        applicationEvents,
-        and(eq(applicationEvents.userId, userId), eq(applicationEvents.applicationId, jobApplications.id)),
+        applicationWorkspaces,
+        and(
+          eq(applicationWorkspaces.applicationId, jobApplications.id),
+          eq(applicationWorkspaces.userId, jobApplications.userId),
+        ),
       )
       .where(eq(jobApplications.userId, userId))
-      .orderBy(asc(jobApplications.id), desc(applicationEvents.occurredAt), desc(applicationEvents.id));
+      .orderBy(asc(jobApplications.id));
 
-    const records = new Map<number, ApplicationExportRecord>();
-    for (const { application, event } of rows) {
-      let record = records.get(application.id);
-      if (!record) {
-        record = { application: toJobApplication(application), events: [] };
-        records.set(application.id, record);
-      }
-      if (event) record.events.push(toApplicationEvent(event));
-    }
-
-    return [...records.values()].map(({ application, events }) => ({
-      application,
-      events: withApplicationCreationEvent(application, events),
+    return rows.map(({ application, workspace }) => ({
+      application: toJobApplication(application),
+      preparation: toApplicationPreparation(workspace),
     }));
   }
 

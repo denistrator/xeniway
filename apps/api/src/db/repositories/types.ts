@@ -37,7 +37,10 @@ export type ApplicationWorkspaceRow = typeof applicationWorkspaces.$inferSelect;
 export type ApplicationContactRow = typeof applicationContacts.$inferSelect;
 export type ApplicationFollowUpTaskRow = typeof applicationFollowUpTasks.$inferSelect;
 export type JobApplicationRow = typeof jobApplications.$inferSelect;
-export type ApplicationExportRecord = { application: JobApplication; events: ApplicationEvent[] };
+export type ApplicationExportRecord = {
+  application: JobApplication;
+  preparation: Pick<ApplicationPreparation, "companyResearch" | "talkingPoints" | "interviewerQuestions">;
+};
 export type ApplicationWorkspaceData = {
   preparation: ApplicationPreparation;
   contacts: ApplicationContact[];

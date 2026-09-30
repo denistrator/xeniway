@@ -89,7 +89,7 @@ describe("application API", () => {
     expect(csv).toContain('"active"');
     expect(csv).toContain('"archive"');
     expect(csv).toContain('"blacklist"');
-    expect(csv).toContain("Email recruiter");
+    expect(csv).not.toContain("Email recruiter");
     expect(csv).not.toContain("Other Account Secret");
   });
 
