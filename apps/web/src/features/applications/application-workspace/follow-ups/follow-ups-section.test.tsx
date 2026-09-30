@@ -1,15 +1,15 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../../i18n/i18n";
+import { changeLocale } from "../../../../i18n/i18n";
+import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { workspaceFollowUpTask } from "../test-support/application-workspace-fixtures";
 import { renderApplicationWorkspace } from "../test-support/render-application-workspace";
 import { validateFollowUpDraft } from "./use-follow-ups-controller";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 afterEach(() => vi.unstubAllGlobals());

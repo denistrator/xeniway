@@ -4,15 +4,14 @@ import userEvent from "@testing-library/user-event";
 import type { JobApplication } from "@xeniway/shared";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../../i18n/i18n";
 import { authKeys } from "../../../../lib/queries";
+import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
 import { ApplicationLifecycleActions } from "./application-lifecycle-actions";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 test.each([
@@ -91,6 +90,72 @@ test("reports restore failures without navigating", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   expect(screen.getByTestId("pathname")).toHaveTextContent("/applications/3");
+});
+
+test("blacklisting sends an empty reason only after confirmation", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { message: "Blacklisted" } })));
+  vi.stubGlobal("fetch", fetcher);
+  renderLifecycle(createApplication());
+
+  await user.click(screen.getByRole("button", { name: "Add to blacklist" }));
+  expect(fetcher).not.toHaveBeenCalled();
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "No" }));
+  expect(fetcher).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Add to blacklist" }));
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Add to blacklist" }));
+
+  await waitFor(() => expect(screen.getByTestId("pathname")).toHaveTextContent(/^\/$/));
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher).toHaveBeenCalledWith("/api/applications/3/blacklist", expect.objectContaining({ method: "POST" }));
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ reason: null });
+});
+
+test.each([
+  { state: { archivedAt: "2026-09-20T00:00:00.000Z" }, path: "/archive" },
+  { state: { blacklistedAt: "2026-09-20T00:00:00.000Z" }, path: "/blacklist" },
+])("permanent deletion returns to $path after confirmation", async ({ state, path }) => {
+  const user = userEvent.setup();
+  const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { message: "Deleted" } })));
+  vi.stubGlobal("fetch", fetcher);
+  renderLifecycle(createApplication(state));
+
+  await user.click(screen.getByRole("button", { name: "Delete permanently" }));
+  expect(fetcher).not.toHaveBeenCalled();
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete permanently" }));
+
+  await waitFor(() => expect(screen.getByTestId("pathname").textContent).toBe(path));
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher).toHaveBeenCalledWith("/api/applications/3", expect.objectContaining({ method: "DELETE" }));
+  expect(new Headers(fetcher.mock.calls[0][1].headers).get("x-csrf-token")).toBe("csrf");
+});
+
+test("disables confirmation while pending and retains the dialog after failure", async () => {
+  const user = userEvent.setup();
+  let reject!: (error: Error) => void;
+  const fetcher = vi.fn().mockReturnValue(
+    new Promise((_resolve, fail) => {
+      reject = fail;
+    }),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  renderLifecycle(createApplication());
+
+  await user.click(screen.getByRole("button", { name: "Archive application" }));
+  const confirm = within(screen.getByRole("alertdialog")).getByRole("button", { name: "Archive application" });
+  await user.click(confirm);
+  expect(confirm).toBeDisabled();
+  await user.click(confirm);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  reject(new Error("offline"));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  expect(screen.getByRole("alertdialog")).toBeVisible();
+  expect(confirm).toBeEnabled();
+  expect(screen.getByTestId("pathname").textContent).toBe("/applications/3");
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "No" }));
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(screen.queryByRole("alert")).toBeNull();
 });
 
 function createApplication(overrides: Partial<JobApplication> = {}): JobApplication {

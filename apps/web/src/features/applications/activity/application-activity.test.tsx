@@ -2,14 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../i18n/i18n";
 import { authKeys } from "../../../lib/queries";
+import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { ApplicationActivity } from "./application-activity";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 test("shows loading while its application-detail query is pending", () => {

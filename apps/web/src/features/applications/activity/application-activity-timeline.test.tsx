@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import type { ApplicationEvent } from "@xeniway/shared";
 import { beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../i18n/i18n";
+import { changeLocale } from "../../../i18n/i18n";
+import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { ApplicationActivityTimeline } from "./application-activity-timeline";
 
 beforeEach(async () => {
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 const event: ApplicationEvent = {
@@ -21,6 +21,20 @@ const event: ApplicationEvent = {
   metadata: null,
   isSystem: false,
 };
+
+test("sorts newest first with deterministic ties without mutating supplied events", () => {
+  const events = [
+    { ...event, id: 1, title: "Oldest" },
+    { ...event, id: 2, title: "Newer lower ID", occurredAt: "2026-09-02T12:00:00.000Z" },
+    { ...event, id: 3, title: "Newer higher ID", occurredAt: "2026-09-02T12:00:00.000Z" },
+  ];
+  render(<ApplicationActivityTimeline events={events} onEdit={vi.fn()} onDelete={vi.fn()} />);
+  const items = screen.getAllByRole("listitem");
+  expect(items[0]).toHaveTextContent("Newer higher ID");
+  expect(items[1]).toHaveTextContent("Newer lower ID");
+  expect(items[2]).toHaveTextContent("Oldest");
+  expect(events.map(({ id }) => id)).toEqual([1, 2, 3]);
+});
 
 test("renders localized activity and editable user events", () => {
   render(<ApplicationActivityTimeline events={[event]} onEdit={vi.fn()} onDelete={vi.fn()} />);

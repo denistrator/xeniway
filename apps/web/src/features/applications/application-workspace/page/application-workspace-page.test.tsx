@@ -4,16 +4,15 @@ import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../../i18n/i18n";
 import { authKeys } from "../../../../lib/queries";
 import { store } from "../../../../store";
+import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
 import { ApplicationWorkspacePage } from "./application-workspace-page";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 afterEach(() => vi.unstubAllGlobals());

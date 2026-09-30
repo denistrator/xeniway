@@ -1,12 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../i18n/i18n";
+import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { ApplicationActivityForm } from "./application-activity-form";
 
 beforeEach(async () => {
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 test("requires a title and submits a dated follow-up", async () => {

@@ -4,6 +4,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
+### Choose activity timeline sorting direction
+
+- **Area:** Application activity timeline.
+- **Why:** Activity currently always appears newest first. A future user-selected oldest-first view could help review an application's history chronologically.
+- **Possible direction:** Add an accessible, localized sorting-direction control. Keep newest first as the default; sorting remains a presentation concern, not an API or stored-event mutation.
+- **Guardrails:** Preserve ordering by occurrence time with deterministic ID tie-breaking, leave the supplied event array unchanged, and retain immutable system history and owner-scoped activity access.
+
 ### Extend the application workspace
 
 - **Area:** Application management.

@@ -1,14 +1,13 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../../i18n/i18n";
+import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { workspacePreparation } from "../test-support/application-workspace-fixtures";
 import { renderApplicationWorkspace } from "../test-support/render-application-workspace";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
-  await initializeI18n();
-  await changeLocale("en");
+  await initializeTestI18n();
 });
 
 afterEach(() => vi.unstubAllGlobals());
@@ -39,6 +38,29 @@ test("preparation saves only the edited field and cancel restores its previous v
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ talkingPoints: "Ask about growth" });
   expect(screen.getByText("Ask about growth")).toBeVisible();
+});
+
+test("preparation editors keep independent drafts when another field is saved", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ data: { preparation: workspacePreparation } })));
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace({ preparation: workspacePreparation });
+
+  await user.click(screen.getByRole("button", { name: "Company research, Edit" }));
+  await user.type(screen.getByRole("textbox", { name: "Company research" }), " draft");
+  await user.click(screen.getByRole("button", { name: "Talking points, Edit" }));
+  await user.type(screen.getByRole("textbox", { name: "Talking points" }), "Ask about growth");
+  await user.click(screen.getByRole("button", { name: "Save talking points" }));
+
+  await waitFor(() => expect(screen.getByRole("button", { name: "Talking points, Edit" })).toHaveFocus());
+  expect(screen.getByRole("textbox", { name: "Company research" })).toHaveValue("Existing research draft");
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ talkingPoints: "Ask about growth" });
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(screen.getByText("Existing research")).toBeVisible();
+  expect(fetcher).toHaveBeenCalledTimes(1);
 });
 
 test("preparation announces pending and failed saves without losing the draft", async () => {
