@@ -13,6 +13,7 @@ const ru = {
       addJob: "Добавить вакансию",
       close: "Закрыть",
       closeDialog: "Закрыть диалог",
+      login: "Войти",
       logout: "Выйти",
       signingOut: "Выход…",
       retry: "Повторить",

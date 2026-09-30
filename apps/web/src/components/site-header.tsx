@@ -72,6 +72,11 @@ export function SiteHeader() {
               </Button>
             )}
             {user.data && <CsvExportButton />}
+            {!user.isPending && !user.data && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/login">{t("common.actions.login")}</Link>
+              </Button>
+            )}
             <ThemeSelector />
             <LanguageSelector />
           </div>

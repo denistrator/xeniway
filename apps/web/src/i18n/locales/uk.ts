@@ -13,6 +13,7 @@ const uk = {
       addJob: "Додати вакансію",
       close: "Закрити",
       closeDialog: "Закрити діалог",
+      login: "Увійти",
       logout: "Вийти",
       signingOut: "Вихід…",
       retry: "Повторити",

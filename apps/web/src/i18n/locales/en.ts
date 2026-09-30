@@ -11,6 +11,7 @@ export const en = {
       addJob: "Add job",
       close: "Close",
       closeDialog: "Close dialog",
+      login: "Log in",
       logout: "Logout",
       signingOut: "Signing out…",
       retry: "Retry",

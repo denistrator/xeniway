@@ -5,6 +5,7 @@
 - `packages/shared/src/index.test.ts` verifies shared schemas and public contract assumptions.
 - `apps/api/src/*.test.ts` covers authentication, expiration, CSRF, password-reset token lifecycle, mailer/service behavior, row mapping, seed invariants, validation, CRUD, status filtering, archive and blacklist transitions, error status codes, and ownership isolation using focused in-memory dependencies.
 - `apps/web/src/lib/api.test.ts` covers client error parsing, query-key separation, and CSRF headers on password-reset mutations.
+- `apps/web/src/components/site-header.test.tsx` covers the resolved signed-out login link and confirms it remains absent while the session is loading or authenticated.
 - `apps/web/src/features/welcome/welcome-modal.test.tsx` covers localized welcome content, completion actions, backdrop/Escape behavior, and the language control.
 - `apps/web/src/i18n/i18n.test.ts`, `apps/web/src/i18n/format.test.ts`, and `apps/web/src/features/preferences/language-selector.test.tsx` cover locale resolution, lazy resource selection, browser persistence, date formatting, compact labels, and accessible language names.
 - `apps/web/src/features/applications/board/job-status.test.ts` protects the shared six-status display order and translated labels used by the board, filters, and form.

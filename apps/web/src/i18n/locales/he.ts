@@ -7,6 +7,7 @@ const he = {
       addJob: "הוספת משרה",
       close: "סגירה",
       closeDialog: "סגירת החלון",
+      login: "התחברות",
       logout: "יציאה",
       signingOut: "מתבצעת יציאה…",
       retry: "ניסיון חוזר",
