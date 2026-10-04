@@ -1,3 +1,4 @@
+import type { ApplicationContact, ApplicationFollowUpTask } from "@xeniway/shared";
 import type { ApplicationExportRecord } from "../../db/repositories/types";
 
 type CsvExportField = {
@@ -33,9 +34,43 @@ function csvCell(value: unknown): string {
   return `"${safeText.replaceAll('"', '""')}"`;
 }
 
-export function serializeApplicationsCsv(records: ApplicationExportRecord[]): string {
-  const header = exportFields.map((field) => csvCell(field.header)).join(",");
-  const rows = records.map((record) => exportFields.map((field) => csvCell(field.read(record))).join(","));
-
+function serializeRows<T>(
+  fields: ReadonlyArray<{ header: string; read: (record: T) => string | number | null }>,
+  records: T[],
+) {
+  const header = fields.map((field) => csvCell(field.header)).join(",");
+  const rows = records.map((record) => fields.map((field) => csvCell(field.read(record))).join(","));
   return `\uFEFF${[header, ...rows].join("\r\n")}\r\n`;
+}
+
+export function serializeApplicationsCsv(records: ApplicationExportRecord[]): string {
+  return serializeRows(exportFields, records);
+}
+
+export function serializeContactsCsv(contacts: ApplicationContact[]): string {
+  return serializeRows(
+    [
+      { header: "Application ID", read: (contact) => contact.applicationId },
+      { header: "Name", read: (contact) => contact.name },
+      { header: "Role", read: (contact) => contact.role },
+      { header: "Email", read: (contact) => contact.email },
+      { header: "Phone", read: (contact) => contact.phone },
+      { header: "Profile URL", read: (contact) => contact.profileUrl },
+      { header: "Notes", read: (contact) => contact.notes },
+    ],
+    contacts,
+  );
+}
+
+export function serializeFollowUpsCsv(tasks: ApplicationFollowUpTask[]): string {
+  return serializeRows(
+    [
+      { header: "Application ID", read: (task) => task.applicationId },
+      { header: "Title", read: (task) => task.title },
+      { header: "Due date", read: (task) => task.dueDate },
+      { header: "Notes", read: (task) => task.notes },
+      { header: "Completed at", read: (task) => task.completedAt },
+    ],
+    tasks,
+  );
 }

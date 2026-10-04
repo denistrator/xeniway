@@ -19,11 +19,11 @@ beforeEach(async () => {
   useExportMutation.mockReturnValue({ mutate, isPending: false, isError: false });
 });
 
-test("starts an export from the accessible CSV button", async () => {
+test("starts an export from the accessible package button", async () => {
   const user = userEvent.setup();
   render(<CsvExportButton />);
 
-  await user.click(screen.getByRole("button", { name: "Export CSV" }));
+  await user.click(screen.getByRole("button", { name: "Export package" }));
 
   expect(mutate).toHaveBeenCalledOnce();
 });
@@ -32,5 +32,5 @@ test("shows a localized alert when export fails", () => {
   useExportMutation.mockReturnValue({ mutate, isPending: false, isError: true });
   render(<CsvExportButton />);
 
-  expect(screen.getByRole("alert")).toHaveTextContent("CSV export failed. Please try again.");
+  expect(screen.getByRole("alert")).toHaveTextContent("Export package failed. Please try again.");
 });

@@ -299,6 +299,28 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     }));
   }
 
+  async listContactsForExport(userId: number): Promise<ApplicationContact[]> {
+    const rows = await this.database
+      .select()
+      .from(applicationContacts)
+      .where(eq(applicationContacts.userId, userId))
+      .orderBy(asc(applicationContacts.applicationId), asc(applicationContacts.createdAt), asc(applicationContacts.id));
+    return rows.map(toApplicationContact);
+  }
+
+  async listFollowUpTasksForExport(userId: number): Promise<ApplicationFollowUpTask[]> {
+    const rows = await this.database
+      .select()
+      .from(applicationFollowUpTasks)
+      .where(eq(applicationFollowUpTasks.userId, userId))
+      .orderBy(
+        asc(applicationFollowUpTasks.applicationId),
+        asc(applicationFollowUpTasks.dueDate),
+        asc(applicationFollowUpTasks.id),
+      );
+    return rows.map(toApplicationFollowUpTask);
+  }
+
   private async recordSystemEvent(
     transaction: Transaction,
     userId: number,

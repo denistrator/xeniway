@@ -111,6 +111,8 @@ export interface ApplicationRepository {
   completeFollowUpTask(userId: number, applicationId: number, taskId: number): Promise<ApplicationFollowUpTask | null>;
   deleteFollowUpTask(userId: number, applicationId: number, taskId: number): Promise<boolean>;
   listForExport(userId: number): Promise<ApplicationExportRecord[]>;
+  listContactsForExport(userId: number): Promise<ApplicationContact[]>;
+  listFollowUpTasksForExport(userId: number): Promise<ApplicationFollowUpTask[]>;
   list(userId: number, options?: { status?: JobStatus; archived?: boolean }): Promise<JobApplication[]>;
   findById(
     userId: number,

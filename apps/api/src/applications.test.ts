@@ -8,6 +8,7 @@ import type {
   ApplicationResponse,
   JobApplication,
 } from "@xeniway/shared";
+import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app";
 import { createDependencies, jsonRequest, register } from "./app-test-support";
@@ -91,6 +92,22 @@ describe("application API", () => {
     expect(csv).toContain('"blacklist"');
     expect(csv).not.toContain("Email recruiter");
     expect(csv).not.toContain("Other Account Secret");
+
+    const packageResponse = await app.handle(
+      new Request("http://localhost/api/applications/export.zip", {
+        headers: { cookie: `session_id=${owner.sessionId}` },
+      }),
+    );
+    const files = unzipSync(new Uint8Array(await packageResponse.arrayBuffer()));
+
+    expect(packageResponse.headers.get("content-type")).toBe("application/zip");
+    expect(packageResponse.headers.get("content-disposition")).toMatch(
+      /attachment; filename="xenia-way-export-.*\.zip"/,
+    );
+    expect(Object.keys(files).sort()).toEqual(["applications.csv", "contacts.csv", "follow-ups.csv"]);
+    expect(strFromU8(files["applications.csv"])).toContain("CSV Active");
+    expect(strFromU8(files["contacts.csv"])).toContain('"Application ID"');
+    expect(strFromU8(files["follow-ups.csv"])).toContain('"Application ID"');
   });
 
   it("requires authentication to export applications", async () => {

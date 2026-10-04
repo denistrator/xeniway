@@ -170,7 +170,7 @@ export function listApplications(status?: JobStatus): Promise<ApplicationListRes
 }
 
 export async function exportApplicationsCsv(): Promise<{ blob: Blob; filename: string }> {
-  const path = "/api/applications/export.csv";
+  const path = "/api/applications/export.zip";
   const response = await fetch(path, { credentials: "include" });
   if (!response.ok) {
     let payload: unknown;
@@ -187,8 +187,8 @@ export async function exportApplicationsCsv(): Promise<{ blob: Blob; filename: s
   }
 
   const disposition = response.headers.get("content-disposition");
-  const filename = disposition?.match(/filename="(xenia-way-export-\d{4}-\d{2}-\d{2}\.csv)"/)?.[1];
-  return { blob: await response.blob(), filename: filename ?? "xenia-way-export.csv" };
+  const filename = disposition?.match(/filename="(xenia-way-export-\d{4}-\d{2}-\d{2}\.zip)"/)?.[1];
+  return { blob: await response.blob(), filename: filename ?? "xenia-way-export.zip" };
 }
 
 export function getApplicationDetail(id: number): Promise<ApplicationDetailResponse> {

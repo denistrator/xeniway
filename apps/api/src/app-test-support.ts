@@ -223,6 +223,12 @@ export function createDependencies(): AppDependencies {
           preparation: preparations.get(application.id) ?? emptyPreparation(),
         }));
     },
+    async listContactsForExport(userId) {
+      return contacts.filter((contact) => applicationUserIds.get(contact.applicationId) === userId);
+    },
+    async listFollowUpTasksForExport(userId) {
+      return followUpTasks.filter((task) => applicationUserIds.get(task.applicationId) === userId);
+    },
     async listEvents(userId, applicationId) {
       if (applicationUserIds.get(applicationId) !== userId) return [];
       return events

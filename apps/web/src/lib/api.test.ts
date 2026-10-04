@@ -22,8 +22,8 @@ describe("web API helpers", () => {
         new Response("\uFEFFcompany\r\nAcme\r\n", {
           status: 200,
           headers: {
-            "content-disposition": 'attachment; filename="xenia-way-export-2026-09-23.csv"',
-            "content-type": "text/csv; charset=utf-8",
+            "content-disposition": 'attachment; filename="xenia-way-export-2026-09-23.zip"',
+            "content-type": "application/zip",
           },
         }),
     );
@@ -32,9 +32,9 @@ describe("web API helpers", () => {
     const result = await exportApplicationsCsv();
 
     expect(await result.blob.text()).toBe("company\r\nAcme\r\n");
-    expect(result.filename).toBe("xenia-way-export-2026-09-23.csv");
+    expect(result.filename).toBe("xenia-way-export-2026-09-23.zip");
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/applications/export.csv",
+      "/api/applications/export.zip",
       expect.objectContaining({
         credentials: "include",
       }),
