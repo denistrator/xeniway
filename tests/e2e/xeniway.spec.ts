@@ -48,6 +48,45 @@ test("shows the about page without authentication", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
 });
 
+for (const authenticated of [false, true]) {
+  test(`checks the session once on ${authenticated ? "authenticated" : "signed-out"} page load`, async ({ page }) => {
+    if (authenticated) {
+      const csrf = await page.request.get("/api/auth/csrf");
+      const csrfToken = ((await csrf.json()) as { data: { csrfToken: string } }).data.csrfToken;
+      const login = await page.request.post("/api/auth/login", {
+        headers: { "x-csrf-token": csrfToken },
+        data: { email: "admin@example.com", password: "password" },
+      });
+      expect(login.ok()).toBe(true);
+    }
+
+    let sessionRequests = 0;
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname === "/api/auth/me") sessionRequests += 1;
+    });
+    await page.goto("/");
+    if (authenticated) {
+      await expect(page.getByRole("button", { name: "Add job" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Applications", exact: true })).toBeVisible();
+    } else {
+      await expect(page).toHaveURL(/\/login$/);
+      await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+    }
+    expect(sessionRequests).toBe(1);
+
+    await page.getByRole("link", { name: "About", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
+    expect(sessionRequests).toBe(1);
+
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
+    await expect(
+      page.getByRole(authenticated ? "button" : "link", { name: authenticated ? "Logout" : "Log in", exact: true }),
+    ).toBeVisible();
+    expect(sessionRequests).toBe(2);
+  });
+}
+
 test("switches and persists the selected browser language", async ({ page }) => {
   await page.addInitScript(() => {
     if (sessionStorage.getItem("e2e-preferences-reset")) return;

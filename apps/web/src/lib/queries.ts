@@ -77,6 +77,8 @@ export function useCurrentUser() {
     queryKey: authKeys.me,
     queryFn: getCurrentUser,
     retry: false,
+    retryOnMount: false,
+    staleTime: 60_000,
     select: (response) => response.data.user,
   });
 }

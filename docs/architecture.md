@@ -60,7 +60,7 @@ The UI language is owned by i18next/react-i18next. English is initialized before
 
 1. The browser acquires a CSRF token from `GET /api/auth/csrf`; the server creates an anonymous session when needed.
 2. Registration or login validates the shared schema, replaces the anonymous session, and sets an authenticated HttpOnly session cookie.
-3. `GET /api/auth/me` restores the current user on page load.
+3. `GET /api/auth/me` restores the current user on page load. All consumers share the `auth/me` query: successful results remain fresh for one minute, and failed checks do not retry just because another consumer mounts (including lazy-route and StrictMode remounts). Stale results still revalidate on mount, window focus, or reconnect; unsuccessful checks can recover on focus/reconnect or explicit refetch. Login/registration/logout update the shared cache immediately, and application authorization failures still clear account caches. A full page reload starts a new session check; this browser cache never replaces server-side authentication or ownership checks.
 4. Application reads require a valid session and are filtered by `userId` in the repository.
 5. Application mutations require both a valid session and the CSRF token belonging to that session.
 6. TanStack Query invalidates application lists and detail data after mutations so the UI reflects the server state. System events are inserted inside the same PostgreSQL transaction as their application mutation; manual event mutations invalidate only the relevant detail query.
