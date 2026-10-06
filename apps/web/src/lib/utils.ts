@@ -1,6 +1,6 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { cn as mergeClasses } from "tailwind-variants";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+// Keep the application's class-composition contract a definite string.
+export function cn(...inputs: Parameters<typeof mergeClasses>): string {
+  return mergeClasses(...inputs) ?? "";
 }

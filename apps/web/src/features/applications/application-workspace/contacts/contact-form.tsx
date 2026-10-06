@@ -1,6 +1,9 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
+import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles";
 import { Input } from "../../../../components/ui/input";
+import { editorFormStyles } from "../../../../components/ui/surface-styles";
+import { cn } from "../../../../lib/utils";
 import { WorkspaceFieldError, WorkspaceFormActions } from "../shared/workspace-section-ui";
 import type { ContactsController } from "./use-contacts-controller";
 
@@ -15,15 +18,15 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
       ref={editor.formRef}
       noValidate
       onSubmit={(event) => void editor.submit(event)}
-      className="mt-4 space-y-4 rounded-xl border border-line bg-surface-tint p-4"
+      className={editorFormStyles()}
     >
       <h3 className="font-display text-lg text-ink">
         {t(editor.target === "new" ? "applications.workspace.contacts.add" : "applications.workspace.contacts.edit")}
       </h3>
       <div className="grid gap-4 sm:grid-cols-2">
         {(["name", "role", "email", "phone", "profileUrl"] as const).map((field) => (
-          <div key={field} className={field === "profileUrl" ? "sm:col-span-2" : undefined}>
-            <label htmlFor={`${formId}-${field}`} className="mb-1 block text-sm font-medium text-ink">
+          <div key={field} className={cn(field === "profileUrl" && "sm:col-span-2")}>
+            <label htmlFor={`${formId}-${field}`} className={fieldLabelStyles()}>
               {t(`applications.workspace.contacts.${field}`)}
             </label>
             <Input
@@ -35,7 +38,7 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
               required={field === "name" || field === "role"}
               maxLength={field === "profileUrl" ? 500 : field === "phone" ? 100 : 255}
               value={editor.draft[field]}
-              className={editor.errors[field] ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : undefined}
+              className={fieldErrorStyles({ invalid: Boolean(editor.errors[field]) })}
               aria-invalid={Boolean(editor.errors[field]) || undefined}
               aria-describedby={editor.errors[field] ? `${formId}-${field}-error` : undefined}
               onChange={(event) => editor.setField(field, event.target.value)}
@@ -50,7 +53,7 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
         ))}
       </div>
       <div>
-        <label htmlFor={`${formId}-notes`} className="mb-1 block text-sm font-medium text-ink">
+        <label htmlFor={`${formId}-notes`} className={fieldLabelStyles()}>
           {t("applications.workspace.contacts.notes")}
         </label>
         <textarea
@@ -62,11 +65,7 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
           aria-invalid={Boolean(editor.errors.notes) || undefined}
           aria-describedby={editor.errors.notes ? `${formId}-notes-error` : undefined}
           onChange={(event) => editor.setField("notes", event.target.value)}
-          className={`w-full rounded-xl border bg-surface px-3 py-2 text-sm text-ink outline-none focus:ring-2 ${
-            editor.errors.notes
-              ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200"
-              : "border-line focus:border-accent focus:ring-accent-soft"
-          }`}
+          className={textAreaStyles({ invalid: Boolean(editor.errors.notes) })}
         />
         {editor.errors.notes && (
           <WorkspaceFieldError

@@ -1,8 +1,15 @@
 import type { JobApplication } from "@xeniway/shared";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { getStatusLabel, jobStatuses, statusStyles } from "../../board/job-status";
+import { tv } from "tailwind-variants";
+import { getStatusLabel, jobStatuses } from "../../board/job-status";
+import { jobStatusStyles } from "../../board/job-status-styles";
 import type { ApplicationFieldsController } from "./use-application-fields";
+
+const optionMarkerStyles = tv({
+  base: "pointer-events-none size-4 rounded-full border-3",
+  variants: { selected: { true: "border-accent", false: "border-transparent" } },
+});
 
 export function ApplicationStatusControl({
   application,
@@ -63,13 +70,16 @@ export function ApplicationStatusControl({
         }}
         className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-2"
       >
-        <span aria-hidden="true" className={`size-2 rounded-full ${statusStyles[application.status].marker}`} />
+        <span
+          aria-hidden="true"
+          className={jobStatusStyles({ status: application.status }).marker({ className: "size-2 rounded-full" })}
+        />
         {getStatusLabel(t, application.status)}
       </button>
       {isOpen && (
         <fieldset
           id="application-status-options"
-          className="absolute start-0 top-full z-20 mt-2 w-full min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg"
+          className="absolute start-0 top-full z-20 mt-2 min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg"
         >
           <legend className="sr-only">{t("applications.form.status")}</legend>
           {jobStatuses.map((option) => (
@@ -89,9 +99,9 @@ export function ApplicationStatusControl({
               />
               <span
                 aria-hidden="true"
-                className={`pointer-events-none size-4 rounded-full border-3 ${statusStyles[option].marker} ${
-                  option === application.status ? "border-accent" : "border-transparent"
-                }`}
+                className={jobStatusStyles({ status: option }).marker({
+                  className: optionMarkerStyles({ selected: option === application.status }),
+                })}
               />
               {getStatusLabel(t, option)}
             </label>

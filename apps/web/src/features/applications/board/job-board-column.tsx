@@ -3,7 +3,8 @@ import type { JobApplication, JobStatus } from "@xeniway/shared";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { JobCard } from "./job-card";
-import { getStatusLabel, statusStyles } from "./job-status";
+import { getStatusLabel } from "./job-status";
+import { jobStatusStyles } from "./job-status-styles";
 
 export function JobBoardColumn({
   status,
@@ -49,7 +50,7 @@ export function JobBoardColumn({
     <section
       ref={columnRef}
       aria-label={`${getStatusLabel(t, status)} applications`}
-      className={`job-board-column min-h-64 rounded-2xl border border-line border-t-4 bg-surface-tint p-3 md:min-w-64 ${statusStyles[status].column}`}
+      className={jobStatusStyles({ status }).column()}
     >
       <div className="mb-3 flex items-center justify-between px-1">
         <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-ink">{getStatusLabel(t, status)}</h2>

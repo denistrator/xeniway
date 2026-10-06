@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { dialogBackdropStyles } from "../../../components/ui/surface-styles";
 import { JobFormContent, type JobFormDialogProps } from "./job-form-content";
 
 export function JobModal({
@@ -17,7 +18,7 @@ export function JobModal({
         type="button"
         aria-label={t("common.actions.closeDialog")}
         tabIndex={-1}
-        className="absolute inset-0 h-full w-full cursor-default"
+        className={dialogBackdropStyles()}
         onClick={onClose}
       />
       <div

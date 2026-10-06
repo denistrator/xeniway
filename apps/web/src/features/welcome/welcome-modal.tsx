@@ -1,3 +1,4 @@
+import { dialogBackdropStyles } from "../../components/ui/surface-styles";
 import { useWelcomeModal } from "./use-welcome-modal";
 import { WelcomeModalContent } from "./welcome-modal-content";
 
@@ -11,7 +12,7 @@ export function WelcomeModal({ onComplete }: { onComplete: (action: WelcomeActio
         type="button"
         aria-label={t("welcome.close")}
         tabIndex={-1}
-        className="absolute inset-0 h-full w-full cursor-default"
+        className={dialogBackdropStyles()}
         onClick={() => complete("stay")}
       />
       <WelcomeModalContent t={t} closeRef={closeRef} complete={complete} />

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ApplicationSearch } from "../components/application-search";
 import { PageIntro } from "../components/page-intro";
 import { ConfirmationModal } from "../components/ui/confirmation-modal";
+import { emptyStateStyles } from "../components/ui/surface-styles";
 import { JobBoard } from "../features/applications/board/job-board";
 import { StatusFilter } from "../features/applications/filters/status-filter";
 import { getApiErrorKey } from "../i18n/format";
@@ -61,9 +62,7 @@ export function HomePage() {
           </p>
         )}
         {applications.data && !applications.data.length && (
-          <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-            {t("applications.empty")}
-          </p>
+          <p className={emptyStateStyles({ page: true })}>{t("applications.empty")}</p>
         )}
       </div>
       {applications.data && applications.data.length > 0 && (

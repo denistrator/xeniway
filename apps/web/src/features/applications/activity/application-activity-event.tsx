@@ -1,5 +1,11 @@
 import type { ApplicationEvent } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
+import { tv } from "tailwind-variants";
+
+const activityEventStyles = tv({
+  base: "rounded-xl border border-line p-4",
+  variants: { system: { true: "bg-surface-tint", false: "bg-surface" } },
+});
 
 export function ApplicationActivityEvent({
   event,
@@ -15,9 +21,7 @@ export function ApplicationActivityEvent({
   const { t } = useTranslation();
   const label = t(`applications.activity.types.${event.type}`);
   return (
-    <article
-      className={`rounded-xl border p-4 ${event.isSystem ? "border-line bg-surface-tint" : "border-line bg-surface"}`}
-    >
+    <article className={activityEventStyles({ system: event.isSystem })}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>

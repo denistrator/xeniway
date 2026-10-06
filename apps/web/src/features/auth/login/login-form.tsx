@@ -7,6 +7,7 @@ import { FloatingLabel } from "../../../components/ui/floating-label";
 import { Input } from "../../../components/ui/input";
 import { getApiErrorKey } from "../../../i18n/format";
 import { ApiRequestError } from "../../../lib/api";
+import { authErrorStyles, authLinkStyles } from "../auth-styles";
 
 export function LoginForm({
   email,
@@ -58,13 +59,7 @@ export function LoginForm({
         />
       </FloatingLabel>
       {Boolean(error) && (
-        <p
-          ref={errorRef}
-          role="alert"
-          aria-live="assertive"
-          tabIndex={-1}
-          className="text-sm leading-6 text-rose-600 dark:text-rose-400"
-        >
+        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={authErrorStyles()}>
           {t(getApiErrorKey(error instanceof ApiRequestError ? error.code : "REQUEST_FAILED"))}
         </p>
       )}
@@ -72,7 +67,7 @@ export function LoginForm({
         {pending ? t("auth.login.pending") : t("auth.login.submit")}
       </Button>
       <p className="text-center text-sm leading-6 text-muted">
-        <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/forgot-password">
+        <Link className={authLinkStyles()} to="/forgot-password">
           {t("auth.login.forgotPassword")}
         </Link>
       </p>

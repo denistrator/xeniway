@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { changeLocale, i18n, initializeI18n } from "../../../i18n/i18n";
-import { getStatusLabel, jobStatuses, statusStyles } from "./job-status";
+import { getStatusLabel, jobStatuses } from "./job-status";
+import { jobStatusStyles } from "./job-status-styles";
 
 describe("job statuses", () => {
   test("defines all workflow statuses in display order", () => {
@@ -16,10 +17,13 @@ describe("job statuses", () => {
   });
 
   test("defines matching column and marker decoration classes", () => {
-    expect(statusStyles.offer).toEqual({
-      column: "border-t-emerald-600 dark:border-t-emerald-400",
-      marker: "bg-emerald-600 dark:bg-emerald-400",
-    });
-    expect(statusStyles.saved.marker).toBe("bg-slate-400 dark:bg-slate-500");
+    const offer = jobStatusStyles({ status: "offer" });
+    const columnClasses = offer.column().split(" ");
+    expect(columnClasses).toContain("border-line");
+    expect(columnClasses).toContain("border-t-4");
+    expect(columnClasses).toContain("border-t-emerald-600");
+    expect(columnClasses).toContain("dark:border-t-emerald-400");
+    expect(offer.marker()).toBe("bg-emerald-600 dark:bg-emerald-400");
+    expect(jobStatusStyles({ status: "saved" }).marker()).toBe("bg-slate-400 dark:bg-slate-500");
   });
 });

@@ -22,6 +22,18 @@ React + React Router
 
 ## Workspace boundaries
 
+### Frontend styling
+
+Tailwind CSS v4 generates utilities through the Vite plugin. Tailwind Variants owns variant recipes and class conflict resolution; `apps/web/src/lib/utils.ts` wraps its `cn()` to preserve the application's definite-string return contract. The web package has no direct CVA, clsx, or tailwind-merge dependency.
+
+Define recipes at module scope beside their owning components. Use `tv({ base, variants, defaultVariants })` for element variants and slots when a component has coordinated parts. Button keeps its `variant`, `size`, `asChild`, native props, and forwarded ref; Card retains independent React components backed by slot functions. Pass caller classes to the recipe or relevant slot with `className`, so overrides are merged once. Use `VariantProps` for inferred public variant props and `cn()` for simple conditional composition. Keep complete literal class names so Tailwind can discover them; static one-off layout classes remain in JSX.
+
+Shared `components/ui/field-styles.ts` and `surface-styles.ts` recipes cover validation, textarea/label styling, empty states, editor forms, dialog backdrops, and collection actions. Feature-local recipes cover navigation selection, search decoration, all six status colors, activity forms/events, follow-up completion, authentication feedback, and workspace editing feedback. `board/job-status-styles.ts` separates status decoration from canonical status ordering and translated labels.
+
+Grow recipes when component behavior introduces a real styling distinction. Use slots when several elements respond to the same state, and use compound variants when a particular combination of existing variants needs additional classes. Keep independent variants independent; do not enumerate combinations without a styling requirement. Keep simple static layout classes in JSX. Put base classes in the recipe before variant classes, and reserve slot `className` arguments for caller overrides: a broad caller override can intentionally replace a more specific variant class.
+
+CSS remains responsible for theme tokens and dark-mode selection in `index.css`, floating-label child/peer selectors in `components/ui/floating-label.css`, board scroll behavior, reduced motion, and Atlaskit's accessible edit targets in `workspace-inline-edit.css`. Preserve those DOM class hooks when refactoring. Styling variants consume existing UI state; Redux, TanStack Query, i18next, form hooks, and native/ARIA attributes continue owning behavior and semantics.
+
 `packages/shared` is the contract boundary. It defines the six-status enum, registration/login schemas, application and manual-event input schemas, and public response types. The web and API packages import these definitions instead of duplicating validation or JSON shapes.
 
 `apps/api/src/app.ts` is an injectable Elysia app factory. It owns dependency construction, global middleware, and error handling, then mounts the domain composition in `apps/api/src/routes/index.ts`. Health, auth, preferences, and application endpoints live in their own routers; application routes are grouped by collection, item, event, and board responsibilities. Shared request guards and cookie/response helpers live under `apps/api/src/routes/support/`. Typed repository dependencies allow route behavior to be tested with in-memory implementations. `apps/api/src/server.ts` wires the production Drizzle repositories, Redis rate limiter, and independent database/Redis health checks.

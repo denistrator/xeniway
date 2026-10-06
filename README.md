@@ -34,7 +34,7 @@ The application is designed as an accessibility-sensitive product surface: it us
 | --- | --- |
 | Web | React 19, TypeScript, Vite, React Router, i18next |
 | Client state | TanStack Query for server state, Redux Toolkit for local UI state |
-| UI | Tailwind CSS v4 and local shadcn/ui-style primitives |
+| UI | Tailwind CSS v4, Tailwind Variants, and local shadcn/ui-style primitives |
 | API | Bun, Elysia, Zod |
 | Persistence | Drizzle ORM and PostgreSQL 16 |
 | Rate limiting | Redis 7 for login, registration, and password-reset limits |

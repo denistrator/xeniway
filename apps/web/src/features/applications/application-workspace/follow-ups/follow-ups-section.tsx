@@ -1,12 +1,19 @@
 import type { ApplicationFollowUpTask } from "@xeniway/shared";
 import { memo, useId, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { tv } from "tailwind-variants";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
+import { emptyStateStyles } from "../../../../components/ui/surface-styles";
 import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui";
 import { FollowUpForm } from "./follow-up-form";
 import { useFollowUpsController } from "./use-follow-ups-controller";
+
+const followUpStyles = tv({
+  base: "flex flex-wrap items-start gap-4 rounded-xl border border-line p-4",
+  variants: { completed: { true: "bg-surface-tint", false: "bg-surface" } },
+});
 
 function sortFollowUps(tasks: ApplicationFollowUpTask[]) {
   return [...tasks].sort((left, right) => {
@@ -55,21 +62,14 @@ export const FollowUpsSection = memo(function FollowUpsSection({
         <CardContent>
           <FollowUpForm controller={controller} />
           {sortedTasks.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">
-              {t("applications.workspace.followUps.empty")}
-            </p>
+            <p className={emptyStateStyles()}>{t("applications.workspace.followUps.empty")}</p>
           ) : (
             <ul className="space-y-3">
               {sortedTasks.map((task) => {
                 const isCompleted = Boolean(task.completedAt);
                 const dueDate = new Date(`${task.dueDate}T00:00:00Z`);
                 return (
-                  <li
-                    key={task.id}
-                    className={`flex flex-wrap items-start gap-4 rounded-xl border border-line p-4 ${
-                      isCompleted ? "bg-surface-tint" : "bg-surface"
-                    }`}
-                  >
+                  <li key={task.id} className={followUpStyles({ completed: isCompleted })}>
                     <time
                       dateTime={task.dueDate}
                       title={fullDateFormatter.format(dueDate)}

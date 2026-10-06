@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
+import { emptyStateStyles } from "../../../../components/ui/surface-styles";
 import { sanitizeExternalUrl } from "../shared/sanitize-external-url";
 import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui";
 import { ContactForm } from "./contact-form";
@@ -36,9 +37,7 @@ export const ContactsSection = memo(function ContactsSection({
         <CardContent>
           <ContactForm controller={controller} />
           {contacts.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">
-              {t("applications.workspace.contacts.empty")}
-            </p>
+            <p className={emptyStateStyles()}>{t("applications.workspace.contacts.empty")}</p>
           ) : (
             <ul className="grid gap-3 md:grid-cols-2">
               {contacts.map((contact) => {

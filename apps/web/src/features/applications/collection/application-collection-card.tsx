@@ -3,6 +3,7 @@ import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "../../../components/ui/card";
+import { collectionActionStyles } from "../../../components/ui/surface-styles";
 import { ApplicationActivity } from "../activity/application-activity";
 import { getStatusLabel } from "../board/job-status";
 import { ApplicationCollectionActions } from "./application-collection-actions";
@@ -56,7 +57,7 @@ export function ApplicationCollectionCard({
           type="button"
           aria-expanded={activityOpen}
           aria-controls={`application-activity-${job.id}`}
-          className="rounded-lg border border-line px-3 py-2 text-sm text-ink hover:bg-surface-hover focus-visible:outline-2"
+          className={collectionActionStyles()}
           onClick={() => setActivityOpen((open) => !open)}
         >
           {t(activityOpen ? "applications.activity.hide" : "applications.activity.view")}

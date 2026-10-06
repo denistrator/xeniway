@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../../../components/ui/button";
 import { getApiErrorKey } from "../../../i18n/format";
 import { ApiRequestError } from "../../../lib/api";
+import { authErrorStyles } from "../auth-styles";
 import { RegisterFields } from "./register-fields";
 
 export type RegisterFormState = {
@@ -33,13 +34,7 @@ export function RegisterForm({
     <form className="space-y-4" onSubmit={onSubmit}>
       <RegisterFields form={form} onChange={onChange} />
       {error && (
-        <p
-          ref={errorRef}
-          role="alert"
-          aria-live="assertive"
-          tabIndex={-1}
-          className="text-sm leading-6 text-rose-600 dark:text-rose-400"
-        >
+        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={authErrorStyles()}>
           {error}
         </p>
       )}

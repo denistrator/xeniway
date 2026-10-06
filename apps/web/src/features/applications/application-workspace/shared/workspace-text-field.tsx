@@ -1,6 +1,8 @@
 import InlineEdit from "@atlaskit/inline-edit";
 import { useTranslation } from "react-i18next";
+import { textAreaStyles } from "../../../../components/ui/field-styles";
 import { useInlineEditFocus } from "./use-inline-edit-focus";
+import { workspaceFieldStyles } from "./workspace-field-styles";
 
 export type WorkspaceTextFieldController = {
   savedValue: string | null;
@@ -42,10 +44,11 @@ export function WorkspaceTextField({
   const focus = useInlineEditFocus<HTMLElement, HTMLTextAreaElement>(controller.editing);
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const hasError = feedback?.kind === "error" || feedback?.kind === "invalid";
+  const styles = workspaceFieldStyles({ error: hasError });
 
   return (
-    <section ref={focus.container} aria-labelledby={`${id}-heading`} className={`workspace-inline-edit ${className}`}>
-      <Heading id={`${id}-heading`} className={headingClassName}>
+    <section ref={focus.container} aria-labelledby={`${id}-heading`} className={styles.root({ className })}>
+      <Heading id={`${id}-heading`} className={styles.heading({ className: headingClassName })}>
         {label}
       </Heading>
       <InlineEdit<string>
@@ -59,14 +62,9 @@ export function WorkspaceTextField({
         confirmButtonLabel={t("applications.workspace.saveNamed", { name: label.toLowerCase() })}
         cancelButtonLabel={t("applications.workspace.actions.cancel")}
         readView={() => (
-          <div className="flex items-start justify-between gap-3">
-            <p className="whitespace-pre-wrap text-sm leading-6 text-muted">
-              {controller.savedValue || t("applications.workspace.notProvided")}
-            </p>
-            <span
-              aria-hidden="true"
-              className="shrink-0 rounded-lg border border-line px-2 py-1 text-sm font-medium text-ink"
-            >
+          <div className={styles.readView()}>
+            <p className={styles.value()}>{controller.savedValue || t("applications.workspace.notProvided")}</p>
+            <span aria-hidden="true" className={styles.editLabel()}>
               {t("applications.workspace.actions.edit")}
             </span>
           </div>
@@ -91,7 +89,7 @@ export function WorkspaceTextField({
               }}
               aria-invalid={hasError}
               aria-describedby={hasError ? `${id}-message` : undefined}
-              className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm leading-6 text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+              className={textAreaStyles({ className: "leading-6" })}
             />
           </>
         )}
@@ -104,7 +102,7 @@ export function WorkspaceTextField({
           id={`${id}-message`}
           role={hasError ? "alert" : "status"}
           aria-live="polite"
-          className={`mt-2 text-sm ${hasError ? "text-rose-600" : "text-muted"}`}
+          className={styles.feedback({ className: "mt-2" })}
         >
           {controller.pending ? t("applications.workspace.actions.saving") : feedback?.text}
         </p>

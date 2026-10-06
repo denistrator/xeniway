@@ -2,6 +2,7 @@ import type { ApplicationEvent } from "@xeniway/shared";
 import { memo, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
+import { collectionActionStyles } from "../../../components/ui/surface-styles";
 import { ApplicationActivityForm } from "./application-activity-form";
 import { ApplicationActivityTimeline } from "./application-activity-timeline";
 import { useApplicationActivityController } from "./use-application-activity-controller";
@@ -23,12 +24,7 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
         <h3 id={headingId} className="font-display text-lg font-semibold text-ink">
           {t("applications.activity.heading")}
         </h3>
-        <button
-          ref={activity.addButton}
-          type="button"
-          className="rounded-lg border border-line px-3 py-2 text-sm text-ink hover:bg-surface-hover focus-visible:outline-2"
-          onClick={activity.beginAdd}
-        >
+        <button ref={activity.addButton} type="button" className={collectionActionStyles()} onClick={activity.beginAdd}>
           {t("applications.activity.add")}
         </button>
       </div>

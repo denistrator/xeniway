@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ApplicationSearch } from "../../../components/application-search";
 import { PageIntro } from "../../../components/page-intro";
+import { emptyStateStyles } from "../../../components/ui/surface-styles";
 
 export function ApplicationCollection({
   title,
@@ -55,17 +56,9 @@ export function ApplicationCollection({
           {errorMessage}
         </p>
       )}
-      {isEmpty && (
-        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-          {emptyMessage}
-        </p>
-      )}
+      {isEmpty && <p className={emptyStateStyles({ page: true })}>{emptyMessage}</p>}
       {hasResults && <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{children}</div>}
-      {!loading && !isEmpty && !hasResults && (
-        <p className="rounded-2xl border border-dashed border-line p-12 text-center text-sm leading-6 text-muted">
-          {noMatchMessage}
-        </p>
-      )}
+      {!loading && !isEmpty && !hasResults && <p className={emptyStateStyles({ page: true })}>{noMatchMessage}</p>}
     </div>
   );
 }

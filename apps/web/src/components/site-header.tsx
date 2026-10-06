@@ -2,19 +2,26 @@ import { LogOut, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { tv } from "tailwind-variants";
 import { CsvExportButton } from "../features/data-export/csv-export-button";
 import { LanguageSelector } from "../features/preferences/language-selector";
 import { ThemeSelector } from "../features/preferences/theme-selector";
 import { useAuthMutations, useCurrentUser } from "../lib/queries";
-import { cn } from "../lib/utils";
 import { closeDrawer, openCreateDrawer } from "../store";
 import { Button } from "./ui/button";
 
+const navigationLinkStyles = tv({
+  base: "rounded-lg px-3 py-2 text-sm transition-colors",
+  variants: {
+    active: {
+      true: "bg-accent-soft font-semibold text-accent",
+      false: "text-muted hover:bg-accent-hover hover:text-accent",
+    },
+  },
+});
+
 function navigationLinkClassName({ isActive }: { isActive: boolean }) {
-  return cn(
-    "rounded-lg px-3 py-2 text-sm transition-colors",
-    isActive ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-accent-hover hover:text-accent",
-  );
+  return navigationLinkStyles({ active: isActive });
 }
 
 const navigationLinks = [

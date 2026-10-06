@@ -34,10 +34,17 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open refactoring tasks
 
+### Align the CSV browser test with the current export label
+
+- **Where:** `tests/e2e/xeniway.spec.ts` CSV download workflow and `apps/web/src/i18n/locales/en.ts`.
+- **Why:** The checked-in UI and component test use “Export package”, but the browser workflow expects “Export CSV” twice. This fails the serial suite before the remaining workflows can run.
+- **Possible direction:** Align the browser assertions with the intended current copy, or explicitly approve a copy change across dictionaries and tests.
+- **Guardrails:** Preserve header action order, authenticated download behavior, CSV filename/content assertions, and all four locales. Do not skip this workflow in the permanent test configuration.
+
 ### Measure frontend bundle costs
 
 - **Where:** The shared web entry chunk and `apps/web/src/features/applications/application-workspace` workspace chunk.
-- **Why:** The production build currently emits a shared entry chunk of about 513 KB before gzip (about 159 KB gzip), which exceeds Vite's 500 KB warning threshold. Replacing the custom editors with `@atlaskit/inline-edit` also increased the lazy-loaded workspace JavaScript chunk from about 38 KB to about 332 KB before gzip (about 93 KB gzip) and pulls Atlaskit styling/theme modules into the build.
+- **Why:** After adopting Tailwind Variants, the production build emits an entry chunk of about 482 KB before gzip (about 149 KB gzip) and a shared Button/styling chunk of about 45 KB (about 15 KB gzip). The former 513 KB entry size partly shifted into a shared chunk, so the smaller entry alone is not a total download reduction. The lazy-loaded workspace JavaScript chunk remains about 332 KB (about 93 KB gzip) and pulls Atlaskit styling/theme modules into the build.
 - **Possible direction:** Run `npx vite-bundle-analyzer`, measure real entry/workspace load and interaction performance, then reduce unused dependencies or introduce evidence-backed code splitting. Inspect Atlaskit theme/runtime code separately from shared application dependencies.
 - **Guardrails:** Preserve accessible read/edit controls, keyboard focus, status selection, validation, and the compact-field unsaved-change warning. Treat a different editor library or return to custom controls as a separate product/architecture decision.
 

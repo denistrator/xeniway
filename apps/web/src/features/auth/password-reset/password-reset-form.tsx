@@ -6,6 +6,7 @@ import { FloatingLabel } from "../../../components/ui/floating-label";
 import { Input } from "../../../components/ui/input";
 import { getApiErrorKey } from "../../../i18n/format";
 import { ApiRequestError } from "../../../lib/api";
+import { authErrorStyles } from "../auth-styles";
 
 export function PasswordResetForm({
   password,
@@ -58,13 +59,7 @@ export function PasswordResetForm({
         />
       </FloatingLabel>
       {Boolean(error) && (
-        <p
-          ref={errorRef}
-          role="alert"
-          aria-live="assertive"
-          tabIndex={-1}
-          className="text-sm leading-6 text-rose-600 dark:text-rose-400"
-        >
+        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={authErrorStyles()}>
           {error instanceof ApiRequestError ? t(getApiErrorKey(error.code)) : String(error)}
         </p>
       )}

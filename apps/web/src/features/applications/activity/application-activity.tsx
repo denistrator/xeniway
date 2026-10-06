@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
+import { collectionActionStyles } from "../../../components/ui/surface-styles";
 import { useApplicationDetail } from "../../../lib/queries";
 import { ApplicationActivitySection } from "./application-activity-section";
 
@@ -18,11 +19,7 @@ export function ApplicationActivity({ applicationId }: { applicationId: number }
         <h3 id={headingId} className="font-display text-lg font-semibold text-ink">
           {t("applications.activity.heading")}
         </h3>
-        <button
-          type="button"
-          aria-disabled="true"
-          className="rounded-lg border border-line px-3 py-2 text-sm text-ink hover:bg-surface-hover focus-visible:outline-2"
-        >
+        <button type="button" aria-disabled="true" className={collectionActionStyles()}>
           {t("applications.activity.add")}
         </button>
       </div>

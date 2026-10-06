@@ -3,7 +3,8 @@ import type { JobApplication } from "@xeniway/shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../i18n/format";
-import { getStatusLabel, statusStyles } from "./job-status";
+import { getStatusLabel } from "./job-status";
+import { jobStatusStyles } from "./job-status-styles";
 
 export function JobCard({
   job,
@@ -64,7 +65,9 @@ export function JobCard({
           <p className="flex items-start gap-2 break-words font-semibold text-ink">
             <span
               aria-hidden="true"
-              className={`mt-1.5 size-2 shrink-0 rounded-full ${statusStyles[job.status].marker}`}
+              className={jobStatusStyles({ status: job.status }).marker({
+                className: "mt-1.5 size-2 shrink-0 rounded-full",
+              })}
             />
             <span>{job.company}</span>
           </p>

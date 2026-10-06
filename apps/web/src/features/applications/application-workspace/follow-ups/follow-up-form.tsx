@@ -1,6 +1,8 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
+import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles";
 import { Input } from "../../../../components/ui/input";
+import { editorFormStyles } from "../../../../components/ui/surface-styles";
 import { WorkspaceFieldError, WorkspaceFormActions } from "../shared/workspace-section-ui";
 import type { FollowUpsController } from "./use-follow-ups-controller";
 
@@ -11,17 +13,13 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
   if (!editor.target) return null;
 
   return (
-    <form
-      noValidate
-      onSubmit={(event) => void editor.submit(event)}
-      className="mt-4 space-y-4 rounded-xl border border-line bg-surface-tint p-4"
-    >
+    <form noValidate onSubmit={(event) => void editor.submit(event)} className={editorFormStyles()}>
       <h3 className="font-display text-lg text-ink">
         {t(editor.target === "new" ? "applications.workspace.followUps.add" : "applications.workspace.followUps.edit")}
       </h3>
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
         <div>
-          <label htmlFor={`${formId}-title`} className="mb-1 block text-sm font-medium text-ink">
+          <label htmlFor={`${formId}-title`} className={fieldLabelStyles()}>
             {t("applications.workspace.followUps.task")}
           </label>
           <Input
@@ -31,7 +29,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
             required
             maxLength={255}
             value={editor.draft.title}
-            className={editor.errors.title ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : undefined}
+            className={fieldErrorStyles({ invalid: Boolean(editor.errors.title) })}
             aria-invalid={Boolean(editor.errors.title) || undefined}
             aria-describedby={editor.errors.title ? `${formId}-title-error` : undefined}
             onChange={(event) => editor.setTitle(event.target.value)}
@@ -44,7 +42,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
           )}
         </div>
         <div>
-          <label htmlFor={`${formId}-dueDate`} className="mb-1 block text-sm font-medium text-ink">
+          <label htmlFor={`${formId}-dueDate`} className={fieldLabelStyles()}>
             {t("applications.workspace.followUps.dueDate")}
           </label>
           <Input
@@ -54,7 +52,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
             type="date"
             required
             value={editor.draft.dueDate}
-            className={editor.errors.dueDate ? "border-rose-600 focus:border-rose-600 focus:ring-rose-200" : undefined}
+            className={fieldErrorStyles({ invalid: Boolean(editor.errors.dueDate) })}
             aria-invalid={Boolean(editor.errors.dueDate) || undefined}
             aria-describedby={editor.errors.dueDate ? `${formId}-dueDate-error` : undefined}
             onChange={(event) => editor.setDueDate(event.target.value)}
@@ -68,7 +66,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
         </div>
       </div>
       <div>
-        <label htmlFor={`${formId}-notes`} className="mb-1 block text-sm font-medium text-ink">
+        <label htmlFor={`${formId}-notes`} className={fieldLabelStyles()}>
           {t("applications.workspace.followUps.notes")}
         </label>
         <textarea
@@ -78,7 +76,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
           maxLength={10000}
           value={editor.draft.notes}
           onChange={(event) => editor.setNotes(event.target.value)}
-          className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+          className={textAreaStyles()}
         />
       </div>
       <WorkspaceFormActions

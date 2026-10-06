@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { Button } from "../../../../components/ui/button";
 import { CardHeader, CardTitle } from "../../../../components/ui/card";
+import { workspaceFieldStyles } from "./workspace-field-styles";
 
 export function WorkspaceSectionHeader({
   headingId,
@@ -50,7 +51,7 @@ export function WorkspaceMutationStatus({
     <p
       role={isError ? "alert" : undefined}
       aria-live="polite"
-      className={`mt-3 text-sm ${isError ? "text-rose-600" : "text-muted"}`}
+      className={workspaceFieldStyles({ error: isError }).feedback({ className: "mt-3" })}
     >
       {pending ? pendingText : text}
     </p>

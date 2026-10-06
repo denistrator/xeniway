@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Button } from "./button";
+import { dialogBackdropStyles } from "./surface-styles";
 
 export function ConfirmationModal({
   title,
@@ -34,13 +35,7 @@ export function ConfirmationModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-overlay p-4">
-      <button
-        type="button"
-        aria-label={noLabel}
-        tabIndex={-1}
-        className="absolute inset-0 h-full w-full cursor-default"
-        onClick={onNo}
-      />
+      <button type="button" aria-label={noLabel} tabIndex={-1} className={dialogBackdropStyles()} onClick={onNo} />
       <div
         role="alertdialog"
         aria-modal="true"

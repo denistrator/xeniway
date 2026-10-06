@@ -9,6 +9,7 @@ import { Input } from "../../../components/ui/input";
 import { getApiErrorKey } from "../../../i18n/format";
 import { ApiRequestError } from "../../../lib/api";
 import { useCsrfToken, usePasswordResetMutations } from "../../../lib/queries";
+import { authErrorStyles, authLinkStyles } from "../auth-styles";
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -33,7 +34,7 @@ export function ForgotPasswordPage() {
       {submitted ? (
         <div className="space-y-4" role="status" aria-live="polite">
           <p className="text-sm leading-6 text-muted">{t("auth.forgotPassword.submitted")}</p>
-          <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/login">
+          <Link className={authLinkStyles()} to="/login">
             {t("auth.forgotPassword.returnToSignIn")}
           </Link>
         </div>
@@ -54,13 +55,7 @@ export function ForgotPasswordPage() {
             />
           </FloatingLabel>
           {request.error && (
-            <p
-              ref={errorRef}
-              role="alert"
-              aria-live="assertive"
-              tabIndex={-1}
-              className="text-sm leading-6 text-rose-600 dark:text-rose-400"
-            >
+            <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={authErrorStyles()}>
               {t(getApiErrorKey(request.error instanceof ApiRequestError ? request.error.code : "REQUEST_FAILED"))}
             </p>
           )}
@@ -69,7 +64,7 @@ export function ForgotPasswordPage() {
           </Button>
           <p className="text-center text-sm leading-6 text-muted">
             {t("auth.forgotPassword.rememberedPassword")}{" "}
-            <Link className="font-semibold text-ink underline-offset-4 hover:underline" to="/login">
+            <Link className={authLinkStyles()} to="/login">
               {t("auth.login.submit")}
             </Link>
           </p>

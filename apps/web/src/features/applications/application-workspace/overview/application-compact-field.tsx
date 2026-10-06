@@ -3,7 +3,9 @@ import type { FocusEvent, HTMLInputTypeAttribute, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { FloatingLabel } from "../../../../components/ui/floating-label";
 import { Input } from "../../../../components/ui/input";
+import { cn } from "../../../../lib/utils";
 import { useInlineEditFocus } from "../shared/use-inline-edit-focus";
+import { workspaceFieldStyles } from "../shared/workspace-field-styles";
 import { getApplicationFieldFeedback } from "./application-field-feedback";
 import type { EditableApplicationField } from "./use-application-field";
 import type { ApplicationFieldsController } from "./use-application-fields";
@@ -68,7 +70,7 @@ export function ApplicationCompactField({
         readView={() => (
           <div className="break-words text-ink">
             {showLabel && <span className="block font-medium text-muted">{label}</span>}
-            <span className={showLabel ? "mt-1 block" : "block"}>
+            <span className={cn("block", showLabel && "mt-1")}>
               {displayValue || controller.savedValue || t("applications.workspace.notProvided")}
             </span>
           </div>
@@ -106,7 +108,7 @@ export function ApplicationCompactField({
           id={`${id}-message`}
           role={hasError ? "alert" : "status"}
           aria-live="polite"
-          className={`mt-1 text-sm ${hasError ? "text-rose-600" : "text-muted"}`}
+          className={workspaceFieldStyles({ error: hasError }).feedback({ className: "mt-1" })}
         >
           {feedback.text}
         </p>

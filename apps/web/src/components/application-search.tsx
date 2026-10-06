@@ -1,10 +1,13 @@
 import { Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
+import { tv } from "tailwind-variants";
 import { type RootState, setSearch } from "../store";
 import { Button } from "./ui/button";
 import { FloatingLabel } from "./ui/floating-label";
 import { Input } from "./ui/input";
+
+const searchStyles = tv({ base: "peer", variants: { populated: { true: "pe-10" } } });
 
 export function ApplicationSearch() {
   const { t } = useTranslation();
@@ -20,7 +23,7 @@ export function ApplicationSearch() {
     >
       <Input
         id="application-search"
-        className={search ? "peer pe-10" : "peer"}
+        className={searchStyles({ populated: Boolean(search) })}
         placeholder=" "
         name="search"
         autoComplete="off"
