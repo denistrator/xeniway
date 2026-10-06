@@ -159,6 +159,7 @@ The browser workflow covers language switching and reload persistence, server pr
 
 - [API reference](docs/api.md)
 - [Architecture](docs/architecture.md)
+- [Frontend bundle-cost baseline](docs/frontend-bundle-cost.md)
 - [Database](docs/database.md)
 - [Operations and troubleshooting](docs/operations.md)
 - [Testing](docs/testing.md)

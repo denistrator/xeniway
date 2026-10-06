@@ -41,11 +41,11 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Possible direction:** Align the browser assertions with the intended current copy, or explicitly approve a copy change across dictionaries and tests.
 - **Guardrails:** Preserve header action order, authenticated download behavior, CSV filename/content assertions, and all four locales. Do not skip this workflow in the permanent test configuration.
 
-### Measure frontend bundle costs
+### Investigate measured frontend bundle costs
 
 - **Where:** The shared web entry chunk and `apps/web/src/features/applications/application-workspace` workspace chunk.
-- **Why:** After adopting Tailwind Variants, the production build emits an entry chunk of about 482 KB before gzip (about 149 KB gzip) and a shared Button/styling chunk of about 45 KB (about 15 KB gzip). The former 513 KB entry size partly shifted into a shared chunk, so the smaller entry alone is not a total download reduction. The lazy-loaded workspace JavaScript chunk remains about 332 KB (about 93 KB gzip) and pulls Atlaskit styling/theme modules into the build.
-- **Possible direction:** Run `npx vite-bundle-analyzer`, measure real entry/workspace load and interaction performance, then reduce unused dependencies or introduce evidence-backed code splitting. Inspect Atlaskit theme/runtime code separately from shared application dependencies.
+- **Why:** The [October 2026 production route baseline](frontend-bundle-cost.md) measured about 186 KB compressed JS/CSS body for login, 196 KB for the board, and 287 KB for a direct workspace load. Board → workspace adds about 101 KB compressed; the shared styling chunk is about 45 KB emitted / 15 KB modeled gzip and is reused during SPA navigation. The smaller entry chunk alone does not establish a net migration saving.
+- **Possible direction:** Attribute the large entry/global form dependencies and workspace dependency bytes separately, then measure interaction performance and actual deployment compression/cache behavior before approving optimization. Public routes also request global job-manager/form chunks. Preserve the baseline and compare complete route asset sets, not individual entry sizes.
 - **Guardrails:** Preserve accessible read/edit controls, keyboard focus, status selection, validation, and the compact-field unsaved-change warning. Treat a different editor library or return to custom controls as a separate product/architecture decision.
 
 ### Reassess CSV export memory use for larger boards
