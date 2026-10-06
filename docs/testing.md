@@ -2,6 +2,7 @@
 
 ## Test layers
 
+- `scripts/check-seo.test.ts` verifies the search description, crawler policy, and declared favicon asset formats/dimensions. The shared HTML shell declares a generated ivory X on teal in `apps/web/public/favicon.png` (64×64) and `favicon.ico` (32×32); Vite copies both to the production build root.
 - `packages/shared/src/index.test.ts` verifies shared schemas and public contract assumptions.
 - `apps/api/src/*.test.ts` covers authentication, expiration, CSRF, password-reset token lifecycle, mailer/service behavior, row mapping, seed invariants, validation, CRUD, status filtering, archive and blacklist transitions, error status codes, and ownership isolation using focused in-memory dependencies.
 - `apps/web/src/lib/api.test.ts` covers client error parsing, query-key separation, CSRF headers on password-reset mutations, and authenticated export-package downloads.
