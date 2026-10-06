@@ -473,6 +473,20 @@ test("provides a keyboard skip link to the main content", async ({ page }) => {
 });
 
 test("manages focus and escape behavior for the job form dialog", async ({ page }) => {
+  let releaseHost: () => void = () => undefined;
+  const hostRelease = new Promise<void>((resolve) => {
+    releaseHost = resolve;
+  });
+  await page.route("**/form/job-manager-host.tsx*", async (route) => {
+    await hostRelease;
+    await route.continue();
+  });
+  const formHostRequests: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.endsWith("/form/job-manager-host.tsx")) {
+      formHostRequests.push(request.url());
+    }
+  });
   await page.goto("/login");
   await page.getByLabel("Email").fill("test_user@example.com");
   await page.getByLabel("Password").fill("password");
@@ -480,9 +494,16 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
   const addJob = page.getByRole("button", { name: "Add job" });
-  await addJob.click();
+  expect(formHostRequests).toHaveLength(0);
+  await addJob.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("Loading…");
+  await page.keyboard.press("Tab");
+  await expect(addJob).not.toBeFocused();
+  releaseHost();
   const closeButton = page.getByRole("button", { name: "Close", exact: true });
   await expect(closeButton).toBeFocused();
+  expect(formHostRequests).toHaveLength(1);
   await expect(page.getByRole("button", { name: "Close dialog", exact: true })).toBeVisible();
 
   await page.keyboard.press("Tab");
@@ -493,6 +514,8 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await expect(addJob).toBeFocused();
 
   await addJob.click();
+  await expect(closeButton).toBeFocused();
+  expect(formHostRequests).toHaveLength(1);
   const switchToModal = page.getByRole("button", { name: "Switch to modal" });
   const presentationUpdate = page.waitForResponse(
     (response) =>

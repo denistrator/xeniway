@@ -1,6 +1,7 @@
-import { lazy, Suspense } from "react";
+import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
+import { CreateApplicationLoader } from "../features/applications/form/create-application-loader";
 import { UserPreferencesSync } from "../features/preferences/user-preferences-sync";
 import { type WelcomeAction, WelcomeModal } from "../features/welcome/welcome-modal";
 import { useCompleteIntroduction, useCurrentUser, useUserPreferences } from "../lib/queries";
@@ -9,21 +10,20 @@ import { closeWelcome, type RootState } from "../store";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
-const JobManagerHost = lazy(() =>
-  import("../features/applications/form/job-manager-host").then(({ JobManagerHost }) => ({ default: JobManagerHost })),
-);
-
 export function Layout() {
+  const createOpenerRef = useRef<HTMLElement | null>(null);
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">
-      <SiteHeader />
+      <SiteHeader
+        onCreateDialogOpen={(opener) => {
+          createOpenerRef.current = opener;
+        }}
+      />
       <UserPreferencesSync />
       <main id="main-content" tabIndex={-1} className="w-full flex-1 py-8">
         <Outlet />
       </main>
-      <Suspense fallback={null}>
-        <JobManagerHost />
-      </Suspense>
+      <CreateApplicationLoader openerRef={createOpenerRef} />
       <WelcomeHost />
       <SiteFooter />
     </div>

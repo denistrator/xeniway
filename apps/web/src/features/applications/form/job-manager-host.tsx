@@ -1,4 +1,5 @@
 import type { CreateApplicationInput } from "@xeniway/shared";
+import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { getApiErrorKey } from "../../../i18n/format";
@@ -7,13 +8,15 @@ import { useApplicationMutations, useCurrentUser } from "../../../lib/queries";
 import { closeDrawer, type RootState } from "../../../store";
 import { JobManager } from "./job-manager";
 
-export function JobManagerHost() {
+type JobManagerHostProps = { openerRef?: RefObject<HTMLElement | null> };
+
+export function JobManagerHost({ openerRef }: JobManagerHostProps) {
   const user = useCurrentUser();
 
-  return user.data ? <AuthenticatedJobManager /> : null;
+  return user.data ? <AuthenticatedJobManager openerRef={openerRef} /> : null;
 }
 
-function AuthenticatedJobManager() {
+function AuthenticatedJobManager({ openerRef }: JobManagerHostProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.drawer.open);
@@ -29,7 +32,13 @@ function AuthenticatedJobManager() {
 
   return (
     <>
-      <JobManager open={isOpen} submitting={pending} onSave={handleSave} onClose={() => dispatch(closeDrawer())} />
+      <JobManager
+        open={isOpen}
+        submitting={pending}
+        onSave={handleSave}
+        onClose={() => dispatch(closeDrawer())}
+        openerRef={openerRef}
+      />
       {mutationError && (
         <p className="mx-auto max-w-7xl px-6 pb-6 text-sm leading-6 text-rose-600 dark:text-rose-400">
           {t(getApiErrorKey(mutationErrorCode))}

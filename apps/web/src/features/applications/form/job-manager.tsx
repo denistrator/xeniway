@@ -1,4 +1,5 @@
 import type { CreateApplicationInput } from "@xeniway/shared";
+import type { RefObject } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useCurrentUser, useUpdateUserPreferences } from "../../../lib/queries";
 import { writeLocalUserPreferences } from "../../../lib/user-preferences";
@@ -12,15 +13,17 @@ export function JobManager({
   submitting,
   onSave,
   onClose,
+  openerRef,
 }: {
   open: boolean;
   submitting: boolean;
   onSave: (input: CreateApplicationInput) => void;
   onClose: () => void;
+  openerRef?: RefObject<HTMLElement | null>;
 }) {
   const dispatch = useDispatch();
   const presentation = useSelector((state: RootState) => state.ui.jobFormPresentation);
-  const dialogRef = useJobDialog(open, onClose);
+  const dialogRef = useJobDialog(open, onClose, openerRef);
   const user = useCurrentUser();
   const updatePreferences = useUpdateUserPreferences();
 

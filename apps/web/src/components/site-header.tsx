@@ -31,7 +31,7 @@ const navigationLinks = [
   { to: "/about", labelKey: "navigation.about", authOnly: false, end: false },
 ] as const;
 
-export function SiteHeader() {
+export function SiteHeader({ onCreateDialogOpen }: { onCreateDialogOpen?: (opener: HTMLElement) => void }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -74,7 +74,14 @@ export function SiteHeader() {
           )}
           <div className="ms-2 flex items-center gap-2">
             {user.data && (
-              <Button variant="outline" size="sm" onClick={() => dispatch(openCreateDrawer())}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(event) => {
+                  onCreateDialogOpen?.(event.currentTarget);
+                  dispatch(openCreateDrawer());
+                }}
+              >
                 <Plus aria-hidden="true" size={15} /> {t("common.actions.addJob")}
               </Button>
             )}

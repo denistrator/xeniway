@@ -1,6 +1,6 @@
 # Frontend bundle cost
 
-Measured on October 6, 2026, against commit `8788de2`. This is a production-build asset baseline, not a claim about rendering speed or a before/after migration benchmark. All sizes below use decimal KB (1 KB = 1,000 bytes).
+The original baseline was measured on October 6, 2026, against commit `8788de2`. The follow-up below records the on-demand create-form change based on `f390c76`. This is a production-build asset baseline, not a before/after Tailwind Variants migration benchmark. All sizes below use decimal KB (1 KB = 1,000 bytes).
 
 ## Method and scope
 
@@ -12,7 +12,7 @@ Playwright Chromium used a 1440×900 viewport, default English preferences, and 
 
 For each phase, collect `performance.getEntriesByType("resource")`, filter `/assets/` JavaScript and CSS, and sum `encodedBodySize` and `transferSize`. Deduplicate asset URLs when summing emitted file sizes. The tables exclude HTML, API responses, images, fonts, and source maps. They measure initial route settlement, not every later interaction, locale, or theme change.
 
-“Compressed body” is the browser-observed encoded response size. “Transfer” is the browser's transfer-size estimate, including response overhead. The preview served compressed assets; deployment compression and caching may differ. Independently gzip each emitted file with Node's `zlib.gzipSync()` for a reproducible modeled size; these totals differ slightly from preview response compression and Vite's displayed gzip estimates. No throttled CPU/network or interaction-latency benchmark was performed.
+“Compressed body” is the browser-observed encoded response size. “Transfer” is the browser's transfer-size estimate, including response overhead. The preview served compressed assets; deployment compression and caching may differ. Independently gzip each emitted file with Node's `zlib.gzipSync()` for a reproducible modeled size; these totals differ slightly from preview response compression and Vite's displayed gzip estimates. The original baseline had no interaction-timing probe; the follow-up adds limited local samples below, without CPU/network throttling.
 
 ## Cold route downloads
 
@@ -68,3 +68,84 @@ The evidence supports investigating two separate questions if optimization is ap
 2. **Workspace incremental cost:** attribute the workspace's dependency bytes and measure read/edit interaction performance before changing loading boundaries. Its roughly 101 KB direct-navigation compressed download is larger than the entire shared styling chunk.
 
 No application optimization or dependency replacement was made for this measurement. Preserve Atlaskit InlineEdit, saved-field behavior, keyboard/focus management, validation, responsive layouts, and the compact-field unsaved-change warning in any later work. Repeat the route measurements on the intended host with its compression/cache policy and representative locale/theme settings before choosing performance budgets.
+
+## Follow-up: on-demand create form
+
+The shared layout now renders a lightweight authentication/loading boundary. The host import starts on the first authenticated Add job activation, not when a public page or board renders. The host remains mounted after closing until authentication is lost or the account changes. Existing mutation, dialog, and form behavior is retained; no hover/focus preload, manual chunk splitting, dependency replacement, or workspace-editor change was introduced.
+
+Repeated the production-preview procedure above with the new build. No `job-manager-host` asset appeared in any initial route load. These compressed-body totals include JavaScript and CSS, with the create form unopened:
+
+| Cold route | Original KB | On-demand KB | Reduction KB |
+| --- | ---: | ---: | ---: |
+| `/about` | 187.04 | 182.18 | 4.86 |
+| `/login` | 186.02 | 181.99 | 4.03 |
+| `/register` | 186.39 | 182.36 | 4.03 |
+| `/forgot-password` | 185.53 | 181.50 | 4.03 |
+| `/reset-password?token=invalid` | 185.84 | 181.82 | 4.03 |
+| `/` | 195.67 | 191.79 | 3.89 |
+| `/archive` | 190.29 | 186.40 | 3.89 |
+| `/blacklist` | 190.34 | 186.46 | 3.89 |
+| `/applications/:id` | 286.66 | 282.77 | 3.89 |
+
+First Add job activation from the settled board fetches one new JavaScript file (`job-manager-host-DjPYOfET.js`), **11.96 KB emitted / 3.83 KB compressed body / 4.13 KB transfer**. Closing and reopening fetches no new assets. Keyboard activation, initial close-button focus, Escape, and focus return were verified against the preview. The browser regression additionally delays the first import and moves focus while loading, verifying activation-time focus restoration. Direct board → workspace remains **100.95 KB compressed body / 102.45 KB transfer**; workspace navigation is not optimized by this change.
+
+The new entry is **482.54 KB emitted / 147.71 KB modeled gzip**, slightly larger uncompressed than the original entry. Total emitted JavaScript is **1,239.62 KB / 354.28 KB modeled gzip** across 48 files. This optimization defers downloads; it does not remove the form's code. Most shared form primitives are still needed by auth, board, or workspace routes, limiting the cold-load reduction.
+
+Cached workspace reload transfer was about **4.50 KB** for 15 JS/CSS resources. Chromium may report the cached representation's `encodedBodySize` even when transfer only reflects revalidation; do not interpret that cached value as a newly downloaded body. The original baseline's zero encoded size and this follow-up's populated encoded size are not evidence of a caching regression.
+
+## Entry and workspace byte attribution
+
+Use the hidden source maps to decode generated positions and attribute each generated span up to the next mapping to its source package. Unmapped prefixes, segments, newlines, and remaining bytes are counted separately; totals reconcile with emitted file bytes. This is approximate **minified-code attribution**, not source-content length, gzip allocation, removable bytes, or runtime CPU cost.
+
+### Entry: `index-DP5-4LSf.js`
+
+| Contributor | Approximate emitted KB |
+| --- | ---: |
+| React DOM | 207.12 |
+| Zod | 82.23 |
+| Application code, including English dictionary/shared contracts | 44.53 |
+| i18next | 43.17 |
+| React Router | 38.28 |
+| TanStack Query core + React bindings | 34.92 |
+| Redux Toolkit, Redux, React Redux, Immer, thunk, external-store helper | 23.80 |
+| Scheduler | 3.54 |
+| Other dependencies | 1.87 |
+| Unmapped generated code | 3.09 |
+
+The English dictionary accounts for approximately 13.99 KB of application code. Other locales remain lazy. `main.tsx` imports React DOM and global providers; the shared layout/header need routing, auth queries, preferences, and i18n on public and protected routes. `lib/user-preferences.ts` imports the locale/theme/form enum schemas from the shared contract module, making Zod an eager dependency even on routes without an application form. The API client and Query hooks already use type-only shared imports; moving them into a vendor chunk would not remove these required downloads.
+
+The actionable entry investigation is whether shared schema-module boundaries can avoid unnecessary eager construction while retaining shared validation. Removing validation, replacing the React runtime, or duplicating preference contracts is not part of this change. No numeric saving is established for a future schema split.
+
+### Workspace: `application-workspace-page-CRKQNOPp.js`
+
+| Contributor | Approximate emitted KB |
+| --- | ---: |
+| Atlaskit feature-gate client + Statsig client/core | 112.95 |
+| Tooltip/Popper dependencies | 42.61 |
+| Application workspace code | 34.52 |
+| Top-layer, portal, layering | 29.74 |
+| Atlaskit Form + Final Form/focus | 25.76 |
+| Tokens, app-provider, theme | 23.21 |
+| Button/icon/primitives/spinner/support | 19.10 |
+| Motion | 7.23 |
+| InlineEdit itself | 6.06 |
+| Analytics/context helpers | 5.30 |
+| Other dependencies | 23.27 |
+| Unmapped generated code | 2.65 |
+
+The feature-gate/Statsig group is about **34% of workspace JavaScript before compression**. The installed InlineEdit imports `@atlaskit/platform-feature-flags/fg`; its `resolveBooleanFlag` module statically imports the feature-gate client, which brings the Statsig dependency graph into the bundle. The application already installs `setBooleanFeatureFlagResolver(() => false)` in `main.tsx`. That runtime resolver preserves false flag behavior, but does not remove static dependency code from the build. Bundled SDK code alone does not prove that remote feature-gate requests occur.
+
+InlineEdit's own 6.06 KB does not represent its transitive cost. Conversely, the whole 332.40 KB chunk is not all editor-library code. Investigate supported upstream dependency/import reductions before considering a library change. Do not alias packages to empty stubs or blanket-replace flag functions: those can silently change component behavior and need a separate reviewed design and regression coverage.
+
+### Local interaction and responsive checks
+
+Five fresh authenticated Chromium contexts started at a settled board with no workspace chunk cached. Browser-side timestamps measured the actual card click to the workspace company editor appearing plus two animation frames, and the company edit click to input focus plus two animation frames. No fields were changed or saved.
+
+| Diagnostic interaction | Median ms | Range ms |
+| --- | ---: | ---: |
+| Board card activation → workspace ready | 109.4 | 94.2–112.9 |
+| First company edit → input focused | 30.3 | 29.7–30.9 |
+
+These are local unthrottled loopback samples and include API, chunk loading, render, and frame-alignment delays; they are not INP, CPU-only measurements, performance budgets, or proof of a production improvement. There is no equivalent pre-change interaction sample. Capture representative-device traces before deciding that any dependency is a runtime bottleneck.
+
+At 390×844 with reduced motion, the lazy-loaded dialog received focus and remained within the viewport. The unchanged authenticated header extended the document to 411 px both before and after opening; its trailing language-control group overflowed the 390 px viewport. This separate responsive issue is recorded in the backlog, not fixed by hiding overflow or expanding this loading change.

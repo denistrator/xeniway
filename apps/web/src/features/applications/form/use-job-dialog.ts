@@ -1,13 +1,17 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
 
-export function useJobDialog(open: boolean, onClose: () => void) {
+export function useJobDialog(open: boolean, onClose: () => void, triggerRef?: RefObject<HTMLElement | null>) {
   const dialogRef = useRef<HTMLElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const wasOpenRef = useRef(false);
 
   useLayoutEffect(() => {
     if (open && !wasOpenRef.current) {
-      openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      openerRef.current = triggerRef?.current?.isConnected
+        ? triggerRef.current
+        : document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
       const initialFocus = dialogRef.current?.querySelector<HTMLElement>("[data-dialog-initial-focus]");
       (initialFocus ?? dialogRef.current)?.focus();
     } else if (!open && wasOpenRef.current) {
@@ -15,7 +19,7 @@ export function useJobDialog(open: boolean, onClose: () => void) {
       openerRef.current = null;
     }
     wasOpenRef.current = open;
-  }, [open]);
+  }, [open, triggerRef]);
 
   useEffect(() => {
     if (!open) return;

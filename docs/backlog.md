@@ -34,6 +34,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open refactoring tasks
 
+### Keep authenticated header actions within narrow viewports
+
+- **Where:** `apps/web/src/components/site-header.tsx`, the authenticated action/language-control groups.
+- **Why:** A production-preview check at 390×844 measured a 411 px document width, with the trailing language control beyond the viewport. The overflow existed before opening the create dialog and remained identical afterward; the dialog itself stayed within the viewport.
+- **Possible direction:** Let action groups wrap or adapt their layout at narrow widths while keeping account, Add job, export, theme, and language controls discoverable. Do not conceal the issue with document-wide overflow clipping.
+- **Guardrails:** Preserve action order, accessible labels, keyboard focus, touch targets, theme/language behavior, and all four locales including Hebrew RTL. Add narrow-viewport browser assertions.
+
 ### Align the CSV browser test with the current export label
 
 - **Where:** `tests/e2e/xeniway.spec.ts` CSV download workflow and `apps/web/src/i18n/locales/en.ts`.
@@ -44,8 +51,8 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 ### Investigate measured frontend bundle costs
 
 - **Where:** The shared web entry chunk and `apps/web/src/features/applications/application-workspace` workspace chunk.
-- **Why:** The [October 2026 production route baseline](frontend-bundle-cost.md) measured about 186 KB compressed JS/CSS body for login, 196 KB for the board, and 287 KB for a direct workspace load. Board → workspace adds about 101 KB compressed; the shared styling chunk is about 45 KB emitted / 15 KB modeled gzip and is reused during SPA navigation. The smaller entry chunk alone does not establish a net migration saving.
-- **Possible direction:** Attribute the large entry/global form dependencies and workspace dependency bytes separately, then measure interaction performance and actual deployment compression/cache behavior before approving optimization. Public routes also request global job-manager/form chunks. Preserve the baseline and compare complete route asset sets, not individual entry sizes.
+- **Why:** After deferring the create form until first use, the [October 2026 route measurements and byte attribution](frontend-bundle-cost.md) show about 182 KB compressed JS/CSS body for login, 192 KB for the board, and 283 KB for a direct workspace load. Board → workspace still adds about 101 KB compressed. Approximately 113 KB of the workspace's 332 KB emitted JavaScript is feature-gate/Statsig dependency code; the entry is dominated by React DOM (207 KB) and Zod (82 KB). The shared styling chunk remains about 15 KB modeled gzip. Smaller or differently named chunks alone do not establish a net saving.
+- **Possible direction:** Investigate a supported upstream way to reduce the feature-gate dependency graph while preserving the existing false-flag resolver and InlineEdit behavior. Inspect shared-contract/preference import boundaries for unnecessary eager schema construction without duplicating validators or removing validation. Profile representative devices and deployment compression/cache behavior before approving further optimization; compare complete route sets and edit responsiveness. On-demand create-form loading is complete and should not be reintroduced as a global eager import.
 - **Guardrails:** Preserve accessible read/edit controls, keyboard focus, status selection, validation, and the compact-field unsaved-change warning. Treat a different editor library or return to custom controls as a separate product/architecture decision.
 
 ### Reassess CSV export memory use for larger boards
