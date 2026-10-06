@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { writeLocalUserPreferences } from "../../lib/user-preferences";
 import { type RootState, setTheme, type ThemePreference } from "../../store";
+import { useCanMutate } from "../offline/offline-access";
 
 const options: Array<{ value: ThemePreference; label: string; icon: LucideIcon }> = [
   { value: "light", label: "Light", icon: Sun },
@@ -19,6 +20,7 @@ export function ThemeSelector() {
   const dispatch = useDispatch();
   const theme = useSelector((state: RootState) => state.ui.theme);
   const user = useCurrentUser();
+  const canMutate = useCanMutate();
   const updatePreferences = useUpdateUserPreferences();
   const currentOption = options.find((option) => option.value === theme) ?? options[1];
   const CurrentIcon = currentOption.icon;
@@ -26,7 +28,7 @@ export function ThemeSelector() {
   const changeTheme = (nextTheme: ThemePreference) => {
     dispatch(setTheme(nextTheme));
     writeLocalUserPreferences({ theme: nextTheme });
-    if (user.data) updatePreferences.mutate({ selectedTheme: nextTheme });
+    if (user.data && canMutate) updatePreferences.mutate({ selectedTheme: nextTheme });
   };
 
   return (

@@ -164,6 +164,7 @@ function createApplication(overrides: Partial<JobApplication> = {}): JobApplicat
 
 function renderLifecycle(application: JobApplication) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
   client.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
 
   return render(

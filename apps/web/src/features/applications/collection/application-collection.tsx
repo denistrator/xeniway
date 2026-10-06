@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ApplicationSearch } from "../../../components/application-search";
 import { PageIntro } from "../../../components/page-intro";
 import { emptyStateStyles } from "../../../components/ui/surface-styles";
+import { useCanMutate } from "../../offline/offline-access";
 
 export function ApplicationCollection({
   title,
@@ -30,12 +31,14 @@ export function ApplicationCollection({
   removeAllLabel: string;
   onRemoveAll: () => void;
 }) {
+  const canMutate = useCanMutate();
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-6">
       <PageIntro title={title} description={description} />
       <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <ApplicationSearch />
         <button
+          disabled={!canMutate}
           type="button"
           className="h-10 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           onClick={onRemoveAll}

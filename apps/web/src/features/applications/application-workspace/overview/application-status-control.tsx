@@ -2,6 +2,7 @@ import type { JobApplication } from "@xeniway/shared";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
+import { useCanMutate } from "../../../offline/offline-access";
 import { getStatusLabel, jobStatuses } from "../../board/job-status";
 import { jobStatusStyles } from "../../board/job-status-styles";
 import type { ApplicationFieldsController } from "./use-application-fields";
@@ -19,6 +20,7 @@ export function ApplicationStatusControl({
   fields: ApplicationFieldsController;
 }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const selectedOptionRef = useRef<HTMLInputElement>(null);
@@ -31,7 +33,8 @@ export function ApplicationStatusControl({
       wasOpen.current = true;
       selectedOptionRef.current?.focus();
     } else if (wasOpen.current) {
-      triggerRef.current?.focus();
+      if (triggerRef.current?.disabled) menuRef.current?.focus();
+      else triggerRef.current?.focus();
       wasOpen.current = false;
     }
   }, [isOpen]);
@@ -44,7 +47,8 @@ export function ApplicationStatusControl({
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       closeMenu();
-      triggerRef.current?.focus();
+      if (triggerRef.current?.disabled) menuRef.current?.focus();
+      else triggerRef.current?.focus();
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
@@ -55,7 +59,12 @@ export function ApplicationStatusControl({
   }, [isOpen]);
 
   return (
-    <div ref={menuRef} data-compact-edit-field="status" className="workspace-inline-edit relative min-w-0">
+    <div
+      ref={menuRef}
+      tabIndex={-1}
+      data-compact-edit-field="status"
+      className="workspace-inline-edit relative min-w-0 focus-visible:outline-2"
+    >
       <button
         ref={triggerRef}
         type="button"
@@ -63,7 +72,7 @@ export function ApplicationStatusControl({
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls="application-status-options"
-        disabled={fields.fields.status.pending}
+        disabled={!canMutate || fields.fields.status.pending}
         onClick={() => {
           if (isOpen) fields.compact.cancel("status");
           else fields.compact.requestEdit("status");
@@ -93,8 +102,10 @@ export function ApplicationStatusControl({
                 name="application-status"
                 value={option}
                 checked={option === application.status}
-                disabled={fields.fields.status.pending}
-                onChange={() => fields.compact.selectStatus(option)}
+                disabled={!canMutate || fields.fields.status.pending}
+                onChange={() => {
+                  if (canMutate) void fields.compact.selectStatus(option);
+                }}
                 className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
               />
               <span

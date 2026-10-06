@@ -1,8 +1,12 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
-import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
+import {
+  createApplicationWorkspaceData,
+  workspaceContact,
+  workspaceFollowUpTask,
+} from "../test-support/application-workspace-fixtures";
 import { renderApplicationWorkspace } from "../test-support/render-application-workspace";
 
 beforeEach(async () => {
@@ -87,6 +91,200 @@ test("saves status selection immediately and rejects unsafe job links", async ()
 
   await waitFor(() => expect(readUpdateBodies(fetcher)).toContainEqual({ status: "applied" }));
 });
+
+test.each([
+  { label: "Company", text: "Northwind" },
+  { label: "About", text: "Read this description" },
+  { label: "Company research", text: "Existing research" },
+])("does not enter the real $label editor after disconnection", async ({ label, text }) => {
+  const data = createApplicationWorkspaceData();
+  renderApplicationWorkspace({ application: { ...data.application, description: "Read this description" } }, true);
+  act(() => window.dispatchEvent(new Event("offline")));
+  fireEvent.click(screen.getByText(text));
+  expect(screen.queryByRole("textbox", { name: new RegExp(label) })).toBeNull();
+});
+
+test.each(["About", "Company research", "Location"])(
+  "keeps the real %s editor cancel available after disconnection and blocks saving",
+  async (label) => {
+    const user = userEvent.setup();
+    const fetcher = stubApplicationUpdates();
+    renderApplicationWorkspace({}, true);
+    await user.click(screen.getByRole("button", { name: `${label}, Edit` }));
+    await user.type(screen.getByRole("textbox", { name: label }), "Draft");
+    act(() => window.dispatchEvent(new Event("offline")));
+    expect(screen.getByRole("button", { name: `Save ${label.toLowerCase()}` })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("textbox", { name: label })).toBeNull();
+    if (label === "Location") expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
+    else expect(screen.getByRole("region", { name: label })).toHaveFocus();
+    expect(fetcher).not.toHaveBeenCalled();
+  },
+);
+
+test.each([
+  { label: "Company research", action: "Cancel" },
+  { label: "Company research", action: "Save company research" },
+  { label: "Location", action: "Cancel" },
+  { label: "Location", action: "Save location" },
+])("hands focused $action to replacement Cancel when $label becomes read-only", async ({ label, action }) => {
+  const user = userEvent.setup();
+  const fetcher = stubApplicationUpdates();
+  renderApplicationWorkspace({}, true);
+  await user.click(screen.getByRole("button", { name: `${label}, Edit` }));
+  const input = screen.getByRole("textbox", { name: label });
+  await user.type(input, "Draft");
+  const draft = (input as HTMLInputElement | HTMLTextAreaElement).value;
+  const originalAction = screen.getByRole("button", { name: action });
+  act(() => originalAction.focus());
+  expect(originalAction).toHaveFocus();
+
+  act(() => window.dispatchEvent(new Event("offline")));
+
+  expect(originalAction).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+  expect(input).toHaveValue(draft);
+  expect(input).toHaveAttribute("readonly");
+  expect(screen.getByRole("button", { name: `Save ${label.toLowerCase()}` })).toBeDisabled();
+  await user.keyboard("{Enter}");
+  expect(screen.queryByRole("textbox", { name: label })).toBeNull();
+  if (label === "Location") expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
+  else expect(screen.getByRole("region", { name: label })).toHaveFocus();
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test.each(["input", "outside"])("read-only transition preserves %s focus", async (target) => {
+  const user = userEvent.setup();
+  renderApplicationWorkspace({}, true);
+  await user.click(screen.getByRole("button", { name: "Company research, Edit" }));
+  const input = screen.getByRole("textbox", { name: "Company research" });
+  const focused = target === "input" ? input : screen.getByRole("link", { name: "Back to Applications" });
+  act(() => focused.focus());
+  expect(focused).toHaveFocus();
+  act(() => window.dispatchEvent(new Event("offline")));
+  expect(focused).toHaveFocus();
+});
+
+test.each(["Company research", "Location"])(
+  "Escape cancels %s after focus transfers to replacement Cancel",
+  async (label) => {
+    const user = userEvent.setup();
+    renderApplicationWorkspace({}, true);
+    await user.click(screen.getByRole("button", { name: `${label}, Edit` }));
+    await user.type(screen.getByRole("textbox", { name: label }), "Draft");
+    act(() => screen.getByRole("button", { name: "Cancel" }).focus());
+    act(() => window.dispatchEvent(new Event("offline")));
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("textbox", { name: label })).toBeNull();
+  },
+);
+
+test.each([
+  { action: "Add contact", input: "Name", save: "Save contact" },
+  { action: "Add follow-up", input: "Task", save: "Save follow-up" },
+  { action: "Add activity", input: "Title", save: "Save activity" },
+])("keeps $action drafts read-only and cancellable after disconnection", async ({ action, input, save }) => {
+  const user = userEvent.setup();
+  const fetcher = stubApplicationUpdates();
+  renderApplicationWorkspace({}, true);
+  await user.click(screen.getByRole("button", { name: action }));
+  act(() => window.dispatchEvent(new Event("offline")));
+  expect(screen.getByRole("textbox", { name: input })).toHaveAttribute("readonly");
+  expect(screen.getByRole("button", { name: save })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(screen.queryByRole("textbox", { name: input })).toBeNull();
+  expect(
+    screen.getByRole("region", {
+      name: action === "Add contact" ? "Contacts" : action === "Add follow-up" ? "Follow-ups" : "Activity",
+    }),
+  ).toHaveFocus();
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test("keeps contact links and follow-up content readable while disabling their mutations", () => {
+  renderApplicationWorkspace({ contacts: [workspaceContact], followUpTasks: [workspaceFollowUpTask] }, true);
+  act(() => window.dispatchEvent(new Event("offline")));
+  expect(screen.getByRole("link", { name: "ari@example.com" })).toHaveAttribute("href", "mailto:ari@example.com");
+  expect(screen.getByText("Write to Ari")).toBeVisible();
+  for (const name of [
+    "Add contact",
+    "Edit Ari Cole",
+    "Remove Ari Cole",
+    "Add follow-up",
+    "Edit Write to Ari",
+    "Delete Write to Ari",
+    "Complete Write to Ari",
+    "Status, Change status",
+  ]) {
+    expect(screen.getByRole("button", { name })).toBeDisabled();
+  }
+});
+
+test.each(["Remove Ari Cole", "Delete Write to Ari"])(
+  "keeps %s confirmation cancellable after disconnection",
+  async (action) => {
+    const user = userEvent.setup();
+    renderApplicationWorkspace({ contacts: [workspaceContact], followUpTasks: [workspaceFollowUpTask] }, true);
+    await user.click(screen.getByRole("button", { name: action }));
+    act(() => window.dispatchEvent(new Event("offline")));
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByRole("button", { name: "Yes" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "No" })).toBeEnabled();
+    await user.click(within(dialog).getByRole("button", { name: "No" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  },
+);
+
+test("blocks unsaved-warning confirmation after disconnection while allowing cancellation", async () => {
+  const user = userEvent.setup();
+  renderApplicationWorkspace({}, true);
+  await user.click(screen.getByRole("button", { name: "Location, Edit" }));
+  await user.type(screen.getByRole("textbox", { name: "Location" }), "Remote");
+  await user.click(screen.getByRole("button", { name: "Company, Edit" }));
+  act(() => window.dispatchEvent(new Event("offline")));
+  const dialog = screen.getByRole("alertdialog");
+  expect(within(dialog).getByRole("button", { name: "Save" })).toBeDisabled();
+  expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeEnabled();
+  await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(screen.queryByRole("textbox", { name: "Company" })).toBeNull();
+});
+
+test("disables an open status menu after disconnection and keeps Escape with focus return", async () => {
+  const user = userEvent.setup();
+  const fetcher = stubApplicationUpdates();
+  renderApplicationWorkspace({}, true);
+  await user.click(screen.getByRole("button", { name: "Status, Change status" }));
+  act(() => window.dispatchEvent(new Event("offline")));
+  expect(screen.getByRole("radio", { name: "Applied" })).toBeDisabled();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("radio", { name: "Applied" })).toBeNull();
+  expect(document.querySelector('[data-compact-edit-field="status"]')).toHaveFocus();
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test.each(["No", "backdrop", "Escape"])(
+  "dismisses a lifecycle confirmation with %s after disconnection",
+  async (dismiss) => {
+    const user = userEvent.setup();
+    const fetcher = stubApplicationUpdates();
+    renderApplicationWorkspace({}, true);
+    await user.click(screen.getByRole("button", { name: "Archive application" }));
+    act(() => window.dispatchEvent(new Event("offline")));
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByRole("button", { name: "Archive application" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "No" })).toBeEnabled();
+    if (dismiss === "Escape") await user.keyboard("{Escape}");
+    else if (dismiss === "backdrop") await user.click(screen.getAllByRole("button", { name: "No" })[0]);
+    else await user.click(within(dialog).getByRole("button", { name: "No" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.getByRole("navigation", { name: "Application actions" })).toHaveFocus();
+    expect(fetcher).not.toHaveBeenCalled();
+  },
+);
 
 function stubApplicationUpdates() {
   const application = createApplicationWorkspaceData().application;

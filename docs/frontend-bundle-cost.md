@@ -2,7 +2,34 @@
 
 The original baseline was measured on October 6, 2026, against commit `8788de2`. The follow-up below records the on-demand create-form change based on `f390c76`. This is a production-build asset baseline, not a before/after Tailwind Variants migration benchmark. All sizes below use decimal KB (1 KB = 1,000 bytes).
 
+## October 7 state-machine refactor measurement
+
+The access refactor preserves existing download boundaries. Compared with the pre-refactor build (`3fbb00a`, with documentation-only `19b1e34` on top), Vite's build-log estimates changed as follows:
+
+| Shared chunk | Before emitted / gzip KB | After emitted / gzip KB |
+| --- | ---: | ---: |
+| Entry | 516.42 / 159.50 | 520.73 / 160.83 |
+| Workspace | 334.32 / 93.67 | 334.88 / 93.82 |
+| Styling (`button`) | 44.94 / 14.75 | 44.94 / 14.75 |
+
+This is a small bundle increase, not a download optimization. Explicit transitions and the runtime add policy code; chunk attribution alone cannot establish total route cost or CPU improvement.
+
+The final production build was also served with API port 3103 and preview port 4186. Fresh Chromium contexts at 1440×900, English/default preferences, no worker and an unopened create form produced these JS/CSS Resource Timing totals. Protected routes used the seeded account; direct workspace used a separate authenticated context. Board → workspace used the actual MAXED card, cleared timings before the click, and waited for the editor read view and network idle.
+
+| Route / navigation | Files | Emitted KB | Modeled gzip KB | Encoded body KB | Transfer KB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cold login | 12 | 631.54 | 194.66 | 193.61 | 197.21 |
+| Cold board | 12 | 662.95 | 204.87 | 203.44 | 207.04 |
+| Cold workspace | 15 | 995.91 | 297.26 | 295.07 | 299.57 |
+| Board → workspace delta | 5 | 363.36 | 102.43 | 101.63 | 103.13 |
+
+No route requested the create host. These final-route totals are a new baseline, not a directly comparable before/after route benchmark: the historical measurements below predate later offline/PWA additions. They exclude HTML, API responses, images, fonts and maps. Preview compression/caching can differ from deployment, and these are byte measurements, not interaction timings.
+
+The measured validation reduction is separate: a four-query stored snapshot invokes status validation four times instead of eight after removing duplicate canonical derivation. Strict stored-shape, hash, timestamp and ownership checks remain covered. No IndexedDB-open reduction or runtime-speed improvement is claimed; each operation still owns its connection and transaction.
+
 ## Method and scope
+
+Offline preparation is a separate, explicitly requested download: it fetches all public build assets, including lazy create/workspace/locale chunks and PWA metadata/icons, plus all three private application lists and every unique workspace's data. Ordinary startup does not register the worker or trigger this whole-build download. Do not count preparation bytes as cold-route savings or describe moving code among chunks as removing it. The production offline suite checks that the create host is not fetched before consent. Historical measurements below predate the offline runtime; the recorded read-only-runtime baseline is a point-in-time measurement, not a measurement of the later PWA/full-workspace-preload additions.
 
 Build from `apps/web` with `bunx vite build --manifest --sourcemap hidden`. The ignored manifest identifies imports; hidden source maps identify bundled sources without adding a browser source-map request. Do not publish diagnostic source maps unintentionally.
 
@@ -14,7 +41,24 @@ For each phase, collect `performance.getEntriesByType("resource")`, filter `/ass
 
 “Compressed body” is the browser-observed encoded response size. “Transfer” is the browser's transfer-size estimate, including response overhead. The preview served compressed assets; deployment compression and caching may differ. Independently gzip each emitted file with Node's `zlib.gzipSync()` for a reproducible modeled size; these totals differ slightly from preview response compression and Vite's displayed gzip estimates. The original baseline had no interaction-timing probe; the follow-up adds limited local samples below, without CPU/network throttling.
 
-## Cold route downloads
+## Read-only offline runtime baseline
+
+Measured October 6, 2026 against the final uncommitted Phase 1 production build, with entry `index-Su8VHIbj.js`. The build was served on preview 4175 with an isolated API on 3102 and existing seeded fixtures. Chromium used fresh English 1440×900 contexts for cold login and cold authenticated board; Add job and preparation then used the settled board context. No application writes were made. This is a point-in-time baseline, not a controlled optimization comparison.
+
+| Phase | Files / reads | Emitted KB | Modeled gzip KB | Encoded body KB | Response transfer KB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Cold `/login`, JS/CSS | 12 | 622.567 | 192.099 | 191.035 | 194.635 |
+| Cold signed-in `/`, JS/CSS | 12 | 653.976 | 202.313 | 200.875 | 204.475 |
+| First Add job delta, JS/CSS | 1 | 11.988 | 3.864 | 3.855 | 4.155 |
+| Prepare public manifest assets | 53 | 1,346.125 | 387.886 | 391.825 | 407.341 |
+| Prepare private list reads | 3 | — | — | 20.238 | 21.775 |
+| Prepare assets + lists | 56 | — | — | 412.063 | 429.116 |
+
+Cold-route and first-open rows use Resource Timing and exclude HTML, favicons, API responses, and worker registration. Both cold routes had zero worker registrations; first Add job fetched one lazy host. Preparation includes index/favicons and deliberately fetches the entire public manifest even after ordinary route visits. It uses Playwright `Request.sizes()` for worker-owned requests; response transfer here is body plus response headers, excluding request headers and connection overhead. Those accounting methods are not interchangeable, and deployment compression may differ.
+
+The worker is separately 8.919 KB emitted / 3.315 KB modeled gzip. Chromium did not expose its registration-response body size, so the preparation aggregates exclude that actual cost rather than assume zero. Private list sizes depend on account data. No private fields or credentials were logged. Historical route/workspace measurements below remain useful context but are not the current full-route baseline.
+
+## Historical cold route downloads
 
 | Route | JS / CSS files | Emitted JS KB | Emitted CSS KB | Compressed body KB | Transfer KB |
 | --- | --- | ---: | ---: | ---: | ---: |

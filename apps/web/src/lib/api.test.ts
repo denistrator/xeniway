@@ -54,9 +54,11 @@ describe("web API helpers", () => {
   });
 
   it("creates isolated query keys for active and archived applications", () => {
-    expect(applicationKeys.list("active")).toEqual(["applications", "list", "active"]);
-    expect(applicationKeys.list("archive")).toEqual(["applications", "list", "archive"]);
-    expect(applicationKeys.list("blacklist")).toEqual(["applications", "list", "blacklist"]);
+    expect(applicationKeys.list(1, "active")).toEqual(["applications", 1, "list", "active"]);
+    expect(applicationKeys.list(1, "archive")).toEqual(["applications", 1, "list", "archive"]);
+    expect(applicationKeys.list(1, "blacklist")).toEqual(["applications", 1, "list", "blacklist"]);
+    expect(applicationKeys.list(1, "active")).not.toEqual(applicationKeys.list(2, "active"));
+    expect(applicationKeys.detail(1, 7)).not.toEqual(applicationKeys.detail(2, 7));
   });
 
   it("requests active applications without serializing a query context as status", async () => {

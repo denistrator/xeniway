@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { tv } from "tailwind-variants";
 import { CsvExportButton } from "../features/data-export/csv-export-button";
+import { useOfflineAccess } from "../features/offline/offline-access";
 import { LanguageSelector } from "../features/preferences/language-selector";
 import { ThemeSelector } from "../features/preferences/theme-selector";
 import { useAuthMutations, useCurrentUser } from "../lib/queries";
@@ -36,6 +37,8 @@ export function SiteHeader({ onCreateDialogOpen }: { onCreateDialogOpen?: (opene
   const navigate = useNavigate();
   const { t } = useTranslation();
   const user = useCurrentUser();
+  const access = useOfflineAccess();
+  const readAccountId = access.readAccountId ?? (access.canReadRemote ? user.data?.id : null);
   const { logout } = useAuthMutations();
 
   async function handleLogout() {
@@ -53,7 +56,7 @@ export function SiteHeader({ onCreateDialogOpen }: { onCreateDialogOpen?: (opene
         <nav className="flex items-center gap-1 px-3" aria-label={t("accessibility.workspaceNavigation")}>
           {navigationLinks.map(
             ({ to, labelKey, authOnly, end }) =>
-              (!authOnly || Boolean(user.data)) && (
+              (!authOnly || Boolean(readAccountId)) && (
                 <NavLink key={to} to={to} end={end} className={navigationLinkClassName}>
                   {t(labelKey)}
                 </NavLink>
@@ -61,9 +64,9 @@ export function SiteHeader({ onCreateDialogOpen }: { onCreateDialogOpen?: (opene
           )}
         </nav>
         <div className="flex items-center gap-4">
-          {user.data && (
+          {readAccountId && (
             <div className="flex items-center lg:border-x border-line ps-6 pe-3">
-              <span className="hidden text-sm text-muted sm:block">{user.data.email}</span>
+              <span className="hidden text-sm text-muted sm:block">{user.data?.email ?? access.account?.email}</span>
               <Button variant="ghost" size="sm" className="ms-1" onClick={handleLogout} disabled={logout.isPending}>
                 <div className="sr-only">
                   {logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout")}
@@ -75,6 +78,7 @@ export function SiteHeader({ onCreateDialogOpen }: { onCreateDialogOpen?: (opene
           <div className="ms-2 flex items-center gap-2">
             {user.data && (
               <Button
+                disabled={!access.canMutate}
                 variant="outline"
                 size="sm"
                 onClick={(event) => {
@@ -85,8 +89,8 @@ export function SiteHeader({ onCreateDialogOpen }: { onCreateDialogOpen?: (opene
                 <Plus aria-hidden="true" size={15} /> {t("common.actions.addJob")}
               </Button>
             )}
-            {user.data && <CsvExportButton />}
-            {!user.isPending && !user.data && (
+            {user.data && access.canMutate && <CsvExportButton />}
+            {!user.isPending && !readAccountId && (
               <Button asChild variant="outline" size="sm">
                 <Link to="/login">{t("common.actions.login")}</Link>
               </Button>

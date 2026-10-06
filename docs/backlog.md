@@ -4,6 +4,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
+### Full offline synchronization
+
+- **Area:** Offline application writes beyond read-only downloads.
+- **Why:** Read-only device downloads do not permit creating or changing server data while disconnected. Durable local drafts remain separately planned; automatic replay is not implemented.
+- **Possible direction:** Define server idempotency, atomic record versions/conflict resolution, temporary-ID dependencies, and ordered recoverable queues before considering full sync.
+- **Guardrails:** Require renewed authentication/CSRF, owner isolation, explicit conflict UX, ambiguous-create handling, and regression coverage for retry, deletion, logout, and account switching. This entry does not authorize implementation.
+
 ### Choose activity timeline sorting direction
 
 - **Area:** Application activity timeline.
@@ -33,6 +40,20 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Guardrails:** Never delete unread notifications; test the exact age cutoff and ensure cleanup is safe to run repeatedly. Keep retention cleanup independent from the user-facing notification center workflow.
 
 ## Open refactoring tasks
+
+### Finish the immutable offline/PWA security report
+
+- **Area:** Security-review tooling for the `d487081..3fbb00a` offline/PWA change.
+- **Why:** The source review covered 96 changed artifacts, but candidate normalization checked immutable provider line ranges against the shortened workingtree file and rejected them. The scan remains unsealed, with a deferred auth-transition/consent-persistence hypothesis rather than a confirmed vulnerability. The rewrite adds cancellation and regression coverage for stale pre-sign-in responses and cold reconnect checks; these do not prove the entire original persistence hypothesis.
+- **Possible direction:** Correct the tool's immutable source binding, then finish validation and report generation against the original revisions. Separately exercise cross-tab account changes with delayed session responses and inspect the final persisted snapshot owner.
+- **Guardrails:** Never change the review revisions or falsify locations to satisfy normalization. Preserve owner/consent boundaries, generation-scoped cleanup, and the distinction between a concurrency bug and demonstrated cross-account private-data persistence.
+
+### Track the offline worker bundler deprecation
+
+- **Where:** `apps/web/vite.config.ts` custom injectManifest worker build.
+- **Why:** The production PWA build currently emits a nonfatal `inlineDynamicImports` deprecation warning from its bundler integration.
+- **Possible direction:** Reassess compatible `vite-plugin-pwa`/bundler versions when that integration supports the replacement option; avoid overriding its generated worker configuration speculatively.
+- **Guardrails:** Preserve consent-only preparation, lazy application chunks, generated asset revisions, API exclusion, and production offline browser coverage.
 
 ### Keep authenticated header actions within narrow viewports
 
@@ -75,6 +96,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Why:** It covers row mapping, application-history transactions, password resets, and user preferences in one test file.
 - **Possible direction:** Split by independently understandable workflow only if ongoing changes make navigation or ownership difficult. Its current `describe` groups may be sufficient, so this is not urgent.
 - **Guardrails:** Keep database setup shared where that improves clarity; do not split solely to meet a line-count target.
+
+### Make offline preparation failures diagnosable without exposing private data
+
+- **Where:** `apps/web/src/features/offline/offline-access-runtime.ts`, `prepare-offline.ts`, and the worker preparation message boundary.
+- **Why:** Preparation discards the caught exception and shows the same storage-oriented message for API failures, worker activation/MIME/revision failures, ownership changes, and IndexedDB/Cache Storage errors. A reported failure currently requires caught-exception breakpoints or worker inspection to identify its stage.
+- **Possible direction:** Add a bounded, sanitized diagnostic stage/error code for local troubleshooting while retaining translated user-facing copy. Do not log complete API responses, application content, email addresses, cookies, CSRF tokens, or raw persisted snapshots.
+- **Guardrails:** Preserve failure cleanup, no partial readiness, generation/ownership checks, and read-only offline behavior. Cover asset, API, storage, and superseded-run failures; distinguish deliberately superseded work from actionable failures.
 
 ### Review server error observability separately
 

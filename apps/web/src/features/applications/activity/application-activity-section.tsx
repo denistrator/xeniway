@@ -3,6 +3,7 @@ import { memo, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
 import { collectionActionStyles } from "../../../components/ui/surface-styles";
+import { useCanMutate } from "../../offline/offline-access";
 import { ApplicationActivityForm } from "./application-activity-form";
 import { ApplicationActivityTimeline } from "./application-activity-timeline";
 import { useApplicationActivityController } from "./use-application-activity-controller";
@@ -15,16 +16,27 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
   events: ApplicationEvent[];
 }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const activity = useApplicationActivityController(applicationId);
   const headingId = useId();
 
   return (
-    <section aria-labelledby={headingId} className="mt-6 border-t border-line pt-5">
+    <section
+      tabIndex={-1}
+      aria-labelledby={headingId}
+      className="mt-6 border-t border-line pt-5 focus-visible:outline-2"
+    >
       <div className="flex items-center justify-between gap-3">
         <h3 id={headingId} className="font-display text-lg font-semibold text-ink">
           {t("applications.activity.heading")}
         </h3>
-        <button ref={activity.addButton} type="button" className={collectionActionStyles()} onClick={activity.beginAdd}>
+        <button
+          ref={activity.addButton}
+          type="button"
+          disabled={!canMutate}
+          className={collectionActionStyles()}
+          onClick={activity.beginAdd}
+        >
           {t("applications.activity.add")}
         </button>
       </div>
@@ -50,9 +62,11 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
           text={t("applications.activity.deleteConfirmation")}
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
-          onYes={activity.remove}
+          onYes={() => {
+            if (canMutate) activity.remove();
+          }}
           onNo={activity.cancelDelete}
-          yesDisabled={activity.mutations.remove.isPending}
+          yesDisabled={!canMutate || activity.mutations.remove.isPending}
         />
       )}
     </section>

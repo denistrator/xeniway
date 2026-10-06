@@ -26,6 +26,7 @@ import {
   useApplicationContactMutations,
   useApplicationDetail,
   useApplicationFollowUpMutations,
+  useApplicationMutations,
   useApplicationPreparationMutation,
   useAuthMutations,
   useUpdateUserPreferences,
@@ -77,7 +78,69 @@ beforeEach(() => {
   updateUserPreferences.mockReset();
 });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+test("offline mutation fails immediately and reconnect never replays it", async () => {
+  let online = false;
+  vi.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
+  const fetcher = vi.fn();
+  vi.stubGlobal("fetch", fetcher);
+  const { wrapper } = setup(accountA);
+  const { result } = renderHook(() => useApplicationMutations(), { wrapper });
+  act(() => result.current.archive.mutate(1));
+  await waitFor(() => expect(result.current.archive.isError).toBe(true));
+  expect(result.current.archive.isPaused).toBe(false);
+  online = true;
+  await act(async () => window.dispatchEvent(new Event("online")));
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test("does not label a late reorder response with the newly selected owner", async () => {
+  let resolveRequest!: (response: Response) => void;
+  const fetcher = vi.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        resolveRequest = resolve;
+      }),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  const { queryClient, wrapper } = setup(accountA);
+  const { result } = renderHook(() => useApplicationMutations(), { wrapper });
+  act(() => result.current.reorder.mutate({ status: "saved", applicationIds: [] }));
+  await waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+  act(() => queryClient.setQueryData(authKeys.me, { data: { user: accountB } }));
+  await act(async () => {
+    resolveRequest(new Response(JSON.stringify({ data: { applications: [] } })));
+  });
+  await waitFor(() => expect(result.current.reorder.isPending).toBe(false));
+  expect(queryClient.getQueryData(applicationKeys.list(accountB.id, "active"))).toBeUndefined();
+});
+
+test("a late mutateAsync completion cannot continue as a successful save for another owner", async () => {
+  let resolveRequest!: (response: Response) => void;
+  const fetcher = vi.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        resolveRequest = resolve;
+      }),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  const { queryClient, wrapper } = setup(accountA);
+  const { result } = renderHook(() => useApplicationPreparationMutation(3), { wrapper });
+  const completion = result.current.mutateAsync({ companyResearch: "A research" }).then(
+    () => "success",
+    (error: Error) => error.message,
+  );
+  await waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+  act(() => queryClient.setQueryData(authKeys.me, { data: { user: accountB } }));
+  await act(async () => {
+    resolveRequest(new Response(JSON.stringify({ data: { preparation: {} } })));
+  });
+  expect(await completion).toBe("The verified account changed");
+});
 
 test("removes all user preference cache entries after successful logout", async () => {
   logout.mockResolvedValue({ data: { message: "Logged out" } });
@@ -379,14 +442,14 @@ test("stores the server completion timestamp in the application detail cache", a
     vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { followUpTask: completed } }), { status: 200 })),
   );
   const { queryClient, wrapper } = setup();
-  queryClient.setQueryData(applicationKeys.detail(applicationId), detail);
+  queryClient.setQueryData(applicationKeys.detail(1, applicationId), detail);
   const { result } = renderHook(() => useApplicationFollowUpMutations(applicationId), { wrapper });
 
   act(() => result.current.complete.mutate(taskId));
   await waitFor(() => expect(result.current.complete.isSuccess).toBe(true));
 
   expect(
-    queryClient.getQueryData<ApplicationDetailResponse>(applicationKeys.detail(applicationId))?.data.followUpTasks[0]
+    queryClient.getQueryData<ApplicationDetailResponse>(applicationKeys.detail(1, applicationId))?.data.followUpTasks[0]
       ?.completedAt,
   ).toBe(completed.completedAt);
 });
@@ -454,16 +517,16 @@ test.each([
     .mockResolvedValue(new Response(JSON.stringify({ data: { message: "ok" } }), { status: 200 }));
   vi.stubGlobal("fetch", fetchMock);
   const { queryClient, wrapper } = setup();
-  queryClient.setQueryData(applicationKeys.detail(applicationId), { data: { application: { id: applicationId } } });
-  queryClient.setQueryData(applicationKeys.detail(99), { data: { application: { id: 99 } } });
-  queryClient.setQueryData(applicationKeys.list("active"), { data: { applications: [] } });
+  queryClient.setQueryData(applicationKeys.detail(1, applicationId), { data: { application: { id: applicationId } } });
+  queryClient.setQueryData(applicationKeys.detail(1, 99), { data: { application: { id: 99 } } });
+  queryClient.setQueryData(applicationKeys.list(1, "active"), { data: { applications: [] } });
   const invalidate = vi.spyOn(queryClient, "invalidateQueries");
   const { result } = renderHook(useAction, { wrapper });
 
   act(() => result.current());
 
-  await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: applicationKeys.detail(applicationId) }));
-  expect(queryClient.getQueryState(applicationKeys.detail(applicationId))?.isInvalidated).toBe(true);
-  expect(queryClient.getQueryState(applicationKeys.detail(99))?.isInvalidated).toBe(false);
-  expect(queryClient.getQueryState(applicationKeys.list("active"))?.isInvalidated).toBe(false);
+  await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: applicationKeys.detail(1, applicationId) }));
+  expect(queryClient.getQueryState(applicationKeys.detail(1, applicationId))?.isInvalidated).toBe(true);
+  expect(queryClient.getQueryState(applicationKeys.detail(1, 99))?.isInvalidated).toBe(false);
+  expect(queryClient.getQueryState(applicationKeys.list(1, "active"))?.isInvalidated).toBe(false);
 });

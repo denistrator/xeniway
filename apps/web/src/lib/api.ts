@@ -38,8 +38,9 @@ export type ApplicationList = "active" | "archive" | "blacklist";
 
 export const applicationKeys = {
   all: ["applications"] as const,
-  list: (list: ApplicationList) => ["applications", "list", list] as const,
-  detail: (id: number) => ["applications", "detail", id] as const,
+  account: (userId: number) => ["applications", userId] as const,
+  list: (userId: number, list: ApplicationList) => ["applications", userId, "list", list] as const,
+  detail: (userId: number, id: number) => ["applications", userId, "detail", id] as const,
 };
 
 export const userPreferencesKeys = {
@@ -48,6 +49,15 @@ export const userPreferencesKeys = {
 };
 
 type ParsedApiError = { code: string; message: string };
+
+let authenticatedRequestGuard: (() => void) | null = null;
+export function setAuthenticatedRequestGuard(guard: (() => void) | null) {
+  authenticatedRequestGuard = guard;
+}
+export function assertAuthenticatedWrite() {
+  if (!navigator.onLine) throw new ApiRequestError("Offline access is read-only", "OFFLINE_READ_ONLY", 0);
+  authenticatedRequestGuard?.();
+}
 
 export class ApiRequestError extends Error {
   constructor(
@@ -72,13 +82,24 @@ export function parseApiError(payload: unknown): ParsedApiError {
 }
 
 export async function requestJson<T>(path: string, init: RequestInit = {}, csrfToken?: string): Promise<T> {
+  if (init.method && init.method !== "GET" && (path.startsWith("/api/applications") || path.startsWith("/api/user/")))
+    assertAuthenticatedWrite();
   const headers = new Headers(init.headers);
   if (init.body && !headers.has("content-type")) headers.set("content-type", "application/json");
   if (csrfToken) headers.set("x-csrf-token", csrfToken);
 
-  const response = await fetch(path, { ...init, headers, credentials: "include" });
+  const privateRequest = path.startsWith("/api/applications") || path.startsWith("/api/user/");
+  let response: Response;
+  try {
+    response = await fetch(path, { ...init, headers, credentials: "include" });
+  } catch (error) {
+    if (privateRequest && !(error instanceof DOMException && error.name === "AbortError"))
+      window.dispatchEvent(new Event("xeniway:server-unavailable"));
+    throw error;
+  }
   const payload: unknown = await response.json();
   if (!response.ok) {
+    if (privateRequest && response.status >= 500) window.dispatchEvent(new Event("xeniway:server-unavailable"));
     const error = parseApiError(payload);
     if (response.status === 401 && path.startsWith("/api/applications") && typeof window !== "undefined") {
       window.dispatchEvent(new Event("xeniway:auth-expired"));
@@ -170,6 +191,7 @@ export function listApplications(status?: JobStatus): Promise<ApplicationListRes
 }
 
 export async function exportApplicationsCsv(): Promise<{ blob: Blob; filename: string }> {
+  assertAuthenticatedWrite();
   const path = "/api/applications/export.zip";
   const response = await fetch(path, { credentials: "include" });
   if (!response.ok) {

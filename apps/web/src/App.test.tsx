@@ -11,7 +11,7 @@ test("clears account query caches on auth expiry without clearing local preferen
   const localPreferences = JSON.stringify({ theme: "light", language: "ru", wasIntroduced: false });
   window.localStorage.setItem(userPreferencesStorageKey, localPreferences);
   queryClient.setQueryData(authKeys.me, { data: { user: { id: 1, email: "a@example.com" } } });
-  queryClient.setQueryData(applicationKeys.list("active"), { data: { applications: [] } });
+  queryClient.setQueryData(applicationKeys.list(1, "active"), { data: { applications: [] } });
   queryClient.setQueryData(userPreferencesKeys.current(1), { data: { preferences: { selectedTheme: "dark" } } });
   queryClient.setQueryData(userPreferencesKeys.current(2), { data: { preferences: { selectedTheme: "light" } } });
 
@@ -26,7 +26,7 @@ test("clears account query caches on auth expiry without clearing local preferen
     expect(queryClient.getQueryData(userPreferencesKeys.current(1))).toBeUndefined();
     expect(queryClient.getQueryData(userPreferencesKeys.current(2))).toBeUndefined();
   });
-  expect(queryClient.getQueryData(applicationKeys.list("active"))).toBeUndefined();
+  expect(queryClient.getQueryData(applicationKeys.list(1, "active"))).toBeUndefined();
   expect(queryClient.getQueryData(authKeys.me)).toBeUndefined();
   expect(window.localStorage.getItem(userPreferencesStorageKey)).toBe(localPreferences);
 });

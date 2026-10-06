@@ -36,6 +36,46 @@ Never commit `.env`, seed credentials, or generated test artifacts. Never use se
 
 ## Local lifecycle
 
+### Offline browsing and deployment
+
+Sign in, open “Offline access on this device,” check the storage-consent box, and choose “Make available offline on this device.” It preloads all active, archived and blacklisted applications plus every workspace's fields, activity, preparation, contacts and follow-up tasks into IndexedDB, and downloads public assets. Visiting each workspace first is unnecessary. Up to four workspace requests run concurrently; the live status reports completed/total workspaces. Readiness appears only after the complete validated download is saved. One account per browser profile is retained for seven days from preparation, not extended by local reads. Removing offline data or logging out clears private downloads. Offline logout cannot revoke the remote session: reconnect and sign out on the server if revocation is required.
+
+For an existing same-account download, choose “Refresh offline data” while verified online. This explicit action reuses the stored consent, replaces the private download, and renews the seven-day period from the start of preparation. Refresh is unavailable offline or on the development server. The old ready download is removed when refresh begins; if any list/workspace/assets/storage step fails, no ready private download remains. Retry while online after fixing the problem. Workspaces created after preparation are unavailable offline until refreshed or read online; permanently deleted workspace responses are pruned during a successful full refresh. Separate server requests are not an atomic point-in-time backup. Existing older list-plus-visited downloads remain readable, but need an explicit refresh for complete workspace coverage.
+
+A temporary server error does not send an already verified tab back to login: it keeps the requested route and any cached application data read-only, with Retry available even without a device download. Retry must verify the server session before editing or fetching fresh application data resumes. This in-memory recovery does not guarantee offline reloads without explicit preparation. If connectivity is lost while editing, Cancel remains available; open confirmations can still be dismissed with No, the backdrop, or Escape, but cannot confirm mutations. Confirmed authorization failures and logout still remove private access.
+
+A transient session-check failure follows the same read-only recovery path. A background auth-cache update alone does not dismiss an outage; use Retry or reconnect to complete a fresh session check. Multiple Retry attempts are safe: only the current verification can restore remote access. Download removal is separate from sign-out and leaves a verified online session usable, but revokes local fallback until a fresh session verification.
+
+Workers require HTTPS (localhost/loopback are exceptions), same-origin root deployment, and a production build. Development workers are disabled. Serve `/service-worker.js` and `/index.html` with revalidation/no-cache headers and hashed `/assets/*` with immutable caching. Keep previous hashed assets accessible during deployments for existing tabs. Updates never force a reload: finish edits, close all application tabs, and reopen online. The worker preserves the previous complete public cache until a replacement is explicitly prepared. API routes must never receive SPA fallback HTML.
+
+The development UI explains that offline preparation requires a production build and does not offer the preparation controls or register/update workers. On the Vite development server, `/service-worker.js` is not generated and falls through to SPA HTML; attempting registration there would produce “unsupported MIME type ('text/html').” This is not a storage-permission failure.
+
+Production HTML omits initial shared-chunk `modulepreload` hints to avoid Chromium's “cross-world service worker resource mismatch” warnings when the worker serves those modules from Cache Storage. Native module imports still load the shared chunks, and dynamic-import dependency preloading remains enabled for lazy routes and components. An already downloaded shell may retain the old hints until a new build is explicitly prepared and the existing worker's update lifecycle completes; clearing all site data is unnecessary and would remove private downloads and preferences.
+
+For manual offline testing, keep PostgreSQL/Redis running and migrated/seeded, leave `.env` configured for local development, and run one command from the repository root:
+
+```bash
+bun run preview
+```
+
+The command first builds the frontend and typechecks the API. Only after a successful build does `concurrently -k` start the non-watching API on `PORT=3101` with app/CORS origin `http://127.0.0.1:4174`, and the loopback Vite preview on strict port 4174 with `API_PORT=3101` for its proxy. The API loads `.env`; the command does not override `NODE_ENV` or relax production configuration validation. It does not start Docker services, migrate, or reseed. Ctrl+C or either child exiting stops both servers. This is a local preview of production frontend assets, not production backend deployment or a production-grade static server.
+
+Open `http://127.0.0.1:4174`, sign in, and explicitly prepare downloads before disconnecting. Stop preview before running `bun run test:e2e:offline`, which uses the same ports. Do not rebuild the output while testing downloads in a running preview. On a deployed production site, a `text/html` worker response instead means the generated worker is missing or incorrectly routed to SPA fallback; fix the deployment routing/file, not just its MIME header.
+
+On preparation failure, check IndexedDB/Cache Storage permissions, disk space, HTTPS, and asset MIME types. Normal online use remains available. “Remove offline data” clears private downloads; clearing browser site data also removes preferences. Downloads are not encrypted device protection, may be evicted, and do not prove an active session. No queued writes or background sync are enabled.
+
+The displayed last-download time describes the current list or workspace response, not a guarantee that every workspace was downloaded. Public shell/favicon/manifest/app-icon bytes are verified against build-generated SHA-256 revisions before readiness. Obsolete public build caches are pruned on activation only when no windows are open, retaining a complete previous fallback; storage usage can temporarily include multiple generations while tabs remain open.
+
+### PWA installation
+
+The production build generates `/manifest.webmanifest` and links it from the HTML shell. It declares Xenia Way, stable `/` app identity, `/` launch URL and scope, standalone display, and light-canvas launch colors. The existing theme initialization still applies the user's light/dark/system choice after launch. Public assets include `/pwa-192.png`, `/pwa-512.png`, `/pwa-maskable-512.png`, and `/apple-touch-icon.png` (180px); the maskable image has an opaque teal background and a padded ivory X. These are separate from the unchanged browser favicons.
+
+Deploy the complete `apps/web/dist` at an HTTPS origin's root. Serve the manifest as `application/manifest+json` (or `application/json`) and icons as `image/png`; never route missing manifest/icons/worker files to SPA HTML fallback. Revalidate the unversioned manifest and icon URLs when deploying branding changes. HTTPS is required outside the localhost/loopback exception.
+
+To check locally, run `bun run preview` and open `http://127.0.0.1:4174`. Inspect DevTools Application → Manifest for the name, launch settings and icons. On supported desktop browsers, use the browser's install action; on iOS/iPadOS, use Safari's Share → Add to Home Screen action. Browser/platform policy determines whether an install action is offered; there is no custom install button. Launch the installed app to manually confirm standalone behavior and icon masking on the target device. Automated Chromium tests verify metadata/assets and caching, not OS installation UI or Safari behavior.
+
+Installation is independent of offline preparation. The app does not register a worker or save private application data just because metadata is loaded or the app is installed. Sign in and explicitly prepare downloads before expecting offline launches to work. Installing alone is not an offline-readiness guarantee; private downloads still expire after seven days and offline editing remains unsupported. Development workers stay disabled; use a production build for installation/offline testing. Worker updates retain the existing close-all-tabs/reopen-online lifecycle.
+
 ```bash
 bun install
 bun run up
@@ -78,7 +118,8 @@ Command prerequisites:
 | `bun run mailpit:check` | Running Mailpit |
 | `bun run check` | Running PostgreSQL, Redis, and Mailpit |
 | `bun run dev` | Running PostgreSQL and Redis for complete API behavior; Mailpit when using the example SMTP configuration |
-| `bun run test:e2e` | Running PostgreSQL and Redis, applied migrations, development fixtures, and Playwright Chromium; the command starts API/web servers |
+| `bun run preview` | Local development `.env`, running PostgreSQL/Redis, applied migrations/data, free ports 3101/4174; Mailpit when testing example SMTP |
+| `bun run test:e2e`, `bun run test:e2e:offline` | Running PostgreSQL and Redis, applied migrations, development fixtures, and Playwright Chromium; the commands start API/web servers |
 
 ### Bundle analysis
 
@@ -103,7 +144,7 @@ Redis is not the source of truth for application data or sessions. It stores onl
 
 ## CI
 
-The checked-in `.github/workflows/ci.yml` workflow runs on pushes and pull requests. It uses Bun 1.4.0 and the same PostgreSQL 16.15 and Redis 7.4.9 versions as local Compose, installs dependencies from the lockfile, applies migrations, explicitly enables and loads development fixtures against the CI-local database, runs typecheck, Vitest, build, installs Chromium, and runs Playwright. Run the same commands locally from [Testing](testing.md) before submitting changes.
+The checked-in `.github/workflows/ci.yml` workflow runs on pushes and pull requests. It uses Bun 1.4.0 and the same PostgreSQL 16.15 and Redis 7.4.9 versions as local Compose, installs dependencies from the lockfile, applies migrations, explicitly enables and loads development fixtures against the CI-local database, runs typecheck, Vitest, build, installs Chromium, and runs the production offline and ordinary development-server Playwright suites sequentially. Run the same commands locally from [Testing](testing.md) before submitting changes.
 
 ## Troubleshooting
 

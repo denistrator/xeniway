@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCurrentUser, useUpdateUserPreferences } from "../../../lib/queries";
 import { writeLocalUserPreferences } from "../../../lib/user-preferences";
 import { type RootState, setJobFormPresentation } from "../../../store";
+import { useCanMutate } from "../../offline/offline-access";
 import { JobDrawer } from "./job-drawer";
 import { JobModal } from "./job-modal";
 import { useJobDialog } from "./use-job-dialog";
@@ -25,6 +26,7 @@ export function JobManager({
   const presentation = useSelector((state: RootState) => state.ui.jobFormPresentation);
   const dialogRef = useJobDialog(open, onClose, openerRef);
   const user = useCurrentUser();
+  const canMutate = useCanMutate();
   const updatePreferences = useUpdateUserPreferences();
 
   if (!open) return null;
@@ -33,7 +35,7 @@ export function JobManager({
     const nextPresentation = presentation === "drawer" ? "modal" : "drawer";
     dispatch(setJobFormPresentation(nextPresentation));
     writeLocalUserPreferences({ formPresentation: nextPresentation });
-    if (user.data) updatePreferences.mutate({ selectedFormPresentation: nextPresentation });
+    if (user.data && canMutate) updatePreferences.mutate({ selectedFormPresentation: nextPresentation });
   };
   const props = {
     presentation,

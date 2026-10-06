@@ -3,6 +3,7 @@ import type { JobApplication } from "@xeniway/shared";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../i18n/format";
+import { useCanMutate } from "../../offline/offline-access";
 import { getStatusLabel } from "./job-status";
 import { jobStatusStyles } from "./job-status-styles";
 
@@ -22,21 +23,23 @@ export function JobCard({
   total: number;
 }) {
   const { i18n, t } = useTranslation();
+  const canMutate = useCanMutate();
   const cardRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || !canMutate) return;
     return draggable({
       element: cardRef.current,
       getInitialData: () => ({ type: "job-application", applicationId: job.id }),
       onDragStart,
     });
-  }, [job.id, onDragStart]);
+  }, [job.id, onDragStart, canMutate]);
   return (
     <button
       type="button"
       ref={cardRef}
       onClick={onOpen}
       onKeyDown={(event) => {
+        if (!canMutate) return;
         const direction = event.shiftKey
           ? event.key === "ArrowLeft"
             ? "previousStatus"
@@ -56,7 +59,7 @@ export function JobCard({
         event.preventDefault();
         onKeyboardMove(direction);
       }}
-      aria-keyshortcuts="ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight"
+      aria-keyshortcuts={canMutate ? "ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight" : undefined}
       aria-label={`${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. ${t("applications.board.openDetails")}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`}
       className="w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing"
     >

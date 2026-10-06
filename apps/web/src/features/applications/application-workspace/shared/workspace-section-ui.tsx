@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { Button } from "../../../../components/ui/button";
 import { CardHeader, CardTitle } from "../../../../components/ui/card";
+import { useCanMutate } from "../../../offline/offline-access";
 import { workspaceFieldStyles } from "./workspace-field-styles";
 
 export function WorkspaceSectionHeader({
@@ -71,12 +72,13 @@ export function WorkspaceFormActions({
   cancelLabel: string;
   onCancel(): void;
 }) {
+  const canMutate = useCanMutate();
   return (
     <div className="flex flex-wrap gap-2">
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" disabled={!canMutate || pending}>
         {pending ? savingLabel : saveLabel}
       </Button>
-      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={onCancel}>
+      <Button type="button" variant="outline" size="sm" disabled={canMutate && pending} onClick={onCancel}>
         {cancelLabel}
       </Button>
     </div>

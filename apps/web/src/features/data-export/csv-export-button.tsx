@@ -2,6 +2,7 @@ import { Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../components/ui/button";
 import { useApplicationsCsvExport } from "../../lib/queries";
+import { useCanMutate } from "../offline/offline-access";
 
 function downloadCsv(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -17,6 +18,7 @@ function downloadCsv(blob: Blob, filename: string) {
 
 export function CsvExportButton() {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const exportMutation = useApplicationsCsvExport();
 
   return (
@@ -24,7 +26,7 @@ export function CsvExportButton() {
       <Button
         variant="outline"
         size="sm"
-        disabled={exportMutation.isPending}
+        disabled={exportMutation.isPending || !canMutate}
         onClick={() =>
           exportMutation.mutate(undefined, { onSuccess: ({ blob, filename }) => downloadCsv(blob, filename) })
         }

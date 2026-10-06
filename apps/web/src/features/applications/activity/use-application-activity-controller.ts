@@ -22,13 +22,18 @@ export function useApplicationActivityController(applicationId: number) {
 
   function closeForm() {
     setEditing(null);
-    editingTrigger.current?.focus();
+    returnFocus(editingTrigger.current);
     editingTrigger.current = null;
   }
 
   function cancelDelete() {
     setDeleting(null);
-    addButton.current?.focus();
+    returnFocus(addButton.current);
+  }
+
+  function returnFocus(target: HTMLElement | null) {
+    if (target?.matches(":disabled")) target.closest("section")?.focus();
+    else target?.focus();
   }
 
   async function save(input: ApplicationEventInput) {

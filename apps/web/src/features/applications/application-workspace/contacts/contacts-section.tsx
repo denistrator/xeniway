@@ -5,6 +5,7 @@ import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
 import { emptyStateStyles } from "../../../../components/ui/surface-styles";
+import { useCanMutate } from "../../../offline/offline-access";
 import { sanitizeExternalUrl } from "../shared/sanitize-external-url";
 import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui";
 import { ContactForm } from "./contact-form";
@@ -18,20 +19,21 @@ export const ContactsSection = memo(function ContactsSection({
   contacts: ApplicationContact[];
 }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const headingId = useId();
   const controller = useContactsController(applicationId);
   const isEditorOpen = controller.editor.target !== null;
   const statusIsError = controller.status?.endsWith("Failed") ?? false;
 
   return (
-    <section aria-labelledby={headingId}>
+    <section tabIndex={-1} aria-labelledby={headingId} className="focus-visible:outline-2">
       <Card>
         <WorkspaceSectionHeader
           headingId={headingId}
           title={t("applications.workspace.contacts.heading")}
           actionLabel={t("applications.workspace.contacts.add")}
           actionRef={controller.addButtonRef}
-          actionDisabled={isEditorOpen}
+          actionDisabled={!canMutate || isEditorOpen}
           onAction={controller.editor.openNew}
         />
         <CardContent>
@@ -55,6 +57,7 @@ export const ContactsSection = memo(function ContactsSection({
                           size="sm"
                           variant="outline"
                           aria-label={t("applications.workspace.contacts.editNamed", { name: contact.name })}
+                          disabled={!canMutate}
                           onClick={(event) => controller.editor.openExisting(contact, event.currentTarget)}
                         >
                           {t("applications.workspace.actions.edit")}
@@ -64,6 +67,7 @@ export const ContactsSection = memo(function ContactsSection({
                           size="sm"
                           variant="ghost"
                           aria-label={t("applications.workspace.contacts.removeNamed", { name: contact.name })}
+                          disabled={!canMutate}
                           onClick={(event) => controller.deletion.request(contact, event.currentTarget)}
                         >
                           {t("applications.workspace.actions.remove")}
@@ -121,9 +125,11 @@ export const ContactsSection = memo(function ContactsSection({
           text={t("applications.workspace.contacts.removeConfirmation", { name: controller.deletion.target.name })}
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
-          onYes={() => void controller.deletion.confirm()}
+          onYes={() => {
+            if (canMutate) void controller.deletion.confirm();
+          }}
           onNo={controller.deletion.cancel}
-          yesDisabled={controller.pending}
+          yesDisabled={!canMutate || controller.pending}
         />
       )}
     </section>

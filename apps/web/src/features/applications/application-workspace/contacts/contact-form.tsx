@@ -4,11 +4,13 @@ import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../
 import { Input } from "../../../../components/ui/input";
 import { editorFormStyles } from "../../../../components/ui/surface-styles";
 import { cn } from "../../../../lib/utils";
+import { useCanMutate } from "../../../offline/offline-access";
 import { WorkspaceFieldError, WorkspaceFormActions } from "../shared/workspace-section-ui";
 import type { ContactsController } from "./use-contacts-controller";
 
 export function ContactForm({ controller }: { controller: ContactsController }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const formId = useId();
   const { editor } = controller;
   if (!editor.target) return null;
@@ -17,7 +19,10 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
     <form
       ref={editor.formRef}
       noValidate
-      onSubmit={(event) => void editor.submit(event)}
+      onSubmit={(event) => {
+        if (canMutate) void editor.submit(event);
+        else event.preventDefault();
+      }}
       className={editorFormStyles()}
     >
       <h3 className="font-display text-lg text-ink">
@@ -33,6 +38,7 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
               id={`${formId}-${field}`}
               ref={field === "name" ? editor.firstFieldRef : undefined}
               name={field}
+              readOnly={!canMutate}
               type={field === "email" ? "email" : field === "profileUrl" ? "url" : field === "phone" ? "tel" : "text"}
               autoComplete={field === "name" ? "name" : field === "email" ? "email" : field === "phone" ? "tel" : "off"}
               required={field === "name" || field === "role"}
@@ -59,6 +65,7 @@ export function ContactForm({ controller }: { controller: ContactsController }) 
         <textarea
           id={`${formId}-notes`}
           name="notes"
+          readOnly={!canMutate}
           rows={3}
           maxLength={10000}
           value={editor.draft.notes}

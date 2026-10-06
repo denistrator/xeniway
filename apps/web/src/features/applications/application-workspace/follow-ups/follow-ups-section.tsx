@@ -6,6 +6,7 @@ import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
 import { emptyStateStyles } from "../../../../components/ui/surface-styles";
+import { useCanMutate } from "../../../offline/offline-access";
 import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui";
 import { FollowUpForm } from "./follow-up-form";
 import { useFollowUpsController } from "./use-follow-ups-controller";
@@ -37,6 +38,7 @@ export const FollowUpsSection = memo(function FollowUpsSection({
   tasks: ApplicationFollowUpTask[];
 }) {
   const { i18n, t } = useTranslation();
+  const canMutate = useCanMutate();
   const locale = i18n.resolvedLanguage ?? "en";
   const headingId = useId();
   const controller = useFollowUpsController(applicationId);
@@ -49,14 +51,14 @@ export const FollowUpsSection = memo(function FollowUpsSection({
   const statusIsError = controller.status?.endsWith("Failed") ?? false;
 
   return (
-    <section aria-labelledby={headingId}>
+    <section tabIndex={-1} aria-labelledby={headingId} className="focus-visible:outline-2">
       <Card>
         <WorkspaceSectionHeader
           headingId={headingId}
           title={t("applications.workspace.followUps.heading")}
           actionLabel={t("applications.workspace.followUps.add")}
           actionRef={controller.addButtonRef}
-          actionDisabled={controller.editor.target !== null}
+          actionDisabled={!canMutate || controller.editor.target !== null}
           onAction={controller.editor.openNew}
         />
         <CardContent>
@@ -99,6 +101,7 @@ export const FollowUpsSection = memo(function FollowUpsSection({
                             size="sm"
                             variant="outline"
                             aria-label={t("applications.workspace.followUps.editNamed", { name: task.title })}
+                            disabled={!canMutate}
                             onClick={(event) => controller.editor.openExisting(task, event.currentTarget)}
                           >
                             {t("applications.workspace.actions.edit")}
@@ -108,6 +111,7 @@ export const FollowUpsSection = memo(function FollowUpsSection({
                             size="sm"
                             variant="ghost"
                             aria-label={t("applications.workspace.followUps.deleteNamed", { name: task.title })}
+                            disabled={!canMutate}
                             onClick={(event) => controller.deletion.request(task, event.currentTarget)}
                           >
                             {t("applications.workspace.actions.delete")}
@@ -122,9 +126,11 @@ export const FollowUpsSection = memo(function FollowUpsSection({
                           type="button"
                           size="sm"
                           className="mt-3"
-                          disabled={controller.pending}
+                          disabled={!canMutate || controller.pending}
                           aria-label={t("applications.workspace.followUps.completeNamed", { name: task.title })}
-                          onClick={() => void controller.complete(task.id)}
+                          onClick={() => {
+                            if (canMutate) void controller.complete(task.id);
+                          }}
                         >
                           {t("applications.workspace.followUps.complete")}
                         </Button>
@@ -149,9 +155,11 @@ export const FollowUpsSection = memo(function FollowUpsSection({
           text={t("applications.workspace.followUps.deleteConfirmation", { title: controller.deletion.target.title })}
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
-          onYes={() => void controller.deletion.confirm()}
+          onYes={() => {
+            if (canMutate) void controller.deletion.confirm();
+          }}
           onNo={controller.deletion.cancel}
-          yesDisabled={controller.pending}
+          yesDisabled={!canMutate || controller.pending}
         />
       )}
     </section>

@@ -14,7 +14,7 @@ export function ApplicationWorkspaceContent({ data }: { data: ApplicationDetailR
   const applicationFields = useApplicationFields(application);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 px-4 pb-12 sm:px-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-5 px-4 pb-12 sm:px-6">
       <ApplicationWorkspaceHeader
         application={application}
         fields={applicationFields}

@@ -17,6 +17,8 @@ Xenia Way is an actively developed, server-backed candidate-tracking application
 - Expand activity directly from archived and blacklisted cards without restoring the application first.
 - Export all of your active, archived, and blacklisted applications with their activity history to a CSV file.
 - Search applications and filter the board by status.
+- Opt into seven-day, read-only downloads of all three boards and every application workspace on one browser profile, including activity, preparation, contacts, and follow-ups. Explicitly refresh downloads before going offline. See [offline privacy and deployment limits](docs/operations.md#offline-browsing-and-deployment); offline edits and automatic synchronization are not supported.
+- Install the production web app through a supported browser's native installation or Add to Home Screen action. Installation does not prepare private offline downloads. See [PWA installation](docs/operations.md#pwa-installation).
 - Reorder applications within a status using drag-and-drop or keyboard controls.
 - Archive applications, restore them, or permanently delete them from the archive.
 - Blacklist applications with an optional reason and restore them from a dedicated blacklist page.
@@ -103,6 +105,7 @@ Run commands from the repository root.
 | Command | Purpose |
 | --- | --- |
 | `bun run dev` | Start the API and Vite web app |
+| `bun run preview` | Build the production web bundle, then start the API and local production preview together at `http://127.0.0.1:4174` |
 | `bun run up` | Start PostgreSQL, Redis, and Mailpit |
 | `bun run down` | Stop all local infrastructure services |
 | `bun run check` | Check PostgreSQL, Redis, and Mailpit |
@@ -116,13 +119,16 @@ Run commands from the repository root.
 | `bun run test` | Run all Bun and Vitest unit suites |
 | `bun run build` | Build the web bundle and typecheck the API |
 | `bun run test:e2e` | Run the Playwright browser workflow |
+| `bun run test:e2e:offline` | Build and run the production-preview offline browser suite |
 | `bun run format` | Format supported source files with Biome |
 | `bun run format:check` | Check formatting without changing files |
 | `bun run lint` | Check formatting, imports, and lint rules with Biome |
 
 `bun run up` starts or reconciles the Compose services and keeps PostgreSQL and Redis data in named local volumes. `bun run down` removes the local containers and network without removing those volumes. No checked-in lifecycle command deletes the named volumes. Mailpit messages are disposable.
 
-The static checks (`check:public`, `format`, `lint`, `typecheck`, `test`, and `build`) do not require local services. Database migration and seed commands require PostgreSQL. `check` requires PostgreSQL, Redis, and Mailpit, while `test:e2e` requires PostgreSQL, Redis, applied migrations, development fixtures, and Playwright Chromium; the browser suite starts its own API and web servers. Mailpit is useful for manually inspecting local reset mail but is not required by the browser suite.
+The static checks (`check:public`, `format`, `lint`, `typecheck`, `test`, and `build`) do not require local services. Database migration and seed commands require PostgreSQL. `check` requires PostgreSQL, Redis, and Mailpit, while `test:e2e` and `test:e2e:offline` require PostgreSQL, Redis, applied migrations, development fixtures, and Playwright Chromium; the browser suites start their own API and web servers. Run them sequentially because they share fixtures and Redis database 15. Mailpit is useful for manually inspecting local reset mail but is not required by the browser suites.
+
+`bun run preview` is for local production-frontend/offline testing, not a production hosting server. It runs the API without watch mode on port 3101, aligns its app/CORS origin with the preview, and proxies browser API requests to it. Keep the local `.env` runtime in development and PostgreSQL/Redis available; Mailpit is needed when testing the example SMTP configuration. The command does not start infrastructure, migrate, or reseed data. Ctrl+C stops both servers; stop preview before running the offline browser suite, which uses the same ports. See [preview and offline setup](docs/operations.md#offline-browsing-and-deployment).
 
 GitHub Actions treats CI as the publication gate. It checks tracked public content first, then runs formatting, lint, typecheck, unit tests, and the build without services. Only after those jobs pass does it start pinned PostgreSQL and Redis services for migrations, seed validation, and Playwright. Database and Redis URLs are masked before use and scoped only to the migration, seed, and browser-test steps that need them; setup and installation steps do not receive those values. A failed project check reports its name, exit status, and a bounded diagnostic tail after redacting sensitive environment values, connection URLs, reset links, cookies, authorization values, email addresses, and password-reset mail content.
 

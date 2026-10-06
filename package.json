@@ -8,8 +8,10 @@
   ],
   "scripts": {
     "dev": "concurrently -k \"bun --cwd apps/api dev\" \"bun --cwd apps/web dev\"",
+    "preview": "bun run build && concurrently -k \"PORT=3101 APP_ORIGIN=http://127.0.0.1:4174 CORS_ORIGIN=http://127.0.0.1:4174 bun run --cwd apps/api start\" \"API_PORT=3101 bun run --cwd apps/web preview\"",
     "test": "bun test scripts && bun run --cwd packages/shared test && bun run --cwd apps/api test && bun run --cwd apps/web test",
     "test:e2e": "playwright test",
+    "test:e2e:offline": "playwright test --config playwright.offline.config.ts",
     "typecheck": "bun run --cwd packages/shared typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/web typecheck",
     "build": "bun run --cwd apps/web build && bun run --cwd apps/api typecheck",
     "check:public": "bun scripts/check-public-repository.ts",

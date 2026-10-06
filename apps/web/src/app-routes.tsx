@@ -1,7 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/layout";
-import { LoadingScreen } from "./components/loading-screen";
 import { GuestOnly, RequireAuth } from "./route-guards";
 
 const AboutPage = lazy(() => import("./pages/about-page").then(({ AboutPage }) => ({ default: AboutPage })));
@@ -39,25 +38,23 @@ const RegisterPage = lazy(() =>
 
 export function AppRoutes() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/about" element={<AboutPage />} />
-          <Route element={<RequireAuth />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/archive" element={<ArchivePage />} />
-            <Route path="/blacklist" element={<BlacklistPage />} />
-            <Route path="/applications/:id" element={<ApplicationWorkspacePage />} />
-          </Route>
-          <Route element={<GuestOnly />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-          </Route>
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<PasswordResetPage />} />
-          <Route path="*" element={<NotFoundPage />} />
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/about" element={<AboutPage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/archive" element={<ArchivePage />} />
+          <Route path="/blacklist" element={<BlacklistPage />} />
+          <Route path="/applications/:id" element={<ApplicationWorkspacePage />} />
         </Route>
-      </Routes>
-    </Suspense>
+        <Route element={<GuestOnly />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<PasswordResetPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   );
 }

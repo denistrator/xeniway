@@ -2,14 +2,16 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { collectionActionStyles } from "../../../components/ui/surface-styles";
 import { useApplicationDetail } from "../../../lib/queries";
+import { useOfflineAccess } from "../../offline/offline-access";
 import { ApplicationActivitySection } from "./application-activity-section";
 
 export function ApplicationActivity({ applicationId }: { applicationId: number }) {
   const { t } = useTranslation();
   const detail = useApplicationDetail(applicationId);
   const headingId = useId();
+  const access = useOfflineAccess();
 
-  if (!detail.isPending && !detail.isError) {
+  if (detail.data) {
     return <ApplicationActivitySection applicationId={applicationId} events={detail.data.events} />;
   }
 
@@ -24,7 +26,9 @@ export function ApplicationActivity({ applicationId }: { applicationId: number }
         </button>
       </div>
       <div className="mt-4" aria-live="polite">
-        {detail.isPending ? (
+        {!access.canReadRemote ? (
+          <p className="text-sm text-muted">{t("offline.notDownloaded")}</p>
+        ) : detail.isPending ? (
           <p className="text-sm text-muted">{t("common.loading")}</p>
         ) : detail.isError ? (
           <p role="alert" className="text-sm text-rose-600">

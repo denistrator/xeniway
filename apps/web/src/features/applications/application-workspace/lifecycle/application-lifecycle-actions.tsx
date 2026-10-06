@@ -1,16 +1,21 @@
 import type { JobApplication } from "@xeniway/shared";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../../components/ui/button";
 import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
 import { getApiErrorKey } from "../../../../i18n/format";
 import { ApiRequestError } from "../../../../lib/api";
+import { useCanMutate } from "../../../offline/offline-access";
+import { useReturnFocus } from "../shared/use-return-focus";
 import { type ApplicationLifecycleAction, useApplicationLifecycle } from "./use-application-lifecycle";
 
 export function ApplicationLifecycleActions({ application }: { application: JobApplication }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const lifecycle = useApplicationLifecycle(application);
   const [pendingAction, setPendingAction] = useState<ApplicationLifecycleAction | null>(null);
+  const actionsRef = useRef<HTMLElement>(null);
+  const rememberFocus = useReturnFocus(pendingAction !== null, actionsRef);
   const [actionErrorKey, setActionErrorKey] = useState<string | null>(null);
   const [restoreErrorKey, setRestoreErrorKey] = useState<string | null>(null);
   const labels: Record<ApplicationLifecycleAction, string> = {
@@ -21,6 +26,7 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
   };
 
   async function restore() {
+    if (!canMutate) return;
     setRestoreErrorKey(null);
     try {
       await lifecycle.execute("restore");
@@ -30,7 +36,7 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
   }
 
   async function executeConfirmedAction() {
-    if (!pendingAction) return;
+    if (!canMutate || !pendingAction) return;
     setActionErrorKey(null);
     try {
       await lifecycle.execute(pendingAction);
@@ -41,28 +47,35 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
   }
 
   function request(action: ApplicationLifecycleAction) {
+    if (!canMutate) return;
+    if (document.activeElement instanceof HTMLElement) rememberFocus(document.activeElement);
     setActionErrorKey(null);
     setPendingAction(action);
   }
 
   return (
     <>
-      <nav aria-label={t("applications.workspace.actionsLabel")} className="flex flex-wrap gap-2 lg:justify-self-end">
+      <nav
+        ref={actionsRef}
+        tabIndex={-1}
+        aria-label={t("applications.workspace.actionsLabel")}
+        className="flex flex-wrap gap-2 lg:justify-self-end focus-visible:outline-2"
+      >
         {lifecycle.board === "active" ? (
           <>
-            <Button variant="outline" onClick={() => request("archive")}>
+            <Button variant="outline" disabled={!canMutate} onClick={() => request("archive")}>
               {labels.archive}
             </Button>
-            <Button variant="ghost" onClick={() => request("blacklist")}>
+            <Button variant="ghost" disabled={!canMutate} onClick={() => request("blacklist")}>
               {labels.blacklist}
             </Button>
           </>
         ) : (
           <>
-            <Button onClick={() => void restore()} disabled={lifecycle.pending}>
+            <Button onClick={() => void restore()} disabled={!canMutate || lifecycle.pending}>
               {labels.restore}
             </Button>
-            <Button variant="outline" onClick={() => request("delete")}>
+            <Button variant="outline" disabled={!canMutate} onClick={() => request("delete")}>
               {labels.delete}
             </Button>
           </>
@@ -79,7 +92,7 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
           text={t(`applications.workspace.confirm.${pendingAction}`)}
           yesLabel={labels[pendingAction]}
           noLabel={t("common.actions.no")}
-          yesDisabled={lifecycle.pending}
+          yesDisabled={!canMutate || lifecycle.pending}
           onYes={() => void executeConfirmedAction()}
           onNo={() => {
             setActionErrorKey(null);

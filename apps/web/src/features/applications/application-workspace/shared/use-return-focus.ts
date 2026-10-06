@@ -7,7 +7,8 @@ export function useReturnFocus(open: boolean, fallback?: RefObject<HTMLElement |
   useEffect(() => {
     if (wasOpen.current && !open) {
       const target = trigger.current?.isConnected ? trigger.current : fallback?.current;
-      target?.focus();
+      if (target?.matches(":disabled")) (target.closest("section") ?? fallback?.current)?.focus();
+      else target?.focus();
       trigger.current = null;
     }
     wasOpen.current = open;

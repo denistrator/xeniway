@@ -1,4 +1,30 @@
 export const en = {
+  offline: {
+    title: "Offline access on this device",
+    productionOnly:
+      "Offline access requires a production build. Run a production preview to test it; it is unavailable on the development server.",
+    readOnly:
+      "Offline or server unavailable — cached applications are read-only. Reconnect or retry to verify your session before editing.",
+    ready: "Ready offline until {{date}}.",
+    downloaded: "Data last downloaded: {{date}}.",
+    refresh: "Refresh offline data",
+    progress: "Downloaded {{completed}} of {{total}} workspaces…",
+    coverage:
+      "Preparation preloads all active, archived, and blacklisted application boards and workspaces, including activity, preparation, contacts, and follow-ups.",
+    refreshReplacement:
+      "Refresh replaces the stored download and renews offline access for seven days. If refresh fails, no ready download remains; reconnect and try again.",
+    notDownloaded: "This workspace has not been downloaded. Connect to open it.",
+    privacy:
+      "This stores private application data in this browser for seven days. Anyone using this browser profile may read it, even after your server session expires. It is not encrypted device protection. Remote changes appear only after reconnecting; browser storage may be evicted. Only one account can be available offline.",
+    consent: "I understand and want to store my application data on this device.",
+    enable: "Make available offline on this device",
+    remove: "Remove offline data",
+    preparing: "Downloading applications and public assets…",
+    failed: "Offline data could not be saved or read. Check storage permissions and space, then try again online.",
+    localLogout:
+      "Offline data was cleared on this device. Your remote session could not be revoked; reconnect to sign out on the server.",
+    update: "A new version is available. Finish any edits, then close all app tabs and reopen online to update.",
+  },
   common: {
     language: {
       label: "Language",

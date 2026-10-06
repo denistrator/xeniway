@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render } from "@testing-library/react";
 import { StrictMode } from "react";
 import { Provider } from "react-redux";
@@ -27,12 +28,15 @@ test("does not evaluate the host module until the first authenticated create act
   store.dispatch(closeDrawer());
   store.dispatch(closeWelcome());
   mocks.currentUser.mockReturnValue({ data: undefined, isPending: true });
+  const client = new QueryClient();
   const element = () => (
     <StrictMode>
       <Provider store={store}>
-        <MemoryRouter>
-          <Layout />
-        </MemoryRouter>
+        <QueryClientProvider client={client}>
+          <MemoryRouter>
+            <Layout />
+          </MemoryRouter>
+        </QueryClientProvider>
       </Provider>
     </StrictMode>
   );

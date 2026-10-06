@@ -3,17 +3,26 @@ import { useTranslation } from "react-i18next";
 import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles";
 import { Input } from "../../../../components/ui/input";
 import { editorFormStyles } from "../../../../components/ui/surface-styles";
+import { useCanMutate } from "../../../offline/offline-access";
 import { WorkspaceFieldError, WorkspaceFormActions } from "../shared/workspace-section-ui";
 import type { FollowUpsController } from "./use-follow-ups-controller";
 
 export function FollowUpForm({ controller }: { controller: FollowUpsController }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const formId = useId();
   const { editor } = controller;
   if (!editor.target) return null;
 
   return (
-    <form noValidate onSubmit={(event) => void editor.submit(event)} className={editorFormStyles()}>
+    <form
+      noValidate
+      onSubmit={(event) => {
+        if (canMutate) void editor.submit(event);
+        else event.preventDefault();
+      }}
+      className={editorFormStyles()}
+    >
       <h3 className="font-display text-lg text-ink">
         {t(editor.target === "new" ? "applications.workspace.followUps.add" : "applications.workspace.followUps.edit")}
       </h3>
@@ -26,6 +35,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
             id={`${formId}-title`}
             ref={editor.titleRef}
             name="title"
+            readOnly={!canMutate}
             required
             maxLength={255}
             value={editor.draft.title}
@@ -49,6 +59,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
             id={`${formId}-dueDate`}
             ref={editor.dateRef}
             name="dueDate"
+            readOnly={!canMutate}
             type="date"
             required
             value={editor.draft.dueDate}
@@ -72,6 +83,7 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
         <textarea
           id={`${formId}-notes`}
           name="notes"
+          readOnly={!canMutate}
           rows={3}
           maxLength={10000}
           value={editor.draft.notes}

@@ -1,12 +1,14 @@
-import { useRef } from "react";
+import { Suspense, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
 import { CreateApplicationLoader } from "../features/applications/form/create-application-loader";
+import { OfflineControls } from "../features/offline/offline-controls";
 import { UserPreferencesSync } from "../features/preferences/user-preferences-sync";
 import { type WelcomeAction, WelcomeModal } from "../features/welcome/welcome-modal";
 import { useCompleteIntroduction, useCurrentUser, useUserPreferences } from "../lib/queries";
 import { writeLocalUserPreferences } from "../lib/user-preferences";
 import { closeWelcome, type RootState } from "../store";
+import { LoadingScreen } from "./loading-screen";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
@@ -20,8 +22,11 @@ export function Layout() {
         }}
       />
       <UserPreferencesSync />
+      <OfflineControls />
       <main id="main-content" tabIndex={-1} className="w-full flex-1 py-8">
-        <Outlet />
+        <Suspense fallback={<LoadingScreen />}>
+          <Outlet />
+        </Suspense>
       </main>
       <CreateApplicationLoader openerRef={createOpenerRef} />
       <WelcomeHost />

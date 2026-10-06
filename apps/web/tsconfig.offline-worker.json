@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "WebWorker"],
+    "types": [],
+    "noEmit": true
+  },
+  "include": [
+    "src/features/offline/service-worker.ts",
+    "src/features/offline/worker-assets.ts"
+  ]
+}

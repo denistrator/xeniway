@@ -1,6 +1,7 @@
 import type { ApplicationEvent } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
+import { useCanMutate } from "../../offline/offline-access";
 
 const activityEventStyles = tv({
   base: "rounded-xl border border-line p-4",
@@ -19,6 +20,7 @@ export function ApplicationActivityEvent({
   onDelete: (event: ApplicationEvent) => void;
 }) {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const label = t(`applications.activity.types.${event.type}`);
   return (
     <article className={activityEventStyles({ system: event.isSystem })}>
@@ -44,6 +46,7 @@ export function ApplicationActivityEvent({
               type="button"
               className="rounded px-2 py-1 text-sm text-accent hover:bg-surface-hover focus-visible:outline-2"
               aria-label={t("applications.activity.editNamed", { title: event.title })}
+              disabled={!canMutate}
               onClick={() => onEdit(event)}
             >
               {t("applications.activity.edit")}
@@ -52,6 +55,7 @@ export function ApplicationActivityEvent({
               type="button"
               className="rounded px-2 py-1 text-sm text-rose-600 hover:bg-surface-hover focus-visible:outline-2"
               aria-label={t("applications.activity.deleteNamed", { title: event.title })}
+              disabled={!canMutate}
               onClick={() => onDelete(event)}
             >
               {t("applications.activity.delete")}

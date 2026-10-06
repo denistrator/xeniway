@@ -7,12 +7,14 @@ import { ConfirmationModal } from "../components/ui/confirmation-modal";
 import { emptyStateStyles } from "../components/ui/surface-styles";
 import { JobBoard } from "../features/applications/board/job-board";
 import { StatusFilter } from "../features/applications/filters/status-filter";
+import { useCanMutate } from "../features/offline/offline-access";
 import { getApiErrorKey } from "../i18n/format";
 import { ApiRequestError } from "../lib/api";
 import { useApplicationMutations, useApplications } from "../lib/queries";
 
 export function HomePage() {
   const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const applications = useApplications();
   const mutations = useApplicationMutations();
   const [removeAllOpen, setRemoveAllOpen] = useState(false);
@@ -43,6 +45,7 @@ export function HomePage() {
         <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
           <ApplicationSearch />
           <button
+            disabled={!canMutate}
             type="button"
             className="h-10 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={() => setRemoveAllOpen(true)}
