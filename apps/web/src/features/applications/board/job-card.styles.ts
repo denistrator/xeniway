@@ -4,7 +4,7 @@ import { jobStatusStyles } from "./job-status-styles.ts";
 export const jobCardStyles = tv({
   extend: jobStatusStyles,
   slots: {
-    root: "w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing",
+    root: "block w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing",
     header: "flex items-start justify-between gap-3",
     content: "min-w-0",
     companyRow: "flex items-start gap-2 break-words font-semibold text-ink",

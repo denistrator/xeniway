@@ -66,6 +66,8 @@ Settings/header regressions additionally cover the action's location, signed-out
 
 ### Focused frontend regressions
 
+- Board JobCards are links with application URLs. Cover normal in-app clicks, Enter activation, modified-click/new-tab behavior, pointer drag-and-drop, and keyboard reordering. Keep card locators semantic (`link` rather than `button`); do not assert decorative styling.
+
 - Settings contains the expanded Offline access section; other routes show only the disconnected header indicator. Cover browser-offline and API-unavailable states, Retry recovery, route changes during preparation, signed-out access, locale/RTL names, and production offline reloads. Preserve consent, refresh/removal, account isolation, and live status announcements; do not assert decorative icon styling.
 - Settings Theme and Language selects share their update handlers with the header shortcuts. Cover keyboard selection and focus return, synchronization in both directions, authenticated preference saves, translated labels, RTL, and reload persistence. Keep theme and language locally usable without authentication or while offline; do not add style assertions.
 

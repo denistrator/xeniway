@@ -1,6 +1,6 @@
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type { JobApplication } from "@xeniway/shared";
-import { type KeyboardEvent, useEffect, useRef } from "react";
+import { type KeyboardEvent, type MouseEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../i18n/format.ts";
 import { useCanMutate } from "../../offline/offline-access.tsx";
@@ -15,10 +15,10 @@ export type JobCardProps = {
   total: number;
 };
 
-export function useJobCardPresentation({ job, onDragStart, onKeyboardMove, position, total }: JobCardProps) {
+export function useJobCardPresentation({ job, onOpen, onDragStart, onKeyboardMove, position, total }: JobCardProps) {
   const { i18n, t } = useTranslation();
   const canMutate = useCanMutate();
-  const cardRef = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
     if (!cardRef.current || !canMutate) {
       return;
@@ -29,7 +29,18 @@ export function useJobCardPresentation({ job, onDragStart, onKeyboardMove, posit
       onDragStart,
     });
   }, [job.id, onDragStart, canMutate]);
-  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.defaultPrevented || event.button !== 0) {
+      return;
+    }
+    const isModifiedClick = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey;
+    if (isModifiedClick) {
+      return;
+    }
+    event.preventDefault();
+    onOpen();
+  }
+  function handleKeyDown(event: KeyboardEvent<HTMLAnchorElement>) {
     if (!canMutate) {
       return;
     }
@@ -69,5 +80,6 @@ export function useJobCardPresentation({ job, onDragStart, onKeyboardMove, posit
   const appliedLabel = job.appliedAt
     ? t("applications.board.applied", { date: formatDate(job.appliedAt, i18n.resolvedLanguage ?? "en") })
     : null;
-  return { canMutate, cardRef, handleKeyDown, accessibleName, appliedLabel };
+  const href = `/applications/${job.id}`;
+  return { canMutate, cardRef, handleClick, handleKeyDown, accessibleName, appliedLabel, href };
 }

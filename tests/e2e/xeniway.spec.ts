@@ -56,7 +56,19 @@ test("browses all workspace applications with keyboard controls and circular col
       })
     ).ok(),
   ).toBe(true);
-  await page.goto(`/applications/${ids[0]}`);
+  await page.goto("/");
+  const firstCard = page.getByRole("link", { name: /^First saved, Engineer,/ });
+  await expect(firstCard).toHaveAttribute("href", `/applications/${ids[0]}`);
+  const openedTab = page.context().waitForEvent("page");
+  await firstCard.click({ modifiers: ["ControlOrMeta"] });
+  const applicationTab = await openedTab;
+  await expect(applicationTab).toHaveURL(new RegExp(`/applications/${ids[0]}$`));
+  await expect(applicationTab.getByRole("heading", { name: "First saved", exact: true })).toBeVisible();
+  await applicationTab.close();
+  await expect(page).toHaveURL(/\/$/);
+  await firstCard.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(new RegExp(`/applications/${ids[0]}$`));
   const next = page.getByRole("button", { name: "Next application" });
   await expect(next).toBeEnabled();
   await next.focus();
@@ -391,7 +403,7 @@ test("records and edits application activity across reloads", async ({ page }) =
     (response) =>
       /\/api\/applications\/\d+$/.test(new URL(response.url()).pathname) && response.request().method() === "GET",
   );
-  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("link", { name: new RegExp(company) }).click();
   const detailResult = await detailResponse;
   const detailUrl = detailResult.url();
   const createdEvent = (
@@ -461,7 +473,7 @@ test("records and edits application activity across reloads", async ({ page }) =
     ),
   ).toContain("restored_from_archive");
   await page.getByRole("link", { name: "Applications", exact: true }).click();
-  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("link", { name: new RegExp(company) }).click();
   await page.getByRole("button", { name: "Add to blacklist" }).click();
   const blacklisted = page.waitForResponse(
     (response) => response.url().endsWith("/blacklist") && response.status() === 200,
@@ -756,7 +768,7 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   }
 
   const savedColumn = page.getByRole("region", { name: "Saved applications" });
-  const cards = savedColumn.locator("ul > li > button");
+  const cards = savedColumn.getByRole("link");
   const cardTargets = savedColumn.locator("ul > li");
   await expect(cards.nth(1)).toBeVisible();
   expect(await cards.count()).toBeGreaterThanOrEqual(2);
@@ -766,13 +778,13 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   }
 
   await cards.nth(1).dragTo(cardTargets.nth(0));
-  await expect(savedColumn.locator("ul > li > button").first()).toContainText(secondCompany);
+  await expect(savedColumn.getByRole("link").first()).toContainText(secondCompany);
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
-  await expect(
-    page.getByRole("region", { name: "Saved applications" }).locator("ul > li > button").first(),
-  ).toContainText(secondCompany);
+  await expect(page.getByRole("region", { name: "Saved applications" }).getByRole("link").first()).toContainText(
+    secondCompany,
+  );
 });
 
 test("supports keyboard reordering within a status", async ({ page }) => {
@@ -783,7 +795,7 @@ test("supports keyboard reordering within a status", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
   const savedColumn = page.getByRole("region", { name: "Saved applications" });
-  const cards = savedColumn.locator('button[draggable="true"]');
+  const cards = savedColumn.getByRole("link");
   await expect(cards.nth(1)).toBeVisible();
   const secondCompany = await cards.nth(1).locator("p").first().textContent();
   if (!secondCompany) {
@@ -796,9 +808,9 @@ test("supports keyboard reordering within a status", async ({ page }) => {
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
-  await expect(
-    page.getByRole("region", { name: "Saved applications" }).locator('button[draggable="true"]').first(),
-  ).toContainText(secondCompany);
+  await expect(page.getByRole("region", { name: "Saved applications" }).getByRole("link").first()).toContainText(
+    secondCompany,
+  );
 });
 
 test("focuses and announces application form validation errors", async ({ page }) => {
@@ -909,7 +921,7 @@ test("permanently deletes a blacklisted application", async ({ page }) => {
   await page.getByLabel("Company *").fill(company);
   await page.getByLabel("Position *").fill("Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
-  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("link", { name: new RegExp(company) }).click();
   await page.getByRole("button", { name: "Add to blacklist" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Add to blacklist" }).click();
   await page.getByRole("link", { name: "Blacklist", exact: true }).click();
@@ -945,9 +957,9 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await page.getByLabel("Company *").fill(company);
   await page.getByLabel("Position *").fill("E2E Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
-  await expect(page.getByRole("button", { name: new RegExp(company) })).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(company) })).toBeVisible();
 
-  await page.getByRole("button", { name: new RegExp(company) }).click();
+  await page.getByRole("link", { name: new RegExp(company) }).click();
   await expect(page).toHaveURL(/\/applications\/\d+$/);
   await expect(page.getByRole("heading", { name: company })).toBeFocused();
   await page.getByRole("heading", { name: "Interview preparation" }).waitFor();
@@ -1004,13 +1016,13 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await expect(page.getByText(company, { exact: true })).toHaveCount(0);
   await page.getByRole("link", { name: "Applications" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("button", { name: new RegExp(company) })).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(company) })).toBeVisible();
 
   await page.getByLabel("Search applications").fill(company);
-  await expect(page.getByRole("button", { name: new RegExp(company) })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: new RegExp(company) })).toHaveCount(1);
   await page.getByLabel("Search applications").fill("");
 
-  const applicationCard = page.getByRole("button", { name: new RegExp(company) });
+  const applicationCard = page.getByRole("link", { name: new RegExp(company) });
   const appliedColumn = page.getByRole("heading", { name: "Applied" }).locator("xpath=../..");
   const sourceHandle = await applicationCard.elementHandle();
   const targetHandle = await appliedColumn.elementHandle();
@@ -1027,7 +1039,7 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
     [sourceHandle, targetHandle],
   );
   await expect(
-    page.getByRole("region", { name: "Applied applications" }).getByRole("button", { name: new RegExp(company) }),
+    page.getByRole("region", { name: "Applied applications" }).getByRole("link", { name: new RegExp(company) }),
   ).toBeVisible();
 
   await applicationCard.click();

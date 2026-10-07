@@ -103,8 +103,9 @@ test.each([
     />,
   );
 
-  const card = screen.getByRole("button", { name: /Activate to open application workspace/ });
-  fireEvent.click(card);
+  const card = screen.getByRole("link", { name: /Activate to open application workspace/ });
+  expect(card).toHaveAttribute("href", `/applications/${job.id}`);
+  expect(fireEvent.click(card)).toBe(false);
   const defaultAllowed = fireEvent.keyDown(card, { key, shiftKey });
 
   expect(onOpen).toHaveBeenCalledWith(job.id);
@@ -116,6 +117,40 @@ test.each([
     expect(defaultAllowed).toBe(true);
   }
 });
+
+test.each([{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }])(
+  "preserves native link navigation for a modified click %j",
+  (options) => {
+    const onOpen = vi.fn();
+    render(
+      <JobBoardColumn
+        status="saved"
+        columnJobs={[job]}
+        onDrop={vi.fn()}
+        onJobDrop={vi.fn()}
+        onDragStart={vi.fn()}
+        dropTarget={null}
+        setDropTarget={vi.fn()}
+        onKeyboardMove={vi.fn()}
+        onOpen={onOpen}
+      />,
+    );
+    const card = screen.getByRole("link", { name: /Activate to open application workspace/ });
+    let defaultPrevented = true;
+    document.addEventListener(
+      "click",
+      (event) => {
+        defaultPrevented = event.defaultPrevented;
+        // Observe native navigation permission before stopping jsdom's unsupported navigation.
+        event.preventDefault();
+      },
+      { once: true },
+    );
+    fireEvent.click(card, options);
+    expect(defaultPrevented).toBe(false);
+    expect(onOpen).not.toHaveBeenCalled();
+  },
+);
 
 test("preserves the hovered insertion point when dropping on the placeholder", () => {
   const onJobDrop = vi.fn();

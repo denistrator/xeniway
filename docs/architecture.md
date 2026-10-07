@@ -22,6 +22,8 @@ React + React Router
 
 ## Workspace boundaries
 
+Application-board JobCards render as anchors linking to `/applications/:id`. Ordinary clicks and Enter activation retain in-app navigation; modified clicks and browser link actions retain native behavior, including opening a new tab. Drag-and-drop and the existing arrow/Home/End reordering shortcuts remain available only when online mutations are permitted.
+
 ### Read-only offline access
 
 PWA metadata lives in `apps/web/pwa-manifest.ts`; Vite generates and links the production manifest. Installation and private offline preparation are independent. Registration is consent-only, with no custom install prompt. See [Operations](operations.md#pwa-installation) for asset/deployment requirements and manual installation checks.
