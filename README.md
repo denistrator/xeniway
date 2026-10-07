@@ -6,16 +6,12 @@ Archive and blacklist are separate from the six-status workflow. Archive is for 
 
 This repository contains the current candidate-tracking product and its reproducible local development environment. The documentation describes only behavior implemented in this repository.
 
-## Project status
-
-Xenia Way is an actively developed, server-backed candidate-tracking application. This repository provides a reproducible local development environment and is suitable for local development and contribution.
-
 ## What you can do
 
 - Create applications in the modal or drawer, then edit company, position, location, salary, job URL, description, applied date, notes, and status directly in each application workspace.
 - Review each application's activity timeline, including automatic history for creation, edits, status changes, archive, and blacklist transitions. Add, edit, and remove dated notes, emails, calls, interviews, offers, rejections, and follow-ups.
 - Expand activity directly from archived and blacklisted cards without restoring the application first.
-- Export all of your active, archived, and blacklisted applications with their activity history to a CSV file.
+- Download a ZIP package containing application/preparation, contact, and follow-up CSV files across all three boards. Activity history and salary are not included; see the [export contract](docs/api.md#data-export).
 - Search applications and filter the board by status.
 - Opt into seven-day, read-only downloads of all three boards and every application workspace on one browser profile, including activity, preparation, contacts, and follow-ups. Explicitly refresh downloads before going offline. See [offline privacy and deployment limits](docs/operations.md#offline-browsing-and-deployment); offline edits and automatic synchronization are not supported.
 - Install the production web app through a supported browser's native installation or Add to Home Screen action. Installation does not prepare private offline downloads. See [PWA installation](docs/operations.md#pwa-installation).
@@ -26,7 +22,7 @@ Xenia Way is an actively developed, server-backed candidate-tracking application
 - See a localized welcome introduction after the first successful login or registration, with links to the board and About page.
 - Use light, dark, or system theme preferences.
 - Use the English, Russian, Ukrainian, or Hebrew interface with locale-aware dates.
-- Signed-in language, theme, job-form presentation, and welcome-introduction state are stored with the account. The server fields are `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`. The browser keeps the corresponding flat values `language`, `theme`, `formPresentation`, and `wasIntroduced` under the single local-storage key `userPreferences`.
+- Save language, theme, job-form presentation, and welcome-introduction preferences with your account.
 
 The application is designed as an accessibility-sensitive product surface: it uses semantic controls, associated labels, visible focus states, keyboard-operable workflows, managed dialog focus, live announcements, responsive touch targets, and reduced-motion support.
 
@@ -50,8 +46,11 @@ The repository is a Bun workspace with three packages: `apps/web` for the React 
 
 For local development you need:
 
-- [Bun](https://bun.sh/) 1.4.0 (the version pinned in CI);
-- Docker with the Docker Compose plugin;
+- Git to clone the repository;
+- [Bun](https://bun.com/docs/installation) 1.4.0 (the version pinned in CI);
+- [Node.js](https://nodejs.org/en/download) 22.12 or newer for the development tooling; Vite runs through its Node.js executable;
+- [Docker with Compose](https://docs.docker.com/compose/install/), with the Docker engine running; Docker Desktop includes both;
+- `curl` for the Mailpit health check;
 - a browser for the application; and
 - Chromium installed through Playwright if you want to run the browser tests.
 
@@ -59,20 +58,40 @@ Check the installed tools before starting:
 
 ```bash
 bun --version
+node --version
 docker compose version
+docker info
 ```
 
 ## Install and run locally
 
-From the repository root:
+The commands below use a Bash-compatible terminal on macOS, Linux, or Windows with WSL. Start Docker Desktop (or your Docker engine) first. You do not need to install PostgreSQL, Redis, or an SMTP server separately; Compose runs them locally.
+
+### 1. Get the project and install dependencies
 
 ```bash
-cp .env.example .env
+git clone https://github.com/denistrator/xeniway.git
+cd xeniway
 bun install
+cp .env.example .env
+```
+
+If you already have a checkout, open a terminal in its root instead of cloning again. Copy `.env.example` only for first-time setup; do not overwrite an existing `.env`. Its defaults work with the checked-in local services without editing. Keep `.env` private and uncommitted.
+
+### 2. Start and check the local services
+
+```bash
 bun run up
+bun run check
+```
+
+The first start downloads container images. Wait until `check` succeeds before continuing; if a service is still starting, wait a few seconds and run `bun run check` again. PostgreSQL should report that it accepts connections, Redis should report `PONG`, and the Mailpit check should return its server information.
+
+### 3. Initialize the database
+
+```bash
 bun run db:migrate
 bun run db:seed
-bun run dev
 ```
 
 The seed step is optional for ordinary development, but it provides realistic data for exploring the board and is required by the end-to-end tests. The example environment explicitly enables it only for a local database, and the seed command refuses production or non-local targets. It creates these disposable local-only accounts; do not use them outside local development:
@@ -84,7 +103,15 @@ The seed step is optional for ordinary development, but it provides realistic da
 
 Each account receives 32 applications: 20 on the active board, six archived, and six blacklisted. The saved column includes `MINIMAL` and `MAXED` examples; workspace fixtures cover interview preparation, contacts, follow-ups, and dated activity.
 
-Open:
+### 4. Start development
+
+```bash
+bun run dev
+```
+
+Keep this terminal open: it runs both the API and web app and reloads them as you edit. Once both servers have started, open the web app and sign in with a seed account above, or register your own account if you skipped the seed.
+
+Local addresses:
 
 - web app: [http://localhost:5173](http://localhost:5173)
 - API health: [http://localhost:3000/api/health](http://localhost:3000/api/health)
@@ -92,11 +119,33 @@ Open:
 
 The Vite development server proxies `/api` requests to the API. PostgreSQL listens on port `5432`, Redis on `6379`, the API on `3000`, and the web app on `5173` by default.
 
-User preferences are account-scoped on the server. `GET /api/user/preferences` reads `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`; `PATCH /api/user/preferences` saves one or more selected values; and `POST /api/user/preferences/introduced` completes the welcome introduction. The selected values accept `en`/`ru`/`uk`/`he`, `light`/`dark`/`system`, and `drawer`/`modal`, respectively. Reads require authentication, writes require the authenticated session's CSRF token, and every operation uses the session user rather than a client-supplied user ID.
+The example password-recovery configuration sends mail to Mailpit. For other environments, see [environment configuration](docs/operations.md#environment) and [password recovery](docs/operations.md#password-recovery). The non-production console-mailer fallback logs sensitive reset links; production requires SMTP and rejects local service configuration.
 
-The browser applies its `userPreferences` cache immediately. After a successful login or registration, non-null account selections and the account's `wasIntroduced` value replace their browser counterparts; browser values are never uploaded automatically. An explicit user action updates the interface and local storage first, then synchronizes the corresponding account value in the background. This keeps the interface responsive while making the server authoritative when authentication starts.
+### Coming back to the project
 
-Password recovery sends local mail to Mailpit through `smtp://127.0.0.1:1025`. For another SMTP server, set `APP_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` in `.env`. Without both SMTP settings, non-production uses an intentional console fallback that logs the full reset URL and raw token; keep that output local and treat it as sensitive. Production startup requires explicit PostgreSQL, Redis, HTTPS app-origin, SMTP, and sender settings that do not use local addresses, so production cannot use the console fallback. `CORS_ORIGIN` defaults to the app origin; either way it must be an HTTPS origin in production. Production session cookies are `Secure` as well as HttpOnly and SameSite=Lax; mutating requests still require the session's server-issued CSRF token.
+From the repository root, with Docker running:
+
+```bash
+bun run up
+bun run check
+bun run db:migrate
+bun run dev
+```
+
+Run `bun install` again when dependencies change. Migrations are safe to rerun and skip already applied entries. Do not seed on every startup: seeding replaces the fixture applications and resets the seed accounts' preferences. Your non-seed applications are left alone.
+
+To stop development, press `Ctrl+C` in the terminal running `dev`. Run `bun run down` to stop the infrastructure too; PostgreSQL and Redis data remain in Docker volumes for the next start.
+
+### If setup fails
+
+| Symptom | What to check |
+| --- | --- |
+| `bun`, `node`, or `docker` is not found | Install the missing prerequisite, reopen the terminal, and check its version |
+| Docker cannot connect to its daemon | Start Docker Desktop or the Docker engine, then retry `docker info` |
+| A port is already in use | Check ports `5432`, `6379`, `1025`, `8025`, `3000`, and `5173`; stop the conflicting local service or follow the [configuration guide](docs/operations.md#environment) |
+| Database connection fails | Run `bun run db:check` and compare `.env` with `.env.example` |
+| Tables are missing or seed login fails | Apply migrations first; seed the disposable accounts if you want to use them |
+| Authentication or password recovery fails | Check Redis and Mailpit with `bun run check`, then use the [troubleshooting guide](docs/operations.md#troubleshooting) |
 
 ## Common commands
 
@@ -124,13 +173,7 @@ Run commands from the repository root.
 | `bun run format:check` | Check formatting without changing files |
 | `bun run lint` | Check formatting, imports, and lint rules with Biome |
 
-`bun run up` starts or reconciles the Compose services and keeps PostgreSQL and Redis data in named local volumes. `bun run down` removes the local containers and network without removing those volumes. No checked-in lifecycle command deletes the named volumes. Mailpit messages are disposable.
-
-The static checks (`check:public`, `format`, `lint`, `typecheck`, `test`, and `build`) do not require local services. Database migration and seed commands require PostgreSQL. `check` requires PostgreSQL, Redis, and Mailpit, while `test:e2e` and `test:e2e:offline` require PostgreSQL, Redis, applied migrations, development fixtures, and Playwright Chromium; the browser suites start their own API and web servers. Run them sequentially because they share fixtures and Redis database 15. Mailpit is useful for manually inspecting local reset mail but is not required by the browser suites.
-
-`bun run preview` is for local production-frontend/offline testing, not a production hosting server. It runs the API without watch mode on port 3101, aligns its app/CORS origin with the preview, and proxies browser API requests to it. Keep the local `.env` runtime in development and PostgreSQL/Redis available; Mailpit is needed when testing the example SMTP configuration. The command does not start infrastructure, migrate, or reseed data. Ctrl+C stops both servers; stop preview before running the offline browser suite, which uses the same ports. See [preview and offline setup](docs/operations.md#offline-browsing-and-deployment).
-
-GitHub Actions treats CI as the publication gate. It checks tracked public content first, then runs formatting, lint, typecheck, unit tests, and the build without services. Only after those jobs pass does it start pinned PostgreSQL and Redis services for migrations, seed validation, and Playwright. Database and Redis URLs are masked before use and scoped only to the migration, seed, and browser-test steps that need them; setup and installation steps do not receive those values. A failed project check reports its name, exit status, and a bounded diagnostic tail after redacting sensitive environment values, connection URLs, reset links, cookies, authorization values, email addresses, and password-reset mail content.
+Static checks need no running services. See [command prerequisites and service lifecycle](docs/operations.md#local-lifecycle) for service-dependent commands, [local production preview](docs/operations.md#offline-browsing-and-deployment), and [verification and CI](docs/testing.md). Preview is not a production hosting server.
 
 ## Browser tests
 
@@ -140,16 +183,7 @@ Install Chromium once if it is not already available:
 bunx playwright install chromium
 ```
 
-Then ensure PostgreSQL and Redis are running, apply migrations, seed the database, and run:
-
-```bash
-bun run up
-bun run db:migrate
-bun run db:seed
-bun run test:e2e
-```
-
-The browser workflow covers language switching and reload persistence, server preference persistence and account override, account isolation, theme/language/form-presentation selectors, welcome completion after login and registration, public password recovery navigation and validation, authentication, the six statuses, search, create/edit flows, activity history and manual events, CSV export, blacklist and restore, drag-and-drop, archive, and permanent deletion.
+After the local setup above, run `bun run test:e2e` and `bun run test:e2e:offline` sequentially. Both require PostgreSQL and Redis; they start their own API/web servers and seed disposable fixtures. Stop manual preview first because the offline suite uses the same ports. See [Testing](docs/testing.md) for coverage, known limitations, and the full verification sequence.
 
 ## Repository map
 
@@ -165,15 +199,15 @@ The browser workflow covers language switching and reload persistence, server pr
 
 - [API reference](docs/api.md)
 - [Architecture](docs/architecture.md)
-- [Frontend bundle-cost baseline](docs/frontend-bundle-cost.md)
 - [Database](docs/database.md)
 - [Operations and troubleshooting](docs/operations.md)
 - [Testing](docs/testing.md)
-- [Database change policy](docs/migration.md)
+- [Documentation index and where to change what](docs/README.md)
+- [Database change policy](docs/database.md#migrations)
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for runtime requirements, local setup, checks, test placement, migration rules, and pull-request expectations.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution scope and pull-request expectations, and [AGENTS.md](AGENTS.md) for repository coding rules.
 
 ## License
 
@@ -186,9 +220,3 @@ Read [SECURITY.md](SECURITY.md) for private vulnerability reporting and data-han
 ## Support
 
 For reproducible bugs and product suggestions, use the repository's [GitHub issue templates](https://github.com/denistrator/xeniway/issues/new/choose). For questions about local setup, start with [Operations and troubleshooting](docs/operations.md).
-
-## Security and data boundaries
-
-All application operations are scoped to the authenticated user. Sessions use HttpOnly, SameSite=Lax cookies that are also `Secure` in production; mutating requests require the server-issued CSRF token; and passwords use Argon2id. Login, registration, and password-reset limits use hashed Redis keys and fail closed when Redis is unavailable. Normal password-reset requests use the same generic success for unknown accounts and successfully delivered known accounts, but storage or delivery failures for a known account return a distinguishable server error. Password-reset tokens are cryptographically random, single-use, valid for one hour, and stored only as SHA-256 hashes; a successful reset invalidates every session for that user.
-
-Do not use the seed credentials outside local development. Never commit `.env`, passwords, session IDs, or generated test artifacts.

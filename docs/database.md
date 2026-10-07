@@ -27,7 +27,7 @@ Stores account-scoped onboarding and selected UI preferences. `user_id` is the p
 
 ### `password_reset_tokens`
 
-Stores a user foreign key, unique SHA-256 token hash, expiry, nullable one-time-use timestamp, and creation time. PostgreSQL never stores the raw URL token. SMTP sends the raw value only inside the reset link; when SMTP is intentionally absent outside production, the console mailer logs the complete reset URL and token. Normal unknown-account and successfully delivered known-account requests return the same generic success, but token-storage or delivery failures for a known account return a distinguishable server error. User deletion cascades to reset tokens; indexes support user cleanup and token lookup.
+Stores a user foreign key, unique SHA-256 token hash, expiry, nullable one-time-use timestamp, and creation time. PostgreSQL never stores the raw URL token. User deletion cascades to reset tokens; indexes support user cleanup and token lookup. Delivery and response behavior belong to [API authentication](api.md#health-and-authentication).
 
 ### `job_applications`
 
@@ -49,16 +49,32 @@ The migration is schema-only: it does not backfill event rows. The detail API de
 
 ## Migrations
 
-Checked-in SQL migrations live in `apps/api/drizzle`. The migration runner uses a manually ordered ID/file registry, records applied IDs in `schema_migrations`, supports incremental migrations, and can safely be rerun. Apply them with:
+Checked-in SQL lives in [apps/api/drizzle](../apps/api/drizzle). With local PostgreSQL running and `.env` configured, `bun run db:migrate` applies it without creating fixtures.
+
+The [migration runner](../apps/api/src/db/migrate.ts) contains a manually ordered registry pairing each migration ID with a SQL filename. For each unregistered entry, it executes the SQL and records the ID in `schema_migrations` within one transaction. Rerunning the command skips recorded IDs; the table stores IDs, not filenames.
+
+Before the registry loop, a compatibility branch checks for an existing `users` table or a predecessor initial-migration marker. If either exists, it records `0000_create_xeniway` without executing the current initial SQL. This supports the existing initial schema; it is not a general schema-repair or application-data import mechanism.
+
+### Change policy
+
+After a migration is shared, its SQL and registry entry are forward-only: append a new ID/file pair for corrections instead of editing an applied entry. Keep migrations schema-only. Accounts, application records, preference values, and fixtures belong to the guarded development seed command, not migration SQL.
+
+Preserve the [table constraints](#tables), [public API contracts](api.md), and [ownership/security guardrails](../AGENTS.md#security-and-configuration). Do not merge archive/blacklist into statuses, weaken owner scoping or cascades, backfill application history, or copy browser defaults into nullable account preferences. Data-bearing changes or incompatible shared/API contract changes require explicit maintainer direction before implementation.
+
+For an accepted schema change, update this document, the API reference, focused tests, and development seed invariants together.
+
+### Migration verification
+
+On a disposable local development database, run:
 
 ```bash
-bun run db:up
 bun run db:migrate
+bun run db:seed
+bun run typecheck
+bun run test
 ```
 
-Before iterating the registry, a compatibility branch checks for an existing `users` table or a predecessor initial-migration marker. If either exists, it records `0000_create_xeniway` with conflict-safe insertion. The normal loop then skips that registered ID, so the current initial SQL file is not necessarily executed by this runner even though its current ID is recorded. For all other unrecorded registry entries, the runner executes the paired SQL in a transaction and records the ID only after success.
-
-Migrations create or evolve schema only and do not insert users, applications, or other fixture data. `0006_user_preference_values.sql` adds the nullable language and theme selections, `0007_user_preference_form_presentation.sql` adds the nullable drawer/modal selection, `0009_application_events.sql` creates the activity table, and `0010_application_workspace.sql` creates preparation, contact, and follow-up storage. Rerunning the runner skips recorded IDs.
+Seeding replaces fixtures; see [Development seed](#development-seed). For user-visible/API changes, also run the relevant [browser suites](testing.md#commands), which require Redis and Chromium in addition to PostgreSQL.
 
 ## Development seed
 

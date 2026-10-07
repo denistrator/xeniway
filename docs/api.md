@@ -9,8 +9,6 @@ The `GET /api/health` endpoint is the exception: it returns a direct health obje
 
 The API uses camelCase JSON. Session authentication is carried by the `session_id` HttpOnly, SameSite=Lax cookie; production also marks it `Secure`. Mutating requests send the server-issued token for that session in `x-csrf-token`.
 
-Routes are composed through `apps/api/src/routes/index.ts`: health, auth, preferences, and applications are separate domain routers. Application handlers are grouped into collection, item, event, and board operations. Shared authentication/CSRF guards live under `apps/api/src/routes/support/`; endpoint handlers retain their own schemas, repository calls, and route-specific response behavior.
-
 Xenia Way records employer conversations and application progress for one authenticated candidate at a time. Application status is always one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`; archive and blacklist are independent lifecycle states outside that status set.
 
 ## Health and authentication
@@ -26,7 +24,7 @@ Xenia Way records employer conversations and application progress for one authen
 | `POST` | `/api/auth/password-reset/request` | CSRF | Returns generic success for an unknown account or after successful known-account reset delivery |
 | `POST` | `/api/auth/password-reset/confirm` | CSRF | Consumes a valid reset token and changes the password |
 
-All mutating authenticated requests require the current session's CSRF token in `x-csrf-token`. Reads require the session cookie but not the CSRF header. Requests that address an application are always scoped to the authenticated user; ownership failures are reported as `NOT_FOUND`.
+Reads require the session cookie but not the CSRF header. Requests that address an application are scoped to the authenticated user; ownership failures are reported as `NOT_FOUND`.
 
 Register body:
 
@@ -47,12 +45,15 @@ Password reset request body is `{ "email": "candidate@example.com" }`. An unknow
 
 | Method | Path | Auth/CSRF | Purpose |
 | --- | --- | --- | --- |
-| `GET` | `/api/applications/export.csv` | Session | Downloads the current user's applications and activity history as CSV |
+| `GET` | `/api/applications/export.csv` | Session | Downloads application and preparation fields as CSV |
+| `GET` | `/api/applications/export.zip` | Session | Downloads application, contact, and follow-up CSV files in a ZIP package |
 | `GET` | `/api/applications` | Session | Lists active applications; optional `?status=` filter |
 | `GET` | `/api/applications/archive` | Session | Lists the current user's archived applications |
 | `GET` | `/api/applications/blacklist` | Session | Lists the current user's blacklisted applications |
 | `GET` | `/api/applications/:id` | Session | Reads one owned application in any board, with activity, interview preparation, contacts, and follow-ups |
 | `POST` | `/api/applications` | Session + CSRF | Creates an active application; returns `201` |
+| `POST` | `/api/applications/reorder` | Session + CSRF | Reorders active applications within one status |
+| `POST` | `/api/applications/remove-all` | Session + CSRF | Permanently deletes all owned applications in the selected board |
 | `PUT` | `/api/applications/:id` | Session + CSRF | Updates an active application |
 | `POST` | `/api/applications/:id/archive` | Session + CSRF | Archives an active application |
 | `POST` | `/api/applications/:id/blacklist` | Session + CSRF | Blacklists an active application with an optional reason |
@@ -87,9 +88,21 @@ Application create/update fields:
 }
 ```
 
-`company` and `position` are required. `status` is one of `saved`, `applied`, `interview`, `offer`, `rejected`, or `withdrawn`, and defaults to `saved`. Optional text fields may be null. `appliedAt` is an ISO calendar date. Archive and blacklist are independent lifecycle states, not additional status values. Blacklisting preserves the application's status and data; removing it from the blacklist returns it to the active list. Permanent deletion is available to the owner for any application; the UI exposes it from archive and blacklist views.
+`company` and `position` are required on creation; PUT accepts a partial object and preserves omitted fields. Creation defaults `status` to `saved`; the six accepted values are listed above. Optional text fields may be null, and `appliedAt` is an ISO calendar date. Blacklisting preserves status and data; removing it returns the application to the active list. Permanent deletion is available to the owner for any application, with UI actions in archive and blacklist views.
 
-`GET /api/applications/export.zip` downloads a ZIP package with `applications.csv`, `contacts.csv`, and `follow-ups.csv`. Each CSV uses UTF-8 with a byte-order mark for spreadsheet compatibility. `applications.csv` contains one row per application across the active, archive, and blacklist boards, with ordered columns `Company`, `Position`, `Status`, `Board`, `Location`, `Job URL`, `Description`, `Applied at`, `Notes`, `Company research`, `Talking points`, `Interviewer questions`, `Created at`, and `Updated at`. `contacts.csv` and `follow-ups.csv` include `Application ID` to associate their rows with the application file. The preparation columns are blank when the application has no workspace record. Cells that could be interpreted as spreadsheet formulas are prefixed with an apostrophe. The endpoint is authenticated, owner-scoped, and returned with private no-store caching; it never includes credentials, sessions, CSRF tokens, internal identifiers, or activity data.
+Reorder accepts `{ "status": "saved", "applicationIds": [1, 2] }` with 1–100 positive IDs; repository validation checks ownership and ordering validity. Remove-all accepts `{ "board": "active" }`, with `active`, `archive`, or `blacklist` as the explicit deletion scope.
+
+## Data export
+
+The UI uses `GET /api/applications/export.zip`, which downloads `applications.csv`, `contacts.csv`, and `follow-ups.csv`. The separate `export.csv` endpoint returns the same application CSV without the related files. Both include applications across active, archive, and blacklist boards, are owner-scoped, and use private no-store caching.
+
+Each CSV uses UTF-8 with a byte-order mark. The ordered application columns are `Company`, `Position`, `Status`, `Board`, `Location`, `Job URL`, `Description`, `Applied at`, `Notes`, `Company research`, `Talking points`, `Interviewer questions`, `Created at`, and `Updated at`. Preparation columns are blank when no workspace record exists. Salary and activity are not exported.
+
+Contacts export `Application ID`, `Name`, `Role`, `Email`, `Phone`, `Profile URL`, and `Notes`; follow-ups export `Application ID`, `Title`, `Due date`, `Notes`, and `Completed at`. The application CSV currently omits the ID, so related rows cannot be reliably joined back to an application row from the package alone. This limitation is tracked in [the backlog](backlog.md#make-exported-related-records-joinable).
+
+All columns are allowlisted in `apps/api/src/routes/applications/export-csv.ts`. Formula-like cells receive an apostrophe prefix and CSV quotes are escaped. Credentials, sessions, CSRF tokens, user IDs, and contact/task IDs are excluded; the related files explicitly expose their parent application IDs.
+
+## Blacklist transitions
 
 Blacklisting accepts an optional body such as `{ "reason": "Duplicate employer" }`. The reason is trimmed and limited to 1,000 characters. Blacklist and unblacklist transitions return the standard message success envelope and require the session CSRF token.
 
@@ -166,4 +179,4 @@ The browser stores the flat object `{ "theme", "language", "formPresentation", "
 
 The healthy response from `/api/health` is `{ "status": "ok", "database": "up", "redis": "up" }`. Common codes include `UNAUTHENTICATED` (`401`), `CSRF_ERROR` (`403`), `VALIDATION_ERROR` (`422`), `EMAIL_TAKEN` (`409`), `ACTIVE_APPLICATION` (`409`), `PASSWORD_RESET_INVALID` (`400`), `RATE_LIMITED` (`429`), `RATE_LIMIT_UNAVAILABLE` (`503`), `NOT_FOUND` (`404`), and `INVALID_ID` (`400`). Validation errors include a `fields` map. Ownership failures and invalid blacklist transitions are intentionally reported as not found rather than revealing another user's records. Repeated login, registration, and password-reset attempts for the same normalized email use a five-attempt, fifteen-minute Redis-backed fixed window with SHA-256-digested identifiers; rejected requests include `Retry-After`. If Redis is unavailable, these flows fail closed with `RATE_LIMIT_UNAVAILABLE` rather than bypassing the limit.
 
-Passwords are hashed with Argon2id. Raw reset tokens are generated from 32 random bytes and stored only as SHA-256 hashes. With SMTP configured, the raw token is sent only in the delivered reset link. In local development without `SMTP_URL` and `MAIL_FROM`, the intentional console fallback logs the full reset URL, including its raw token, and those logs must be treated as sensitive. Production requires SMTP and sender configuration and cannot select the console fallback. Tokens expire after one hour, are single-use, and a successful reset invalidates every session owned by that user. Production startup also requires an explicit HTTPS app origin; the CORS origin defaults to the app origin and must also be HTTPS, keeping reset links and credentialed browser requests on the intended origins.
+Passwords use Argon2id. Reset-token behavior is defined under [authentication](#health-and-authentication); mail delivery and production configuration are described in [Operations](operations.md#password-recovery).

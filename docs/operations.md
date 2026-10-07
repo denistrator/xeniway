@@ -36,7 +36,24 @@ Never commit `.env`, seed credentials, or generated test artifacts. Never use se
 
 ## Local lifecycle
 
-### Offline browsing and deployment
+Use the [README setup sequence and command table](../README.md#install-and-run-locally). `up` reconciles the Compose services; `down` removes containers/network but preserves PostgreSQL and Redis named volumes. Individual `*:down` commands stop only that service. No checked-in lifecycle command deletes volumes; Mailpit messages are disposable.
+
+Seed requires `ALLOW_DEVELOPMENT_SEED=true`, rejects production and non-local PostgreSQL targets, and replaces only deterministic fixtures. See [Database](database.md#development-seed) for accounts and record counts.
+
+| Commands | Required local dependencies |
+| --- | --- |
+| Public/format/lint/typecheck/unit/build checks | Installed workspace dependencies only |
+| Service lifecycle commands | Docker with Compose |
+| `db:check`, `db:migrate`, `db:seed` | Running PostgreSQL; seed also needs the local development opt-in |
+| `redis:check` / `mailpit:check` | Running Redis / Mailpit respectively |
+| `check` | PostgreSQL, Redis, and Mailpit |
+| `dev` | PostgreSQL/Redis for complete API behavior; Mailpit for example SMTP |
+| `preview` | Development `.env`, PostgreSQL/Redis, migrated data, free ports 3101/4174; Mailpit for example SMTP |
+| Browser suites | PostgreSQL/Redis, migrated schema, development seed opt-in, Chromium; suites seed and start their own API/web servers |
+
+PostgreSQL health expects readiness; Redis expects `PONG`; Mailpit checks its API metadata. `GET /api/health` checks PostgreSQL/Redis and returns `503` if either is unavailable.
+
+## Offline browsing and deployment
 
 Sign in, open “Offline access on this device,” check the storage-consent box, and choose “Make available offline on this device.” It preloads all active, archived and blacklisted applications plus every workspace's fields, activity, preparation, contacts and follow-up tasks into IndexedDB, and downloads public assets. Visiting each workspace first is unnecessary. Up to four workspace requests run concurrently; the live status reports completed/total workspaces. Readiness appears only after the complete validated download is saved. One account per browser profile is retained for seven days from preparation, not extended by local reads. Removing offline data or logging out clears private downloads. Offline logout cannot revoke the remote session: reconnect and sign out on the server if revocation is required.
 
@@ -62,11 +79,11 @@ The command first builds the frontend and typechecks the API. Only after a succe
 
 Open `http://127.0.0.1:4174`, sign in, and explicitly prepare downloads before disconnecting. Stop preview before running `bun run test:e2e:offline`, which uses the same ports. Do not rebuild the output while testing downloads in a running preview. On a deployed production site, a `text/html` worker response instead means the generated worker is missing or incorrectly routed to SPA fallback; fix the deployment routing/file, not just its MIME header.
 
-On preparation failure, check IndexedDB/Cache Storage permissions, disk space, HTTPS, and asset MIME types. Normal online use remains available. “Remove offline data” clears private downloads; clearing browser site data also removes preferences. Downloads are not encrypted device protection, may be evicted, and do not prove an active session. No queued writes or background sync are enabled.
+On preparation failure, check IndexedDB/Cache Storage permissions, disk space, HTTPS, and asset MIME types. Normal online use remains available. “Remove offline data” clears private downloads; clearing browser site data also removes preferences. Anyone using the browser profile may read downloaded data during its retention period; it is not encrypted device protection or proof of an active session. Browser eviction may remove it sooner, and remote revocation is undetectable until reconnecting. No queued writes or background sync are enabled.
 
-The displayed last-download time describes the current list or workspace response, not a guarantee that every workspace was downloaded. Public shell/favicon/manifest/app-icon bytes are verified against build-generated SHA-256 revisions before readiness. Obsolete public build caches are pruned on activation only when no windows are open, retaining a complete previous fallback; storage usage can temporarily include multiple generations while tabs remain open.
+The displayed last-download time describes the current list/workspace response, not the seven-day expiry or an atomic backup. Public shell/favicon/manifest/app-icon bytes are verified against build-generated SHA-256 revisions before readiness. Obsolete public build caches are pruned on activation only when no windows are open, retaining a complete previous fallback; storage usage can temporarily include multiple generations while tabs remain open.
 
-### PWA installation
+## PWA installation
 
 The production build generates `/manifest.webmanifest` and links it from the HTML shell. It declares Xenia Way, stable `/` app identity, `/` launch URL and scope, standalone display, and light-canvas launch colors. The existing theme initialization still applies the user's light/dark/system choice after launch. Public assets include `/pwa-192.png`, `/pwa-512.png`, `/pwa-maskable-512.png`, and `/apple-touch-icon.png` (180px); the maskable image has an opaque teal background and a padded ivory X. These are separate from the unchanged browser favicons.
 
@@ -76,65 +93,19 @@ To check locally, run `bun run preview` and open `http://127.0.0.1:4174`. Inspec
 
 Installation is independent of offline preparation. The app does not register a worker or save private application data just because metadata is loaded or the app is installed. Sign in and explicitly prepare downloads before expecting offline launches to work. Installing alone is not an offline-readiness guarantee; private downloads still expire after seven days and offline editing remains unsupported. Development workers stay disabled; use a production build for installation/offline testing. Worker updates retain the existing close-all-tabs/reopen-online lifecycle.
 
-```bash
-bun install
-bun run up
-bun run db:migrate
-bun run db:seed
-bun run dev
-```
+## Bundle analysis
 
-Use `bun run check` to check PostgreSQL, Redis, and Mailpit together. Stop all services with `bun run down`. Individual service commands are available when only one dependency needs to be started or stopped:
+`vite-bundle-analyzer` is installed as a development dependency. Run it in the web workspace so it discovers the Vite configuration:
 
 ```bash
-bun run db:up
-bun run redis:up
-bun run mailpit:up
-
-bun run db:down
-bun run redis:down
-bun run mailpit:down
+bun run --cwd apps/web vite-bundle-analyzer
 ```
 
-The Compose volumes `xeniway_postgres_data` and `xeniway_redis_data` persist local data between container restarts. `bun run up` starts or reconciles the three services without deleting data. `bun run down` removes the local containers and network but does not remove the named volumes. Mailpit mail is disposable. No checked-in lifecycle command removes volumes.
-
-`bun run db:seed` is deliberately limited to development. It requires `ALLOW_DEVELOPMENT_SEED=true`, rejects `NODE_ENV=production`, and accepts only PostgreSQL URLs on localhost or a loopback address. The example credentials and all generated applications are disposable fixtures.
-
-Health checks:
-
-- `bun run db:check` expects PostgreSQL to report ready.
-- `bun run redis:check` expects `PONG` from Redis.
-- `bun run mailpit:check` checks Mailpit's API metadata.
-- `GET /api/health` reports database and Redis status and returns `503` if either dependency is unavailable.
-
-Command prerequisites:
-
-| Commands | Required local dependencies |
-| --- | --- |
-| `bun run check:public`, `bun run format`, `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build` | Installed workspace dependencies only |
-| `bun run db:up`, `bun run redis:up`, `bun run mailpit:up`, `bun run up` | Docker with Compose |
-| `bun run db:check`, `bun run db:migrate`, `bun run db:seed` | Running PostgreSQL; seed also requires the development opt-in and a local database URL |
-| `bun run redis:check` | Running Redis |
-| `bun run mailpit:check` | Running Mailpit |
-| `bun run check` | Running PostgreSQL, Redis, and Mailpit |
-| `bun run dev` | Running PostgreSQL and Redis for complete API behavior; Mailpit when using the example SMTP configuration |
-| `bun run preview` | Local development `.env`, running PostgreSQL/Redis, applied migrations/data, free ports 3101/4174; Mailpit when testing example SMTP |
-| `bun run test:e2e`, `bun run test:e2e:offline` | Running PostgreSQL and Redis, applied migrations, development fixtures, and Playwright Chromium; the commands start API/web servers |
-
-### Bundle analysis
-
-`vite-bundle-analyzer` is installed as a development dependency for inspecting the production web bundle. Run the build and then start the analyzer from the repository root:
-
-```bash
-bun run build
-npx vite-bundle-analyzer
-```
-
-The command opens an interactive treemap in the browser. Run `npx vite-bundle-analyzer --help` for CLI options.
+The CLI builds the analysis bundle and opens a treemap. Use `bun run --cwd apps/web vite-bundle-analyzer --help` for options. For route measurements rather than package visualization, see [Bundle measurement](testing.md#bundle-measurement).
 
 ## Password recovery
 
-The forgot-password form returns the same generic success for an unknown account and for a known account after its reset message is delivered. A storage or mail-delivery failure for a known account returns `PASSWORD_RESET_ERROR` (`500`), while an unknown account still succeeds, so operational failures can reveal that the two paths differ. A known account receives a one-hour, single-use link containing a token generated from 32 random bytes. Only its SHA-256 hash is stored in PostgreSQL, and successful use changes the Argon2id password and invalidates every existing session. Older outstanding tokens are invalidated when a new request is created.
+See [API authentication](api.md#health-and-authentication) for token lifetime, session invalidation, generic success, and the distinguishable known-account storage/delivery failure. For local delivery troubleshooting:
 
 The example local configuration delivers reset mail to Mailpit at [http://localhost:8025](http://localhost:8025). In non-production environments where both `SMTP_URL` and `MAIL_FROM` are intentionally absent, the API uses the console mailer and logs the complete reset URL, including the raw token. Treat that output as sensitive, keep it out of shared logs, and use this fallback only for local development. A partial SMTP configuration is rejected. In production, the API refuses to start unless both values are configured and therefore never falls back to console logging.
 
@@ -144,13 +115,13 @@ Redis is not the source of truth for application data or sessions. It stores onl
 
 ## CI
 
-The checked-in `.github/workflows/ci.yml` workflow runs on pushes and pull requests. It uses Bun 1.4.0 and the same PostgreSQL 16.15 and Redis 7.4.9 versions as local Compose, installs dependencies from the lockfile, applies migrations, explicitly enables and loads development fixtures against the CI-local database, runs typecheck, Vitest, build, installs Chromium, and runs the production offline and ordinary development-server Playwright suites sequentially. Run the same commands locally from [Testing](testing.md) before submitting changes.
+See [Testing and CI](testing.md#ci) for job order, pinned services, sanitized diagnostics, and the local verification sequence.
 
 ## Troubleshooting
 
 - If the API cannot connect, verify Docker is running and `DATABASE_URL` points to port `5432`.
 - If authentication cannot reach its rate limiter, verify Redis is running on port `6379` and `REDIS_URL` is correct.
-- If the browser redirects to login, run `bun run db:seed` and check that the API port and Vite proxy port match.
+- If the browser redirects to login, inspect the session response/cookie and confirm the API/proxy ports match. Seed only when disposable local fixtures are missing; reseeding is not a session-recovery procedure.
 - If password-reset mail is not visible, check Mailpit at port `8025` and confirm the API is using `SMTP_URL=smtp://127.0.0.1:1025`; if local SMTP is intentionally disabled, inspect the local API console while protecting the logged reset URL as a secret.
 - If the schema is missing, run `bun run db:migrate`; migrations intentionally do not create fixture data.
 - If E2E cannot launch, install Chromium with `bunx playwright install chromium`.

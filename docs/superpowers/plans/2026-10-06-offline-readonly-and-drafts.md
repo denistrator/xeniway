@@ -155,7 +155,7 @@ No commit is included in this execution. Phase 2 below remains an approved-desig
 
 ### Task 7: Release verification, operational guidance, and handoff
 
-**Files:** Update `README.md`, `docs/architecture.md`, `docs/operations.md`, `docs/testing.md`, and `docs/frontend-bundle-cost.md`. Update `docs/backlog.md` for deferred full sync only if not already tracked. Extend `tests/e2e/offline.spec.ts` with production update/multi-tab/draft regression cases.
+**Files:** Update `README.md`, `docs/architecture.md`, `docs/operations.md`, and `docs/testing.md` (including its bundle-measurement checklist if loading boundaries change). Update `docs/backlog.md` for deferred full sync only if not already tracked. Extend `tests/e2e/offline.spec.ts` with production update/multi-tab/draft regression cases.
 
 - [ ] Add and run failing coverage for a worker/build update with an open unsaved editor, unsent drafts surviving a compatible update, failed asset preparation retaining the previous ready build, and stale-tab cleanup after another tab logs out. Do not force a reload or delete unsent compatible drafts just because public assets changed.
 - [ ] Verify the final UX clearly distinguishes downloaded server data, local drafts, unreachable server, expired offline profile, and verified online identity. Keep all four dictionaries structurally aligned and keyboard/focus/RTL/reduced-motion behavior covered.

@@ -1,106 +1,101 @@
 # Testing and CI
 
-## Test layers
-
-`bun run lint` checks JavaScript and TypeScript source, tests, scripts, and root configuration files with Biome. Nested ternaries and redundant `else` blocks after early exits are errors, and control-flow bodies require braces; simple two-way ternaries remain allowed. Generated `dist` output and dependencies are excluded. After a control-flow refactor, run type checking and the relevant tests to verify narrowing and behavior rather than relying on formatting alone.
-
-The same-discriminant `switch` preference is a code-review convention, not a configured Biome rule. Preserve fallback behavior, branch priority, modifier-key handling, and case-local scope when converting equality chains. Independent or compound predicates remain `if` branches.
-
-`style/noParameterAssign` rejects function-parameter reassignment. Property assignments remain allowed so Redux Toolkit's Immer-backed reducers can update draft state normally; use named local variables when transforming inputs.
-
-`style/useSingleVarDeclarator` requires one variable per declaration. `complexity/noExcessiveCognitiveComplexity` rejects functions with a score above 15 across the same linted files, including tests. Split cohesive responsibilities and reduce nesting rather than suppressing the rule or raising its limit. Complexity is a readability guardrail, not a substitute for behavioral coverage.
-
-Complex boolean expressions should use named constant predicates followed by a short combined condition. This preference is reviewed manually; Biome's complexity rule does not enforce predicate naming. During extraction, preserve short-circuit guards and TypeScript narrowing, and keep awaited storage, hashing, and other conditional work lazy. Run the relevant ownership, snapshot-corruption, worker-identity, and cache tests when changing those predicates.
-
-`complexity/noImplicitCoercions` requires explicit conversions instead of shorthand such as `!!value` or unary `+value`. Review fixes for conversion semantics and TypeScript narrowing; direct nullable guards remain appropriate and worker checks must not hash missing responses. `style/useConsistentArrayType` requires shorthand `T[]` and `readonly T[]` syntax without changing mutability.
-
-Dialog focus wrapping is shared by the create-application and welcome dialogs. Focus-helper tests cover both wrap directions, ordinary Tab navigation, disabled controls, and empty containers; keep confirmation-dialog priority in the create dialog's keyboard handler. Browser coverage retains Escape handling and focus return. API helper tests preserve error identity and the distinction between private outages, expired application access, and intentional request cancellation.
-
-JSX logic extractions should preserve rendered controls and event behavior. Board-card tests cover every supported movement key, ignored keys, Shift handling, and default prevention. Contact-form tests verify field-specific input types, autocomplete values, and length limits, alongside existing validation, persistence, and offline read-only coverage.
-
-Production frontend presentation uses per-element slots from colocated `.styles.ts` recipes and behavior from matching `.ts` hooks/helpers. TSX contains rendering and wiring, not literal classes, inline behavioral handlers, state/effects, translations, or formatting. Preserve existing behavioral coverage rather than adding style tests. Activity tests retain sorting without input mutation, localized/plain-text rendering, supplied-event query isolation, CSRF-scoped mutations, confirmation/focus return, failure drafts, and offline cancellation. Workspace tests cover InlineEdit/ref adapters, dirty warnings, saved drafts, navigation, and offline cancellation; preferences/offline tests preserve synchronization and external-store notification timing.
-
-Full-preload tests exercise real fake-IndexedDB persistence and HTTP response fixtures for every unique workspace across all three collections, complete activity/preparation/contact/follow-up data, four-request concurrency, empty collections, stale-detail pruning, generation supersession, removal during requests, quota failure, and no readiness for missing details. Provider tests verify that older tabs cannot overwrite or expire a newer download. Control tests cover explicit same-owner refresh, live progress, duplicate-click prevention, retry consent, development/offline/auth restrictions, cleanup after account changes/unmount, and aligned translated copy in all four locales. The production browser suite opens never-visited workspaces from active/archive/blacklist after disconnecting, verifies all listed IDs exist in IndexedDB, exercises keyboard-triggered refresh with retained focus and a controlled updated workspace response at a narrow viewport, and rejects partial download readiness.
-
-`scripts/check-pwa.test.ts` checks native installation identity, launch settings, PNG dimensions/opaque format, the Apple touch-icon link, and preservation of disabled automatic/development worker registration. Worker tests verify that exact manifest/icon assets become available only after preparation, accept JSON manifest MIME types, reject HTML fallback, and keep query/fragment/unknown paths excluded. Production offline browser tests fetch the linked manifest, decode the icon sizes, check zero registrations/caches before consent, and read metadata/icons after disconnecting. These tests do not automate OS installation UI, actual standalone launch, or Safari; manually check those on target devices as described in [PWA installation](operations.md#pwa-installation).
-
-The production preload regression checks the actual served HTML contains no initial `modulepreload` hints, while lazy login-route dependencies still create runtime preload links and the route renders without registering a worker. Offline reload coverage verifies cached module loading remains functional. Chromium warning text alone is not the regression gate because the cross-world preload warning depends on browser version and loading sequence.
-
-Offline unit tests in `apps/web/src/features/offline` use fake IndexedDB and controlled worker/network dependencies for allowlisting, corruption, expiry, owner switching, late writes, storage failures, readiness, public-asset exclusions, and safe worker lifecycle. Query-hook regressions protect invocation ownership across account changes. Cached profiles never populate auth, and mutations are never dehydrated or resumed.
-
-Pure access-machine tests cover connection/session/download transitions without React or storage. Runtime tests exercise synchronous request guards, scheduled query notifications, correlated reconnect completion, stale auth observations, cleanup/restart and owner-mismatched durable restoration. Controls use the real provider/runtime with controlled preparation and worker boundaries rather than a second mock implementation of its lifecycle. Storage validators reject noncanonical records in one response-validation pass; collection preparation waits for every in-flight collection request to settle before failed-generation cleanup, just as workspace workers do.
-
-Controlled regressions retain old cold-session responses across Retry and login/register, including a previous-owner result and a rejection. A successful credential response must restore access without BroadcastChannel, while an ordinary background auth update must not dismiss an outage. Restoration tests switch owners both before mounting and while restoration is pending, then inspect durable storage. Preparation tests model native channel self-delivery rules, notification failure cleanup, and disposal/restart of a pending run.
-
-Controlled concurrent-save regressions cover both default-clock restoration and snapshot loading without relaxing expiry or future-record validation. Provider regressions hold pre-logout session responses across local/cross-tab logout and exercise transient private-API failures without a device download, retaining the route but blocking reads/writes until Retry succeeds. Sign-in after a rejected Retry must restore the write guard. Workspace tests cover read-only edit entry, cancellation and focus after disconnect, disabled save/confirmation actions, and usable dialog dismissal. Production browser regressions additionally exercise no-download server recovery, delayed cross-tab logout responses, real Atlaskit read views, and an online-opened confirmation becoming read-only; cross-tab removal must still revoke cached-device access.
-
-`user-preferences-sync.integration.test.tsx` exercises real preference/auth hooks under StrictMode during account changes and checks for render-time React update warnings; mocked selector/effect tests alone cannot cover query-cache notification timing. The offline-controls regression also creates a query while a download notice is subscribed, verifying that scheduled notifications retain timestamp updates without render-time state changes.
-
-`bun run test:e2e:offline` builds the production SPA, starts the API on 3101 and preview on 4174, and uses fresh Chromium contexts with real seeded PostgreSQL/Redis (logical database 15). Do not run it concurrently with the ordinary suite against shared fixtures. The development-server suite excludes `offline.spec.ts`. Production tests cover consent, no eager worker/form download, offline reload, three boards, downloaded/missing details, all lazy locales/RTL, reconnect, 401 cleanup, local logout, no API caches, and zero writes on reconnect.
-
-Registration/UI unit tests explicitly cover both Vite development and production flags: development rejects worker preparation before registration, skips update registration, and shows a production-preview explanation instead of consent/preparation controls. Production worker messaging tests stub the production flag; the real production browser suite verifies the built branch without that stub. See [manual production-preview setup](operations.md#offline-browsing-and-deployment).
-
-`scripts/preview-command.test.ts` checks that the root preview builds before launching both supervised children, aligns API/proxy ports and origins, preserves backend runtime mode, and avoids implicit infrastructure or seed operations. The API start command loads `.env` without watch mode; the frontend preview binds loopback with a strict port.
-
-- `scripts/check-seo.test.ts` verifies the search description, crawler policy, and declared favicon asset formats/dimensions. The shared HTML shell declares a generated ivory X on teal in `apps/web/public/favicon.png` (64×64) and `favicon.ico` (32×32); Vite copies both to the production build root.
-- `packages/shared/src/index.test.ts` verifies shared schemas and public contract assumptions.
-- `apps/api/src/*.test.ts` covers authentication, expiration, CSRF, password-reset token lifecycle, mailer/service behavior, row mapping, seed invariants, validation, CRUD, status filtering, archive and blacklist transitions, error status codes, and ownership isolation using focused in-memory dependencies.
-- `apps/web/src/lib/api.test.ts` covers client error parsing, query-key separation, CSRF headers on password-reset mutations, and authenticated export-package downloads.
-- `apps/web/src/components/site-header.test.tsx` covers the resolved signed-out login link and confirms it remains absent while the session is loading or authenticated.
-- `apps/web/src/lib/current-user-query.test.tsx` verifies one shared session request for late-mounting consumers under StrictMode after success, signed-out, and server-error responses, while preserving explicit invalidation and focus-based recovery/revalidation. Browser regressions count `/api/auth/me` requests on authenticated and signed-out startup, route navigation, and full reload.
-- `apps/web/src/components/layout.test.tsx` exercises the real create-form host under StrictMode with controlled query results and real Query mutation state: no host mount before first use, pending/error retention across close/reopen, and account/logout/loading-auth isolation. `layout-import.test.tsx` independently verifies cold import evaluation; it is isolated because React.lazy caches resolved modules across tests within a file. Both files also pass shuffled test execution.
-- `apps/web/src/features/welcome/welcome-modal.test.tsx` covers localized welcome content, completion actions, backdrop/Escape behavior, and the language control.
-- `apps/web/src/i18n/i18n.test.ts`, `apps/web/src/i18n/format.test.ts`, and `apps/web/src/features/preferences/language-selector.test.tsx` cover locale resolution, lazy resource selection, browser persistence, date formatting, compact labels, and accessible language names.
-- `apps/web/src/features/applications/board/job-status.test.ts` protects the shared six-status display order and translated labels used by the board, filters, and form.
-- `apps/web/src/features/applications/activity/*.test.tsx` covers newest-first ordering and deterministic ties, localized plain-text rendering, immutable system history, and manual activity create/edit/delete workflows, confirmation, failure feedback, draft retention, and focus return.
-- `apps/web/src/features/applications/application-workspace/page/*.test.tsx` covers workspace loading, navigation, and ownership failures. Focused tests in `overview`, `lifecycle`, `preparation`, `contacts`, and `follow-ups` cover each domain's forms, validation, persistence, and focus behavior. Lifecycle tests include confirmation/cancellation, pending controls, failure recovery, and board-specific navigation; preparation tests include independent simultaneous drafts.
-- `apps/web/src/features/auth/password-reset/password-reset-page.test.tsx` verifies a user-visible validation message after switching locale.
-- `tests/e2e/xeniway.spec.ts` covers language switching and reload persistence, public password recovery navigation and validation, welcome behavior after login and registration, immediate local preference updates, server persistence after reload, theme/language/form-presentation selectors, server-authoritative account values, and account isolation. It exercises the board, six statuses, search, create, activity history, and the application workspace: preparation edits, contact creation, dated follow-up completion and persistence after reload, navigation from active/archive/blacklist, board-specific lifecycle actions, and cross-account workspace read/write isolation. It also covers native drag-and-drop and permanent deletion.
-
-The application drawer and modal use the shared translated “Close dialog” label for their backdrop controls. Browser coverage checks both accessible names alongside focus management and Escape handling. The dialog workflow observes the Vite development host-module request: no request before Add job, one after keyboard activation, and no additional import on reopen. It delays that first request, checks the loading announcement, tabs to another control before releasing it, and verifies initial dialog focus and Escape return to the original Add job button. It also verifies reopen focus and presentation switching. Production route and first-open download measurements are documented separately in [Frontend bundle cost](frontend-bundle-cost.md); the standard E2E server uses development assets.
-
-The activity browser workflow checks both form presentations, focus entry and return, safe rendering and Axe for the activity view, immutable system events, archive/blacklist history, manual event persistence, and legacy creation-marker behavior through the API test fixture.
-
-The application-workspace browser workflow checks heading focus on navigation, Atlaskit inline editing and focus return, accessible preparation editing, contact and follow-up creation, follow-up completion, server persistence after reload, and lifecycle transitions while retaining the same workspace data. Workspace unit tests cover one-field updates, the dirty compact-field warning, direct confirmation, multiline editing, and immediate status selection.
-
 ## Commands
+
+Run static checks first from the repository root:
 
 ```bash
 bun run check:public
+bun run format:check
 bun run lint
 bun run typecheck
 bun run test
 bun run build
-bun run up
-bun run db:migrate
-bun run db:seed
-bun run test:e2e
-bun run test:e2e:offline
 git diff --check
 ```
 
-`check:public`, lint, typecheck, unit tests, build, and `git diff --check` do not require local services. The root `typecheck` command includes the dedicated `tests/tsconfig.json` project, which maps `@xeniway/shared` to the shared package source for both the compiler and IDEs. The root `test` command runs the repository-check tests and all three Vitest workspaces. Database migration and seed commands require running PostgreSQL. E2E requires running PostgreSQL and Redis, an applied and seeded schema, and Playwright Chromium because it uses the real API and database; Playwright starts and stops its own API and web servers. Mailpit is not required by the automated browser suite, though it is used for manual local email inspection.
+For a full change, continue with local services and browser tests:
 
-The checked-in `.github/workflows/ci.yml` workflow uses PostgreSQL and Redis service containers, applies migrations, seeds development fixtures, runs typecheck, unit tests, and build, installs Chromium, and runs Playwright. The welcome-flow and preference E2E coverage verifies the four browser values under `userPreferences` (`language`, `theme`, `formPresentation`, and `wasIntroduced`) against server `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`: login and registration apply server values, session restoration does not reopen the welcome dialog, explicit actions update locally first and synchronize in the background, and account values remain isolated. Logout preserves the complete browser preference object, including after reloading the login page.
+```bash
+bunx playwright install chromium
+bun run up
+bun run db:migrate
+bun run db:seed
+bun run test:e2e:offline
+bun run test:e2e
+```
+
+Static checks need no running services. Migrations and seed need PostgreSQL; browser tests additionally need Redis and Chromium, start their own API/web servers, and seed disposable fixtures through global setup. Mailpit is not required. Run browser suites sequentially because they share fixtures and Redis database 15. Stop manual preview first: the offline suite uses ports 3101/4174 and rebuilds the output. See [Operations](operations.md#local-lifecycle) for prerequisites.
+
+Root `test` runs Bun tests under `scripts` and the shared, API, and web Vitest suites. Root `typecheck` checks those workspaces plus `tests/tsconfig.json`; see [TypeScript configuration](architecture.md#typescript-configuration) for browser/Node/worker boundaries and the explicit HTML entry point.
+
+## CI
+
+`.github/workflows/ci.yml` has three ordered jobs:
+
+1. Public repository hygiene checks index/tracked content for forbidden paths and likely secrets.
+2. Fast checks install the lockfile dependencies, then run formatting, lint, typecheck, unit tests, and build without services.
+3. Service checks start pinned PostgreSQL/Redis, install Chromium, migrate/seed, then run production offline and ordinary browser suites sequentially.
+
+CI pins Bun 1.4.0 and matches Compose's PostgreSQL 16.15 and Redis 7.4.9. Service connection values are masked and scoped to steps that need them. `scripts/run-ci-check.ts` reports failed command names, exit status, and a bounded diagnostic tail with secrets, connection URLs, reset links, cookies, authorization values, email addresses, and reset-mail content redacted. Rerun the named command locally if the sanitized tail is insufficient.
+
+## Test layers and coverage
+
+| Layer | Location | Main coverage |
+| --- | --- | --- |
+| Repository scripts | `scripts/*.test.ts` | Public-content checks, CI sanitization, preview supervision, SEO/favicon and PWA metadata/assets |
+| Shared contracts | `packages/shared/src/index.test.ts` | Input schemas and public response assumptions |
+| API | `apps/api/src/**/*.test.ts` | Authentication/CSRF, rate limiting, reset tokens and mail delivery, owner isolation, validation, lifecycle history, repository mapping, seed invariants |
+| Web | `apps/web/src/**/*.test.ts(x)` | API error handling, queries, UI behavior, preferences/locales, workspace editing, dialogs, offline lifecycle/storage |
+| Browser | `tests/e2e/xeniway.spec.ts` | Real server/database workflows, locale/RTL persistence, welcome/preferences, application lifecycle, activity, keyboard/drag ordering, accessibility |
+| Production offline | `tests/e2e/offline.spec.ts` | Built assets/worker, explicit consent, complete downloads, offline reload/navigation, lazy locales, reconnect, logout/account cleanup, storage failure/expiry |
+
+The ordinary config excludes `offline.spec.ts`. The offline config uses fresh Chromium contexts and real seeded services rather than Vite development assets. Coverage describes checked-in assertions, not a guarantee that every current workflow passes. Export-specific tests were intentionally removed pending a [from-scratch rewrite](backlog.md#rewrite-export-tests-from-scratch); CSV/ZIP serialization, export endpoint security, client download handling, and export-button behavior currently have no dedicated automated coverage.
+
+### Focused frontend regressions
+
+- Session-query tests verify one shared `auth/me` request for late-mounting consumers under StrictMode, including signed-out/error results, explicit invalidation, and focus/reconnect recovery. Browser tests count startup, navigation, and reload requests.
+- Layout tests verify no create-host mount before Add job, retained pending/error state after close/reopen, and account/logout/loading isolation. The cold-import test is separate because React.lazy caches resolved modules. Browser coverage delays the first import, moves focus while loading, and checks announcement, dialog entry, Escape return to the original opener, reopen, and modal/drawer switching.
+- Welcome and preference tests cover completion actions, focus wrapping, backdrop/Escape, immediate local changes, server-authoritative login/register values, account isolation, and preservation of browser preferences on logout. The real-hook StrictMode preference integration catches query-cache notifications during render.
+- Board tests preserve all movement keys, ignored/modifier keys, default prevention, canonical status order, and owner-scoped mutations. Locale tests cover four aligned dictionaries, lazy resources, dates, reload persistence, and Hebrew `html[lang]`/`html[dir]`.
+- Activity tests cover immutable system events, manual CRUD, newest-first/tie ordering without input mutation, plain-text rendering, supplied-event query isolation, CSRF, failure drafts, and confirmation/focus return.
+- Workspace domain tests cover one-field InlineEdit patches, dirty compact warnings, simultaneous drafts, validation, saved metadata, contacts/follow-ups, completion, lifecycle confirmations, offline cancellation, and focus return. Navigation tests cover all collection ordering, empty columns, wraparound, missing/single items, heading focus, and editor reset.
+
+### Offline and PWA regressions
+
+Unit tests use fake IndexedDB and controlled network/worker boundaries. Preserve these distinct regression groups:
+
+- Pure connection/session/download transitions; runtime synchronous guards, scheduled query notifications, operation correlation, disposal/restart, and native channel self-delivery behavior.
+- Allowlisted response persistence, corruption/expiry/future-record rejection, validation clocks after reads, generation-scoped writes/cleanup, same-owner supersession, account switching, and quota/storage failures.
+- Complete three-board/four-concurrent-workspace preparation, empty collections, stale-detail pruning, progress, consent-only refresh, failed-run cleanup, and no readiness with missing details. Failed collection/detail workers settle before cleanup.
+- Stale cold-session results across Retry/login/register, rejected restoration, delayed local/cross-tab logout responses, and no-download transient outages. Cached identity never becomes authentication; persisted mutations and replay remain absent.
+- Read-only edit-entry guards, cancellation/focus and confirmation dismissal after disconnect; Retry/new sign-in restores write permission only with fresh proof, and cross-tab removal still revokes device fallback.
+- Build revisions and exact public-asset allowlists, no API/token-navigation caches, no automatic/development registration, no initial HTML module hints but retained lazy-route preloading, and all lazy locales/RTL after offline reload.
+
+Control tests use the real provider/runtime with controlled preparation boundaries, not a duplicate mocked lifecycle. Production tests verify actual served HTML, metadata/MIME handling, public assets, worker/cache behavior, IndexedDB downloads, and zero writes on reconnect. Browser warning text is not the preload regression gate.
+
+Automated tests do not cover OS installation UI, standalone launch, icon masking, or Safari. Check those manually on target devices using [PWA installation](operations.md#pwa-installation).
 
 ## Test design rules
 
-Web typechecking uses non-composite `tsc -p` checks for the browser app, Vite configuration, and service worker. Browser and Node checks retain incremental caches. Explicit `.tsx` imports ensure rendering files with matching `.ts` logic siblings are checked without a manual component list. The HTML-loaded browser entry `src/main.tsx` is explicitly registered in `files`; confirm it appears in `bun run --cwd apps/web tsc -p tsconfig.app.json --listFilesOnly` when changing entry-point configuration. `bun run build` runs the web typecheck command before Vite; the root typecheck command also checks shared contracts, API, and E2E separately. Project-reference/build-mode orchestration is not the verification entry point.
+- Place unit/integration tests beside their source as `*.test.ts` or `*.test.tsx`; put complete browser workflows in `tests/e2e`.
+- Add focused coverage for changed shared schemas, API/repository rules, authentication, ownership, lifecycle transitions, user-visible workflows, and accessibility. Keep schema changes data-empty and seed idempotency separate.
+- Follow [AGENTS.md](../AGENTS.md#coding-conventions) for lint and rendering conventions. After control-flow extraction, verify narrowing, evaluation order, cancellation, and behavior—not just formatting.
+- Test behavior, semantics, accessibility, persistence, and security, not class names/recipes/CSS/layout or visual snapshots. Primitive tests retain disabled state, forwarded refs, and asChild semantics.
+- Use accessible roles/names and keyboard paths. Manually inspect light/dark/system, Hebrew RTL, narrow layouts, focus visibility, and reduced motion after styling changes. Preserve floating-label, board, and workspace CSS hooks.
+- Workspace/activity tests explicitly call `apps/web/src/test/initialize-test-i18n.ts` to initialize shared i18n and reset English before any per-test locale change. Do not hide initialization in render helpers or impose it on unrelated tests.
+- Browser channels are origin-scoped; provider unit tests disable Node's process-wide BroadcastChannel to prevent unrelated parallel test environments from receiving each other's messages.
+- Preserve the flat `userPreferences` contract; do not restore deleted legacy keys. Its browser cache is separate from account-scoped IndexedDB downloads.
+- The suite has no coverage threshold. Type safety, focused regressions, real database-backed browser flows, and CI checks provide the verification boundary.
 
-CI runs the production offline suite before the ordinary development-server suite, sequentially against shared disposable fixtures. Browser cross-tab tests use origin-scoped native BroadcastChannel. Provider unit tests disable Node's process-wide channel, which lacks browser origin isolation and would incorrectly deliver messages across independent parallel test environments.
+## Bundle measurement
 
-Do not add automated style tests or assertions for class names, recipes, slot overrides, CSS properties, decorative layout, or visual snapshots. Keep coverage focused on behavior, semantics, accessibility, persistence, and security. Button tests retain native disabled state, forwarded refs, and asChild link semantics.
+For styling/dependency/loading changes:
 
-When changing recipes, verify light/dark/system themes, Hebrew RTL, keyboard entry/return for dialogs and InlineEdit, mobile layouts, and reduced motion. Keep the floating-label, board, and workspace CSS hooks intact. Compare production entry/workspace chunks when changing styling dependencies, because merge logic runs in the browser.
+1. Build the web workspace with `bunx vite build --manifest --sourcemap hidden` for diagnostic manifests/maps. Do not publish diagnostic source maps; do not rebuild while preview measurements are running.
+2. Compare fresh cold login, board, and workspace contexts plus actual board → workspace and first Add job navigation. Record build revision, locale/theme, viewport, worker state, and hosting compression/cache policy.
+3. Wait for the destination UI and network idle, then collect JS/CSS Resource Timing. Deduplicate asset URLs for emitted totals; report encoded body and transfer bytes separately. Include shared styling/dependencies, not only the entry chunk.
+4. Separate explicit offline preparation bytes from ordinary startup. Cached encoded sizes may represent previously downloaded bodies; never subtract cold-route totals to infer warm-navigation cost.
+5. Profile representative-device read/edit interactions before claiming runtime improvements. Source-map attribution is approximate emitted bytes—not additive gzip cost, removable code, or CPU time.
 
-Workspace browser coverage verifies status changes and reload persistence, keyboard focus, Hebrew language and document direction, and accessibility.
-
-Add focused tests when changing a shared schema, API route, repository rule, authentication behavior, ownership boundary, archive transition, visible workflow, or accessibility behavior. Keep schema changes data-empty and test seed idempotency separately. Use stable accessible labels and roles in browser tests. For UI changes, verify keyboard access, focus behavior, live announcements, mobile layout, theme behavior, and reduced-motion behavior as applicable. The unified `userPreferences` key is the browser-preferences local-storage contract; do not infer or add compatibility behavior for deleted preference keys. Opted-in offline application snapshots use the separate account-scoped IndexedDB contract described below.
-
-The suite has no coverage threshold. Quality is enforced through type safety, focused behavior tests, a real database-backed browser flow, and the complete CI command sequence.
-
-Workspace and activity tests explicitly call `apps/web/src/test/initialize-test-i18n.ts` in their setup to initialize the shared i18n instance and reset its locale to English. Tests may switch locale afterward. This keeps setup consistent without forcing initialization on unrelated tests or hiding it in a render helper.
-
-## Workspace navigation coverage
-
-The neighbor selector tests cover supplied ordering, empty columns, circular next/previous traversal, missing current applications, and single-item collections. The workspace page regression exercises route navigation, heading focus, editor reset, and wrapping back to a cached destination. The browser regression covers keyboard activation, circular navigation, automated accessibility, and Hebrew language/document direction. Production offline coverage exercises next/previous navigation within downloaded active, archive, and blacklist collections and disables next for single-item collections.
+Preserve InlineEdit, validation, focus/keyboard behavior, dirty warnings, and lazy locale/create-form boundaries. New optimization proposals belong in [the backlog](backlog.md#investigate-measured-frontend-bundle-costs), not a growing historical benchmark document.

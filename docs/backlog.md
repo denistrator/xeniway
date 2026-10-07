@@ -28,32 +28,25 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 ### Extend the application workspace
 
 - **Area:** Application management.
-- **Why:** The first application workspace should focus on contacts, interview preparation, dated follow-up tasks, and the existing activity timeline. Related capabilities may be useful later but are intentionally outside that first scope.
+- **Why:** Contacts, interview preparation, dated follow-ups, and activity are implemented. Attachments and external integrations remain outside the current workspace.
 - **Possible direction:** Consider attaching files and links, integrating calendar or email workflows, and sending scheduled reminders for due follow-up tasks.
 - **Guardrails:** Reassess user needs and privacy/security implications before implementation. Keep integrations opt-in, owner-scoped, and separately approved; do not imply attachments, external sync, or automatic reminders exist until implemented.
 
 ### Complete data portability with import and JSON
 
 - **Area:** User data portability.
-- **Why:** The first CSV export is implemented. The planned portability feature will also support JSON and user-selected formats for import and export.
+- **Why:** CSV and a ZIP package of application/contact/follow-up CSVs are implemented; import and structured JSON backup/restore are not.
 - **Possible direction:** Add JSON as the structured backup/restore format alongside CSV for spreadsheet use, then provide a consistent format choice for import and export.
 - **Guardrails:** Keep all imports and exports scoped to the authenticated user. Define validation, duplicate handling, and failure behavior before implementing import. Never include credentials, sessions, or CSRF tokens in exported data.
 
 ### Clean up old read notifications
 
 - **Area:** Backend notification retention.
-- **Why:** A persistent notification center will accumulate read notification records over time.
+- **Why:** The pending notification-center plan would introduce persistent records; no notification center or retention job exists in current source.
 - **Possible direction:** Add a backend cleanup task that deletes notifications read more than 10 days ago.
 - **Guardrails:** Never delete unread notifications; test the exact age cutoff and ensure cleanup is safe to run repeatedly. Keep retention cleanup independent from the user-facing notification center workflow.
 
 ## Open refactoring tasks
-
-### Investigate order-dependent password-recovery browser failure
-
-- **Area:** Public password-recovery form and browser test initialization.
-- **Why:** During workspace-navigation verification, the recovery workflow passed in isolation but failed twice immediately after the new navigation/registration workflow. The captured form had an empty email field and no success status despite the test filling and submitting it. The cause is not established.
-- **Possible direction:** Trace form initialization and submission timing across sequential browser contexts; check whether late initialization resets user input. Reproduce before changing implementation or test waits.
-- **Guardrails:** Preserve generic unknown-account responses, CSRF, rate limiting, and normal user input. Do not mask the issue with arbitrary delays or weaker assertions.
 
 ### Investigate intermittent company-research save browser failure
 
@@ -78,43 +71,50 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ### Keep authenticated header actions within narrow viewports
 
-- **Where:** `apps/web/src/components/site-header.tsx`, the authenticated action/language-control groups.
+- **Where:** `apps/web/src/components/site-header.tsx` and `site-header.styles.ts`, the authenticated action/language-control groups.
 - **Why:** A production-preview check at 390×844 measured a 411 px document width, with the trailing language control beyond the viewport. The overflow existed before opening the create dialog and remained identical afterward; the dialog itself stayed within the viewport.
 - **Additional evidence:** The workspace status-decoration browser check at 390×844 in Hebrew measured a 399 px document width with both the original heading classes and the decorated heading. The RTL overflow therefore also needs coverage independently of the workspace decoration.
 - **Possible direction:** Let action groups wrap or adapt their layout at narrow widths while keeping account, Add job, export, theme, and language controls discoverable. Do not conceal the issue with document-wide overflow clipping.
 - **Guardrails:** Preserve action order, accessible labels, keyboard focus, touch targets, theme/language behavior, and all four locales including Hebrew RTL. Add narrow-viewport browser assertions.
 
-### Align the CSV browser test with the current export label
+### Rewrite export tests from scratch
 
-- **Where:** `tests/e2e/xeniway.spec.ts` CSV download workflow and `apps/web/src/i18n/locales/en.ts`.
-- **Why:** The checked-in UI and component test use “Export package”, but the browser workflow expects “Export CSV” twice. This fails the serial suite before the remaining workflows can run.
-- **Possible direction:** Align the browser assertions with the intended current copy, or explicitly approve a copy change across dictionaries and tests.
-- **Guardrails:** Preserve header action order, authenticated download behavior, CSV filename/content assertions, and all four locales. Do not skip this workflow in the permanent test configuration.
+- **Where:** API CSV/ZIP serializers and endpoints, browser API download helper, export button, and complete browser download workflow.
+- **Why:** All dedicated export tests were removed at the maintainer's request so coverage can be designed from scratch against the current documented contracts. Export implementation remains unchanged; this is an explicit coverage gap.
+- **Possible direction:** Rebuild serializer, API, client, component, and browser tests using the current API reference. Decode ZIP downloads as ZIP files and check each CSV independently rather than reading the archive as text.
+- **Guardrails:** Cover authentication and owner isolation, all three boards, explicit field allowlists and exclusions, CSV quoting/formula-injection protection, empty data, filenames and response headers, related records, and accessible pending/error/download behavior. No style assertions. This entry records pending work, not authorization to implement it now.
 
 ### Investigate measured frontend bundle costs
 
 - **Where:** The shared web entry chunk and `apps/web/src/features/applications/application-workspace` workspace chunk.
-- **Why:** After deferring the create form until first use, the [October 2026 route measurements and byte attribution](frontend-bundle-cost.md) show about 182 KB compressed JS/CSS body for login, 192 KB for the board, and 283 KB for a direct workspace load. Board → workspace still adds about 101 KB compressed. Approximately 113 KB of the workspace's 332 KB emitted JavaScript is feature-gate/Statsig dependency code; the entry is dominated by React DOM (207 KB) and Zod (82 KB). The shared styling chunk remains about 15 KB modeled gzip. Smaller or differently named chunks alone do not establish a net saving.
+- **Why:** Historical October 6–7 analysis attributed roughly 113 KB of a 332 KB emitted workspace chunk to feature-gate/Statsig code and found eager Zod in shared entry downloads. These figures predate the frontend extraction and need remeasurement; they are leads, not current totals or proven removable bytes. The detailed report remains in Git history. Smaller or differently named chunks alone do not establish a net saving.
 - **Possible direction:** Investigate a supported upstream way to reduce the feature-gate dependency graph while preserving the existing false-flag resolver and InlineEdit behavior. Inspect shared-contract/preference import boundaries for unnecessary eager schema construction without duplicating validators or removing validation. Profile representative devices and deployment compression/cache behavior before approving further optimization; compare complete route sets and edit responsiveness. On-demand create-form loading is complete and should not be reintroduced as a global eager import.
 - **Guardrails:** Preserve accessible read/edit controls, keyboard focus, status selection, validation, and the compact-field unsaved-change warning. Treat a different editor library or return to custom controls as a separate product/architecture decision.
 
 ### Reassess CSV export memory use for larger boards
 
 - **Where:** `apps/api/src/db/repositories/applications.ts` (`listForExport`) and `apps/api/src/routes/applications/export-csv.ts` (`serializeApplicationsCsv`).
-- **Why:** Export currently loads every owned application and event, then builds a second in-memory CSV string. This is simple for current board sizes but scales memory with the full export.
-- **Possible direction:** If board sizes or export latency become a concern, consider a database cursor/batched read and streamed CSV response while keeping event grouping bounded per application.
-- **Guardrails:** Preserve user scoping, stable column/order semantics, CSV quoting and formula-injection protection, and inclusion of the derived application-created event. Keep failure handling from returning a misleading partial export.
+- **Why:** Export loads application/preparation, contact, and follow-up records in memory, serializes CSV strings, and uses synchronous ZIP compression for the package. Memory and CPU cost scale with account size; activity is not currently serialized.
+- **Possible direction:** Measure realistic account sizes before considering batched reads or streamed CSV/ZIP output.
+- **Guardrails:** Preserve owner scoping, stable column/order semantics, CSV quoting and formula-injection protection. Do not add exported fields or return misleading partial packages.
+
+### Make exported related records joinable
+
+- **Where:** `apps/api/src/routes/applications/export-csv.ts` and `export.ts`.
+- **Evidence:** Contact/follow-up CSVs include `Application ID`, but `applications.csv` has no matching ID column. The ZIP alone cannot reliably associate related rows with applications.
+- **Direction:** Agree an explicit export-local association key or approved identifier contract across all three files before changing output.
+- **Guardrails:** Keep the package owner-scoped and spreadsheet-safe; update API documentation and CSV/ZIP tests together. This entry does not authorize changing identifier exposure.
 
 ### Split API in-memory test support by domain
 
-- **Where:** `apps/api/src/app-test-support.ts` (currently a 538-line module).
+- **Where:** `apps/api/src/app-test-support.ts`.
 - **Why:** `createDependencies()` builds in-memory implementations for accounts, sessions, applications and their events, password resets, and preferences in one function. The size makes it harder to locate a fixture's state and behavior.
 - **Possible direction:** Keep one explicit shared state store for cross-domain invariants, and move application/workspace repository behavior and other cohesive domains into focused modules. Avoid splitting every small helper into its own file.
 - **Guardrails:** Preserve application ownership checks, event history behavior, and the dependency factory used by API tests. Run the API test suite and retain cross-account isolation coverage.
 
 ### Reassess database repository test organization if it grows
 
-- **Where:** `apps/api/src/db/repository.test.ts` (currently 334 lines).
+- **Where:** `apps/api/src/db/repository.test.ts`.
 - **Why:** It covers row mapping, application-history transactions, password resets, and user preferences in one test file.
 - **Possible direction:** Split by independently understandable workflow only if ongoing changes make navigation or ownership difficult. Its current `describe` groups may be sufficient, so this is not urgent.
 - **Guardrails:** Keep database setup shared where that improves clarity; do not split solely to meet a line-count target.

@@ -16,24 +16,9 @@ The repository describes the candidate-tracking product and its local developmen
 - `docs` contains human and AI-facing architecture, API, database, operations, testing, and schema-change documentation.
 - `infra/docker-compose.yml` defines the local PostgreSQL, Redis, and Mailpit services.
 
-The web UI is an accessibility-sensitive product surface. Preserve semantic HTML, keyboard access, visible focus indicators, dialog focus management, accessible names, live announcements for async states, responsive touch targets, and reduced-motion behavior.
-
 ## Development commands
 
-Run `bun install` after cloning, copy `.env.example` to `.env`, then use:
-
-- `bun run db:up` and `bun run db:down` to manage local PostgreSQL.
-- `bun run redis:up`, `bun run redis:down`, and `bun run redis:check` to manage and check local Redis.
-- `bun run mailpit:up`, `bun run mailpit:down`, and `bun run mailpit:check` to manage and check the local SMTP test inbox.
-- `bun run up`, `bun run check`, and `bun run down` to manage or check all local infrastructure services together.
-- `bun run db:migrate` to apply migrations.
-- `bun run db:seed` to create or refresh development fixtures.
-- `bun run dev` to run the API and web app together.
-- `bun run check:public`, `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, and `bun run test:e2e` for verification.
-
-Static checks do not require local services. Database migration and seed commands require PostgreSQL. `bun run check` requires PostgreSQL, Redis, and Mailpit. The E2E workflow expects PostgreSQL and Redis to be running and PostgreSQL to be migrated and seeded; it starts the API and web servers itself and requires Playwright Chromium. Mailpit is not required by E2E.
-
-The newcomer setup sequence and current command table live in `README.md`; keep them synchronized with the root `package.json`, `.env.example`, and `infra/docker-compose.yml`. Technical behavior belongs in the linked documents under `docs/` rather than in undocumented assumptions.
+Use [README](README.md#install-and-run-locally) for setup and the command table, [Operations](docs/operations.md#local-lifecycle) for prerequisites, and [Testing](docs/testing.md#commands) for verification. Keep commands synchronized with root `package.json`, `.env.example`, and `infra/docker-compose.yml`. Run browser suites sequentially: they share disposable fixtures and Redis database 15.
 
 ## Coding conventions
 
@@ -55,13 +40,11 @@ Break complex boolean expressions into named `const` predicates that describe th
 
 Prefer `switch` over an `if`/`else if` chain when choosing among multiple values of the same discriminant, such as a field, status, action, route, or keyboard key. Use `if` for ranges, independent predicates, and compound conditions; do not use `switch (true)` as a substitute. Keep intentional fallbacks and no-op cases explicit where needed, prevent accidental fallthrough, and scope case-local declarations with braces.
 
-Keep JSX focused on presentation. Move multi-branch event handling and nontrivial field/value calculations into named handlers or helpers outside the returned markup. Keep simple bindings, render-only mappings, and short argument-passing callbacks inline; do not introduce extra components, hooks, or memoization solely to move a few lines.
-
 Use the same basename for colocated component files: `foo.ts` for logic, `foo.tsx` for rendering, `foo.styles.ts` for Tailwind Variants, and `foo.test.tsx` for component behavior tests. Do not prefix component logic filenames with `use-`; React hook function names must still start with `use`. When logic and rendering share a basename, import the rendering component with an explicit `.tsx` extension and its logic with `.ts` to avoid ambiguous module resolution. Shared contracts may remain in a separate `.types.ts` file. Apply this naming to new or refactored components; it does not require renaming unrelated existing files.
 
 Across production frontend components in `apps/web/src`, keep all component behavior in matching `foo.ts` files and all Tailwind classes in colocated `foo.styles.ts` slot recipes. Give every native HTML element its own semantic slot, including unstyled elements; repeated instances of the same mapped element use its semantic slot. TSX should contain only component wiring, render conditions, list mapping, and bindings, with no inline event handlers, class literals, state/effects, translations, formatting, or data preparation. JSX-only render callbacks are allowed for third-party render-prop APIs; their behavioral adapters belong in `.ts`. Static components need no empty logic file. Shared contracts and focused existing support hooks may stay in their `.ts` modules. Instantiate state-independent slot sets at module scope and preserve existing component/ref APIs and lazy-loading boundaries.
 
-The web app enables TypeScript-extension imports and uses non-composite typechecking with incremental caches. Keep `include: ["src"]` and explicit `.ts`/`.tsx` imports; imported same-basename rendering files are checked automatically without a manual component list. Register `src/main.tsx` in `files` because Vite loads this entry through HTML rather than a TypeScript import. TypeScript glob discovery alone prefers `.ts` siblings, so keep other rendering files reachable through component or behavioral-test imports. The web typecheck command separately checks browser, Vite configuration, and service-worker environments; build runs those checks before Vite.
+Keep the non-composite compiler setup and explicit `.ts`/`.tsx` imports. Register the HTML-loaded `src/main.tsx` entry in `files` and keep other rendering files reachable through imports. See [TypeScript configuration](docs/architecture.md#typescript-configuration) for the glob-discovery exception and environment boundaries.
 
 Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for JavaScript and TypeScript source, tests, scripts, and root configuration files. Generated `dist` output and dependencies are excluded. `style/noNestedTernary`, `style/noUselessElse`, and `style/useBlockStatements` enforce the control-flow conventions.
 
@@ -71,11 +54,11 @@ Keep server state in TanStack Query and local presentation state in Redux Toolki
 
 Application activity is application-specific: system history is immutable and written transactionally with meaningful application mutations, while owner-created events can be edited or deleted. Activity reads and writes must remain owner-scoped; permanent application deletion cascades to events. Use shared event schemas and render user-entered event text as plain text.
 
-CSV export fields are explicitly allowlisted in `apps/api/src/routes/applications/export-csv.ts`. Keep each column name and value reader together in the ordered field definition so headers and rows stay aligned. Preserve formula-injection protection and exclude internal identifiers and authentication data.
+Export fields are explicitly allowlisted in `apps/api/src/routes/applications/export-csv.ts`. Keep each column name and value reader together so headers and rows stay aligned. Preserve formula-injection protection and exclude authentication data. Do not silently add exported fields or change identifier exposure; follow the [current export contract](docs/api.md#data-export).
 
 Internationalization is owned by i18next/react-i18next, not Redux. Supported locales are `en`, `ru`, `uk`, and `he`; English is the fallback, all non-English dictionaries are dynamically imported, and Hebrew uses right-to-left document direction. The server preference contract is `selectedLanguage`, `selectedTheme`, `selectedFormPresentation`, and `wasIntroduced`. The browser stores `language`, `theme`, `formPresentation`, and `wasIntroduced` in one flat object under the local-storage key `userPreferences`. Apply the browser cache immediately, let non-null server selections and server `wasIntroduced` win after login or registration, never upload browser values automatically, and synchronize only explicit user actions after updating local state first. Do not add preference hydration gates. Translate UI copy and stable API error codes, preserve canonical status values and user-entered content, update `html[lang]` and `html[dir]`, and format dates with the active locale.
 
-Password recovery must preserve the normal generic response for unknown accounts and successfully delivered known-account requests, while documentation and tests must acknowledge that known-account storage or delivery failures currently return a distinguishable server error. Reset tokens are random, single-use, time-limited, stored only as hashes in PostgreSQL, and successful resets invalidate all sessions. Keep mail delivery behind the injectable mailer interface; production requires SMTP and cannot use the console fallback. Outside production, use Mailpit for local SMTP testing or, only when SMTP is intentionally absent, the console mailer that logs the complete reset URL and raw token. Treat console output as sensitive, and never add a test-only production endpoint for raw reset tokens.
+Keep mail delivery behind the injectable mailer interface. Preserve the documented generic password-recovery success and distinguishable known-account failure paths; see [API authentication](docs/api.md#health-and-authentication). Use Mailpit locally, or the intentional non-production console fallback only when SMTP is absent. Treat its complete reset URL/raw token as sensitive; never add a test-only production endpoint exposing tokens.
 
 For frontend work, prefer semantic controls over ARIA recreation, associate every form control with a label, provide `name` and appropriate `autocomplete`, keep icon-only actions labeled, use `:focus-visible`, maintain keyboard alternatives for drag-and-drop, and preserve accessible modal/drawer behavior. Use `…` for loading copy and announce asynchronous status changes with an appropriate live region.
 
@@ -87,21 +70,13 @@ Use Vitest for shared contracts, authentication, repository mapping, seed invari
 
 Keep development seed data deterministic and aligned with the current application and workspace schema. When fixture counts or content change, update seed invariant tests and the setup/database documentation.
 
-Application workspace changes must preserve owner-scoped API access, archive/blacklist behavior, saved preparation/contact/follow-up data, keyboard navigation, and focus entry/return behavior. Update the API, database, and testing docs when those contracts or workflows change.
+Application workspace changes must preserve saved preparation/contact/follow-up data, keyboard navigation, and focus entry/return behavior alongside the ownership and lifecycle rules above.
 
 Application and preparation fields in the workspace use `@atlaskit/inline-edit` for read/edit views and confirm/cancel controls. Keep persistence in the existing field hooks, send one-field application patches, and preserve the dirty compact-field warning and immediate status selection. Do not restore the former custom compact or reusable text editor components. The create-application modal/drawer is separate from workspace editing.
 
 Locale changes require focused dictionary/selector tests and a browser test covering language switching, `html[lang]`, `html[dir]`, and reload persistence. Keep all four dictionaries structurally aligned with the English source dictionary.
 
-Before claiming a change is complete, run the checks relevant to the change. For a full change, run:
-
-```bash
-bun run typecheck
-bun run test
-bun run build
-bun run db:seed
-bun run test:e2e
-```
+Before claiming completion, run the checks relevant to the change. Use the full [verification sequence](docs/testing.md#commands) for a full change; report failures or unavailable checks explicitly. Workspace and activity tests share the explicit i18n initializer at `apps/web/src/test/initialize-test-i18n.ts`, rather than duplicating setup.
 
 ## Security and configuration
 
@@ -115,7 +90,7 @@ Do not add new product features, pages, or infrastructure outside the documented
 
 When changing product behavior, setup, commands, environment variables, API contracts, schema, security behavior, tests, or supported locales, update the relevant current documentation and README links in the same change. Keep current documentation grounded in source, shared contracts, checked-in configuration, and executable commands.
 
-Keep completed architecture and workflow guidance in the current documents under `docs/`. Remove obsolete or superseded design/implementation Markdown files once their useful guidance is reflected there; retain approved plans for work that is still pending. Workspace and activity tests share the explicit i18n initializer at `apps/web/src/test/initialize-test-i18n.ts` rather than duplicating locale setup.
+Keep completed architecture and workflow guidance in the current documents under `docs/`. Remove obsolete or superseded design/implementation Markdown files once their useful guidance is reflected there; retain approved plans for work that is still pending.
 
 ## Project backlog
 
