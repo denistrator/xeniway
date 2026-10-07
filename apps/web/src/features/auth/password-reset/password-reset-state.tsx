@@ -1,23 +1,22 @@
-import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { AuthCard } from "../../../components/auth-card";
-import { authLinkStyles } from "../auth-styles";
+import { AuthCard } from "../../../components/auth-card.tsx";
+import { passwordResetStateStyles } from "./password-reset-state.styles.ts";
+import { type PasswordResetStateProps, usePasswordResetState } from "./password-reset-state.ts";
 
-export function PasswordResetState({ submitted }: { submitted: boolean }) {
-  const { t } = useTranslation();
+const styles = passwordResetStateStyles();
+
+export function PasswordResetState({ submitted }: PasswordResetStateProps) {
+  const { labels } = usePasswordResetState();
   return submitted ? (
-    <AuthCard title={t("auth.resetPassword.successTitle")} description={t("auth.resetPassword.successDescription")}>
-      <Link className={authLinkStyles()} to="/login">
-        {t("auth.forgotPassword.returnToSignIn")}
+    <AuthCard title={labels.successTitle} description={labels.successDescription}>
+      <Link className={styles.signInLink()} to="/login">
+        {labels.returnToSignIn}
       </Link>
     </AuthCard>
   ) : (
-    <AuthCard
-      title={t("auth.resetPassword.unavailableTitle")}
-      description={t("auth.resetPassword.unavailableDescription")}
-    >
-      <Link className={authLinkStyles()} to="/forgot-password">
-        {t("auth.resetPassword.requestNewLink")}
+    <AuthCard title={labels.unavailableTitle} description={labels.unavailableDescription}>
+      <Link className={styles.requestLink()} to="/forgot-password">
+        {labels.requestNewLink}
       </Link>
     </AuthCard>
   );

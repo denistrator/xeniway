@@ -1,45 +1,13 @@
-import { type LucideIcon, Monitor, Moon, Sun } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
-import { writeLocalUserPreferences } from "../../lib/user-preferences";
-import { type RootState, setTheme, type ThemePreference } from "../../store";
-import { useCanMutate } from "../offline/offline-access";
+import { themeSelectorStyles } from "./theme-selector.styles.ts";
+import { useThemeSelector } from "./theme-selector.ts";
 
-const options: Array<{ value: ThemePreference; label: string; icon: LucideIcon }> = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "system", label: "System", icon: Monitor },
-  { value: "dark", label: "Dark", icon: Moon },
-];
+const styles = themeSelectorStyles();
 
-export function nextThemePreference(theme: ThemePreference): ThemePreference {
-  const currentIndex = options.findIndex((option) => option.value === theme);
-  return options[(currentIndex + 1) % options.length].value;
-}
-
+export { nextThemePreference } from "./theme-selector.ts";
 export function ThemeSelector() {
-  const dispatch = useDispatch();
-  const theme = useSelector((state: RootState) => state.ui.theme);
-  const user = useCurrentUser();
-  const canMutate = useCanMutate();
-  const updatePreferences = useUpdateUserPreferences();
-  const currentOption = options.find((option) => option.value === theme) ?? options[1];
-  const CurrentIcon = currentOption.icon;
-
-  const changeTheme = (nextTheme: ThemePreference) => {
-    dispatch(setTheme(nextTheme));
-    writeLocalUserPreferences({ theme: nextTheme });
-    if (user.data && canMutate) {
-      updatePreferences.mutate({ selectedTheme: nextTheme });
-    }
-  };
-
+  const { CurrentIcon, handleChange, label } = useThemeSelector();
   return (
-    <button
-      aria-label={`Theme: ${currentOption.label}. Change theme`}
-      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-xs font-semibold text-ink transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-      onClick={() => changeTheme(nextThemePreference(theme))}
-      type="button"
-    >
+    <button aria-label={label} className={styles.button()} onClick={handleChange} type="button">
       <CurrentIcon aria-hidden="true" size={15} strokeWidth={2} />
     </button>
   );

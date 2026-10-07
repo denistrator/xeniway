@@ -1,169 +1,92 @@
 import InlineEdit from "@atlaskit/inline-edit";
-import type { FocusEvent, HTMLInputTypeAttribute, ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../../components/ui/button";
-import { FloatingLabel } from "../../../../components/ui/floating-label";
-import { Input } from "../../../../components/ui/input";
-import { cn } from "../../../../lib/utils";
-import { useCanMutate } from "../../../offline/offline-access";
-import { useInlineEditFocus } from "../shared/use-inline-edit-focus";
-import { workspaceFieldStyles } from "../shared/workspace-field-styles";
-import { getApplicationFieldFeedback } from "./application-field-feedback";
-import type { EditableApplicationField } from "./use-application-field";
-import type { ApplicationFieldsController } from "./use-application-fields";
+import { Button } from "../../../../components/ui/button.tsx";
+import { FloatingLabel } from "../../../../components/ui/floating-label.tsx";
+import { Input } from "../../../../components/ui/input.tsx";
+import { applicationCompactFieldStyles } from "./application-compact-field.styles.ts";
+import type { ApplicationCompactFieldProps } from "./application-compact-field.ts";
+import { useApplicationCompactField } from "./application-compact-field.ts";
 
-type ApplicationCompactFieldProps = {
-  fields: ApplicationFieldsController;
-  field: EditableApplicationField;
-  id: string;
-  label: string;
-  type: HTMLInputTypeAttribute;
-  maxLength: number;
-  required: boolean;
-  showLabel: boolean;
-  displayValue: ReactNode;
-};
-
-export function ApplicationCompactField({
-  fields,
-  field,
-  id,
-  label,
-  type,
-  maxLength,
-  required,
-  showLabel,
-  displayValue,
-}: ApplicationCompactFieldProps) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
-  const controller = fields.fields[field];
-  const editing = controller.editing && fields.compact.activeField === field;
-  const focus = useInlineEditFocus<HTMLDivElement, HTMLInputElement>(
-    controller.editing && fields.compact.activeField === field,
-    fields.compact.activeField === null,
-    canMutate,
-  );
-  const accessibleLabel = label.replace(/\s*\*$/, "");
-  const feedback = getApplicationFieldFeedback(controller, label, t);
-  const hasError = feedback?.kind === "error" || feedback?.kind === "invalid";
+const styles = applicationCompactFieldStyles();
+export function ApplicationCompactField(props: ApplicationCompactFieldProps) {
+  const view = useApplicationCompactField(props);
   const readView = () => (
-    <div className="break-words text-ink">
-      {showLabel && <span className="block font-medium text-muted">{label}</span>}
-      <span className={cn("block", showLabel && "mt-1")}>
-        {displayValue || controller.savedValue || t("applications.workspace.notProvided")}
-      </span>
+    <div className={styles.readView()}>
+      {view.showLabel && <span className={styles.label()}>{view.label}</span>}
+      <span className={view.slotClasses.value}>{view.readValue}</span>
     </div>
   );
 
-  function handleBlur(event: FocusEvent<HTMLInputElement>) {
-    const target = event.relatedTarget;
-    if (target instanceof Node && event.currentTarget.form?.contains(target)) {
-      return;
-    }
-    const requestedField =
-      target instanceof HTMLElement
-        ? target.closest<HTMLElement>("[data-compact-edit-field]")?.dataset.compactEditField
-        : undefined;
-    if (fields.compact.warningField !== field) {
-      fields.compact.blur(field, requestedField as EditableApplicationField | undefined);
-    }
-  }
-
   return (
     <div
-      ref={focus.container}
-      onFocusCapture={focus.onFocusCapture}
+      ref={view.focus.container}
+      onFocusCapture={view.focus.onFocusCapture}
       tabIndex={-1}
-      data-compact-edit-field={field}
-      className="workspace-inline-edit min-w-0 text-sm focus-visible:outline-2"
+      data-compact-edit-field={view.field}
+      className={styles.root()}
     >
-      {!canMutate && !editing ? (
+      {!view.canMutate && !view.editing ? (
         readView()
       ) : (
         <InlineEdit<string>
-          key={controller.editing && fields.compact.activeField === field ? "editing" : "reading"}
-          defaultValue={controller.savedValue ?? ""}
-          isEditing={controller.editing && fields.compact.activeField === field}
+          key={view.controller.editing && view.fields.compact.activeField === view.field ? "editing" : "reading"}
+          defaultValue={view.controller.savedValue ?? ""}
+          isEditing={view.controller.editing && view.fields.compact.activeField === view.field}
           keepEditViewOpenOnBlur
-          hideActionButtons={!canMutate}
-          isRequired={required}
-          editButtonLabel={accessibleLabel}
-          editLabel={t("applications.workspace.actions.edit")}
-          confirmButtonLabel={t("applications.workspace.saveNamed", { name: accessibleLabel.toLowerCase() })}
-          cancelButtonLabel={t("applications.workspace.actions.cancel")}
+          hideActionButtons={!view.canMutate}
+          isRequired={view.required}
+          editButtonLabel={view.accessibleLabel}
+          editLabel={view.editLabel}
+          confirmButtonLabel={view.saveNamed}
+          cancelButtonLabel={view.cancelLabel}
           readView={readView}
           editView={(fieldProps, ref) => (
-            <FloatingLabel htmlFor={id} label={label}>
+            <FloatingLabel htmlFor={view.id} label={view.label}>
               <Input
-                id={id}
-                ref={(element) => {
-                  ref.current = element;
-                  focus.input.current = element;
-                }}
-                name={id}
+                id={view.id}
+                ref={view.bindInputRef(ref)}
+                name={view.id}
                 placeholder=" "
-                type={type}
-                maxLength={maxLength}
-                required={required}
+                type={view.type}
+                maxLength={view.maxLength}
+                required={view.required}
                 value={fieldProps.value ?? ""}
-                readOnly={!canMutate}
-                onChange={(event) => {
-                  fieldProps.onChange(event.target.value);
-                  controller.setDraft(event.target.value);
-                }}
-                onBlur={handleBlur}
-                aria-invalid={hasError}
-                aria-describedby={hasError ? `${id}-message` : undefined}
+                readOnly={!view.canMutate}
+                onChange={view.bindChange(fieldProps)}
+                onBlur={view.handleBlur}
+                aria-invalid={view.hasError}
+                aria-describedby={view.hasError ? `${view.id}-message` : undefined}
               />
             </FloatingLabel>
           )}
-          onEdit={() => {
-            if (canMutate) {
-              fields.compact.requestEdit(field);
-            }
-          }}
-          onConfirm={(value) => {
-            if (canMutate) {
-              fields.compact.save(field, value);
-            }
-          }}
-          onCancel={() => fields.compact.cancel(field)}
+          onEdit={view.beginEdit}
+          onConfirm={view.confirmEdit}
+          onCancel={view.cancelEdit}
         />
       )}
-      {!canMutate && editing && (
-        <div className="mt-2 flex gap-2">
-          <Button
-            type="button"
-            disabled
-            aria-label={t("applications.workspace.saveNamed", { name: accessibleLabel.toLowerCase() })}
-          >
-            {t("applications.workspace.actions.save")}
+      {!view.canMutate && view.editing && (
+        <div className={styles.offlineActions()}>
+          <Button type="button" disabled aria-label={view.saveNamed}>
+            {view.saveLabel}
           </Button>
           <Button
-            ref={focus.readOnlyCancel}
+            ref={view.focus.readOnlyCancel}
             type="button"
             variant="outline"
-            onClick={() => fields.compact.cancel(field)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                fields.compact.cancel(field);
-              }
-            }}
+            onClick={view.cancelEdit}
+            onKeyDown={view.cancelOnEscape}
           >
-            {t("applications.workspace.actions.cancel")}
+            {view.cancelLabel}
           </Button>
         </div>
       )}
-      {feedback && (
+      {view.feedback && (
         <p
-          id={`${id}-message`}
-          role={hasError ? "alert" : "status"}
+          id={`${view.id}-message`}
+          role={view.hasError ? "alert" : "status"}
           aria-live="polite"
-          className={workspaceFieldStyles({ error: hasError }).feedback({ className: "mt-1" })}
+          className={view.slotClasses.feedback}
         >
-          {feedback.text}
+          {view.feedback.text}
         </p>
       )}
     </div>

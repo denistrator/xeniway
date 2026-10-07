@@ -6,12 +6,12 @@ import { MemoryRouter } from "react-router-dom";
 import { expect, test, vi } from "vitest";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
-import { Layout } from "./layout";
+import { Layout } from "./layout.tsx";
 
 const mocks = vi.hoisted(() => ({ currentUser: vi.fn(), hostImported: vi.fn() }));
 
-vi.mock("./site-header", () => ({ SiteHeader: () => null }));
-vi.mock("../features/applications/form/job-manager-host", () => {
+vi.mock("./site-header.tsx", () => ({ SiteHeader: () => null }));
+vi.mock("../features/applications/form/job-manager-host.tsx", () => {
   mocks.hostImported();
   return { JobManagerHost: () => null };
 });

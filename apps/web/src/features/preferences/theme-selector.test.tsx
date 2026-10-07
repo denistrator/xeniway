@@ -6,7 +6,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { setTheme, store } from "../../store";
-import { ThemeSelector } from "./theme-selector";
+import { ThemeSelector } from "./theme-selector.tsx";
 
 vi.mock("../../lib/queries", () => ({
   useCurrentUser: vi.fn(),

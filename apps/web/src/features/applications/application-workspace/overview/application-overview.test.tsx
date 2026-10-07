@@ -57,6 +57,17 @@ test("confirms dirty compact changes and saves only the selected field", async (
   expect(readUpdateBodies(fetcher)[0]).toEqual({ location: "Remote" });
 });
 
+test("keeps localized dates, saved metadata, and empty-value fallbacks readable", () => {
+  const data = createApplicationWorkspaceData();
+  renderApplicationWorkspace({
+    application: { ...data.application, appliedAt: "2026-10-05", salary: "€72,000", location: null },
+  });
+
+  expect(screen.getByText("Oct 5, 2026")).toBeVisible();
+  expect(screen.getByText("€72,000")).toBeVisible();
+  expect(screen.getByText("Location").parentElement).toHaveTextContent("Not provided");
+});
+
 test("allows simultaneous large-field editing and nullable URL updates", async () => {
   const user = userEvent.setup();
   const data = createApplicationWorkspaceData();

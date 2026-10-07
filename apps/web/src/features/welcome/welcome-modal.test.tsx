@@ -1,12 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { Provider } from "react-redux";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeI18n } from "../../i18n/i18n";
 import { store } from "../../store";
-import { WelcomeModal } from "./welcome-modal";
+import { WelcomeModal } from "./welcome-modal.tsx";
 
 beforeEach(async () => {
   await initializeI18n();
@@ -61,6 +61,19 @@ test("routes the board and About actions through the completion callback", async
   expect(onComplete).toHaveBeenCalledWith("board");
   await user.click(screen.getByRole("button", { name: "About Xenia Way" }));
   expect(onComplete).toHaveBeenCalledWith("about");
+});
+
+test("focuses the close action and keeps keyboard focus inside the dialog", async () => {
+  const user = userEvent.setup();
+  renderWelcome(<WelcomeModal onComplete={vi.fn()} />);
+
+  expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Close welcome introduction" })).toHaveFocus();
+  await user.tab({ shift: true });
+  expect(screen.getByRole("button", { name: "Language: English. Change language" })).toHaveFocus();
+  await user.tab({ shift: true });
+  expect(screen.getByRole("button", { name: "Go to board" })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("button", { name: "Language: English. Change language" })).toHaveFocus();
 });
 
 test("does not render synchronization errors from completion", async () => {

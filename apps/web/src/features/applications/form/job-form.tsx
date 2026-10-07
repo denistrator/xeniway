@@ -1,21 +1,17 @@
-import type { CreateApplicationInput } from "@xeniway/shared";
-import { JobFormActions } from "./job-form-actions";
-import { JobFormBasicFields } from "./job-form-basic-fields";
-import { JobFormDetailsFields } from "./job-form-details-fields";
-import { useJobForm } from "./use-job-form";
+import { jobFormStyles } from "./job-form.styles.ts";
+import { type JobFormProps, useJobFormPresentation } from "./job-form.ts";
+import { JobFormActions } from "./job-form-actions.tsx";
+import { JobFormBasicFields } from "./job-form-basic-fields.tsx";
+import { JobFormDetailsFields } from "./job-form-details-fields.tsx";
 
-export function JobForm({
-  submitting,
-  onSubmit,
-}: {
-  submitting: boolean;
-  onSubmit: (input: CreateApplicationInput) => void;
-}) {
-  const form = useJobForm({ onSubmit });
+const styles = jobFormStyles();
+
+export function JobForm({ submitting, onSubmit }: JobFormProps) {
+  const { form } = useJobFormPresentation({ submitting, onSubmit });
 
   return (
     <form
-      className="flex grow flex-col space-y-4"
+      className={styles.root()}
       onSubmit={form.handleSubmit}
       aria-describedby={form.error ? "application-form-error" : undefined}
       autoComplete="off"
@@ -29,7 +25,7 @@ export function JobForm({
           role="alert"
           aria-live="assertive"
           tabIndex={-1}
-          className="text-sm text-rose-600 dark:text-rose-400"
+          className={styles.error()}
         >
           {form.error}
         </p>

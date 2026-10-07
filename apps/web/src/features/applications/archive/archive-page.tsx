@@ -1,96 +1,92 @@
-import type { JobApplication } from "@xeniway/shared";
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSelector } from "react-redux";
-import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
-import { formatDate, getApiErrorKey } from "../../../i18n/format";
-import { ApiRequestError } from "../../../lib/api";
-import { matchesApplicationSearch } from "../../../lib/application-filters";
-import { useApplicationMutations, useArchivedApplications } from "../../../lib/queries";
-import type { RootState } from "../../../store";
-import { ApplicationCollection } from "../collection/application-collection";
-import { ApplicationCollectionCard } from "../collection/application-collection-card";
+import { ConfirmationModal } from "../../../components/ui/confirmation-modal.tsx";
+import { ApplicationCollection } from "../collection/application-collection.tsx";
+import { ApplicationCollectionCard } from "../collection/application-collection-card.tsx";
+import { archivePageStyles } from "./archive-page.styles.ts";
+import { useArchivePagePresentation } from "./archive-page.ts";
+
+const styles = archivePageStyles();
 
 export function ArchivePage() {
-  const { i18n, t } = useTranslation();
-  const archived = useArchivedApplications();
-  const mutations = useApplicationMutations();
-  const search = useSelector((state: RootState) => state.ui.search);
-  const items = useMemo(
-    () => archived.data?.filter((job) => matchesApplicationSearch(job, search)) ?? [],
-    [archived.data, search],
-  );
-  const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
-  const [removeAllOpen, setRemoveAllOpen] = useState(false);
-  async function remove() {
-    if (!pendingRemoval) {
-      return;
-    }
-    await mutations.remove.mutateAsync(pendingRemoval.id);
-    setPendingRemoval(null);
-  }
-  async function restore(id: number) {
-    await mutations.restore.mutateAsync(id);
-  }
-  const error = mutations.restore.error || mutations.remove.error || archived.error;
-  const errorMessage = error
-    ? t(getApiErrorKey(error instanceof ApiRequestError ? error.code : "REQUEST_FAILED"))
-    : undefined;
+  const {
+    archived,
+    isEmpty,
+    busy,
+    items,
+    pendingRemoval,
+    removeAllOpen,
+    remove,
+    archivedDateLabel,
+    errorMessage,
+    title,
+    description,
+    loadingMessage,
+    emptyMessage,
+    noMatchMessage,
+    removeAllLabel,
+    openRemoveAll,
+    restoreLabel,
+    deleteLabel,
+    restoreJob,
+    requestRemoval,
+    confirmationTitle,
+    deleteConfirmation,
+    yesLabel,
+    noLabel,
+    cancelRemoval,
+    removeAllTitle,
+    removeAllConfirmation,
+    removeAllYesLabel,
+    removeAllNoLabel,
+    removeAll,
+    cancelRemoveAll,
+  } = useArchivePagePresentation();
+
   return (
     <>
       <ApplicationCollection
-        title={t("applications.archive.title")}
-        description={t("applications.archive.description")}
-        loadingMessage={t("applications.archive.loading")}
-        emptyMessage={t("applications.archive.empty")}
-        noMatchMessage={t("applications.archive.noMatch")}
+        title={title}
+        description={description}
+        loadingMessage={loadingMessage}
+        emptyMessage={emptyMessage}
+        noMatchMessage={noMatchMessage}
         errorMessage={errorMessage}
         loading={archived.isPending}
-        isEmpty={Boolean(archived.data && !archived.data.length)}
+        isEmpty={isEmpty}
         hasResults={items.length > 0}
-        removeAllLabel={t("common.actions.removeAll")}
-        onRemoveAll={() => setRemoveAllOpen(true)}
+        removeAllLabel={removeAllLabel}
+        onRemoveAll={openRemoveAll}
       >
         {items.map((job) => (
           <ApplicationCollectionCard
             key={job.id}
             job={job}
-            details={
-              <p className="mt-2 text-sm leading-6 text-muted">
-                {t("applications.archive.archived", {
-                  date: job.archivedAt ? formatDate(job.archivedAt, i18n.resolvedLanguage ?? "en") : "—",
-                })}
-              </p>
-            }
-            restoreLabel={t("applications.archive.restore")}
-            deleteLabel={t("applications.archive.delete")}
-            onRestore={() => restore(job.id)}
-            onDelete={() => setPendingRemoval(job)}
-            busy={mutations.restore.isPending || mutations.remove.isPending}
+            details={<p className={styles.archivedDate()}>{archivedDateLabel(job)}</p>}
+            restoreLabel={restoreLabel}
+            deleteLabel={deleteLabel}
+            onRestore={restoreJob(job)}
+            onDelete={requestRemoval(job)}
+            busy={busy}
           />
         ))}
       </ApplicationCollection>
       {pendingRemoval && (
         <ConfirmationModal
-          title={t("applications.confirmation.title")}
-          text={t("applications.archive.deleteConfirmation", pendingRemoval)}
-          yesLabel={t("common.actions.yes")}
-          noLabel={t("common.actions.no")}
+          title={confirmationTitle}
+          text={deleteConfirmation}
+          yesLabel={yesLabel}
+          noLabel={noLabel}
           onYes={remove}
-          onNo={() => setPendingRemoval(null)}
+          onNo={cancelRemoval}
         />
       )}
       {removeAllOpen && (
         <ConfirmationModal
-          title={t("applications.confirmation.title")}
-          text={t("common.actions.deleteAllConfirmation")}
-          yesLabel={t("common.actions.yes")}
-          noLabel={t("common.actions.no")}
-          onYes={async () => {
-            await mutations.removeAll.mutateAsync("archive");
-            setRemoveAllOpen(false);
-          }}
-          onNo={() => setRemoveAllOpen(false)}
+          title={removeAllTitle}
+          text={removeAllConfirmation}
+          yesLabel={removeAllYesLabel}
+          noLabel={removeAllNoLabel}
+          onYes={removeAll}
+          onNo={cancelRemoveAll}
         />
       )}
     </>

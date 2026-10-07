@@ -1,29 +1,26 @@
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import { jobStatuses } from "../board/job-status";
-import { StatusFilterOptions } from "./status-filter-options";
-import { useStatusFilter } from "./use-status-filter";
+import { Button } from "../../../components/ui/button.tsx";
+import { statusFilterStyles } from "./status-filter.styles.ts";
+import { useStatusFilterPresentation } from "./status-filter.ts";
+import { StatusFilterOptions } from "./status-filter-options.tsx";
+
+const styles = statusFilterStyles();
 
 export function StatusFilter() {
-  const { t } = useTranslation();
-  const filter = useStatusFilter();
+  const { filter, toggleOpen, filterStatusesLabel, allStatusesLabel } = useStatusFilterPresentation();
+
   return (
-    <div ref={filter.containerRef} className="relative w-full sm:w-auto">
+    <div ref={filter.containerRef} className={styles.root()}>
       <Button
         ref={filter.triggerRef}
         variant="outline"
-        className="w-full sm:w-auto"
+        className={styles.trigger()}
         aria-haspopup="dialog"
         aria-expanded={filter.open}
         aria-controls="status-filter-options"
-        onClick={() => filter.setOpen((current) => !current)}
+        onClick={toggleOpen}
       >
-        {t("applications.filterStatuses")}
-        <span className="ms-2 text-xs text-muted">
-          {filter.allSelected
-            ? t("applications.allStatuses")
-            : `${filter.visibleStatuses.length}/${jobStatuses.length}`}
-        </span>
+        {filterStatusesLabel}
+        <span className={styles.selection()}>{allStatusesLabel}</span>
       </Button>
       {filter.open && <StatusFilterOptions {...filter} />}
     </div>

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { trapTabFocus } from "../../lib/trap-tab-focus";
-import type { WelcomeAction } from "./welcome-modal";
+export type WelcomeAction = "stay" | "board" | "about";
+export type WelcomeModalProps = { onComplete: (action: WelcomeAction) => void };
 
-export function useWelcomeModal(onComplete: (action: WelcomeAction) => void) {
+export function useWelcomeModal({ onComplete }: WelcomeModalProps) {
   const { t } = useTranslation();
   const closeRef = useRef<HTMLButtonElement>(null);
   const complete = useCallback(
@@ -45,5 +46,12 @@ export function useWelcomeModal(onComplete: (action: WelcomeAction) => void) {
     };
   }, [complete]);
 
-  return { t, closeRef, complete };
+  const labels = {
+    close: t("welcome.close"),
+  };
+  function handleStay() {
+    complete("stay");
+  }
+
+  return { t, labels, closeRef, complete, handleStay };
 }

@@ -1,169 +1,122 @@
-import type { ApplicationFollowUpTask } from "@xeniway/shared";
-import { memo, useId, useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { tv } from "tailwind-variants";
-import { Button } from "../../../../components/ui/button";
-import { Card, CardContent } from "../../../../components/ui/card";
-import { ConfirmationModal } from "../../../../components/ui/confirmation-modal";
-import { emptyStateStyles } from "../../../../components/ui/surface-styles";
-import { useCanMutate } from "../../../offline/offline-access";
-import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui";
-import { FollowUpForm } from "./follow-up-form";
-import { useFollowUpsController } from "./use-follow-ups-controller";
+import { memo } from "react";
+import { Button } from "../../../../components/ui/button.tsx";
+import { Card, CardContent } from "../../../../components/ui/card.tsx";
+import { ConfirmationModal } from "../../../../components/ui/confirmation-modal.tsx";
+import { WorkspaceMutationStatus, WorkspaceSectionHeader } from "../shared/workspace-section-ui.tsx";
+import { FollowUpForm } from "./follow-up-form.tsx";
+import { followUpsSectionStyles } from "./follow-ups-section.styles.ts";
 
-const followUpStyles = tv({
-  base: "flex flex-wrap items-start gap-4 rounded-xl border border-line p-4",
-  variants: { completed: { true: "bg-surface-tint", false: "bg-surface" } },
-});
+import { type FollowUpsSectionProps, useFollowUpsSection } from "./follow-ups-section.ts";
 
-function sortFollowUps(tasks: ApplicationFollowUpTask[]) {
-  return [...tasks].sort((left, right) => {
-    const leftCompleted = Boolean(left.completedAt);
-    const rightCompleted = Boolean(right.completedAt);
-    return (
-      Number(leftCompleted) - Number(rightCompleted) ||
-      (leftCompleted
-        ? (left.completedAt ?? "").localeCompare(right.completedAt ?? "")
-        : left.dueDate.localeCompare(right.dueDate)) ||
-      left.id - right.id
-    );
-  });
-}
-
-export const FollowUpsSection = memo(function FollowUpsSection({
-  applicationId,
-  tasks,
-}: {
-  applicationId: number;
-  tasks: ApplicationFollowUpTask[];
-}) {
-  const { i18n, t } = useTranslation();
-  const canMutate = useCanMutate();
-  const locale = i18n.resolvedLanguage ?? "en";
-  const headingId = useId();
-  const controller = useFollowUpsController(applicationId);
-  const sortedTasks = useMemo(() => sortFollowUps(tasks), [tasks]);
-  const monthFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }), [locale]);
-  const fullDateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }),
-    [locale],
-  );
-  const statusIsError = controller.status?.endsWith("Failed") ?? false;
+const styles = followUpsSectionStyles();
+export const FollowUpsSection = memo(function FollowUpsSection(props: FollowUpsSectionProps) {
+  const view = useFollowUpsSection(props);
 
   return (
-    <section tabIndex={-1} aria-labelledby={headingId} className="focus-visible:outline-2">
+    <section tabIndex={-1} aria-labelledby={view.headingId} className={styles.root()}>
       <Card>
         <WorkspaceSectionHeader
-          headingId={headingId}
-          title={t("applications.workspace.followUps.heading")}
-          actionLabel={t("applications.workspace.followUps.add")}
-          actionRef={controller.addButtonRef}
-          actionDisabled={!canMutate || controller.editor.target !== null}
-          onAction={controller.editor.openNew}
+          headingId={view.headingId}
+          title={view.headingLabel}
+          actionLabel={view.addLabel}
+          actionRef={view.controller.addButtonRef}
+          actionDisabled={!view.canMutate || view.controller.editor.target !== null}
+          onAction={view.controller.editor.openNew}
         />
         <CardContent>
-          <FollowUpForm controller={controller} />
-          {sortedTasks.length === 0 ? (
-            <p className={emptyStateStyles()}>{t("applications.workspace.followUps.empty")}</p>
+          <FollowUpForm controller={view.controller} />
+          {view.sortedTasks.length === 0 ? (
+            <p className={styles.empty()}>{view.emptyLabel}</p>
           ) : (
-            <ul className="space-y-3">
-              {sortedTasks.map((task) => {
-                const isCompleted = Boolean(task.completedAt);
-                const dueDate = new Date(`${task.dueDate}T00:00:00Z`);
-                return (
-                  <li key={task.id} className={followUpStyles({ completed: isCompleted })}>
-                    <time
-                      dateTime={task.dueDate}
-                      title={fullDateFormatter.format(dueDate)}
-                      className="flex min-w-14 flex-col items-center rounded-lg border border-accent-warm/40 bg-surface-tint px-2 py-1 text-center text-ink"
-                    >
-                      <span className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted">
-                        {monthFormatter.format(dueDate)}
-                      </span>
-                      <span className="font-display text-2xl leading-none">{dueDate.getUTCDate()}</span>
-                      <span className="text-[0.65rem] text-muted">{dueDate.getUTCFullYear()}</span>
+            <ul className={styles.list()}>
+              {view.items.map(
+                ({
+                  task,
+                  isCompleted,
+                  dateTitle,
+                  month,
+                  day,
+                  year,
+                  statusLabel,
+                  editLabel,
+                  deleteLabel,
+                  completeLabel,
+                  edit,
+                  remove,
+                  complete,
+                  taskClassName,
+                }) => (
+                  <li key={task.id} className={taskClassName}>
+                    <time dateTime={task.dueDate} title={dateTitle} className={styles.date()}>
+                      <span className={styles.month()}>{month}</span>
+                      <span className={styles.day()}>{day}</span>
+                      <span className={styles.year()}>{year}</span>
                     </time>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-display text-lg text-ink">{task.title}</h3>
-                          <span className="text-xs font-semibold text-muted">
-                            {t(
-                              isCompleted
-                                ? "applications.workspace.followUps.done"
-                                : "applications.workspace.followUps.open",
-                            )}
-                          </span>
+                    <div className={styles.content()}>
+                      <div className={styles.header()}>
+                        <div className={styles.identity()}>
+                          <h3 className={styles.title()}>{task.title}</h3>
+                          <span className={styles.status()}>{statusLabel}</span>
                         </div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className={styles.actions()}>
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
-                            aria-label={t("applications.workspace.followUps.editNamed", { name: task.title })}
-                            disabled={!canMutate}
-                            onClick={(event) => controller.editor.openExisting(task, event.currentTarget)}
+                            aria-label={editLabel}
+                            disabled={!view.canMutate}
+                            onClick={edit}
                           >
-                            {t("applications.workspace.actions.edit")}
+                            {view.editLabel}
                           </Button>
                           <Button
                             type="button"
                             size="sm"
                             variant="ghost"
-                            aria-label={t("applications.workspace.followUps.deleteNamed", { name: task.title })}
-                            disabled={!canMutate}
-                            onClick={(event) => controller.deletion.request(task, event.currentTarget)}
+                            aria-label={deleteLabel}
+                            disabled={!view.canMutate}
+                            onClick={remove}
                           >
-                            {t("applications.workspace.actions.delete")}
+                            {view.deleteLabel}
                           </Button>
                         </div>
                       </div>
-                      {task.notes && (
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">{task.notes}</p>
-                      )}
+                      {task.notes && <p className={styles.notes()}>{task.notes}</p>}
                       {!isCompleted && (
                         <Button
                           type="button"
                           size="sm"
-                          className="mt-3"
-                          disabled={!canMutate || controller.pending}
-                          aria-label={t("applications.workspace.followUps.completeNamed", { name: task.title })}
-                          onClick={() => {
-                            if (canMutate) {
-                              void controller.complete(task.id);
-                            }
-                          }}
+                          className={styles.complete()}
+                          disabled={!view.canMutate || view.controller.pending}
+                          aria-label={completeLabel}
+                          onClick={complete}
                         >
-                          {t("applications.workspace.followUps.complete")}
+                          {view.completeLabel}
                         </Button>
                       )}
                     </div>
                   </li>
-                );
-              })}
+                ),
+              )}
             </ul>
           )}
           <WorkspaceMutationStatus
-            pending={controller.pending}
-            pendingText={t("applications.workspace.actions.saving")}
-            text={controller.status ? t(`applications.workspace.followUps.${controller.status}`) : null}
-            isError={statusIsError}
+            pending={view.controller.pending}
+            pendingText={view.savingLabel}
+            text={view.controller.status ? view.statusLabel : null}
+            isError={view.statusIsError}
           />
         </CardContent>
       </Card>
-      {controller.deletion.target && (
+      {view.controller.deletion.target && (
         <ConfirmationModal
-          title={t("applications.workspace.followUps.deleteTitle")}
-          text={t("applications.workspace.followUps.deleteConfirmation", { title: controller.deletion.target.title })}
-          yesLabel={t("common.actions.yes")}
-          noLabel={t("common.actions.no")}
-          onYes={() => {
-            if (canMutate) {
-              void controller.deletion.confirm();
-            }
-          }}
-          onNo={controller.deletion.cancel}
-          yesDisabled={!canMutate || controller.pending}
+          title={view.deleteTitleLabel}
+          text={view.confirmationText}
+          yesLabel={view.yesLabel}
+          noLabel={view.noLabel}
+          onYes={view.confirmDelete}
+          onNo={view.controller.deletion.cancel}
+          yesDisabled={!view.canMutate || view.controller.pending}
         />
       )}
     </section>

@@ -1,10 +1,9 @@
-import { useTranslation } from "react-i18next";
+import { loadingScreenStyles } from "./loading-screen.styles.ts";
+import { useLoadingScreen } from "./loading-screen.ts";
+
+const styles = loadingScreenStyles();
 
 export function LoadingScreen() {
-  const { t } = useTranslation();
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas text-sm leading-6 text-muted">
-      {t("common.loading")}
-    </div>
-  );
+  const view = useLoadingScreen();
+  return <div className={styles.root()}>{view.loading}</div>;
 }

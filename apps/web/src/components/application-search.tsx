@@ -1,47 +1,37 @@
 import { Search, X } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { useDispatch, useSelector } from "react-redux";
-import { tv } from "tailwind-variants";
-import { type RootState, setSearch } from "../store";
-import { Button } from "./ui/button";
-import { FloatingLabel } from "./ui/floating-label";
-import { Input } from "./ui/input";
+import { applicationSearchStyles } from "./application-search.styles.ts";
+import { useApplicationSearch } from "./application-search.ts";
+import { Button } from "./ui/button.tsx";
+import { FloatingLabel } from "./ui/floating-label.tsx";
+import { Input } from "./ui/input.tsx";
 
-const searchStyles = tv({ base: "peer", variants: { populated: { true: "pe-10" } } });
+const styles = applicationSearchStyles();
 
 export function ApplicationSearch() {
-  const { t } = useTranslation();
-  const dispatch = useDispatch();
-  const search = useSelector((state: RootState) => state.ui.search);
-
+  const view = useApplicationSearch();
   return (
-    <FloatingLabel
-      htmlFor="application-search"
-      label={t("applications.search")}
-      icon={Search}
-      className="min-w-64 flex-1"
-    >
+    <FloatingLabel htmlFor="application-search" label={view.searchLabel} icon={Search} className={styles.label()}>
       <Input
         id="application-search"
-        className={searchStyles({ populated: Boolean(search) })}
+        className={styles.input({ populated: view.populated })}
         placeholder=" "
         name="search"
         autoComplete="off"
-        value={search}
-        onChange={(event) => dispatch(setSearch(event.target.value))}
+        value={view.search}
+        onChange={view.handleChange}
       />
-      {search && (
+      {view.search && (
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute end-1 top-1/2 size-8 -translate-y-1/2"
-          aria-label={t("applications.clearSearch")}
-          title={t("applications.clearSearch")}
-          onClick={() => dispatch(setSearch(""))}
+          className={styles.clearButton()}
+          aria-label={view.clearLabel}
+          title={view.clearLabel}
+          onClick={view.handleClear}
         >
           <X aria-hidden="true" size={16} />
-          <span className="sr-only">{t("applications.clearSearch")}</span>
+          <span className={styles.clearText()}>{view.clearLabel}</span>
         </Button>
       )}
     </FloatingLabel>

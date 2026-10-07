@@ -1,32 +1,15 @@
-import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
-import { tv } from "tailwind-variants";
+import { type FloatingLabelProps, getFloatingLabelView } from "./floating-label.ts";
 
-const floatingLabelStyles = tv({
-  slots: {
-    root: "floating-label",
-    icon: "floating-label-icon",
-    label: "floating-label-label",
-  },
-  variants: { withIcon: { true: { root: "floating-label-with-icon" } } },
-});
+export type { FloatingLabelProps } from "./floating-label.ts";
 
-export type FloatingLabelProps = {
-  children: ReactNode;
-  htmlFor: string;
-  label: ReactNode;
-  icon?: LucideIcon;
-  className?: string;
-  labelClassName?: string;
-};
-
-export function FloatingLabel({ children, htmlFor, label, icon: Icon, className, labelClassName }: FloatingLabelProps) {
-  const styles = floatingLabelStyles({ withIcon: Boolean(Icon) });
+export function FloatingLabel(props: FloatingLabelProps) {
+  const view = getFloatingLabelView(props);
+  const { children, htmlFor, label, icon: Icon } = props;
   return (
-    <div className={styles.root({ className })}>
-      {Icon && <Icon aria-hidden="true" focusable="false" className={styles.icon()} />}
+    <div className={view.rootClassName}>
+      {Icon && <Icon aria-hidden="true" focusable="false" className={view.iconClassName} />}
       {children}
-      <label htmlFor={htmlFor} className={styles.label({ className: labelClassName })}>
+      <label htmlFor={htmlFor} className={view.labelClassName}>
         {label}
       </label>
     </div>

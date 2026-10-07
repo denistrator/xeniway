@@ -1,50 +1,25 @@
-import type { FormEvent, RefObject } from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import { getApiErrorKey } from "../../../i18n/format";
-import { ApiRequestError } from "../../../lib/api";
-import { authErrorStyles } from "../auth-styles";
-import { RegisterFields } from "./register-fields";
+import { Button } from "../../../components/ui/button.tsx";
+import { RegisterFields } from "./register-fields.tsx";
+import { registerFormStyles } from "./register-form.styles.ts";
+import { type RegisterFormProps, useRegisterForm } from "./register-form.ts";
 
-export type RegisterFormState = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-};
+const styles = registerFormStyles();
 
-export function RegisterForm({
-  form,
-  error,
-  pending,
-  errorRef,
-  onChange,
-  onSubmit,
-}: {
-  form: RegisterFormState;
-  error: string | null;
-  pending: boolean;
-  errorRef: RefObject<HTMLParagraphElement | null>;
-  onChange: (field: keyof RegisterFormState, value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  const { t } = useTranslation();
+export { type RegisterFormState, registerError } from "./register-form.ts";
+
+export function RegisterForm({ form, error, pending, errorRef, onChange, onSubmit }: RegisterFormProps) {
+  const { submitLabel } = useRegisterForm(pending);
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
+    <form className={styles.form()} onSubmit={onSubmit}>
       <RegisterFields form={form} onChange={onChange} />
       {error && (
-        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={authErrorStyles()}>
+        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={styles.error()}>
           {error}
         </p>
       )}
-      <Button className="w-full" type="submit" disabled={pending}>
-        {pending ? t("auth.register.pending") : t("auth.register.submit")}
+      <Button className={styles.submitButton()} type="submit" disabled={pending}>
+        {submitLabel}
       </Button>
     </form>
   );
-}
-
-export function registerError(error: unknown, t: (key: string) => string) {
-  return t(getApiErrorKey(error instanceof ApiRequestError ? error.code : "REQUEST_FAILED"));
 }

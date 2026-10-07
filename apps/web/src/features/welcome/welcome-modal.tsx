@@ -1,19 +1,21 @@
-import { dialogBackdropStyles } from "../../components/ui/surface-styles";
-import { useWelcomeModal } from "./use-welcome-modal";
-import { WelcomeModalContent } from "./welcome-modal-content";
+import { welcomeModalStyles } from "./welcome-modal.styles.ts";
+import { useWelcomeModal, type WelcomeModalProps } from "./welcome-modal.ts";
+import { WelcomeModalContent } from "./welcome-modal-content.tsx";
 
-export type WelcomeAction = "stay" | "board" | "about";
+const styles = welcomeModalStyles();
 
-export function WelcomeModal({ onComplete }: { onComplete: (action: WelcomeAction) => void }) {
-  const { t, closeRef, complete } = useWelcomeModal(onComplete);
+export type { WelcomeAction } from "./welcome-modal.ts";
+
+export function WelcomeModal({ onComplete }: WelcomeModalProps) {
+  const { t, labels, closeRef, complete, handleStay } = useWelcomeModal({ onComplete });
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay p-4">
+    <div className={styles.overlay()}>
       <button
         type="button"
-        aria-label={t("welcome.close")}
+        aria-label={labels.close}
         tabIndex={-1}
-        className={dialogBackdropStyles()}
-        onClick={() => complete("stay")}
+        className={styles.backdrop()}
+        onClick={handleStay}
       />
       <WelcomeModalContent t={t} closeRef={closeRef} complete={complete} />
     </div>

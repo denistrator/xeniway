@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
+import { ConfirmationModal } from "../../../components/ui/confirmation-modal.tsx";
 import type { ApplicationActivitySectionProps } from "./application-activity.types";
 import { ApplicationActivityForm } from "./application-activity-form.tsx";
 import { useApplicationActivitySection } from "./application-activity-section.ts";

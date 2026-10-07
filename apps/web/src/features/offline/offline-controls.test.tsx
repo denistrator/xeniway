@@ -10,11 +10,11 @@ import ru from "../../i18n/locales/ru";
 import uk from "../../i18n/locales/uk";
 import { applicationKeys } from "../../lib/api";
 import { initializeTestI18n } from "../../test/initialize-test-i18n";
-import * as offlineAccess from "./offline-access";
-import { OfflineAccessProvider, useOfflineAccess } from "./offline-access";
+import * as offlineAccess from "./offline-access.ts";
+import { OfflineAccessProvider, useOfflineAccess } from "./offline-access.tsx";
 import { createAccessState, selectAccess } from "./offline-access-machine";
 import * as offlineRuntime from "./offline-access-runtime";
-import { OfflineControls } from "./offline-controls";
+import { OfflineControls } from "./offline-controls.tsx";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineDevice,

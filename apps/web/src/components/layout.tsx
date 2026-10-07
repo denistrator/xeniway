@@ -1,34 +1,30 @@
-import { Suspense, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Outlet, useNavigate } from "react-router-dom";
-import { CreateApplicationLoader } from "../features/applications/form/create-application-loader";
-import { OfflineControls } from "../features/offline/offline-controls";
-import { UserPreferencesSync } from "../features/preferences/user-preferences-sync";
-import { type WelcomeAction, WelcomeModal } from "../features/welcome/welcome-modal";
-import { useCompleteIntroduction, useCurrentUser, useUserPreferences } from "../lib/queries";
-import { writeLocalUserPreferences } from "../lib/user-preferences";
-import { closeWelcome, type RootState } from "../store";
-import { LoadingScreen } from "./loading-screen";
-import { SiteFooter } from "./site-footer";
-import { SiteHeader } from "./site-header";
+import { Suspense } from "react";
+import { Outlet } from "react-router-dom";
+import { CreateApplicationLoader } from "../features/applications/form/create-application-loader.tsx";
+import { OfflineControls } from "../features/offline/offline-controls.tsx";
+import { UserPreferencesSync } from "../features/preferences/user-preferences-sync.tsx";
+import { WelcomeModal } from "../features/welcome/welcome-modal.tsx";
+import { layoutStyles } from "./layout.styles.ts";
+import { useLayout, useWelcomeHost } from "./layout.ts";
+import { LoadingScreen } from "./loading-screen.tsx";
+import { SiteFooter } from "./site-footer.tsx";
+import { SiteHeader } from "./site-header.tsx";
+
+const styles = layoutStyles();
 
 export function Layout() {
-  const createOpenerRef = useRef<HTMLElement | null>(null);
+  const view = useLayout();
   return (
-    <div className="flex min-h-screen flex-col bg-canvas text-ink">
-      <SiteHeader
-        onCreateDialogOpen={(opener) => {
-          createOpenerRef.current = opener;
-        }}
-      />
+    <div className={styles.root()}>
+      <SiteHeader onCreateDialogOpen={view.handleCreateDialogOpen} />
       <UserPreferencesSync />
       <OfflineControls />
-      <main id="main-content" tabIndex={-1} className="w-full flex-1 py-8">
+      <main id="main-content" tabIndex={-1} className={styles.main()}>
         <Suspense fallback={<LoadingScreen />}>
           <Outlet />
         </Suspense>
       </main>
-      <CreateApplicationLoader openerRef={createOpenerRef} />
+      <CreateApplicationLoader openerRef={view.createOpenerRef} />
       <WelcomeHost />
       <SiteFooter />
     </div>
@@ -36,28 +32,9 @@ export function Layout() {
 }
 
 function WelcomeHost() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const open = useSelector((state: RootState) => state.ui.welcome.open);
-  const user = useCurrentUser();
-  const preferences = useUserPreferences(open && user.data ? user.data.id : null);
-  const completeIntroduction = useCompleteIntroduction();
-
-  if (!open || preferences.isPending || preferences.error || preferences.data?.wasIntroduced !== false) {
+  const view = useWelcomeHost();
+  if (!view.visible) {
     return null;
   }
-
-  function handleComplete(action: WelcomeAction) {
-    writeLocalUserPreferences({ wasIntroduced: true });
-    dispatch(closeWelcome());
-    if (action === "board") {
-      navigate("/", { replace: true });
-    }
-    if (action === "about") {
-      navigate("/about");
-    }
-    completeIntroduction.mutate();
-  }
-
-  return <WelcomeModal onComplete={handleComplete} />;
+  return <WelcomeModal onComplete={view.handleComplete} />;
 }

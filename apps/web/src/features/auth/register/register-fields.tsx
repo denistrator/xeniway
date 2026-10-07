@@ -1,47 +1,50 @@
 import { LockKeyhole, Mail, User } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { FloatingLabel } from "../../../components/ui/floating-label";
-import { Input } from "../../../components/ui/input";
-import type { RegisterFormState } from "./register-form";
+import { FloatingLabel } from "../../../components/ui/floating-label.tsx";
+import { Input } from "../../../components/ui/input.tsx";
+import { registerFieldsStyles } from "./register-fields.styles.ts";
+import { type RegisterFieldsProps, useRegisterFields } from "./register-fields.ts";
 
-export function RegisterFields({
-  form,
-  onChange,
-}: {
-  form: RegisterFormState;
-  onChange: (field: keyof RegisterFormState, value: string) => void;
-}) {
-  const { t } = useTranslation();
+const styles = registerFieldsStyles();
+
+export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
+  const {
+    labels,
+    handleFirstNameChange,
+    handleLastNameChange,
+    handleEmailChange,
+    handlePasswordChange,
+    handleConfirmationChange,
+  } = useRegisterFields(onChange);
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <FloatingLabel htmlFor="register-first-name" label={t("auth.fields.firstName")} icon={User}>
+      <div className={styles.nameFields()}>
+        <FloatingLabel htmlFor="register-first-name" label={labels.firstName} icon={User}>
           <Input
             id="register-first-name"
-            className="peer"
+            className={styles.firstNameInput()}
             name="firstName"
             autoComplete="given-name"
             placeholder=" "
             value={form.firstName}
-            onChange={(event) => onChange("firstName", event.target.value)}
+            onChange={handleFirstNameChange}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="register-last-name" label={t("auth.fields.lastName")} icon={User}>
+        <FloatingLabel htmlFor="register-last-name" label={labels.lastName} icon={User}>
           <Input
             id="register-last-name"
-            className="peer"
+            className={styles.lastNameInput()}
             name="lastName"
             autoComplete="family-name"
             placeholder=" "
             value={form.lastName}
-            onChange={(event) => onChange("lastName", event.target.value)}
+            onChange={handleLastNameChange}
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="register-email" label={t("auth.fields.email")} icon={Mail}>
+      <FloatingLabel htmlFor="register-email" label={labels.email} icon={Mail}>
         <Input
           id="register-email"
-          className="peer"
+          className={styles.emailInput()}
           name="email"
           autoComplete="email"
           spellCheck={false}
@@ -49,33 +52,33 @@ export function RegisterFields({
           required
           type="email"
           value={form.email}
-          onChange={(event) => onChange("email", event.target.value)}
+          onChange={handleEmailChange}
         />
       </FloatingLabel>
-      <FloatingLabel htmlFor="register-password" label={t("auth.fields.password")} icon={LockKeyhole}>
+      <FloatingLabel htmlFor="register-password" label={labels.password} icon={LockKeyhole}>
         <Input
           id="register-password"
-          className="peer"
+          className={styles.passwordInput()}
           name="password"
           autoComplete="new-password"
           placeholder=" "
           required
           type="password"
           value={form.password}
-          onChange={(event) => onChange("password", event.target.value)}
+          onChange={handlePasswordChange}
         />
       </FloatingLabel>
-      <FloatingLabel htmlFor="register-confirm-password" label={t("auth.fields.confirmPassword")} icon={LockKeyhole}>
+      <FloatingLabel htmlFor="register-confirm-password" label={labels.confirmPassword} icon={LockKeyhole}>
         <Input
           id="register-confirm-password"
-          className="peer"
+          className={styles.confirmationInput()}
           name="confirmPassword"
           autoComplete="new-password"
           placeholder=" "
           required
           type="password"
           value={form.confirmPassword}
-          onChange={(event) => onChange("confirmPassword", event.target.value)}
+          onChange={handleConfirmationChange}
         />
       </FloatingLabel>
     </>

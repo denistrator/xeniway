@@ -4,13 +4,13 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
 import { store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
-import { SiteHeader } from "./site-header";
+import { SiteHeader } from "./site-header.tsx";
 
 const mockCurrentUser = vi.fn();
 
-vi.mock("../features/data-export/csv-export-button", () => ({ CsvExportButton: () => null }));
-vi.mock("../features/preferences/language-selector", () => ({ LanguageSelector: () => null }));
-vi.mock("../features/preferences/theme-selector", () => ({ ThemeSelector: () => null }));
+vi.mock("../features/data-export/csv-export-button.tsx", () => ({ CsvExportButton: () => null }));
+vi.mock("../features/preferences/language-selector.tsx", () => ({ LanguageSelector: () => null }));
+vi.mock("../features/preferences/theme-selector.tsx", () => ({ ThemeSelector: () => null }));
 vi.mock("../lib/queries", () => ({
   useAuthMutations: () => ({ logout: { mutateAsync: vi.fn(), isPending: false } }),
   useCurrentUser: () => mockCurrentUser(),

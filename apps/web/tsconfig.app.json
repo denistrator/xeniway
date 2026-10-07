@@ -9,6 +9,9 @@
       "vite/client"
     ]
   },
+  "files": [
+    "src/main.tsx"
+  ],
   "include": [
     "src"
   ]

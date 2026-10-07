@@ -1,6 +1,9 @@
-import { useTranslation } from "react-i18next";
-import { dialogBackdropStyles } from "../../../components/ui/surface-styles";
-import { JobFormContent, type JobFormDialogProps } from "./job-form-content";
+import { jobDrawerStyles } from "./job-drawer.styles.ts";
+import { useJobDrawerPresentation } from "./job-drawer.ts";
+import type { JobFormDialogProps } from "./job-form-content.ts";
+import { JobFormContent } from "./job-form-content.tsx";
+
+const styles = jobDrawerStyles();
 
 export function JobDrawer({
   presentation,
@@ -10,25 +13,24 @@ export function JobDrawer({
   onSwitchPresentation,
   dialogRef,
 }: JobFormDialogProps) {
-  const { t } = useTranslation();
+  const { closeLabel, setDialogRef } = useJobDrawerPresentation({
+    presentation,
+    submitting,
+    onSave,
+    onClose,
+    onSwitchPresentation,
+    dialogRef,
+  });
 
   return (
-    <div className="fixed inset-0 z-50 bg-overlay">
-      <button
-        type="button"
-        aria-label={t("common.actions.closeDialog")}
-        tabIndex={-1}
-        className={dialogBackdropStyles()}
-        onClick={onClose}
-      />
+    <div className={styles.root()}>
+      <button type="button" aria-label={closeLabel} tabIndex={-1} className={styles.backdrop()} onClick={onClose} />
       <div
-        ref={(element) => {
-          dialogRef.current = element;
-        }}
+        ref={setDialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="job-form-title"
-        className="relative ms-auto flex h-full w-full max-w-xl flex-col overscroll-contain overflow-y-auto border-s border-line bg-surface p-6 shadow-2xl"
+        className={styles.dialog()}
       >
         <JobFormContent
           presentation={presentation}

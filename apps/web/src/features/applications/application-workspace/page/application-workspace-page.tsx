@@ -1,44 +1,36 @@
-import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
-import { LoadingScreen } from "../../../../components/loading-screen";
-import { getApiErrorKey } from "../../../../i18n/format";
-import { ApiRequestError } from "../../../../lib/api";
-import { useApplicationDetail } from "../../../../lib/queries";
-import { NotFoundPage } from "../../../../pages/not-found-page";
-import { useOfflineAccess } from "../../../offline/offline-access";
-import { ApplicationWorkspaceContent } from "./application-workspace-content";
-import { parseApplicationId } from "./parse-application-id";
+import { LoadingScreen } from "../../../../components/loading-screen.tsx";
+import { NotFoundPage } from "../../../../pages/not-found-page.tsx";
+import { ApplicationWorkspaceContent } from "./application-workspace-content.tsx";
+import { applicationWorkspacePageStyles } from "./application-workspace-page.styles.ts";
 
+import { useApplicationWorkspacePage } from "./application-workspace-page.ts";
+
+const styles = applicationWorkspacePageStyles();
 export function ApplicationWorkspacePage() {
-  const { id: rawId } = useParams();
-  const id = parseApplicationId(rawId);
-  const detail = useApplicationDetail(id);
-  const { t } = useTranslation();
-  const access = useOfflineAccess();
+  const view = useApplicationWorkspacePage();
 
-  if (id === null || (detail.error instanceof ApiRequestError && detail.error.code === "NOT_FOUND")) {
+  if (view.notFound) {
     return <NotFoundPage />;
   }
-  if (!access.canReadRemote && !detail.data) {
+  if (view.notDownloaded) {
     return (
-      <p role="status" className="mx-auto max-w-7xl px-6">
-        {t("offline.notDownloaded")}
+      <p role="status" className={styles.offline()}>
+        {view.offlineLabel}
       </p>
     );
   }
-  if (detail.isPending) {
+  if (view.detail.isPending) {
     return <LoadingScreen />;
   }
-  if (!detail.data || (detail.error instanceof ApiRequestError && detail.error.status < 500)) {
+  if (view.failed || !view.detail.data) {
     return (
-      <div role="alert" className="mx-auto max-w-7xl px-6 py-8 text-sm text-rose-600">
-        <p>{t(getApiErrorKey(detail.error instanceof ApiRequestError ? detail.error.code : "REQUEST_FAILED"))}</p>
-        <button type="button" className="mt-2 underline focus-visible:outline-2" onClick={() => void detail.refetch()}>
-          {t("common.actions.retry")}
+      <div role="alert" className={styles.error()}>
+        <p className={styles.errorText()}>{view.errorText}</p>
+        <button type="button" className={styles.retry()} onClick={view.retry}>
+          {view.retryLabel}
         </button>
       </div>
     );
   }
-
-  return <ApplicationWorkspaceContent key={detail.data.application.id} data={detail.data} />;
+  return <ApplicationWorkspaceContent key={view.detail.data.application.id} data={view.detail.data} />;
 }

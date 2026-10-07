@@ -1,83 +1,8 @@
-import { notifyManager, QueryClientContext, useQueryClient } from "@tanstack/react-query";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createAccessState, selectAccess } from "./offline-access-machine";
-import {
-  createOfflineAccessRuntime,
-  type OfflineAuthData,
-  type OfflineRuntimeOptions,
-  offlineAuthKey,
-} from "./offline-access-runtime";
+import { type OfflineAccessProviderProps, OfflineContext, useOfflineAccessProvider } from "./offline-access.ts";
 
-type Runtime = ReturnType<typeof createOfflineAccessRuntime>;
-type Access = ReturnType<Runtime["getSnapshot"]> &
-  Pick<
-    Runtime,
-    "retryConnection" | "removeDownload" | "signOutLocally" | "prepareDownload" | "reportLocalLogout" | "confirmSignIn"
-  >;
-const OfflineContext = createContext<Access | null>(null);
+export { useCanMutate, useOfflineAccess, useReadAccountId, useVerifiedUser } from "./offline-access.ts";
 
-/** Cached auth identity is not proof of mutation permission; useCanMutate owns that decision. */
-export function useVerifiedUser() {
-  const client = useContext(QueryClientContext);
-  const subscribe = useCallback(
-    (listener: () => void) => client?.getQueryCache().subscribe(notifyManager.batchCalls(listener)) ?? (() => {}),
-    [client],
-  );
-  return useSyncExternalStore(
-    subscribe,
-    () => client?.getQueryData<OfflineAuthData>(offlineAuthKey)?.data.user ?? null,
-  );
-}
-
-export function useOfflineAccess(): Access {
-  const context = useContext(OfflineContext);
-  const user = useVerifiedUser();
-  return (
-    context ?? {
-      ...selectAccess(createAccessState({ online: navigator.onLine, userId: user?.id }), Date.now()),
-      canReadRemote: navigator.onLine,
-      checking: false,
-      retryConnection: async () => {},
-      removeDownload: async () => {},
-      signOutLocally: async () => {},
-      prepareDownload: async () => {},
-      reportLocalLogout: () => {},
-      confirmSignIn: () => {},
-    }
-  );
-}
-export function useReadAccountId() {
-  return useOfflineAccess().readAccountId;
-}
-export function useCanMutate() {
-  return useContext(OfflineContext)?.canMutate ?? navigator.onLine;
-}
-
-export function OfflineAccessProvider({ children, ...options }: OfflineRuntimeOptions & { children: ReactNode }) {
-  const client = useQueryClient();
-  const [runtime] = useState(() => createOfflineAccessRuntime(client, options));
-  const snapshot = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
-  useEffect(() => runtime.start(), [runtime]);
-  const access = useMemo(
-    () => ({
-      ...snapshot,
-      retryConnection: runtime.retryConnection,
-      removeDownload: runtime.removeDownload,
-      signOutLocally: runtime.signOutLocally,
-      prepareDownload: runtime.prepareDownload,
-      reportLocalLogout: runtime.reportLocalLogout,
-      confirmSignIn: runtime.confirmSignIn,
-    }),
-    [snapshot, runtime],
-  );
+export function OfflineAccessProvider({ children, ...options }: OfflineAccessProviderProps) {
+  const access = useOfflineAccessProvider(options);
   return <OfflineContext.Provider value={access}>{children}</OfflineContext.Provider>;
 }

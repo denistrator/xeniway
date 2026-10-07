@@ -1,74 +1,82 @@
 import { Banknote, BriefcaseBusiness, Building2, Link, MapPin } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { FloatingLabel } from "../../../components/ui/floating-label";
-import { Input } from "../../../components/ui/input";
-import type { ApplicationFormState as FormState } from "./application-form";
+import { FloatingLabel } from "../../../components/ui/floating-label.tsx";
+import { Input } from "../../../components/ui/input.tsx";
+import { jobFormBasicFieldsStyles } from "./job-form-basic-fields.styles.ts";
+import { type JobFormBasicFieldsProps, useJobFormBasicFieldsPresentation } from "./job-form-basic-fields.ts";
 
-export function JobFormBasicFields({
-  form,
-  update,
-}: {
-  form: FormState;
-  update: (field: keyof FormState, value: string) => void;
-}) {
-  const { t } = useTranslation();
+const styles = jobFormBasicFieldsStyles();
+
+export function JobFormBasicFields({ form, update }: JobFormBasicFieldsProps) {
+  const {
+    companyLabel,
+    changeCompany,
+    positionLabel,
+    changePosition,
+    locationLabel,
+    changeLocation,
+    salaryLabel,
+    changeSalary,
+    jobUrlLabel,
+    changeJobUrl,
+  } = useJobFormBasicFieldsPresentation({ form, update });
+
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-company" label={t("applications.form.company")} icon={Building2}>
+      <div className={styles.companyPosition()}>
+        <FloatingLabel htmlFor="job-company" label={companyLabel} icon={Building2}>
           <Input
             id="job-company"
-            className="peer"
+            className={styles.companyInput()}
             name="company"
             placeholder=" "
             required
             value={form.company}
-            onChange={(event) => update("company", event.target.value)}
+            onChange={changeCompany}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-position" label={t("applications.form.position")} icon={BriefcaseBusiness}>
+        <FloatingLabel htmlFor="job-position" label={positionLabel} icon={BriefcaseBusiness}>
           <Input
             id="job-position"
-            className="peer"
+            className={styles.positionInput()}
             name="position"
             placeholder=" "
             required
             value={form.position}
-            onChange={(event) => update("position", event.target.value)}
+            onChange={changePosition}
           />
         </FloatingLabel>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-location" label={t("applications.form.location")} icon={MapPin}>
+      <div className={styles.locationSalary()}>
+        <FloatingLabel htmlFor="job-location" label={locationLabel} icon={MapPin}>
           <Input
             id="job-location"
-            className="peer"
+            className={styles.locationInput()}
             name="location"
             placeholder=" "
             value={form.location}
-            onChange={(event) => update("location", event.target.value)}
+            onChange={changeLocation}
           />
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-salary" label={t("applications.form.salary")} icon={Banknote}>
+        <FloatingLabel htmlFor="job-salary" label={salaryLabel} icon={Banknote}>
           <Input
             id="job-salary"
-            className="peer"
+            className={styles.salaryInput()}
             name="salary"
             placeholder=" "
             value={form.salary}
-            onChange={(event) => update("salary", event.target.value)}
+            onChange={changeSalary}
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="job-url" label={t("applications.form.jobUrl")} icon={Link}>
+      <FloatingLabel htmlFor="job-url" label={jobUrlLabel} icon={Link}>
         <Input
           id="job-url"
-          className="peer"
+          className={styles.urlInput()}
           name="jobUrl"
           placeholder=" "
           type="url"
           value={form.jobUrl}
-          onChange={(event) => update("jobUrl", event.target.value)}
+          onChange={changeJobUrl}
         />
       </FloatingLabel>
     </>

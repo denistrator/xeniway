@@ -1,42 +1,40 @@
-import type { ApplicationDetailResponse } from "@xeniway/shared";
 import { ApplicationActivitySection } from "../../activity/application-activity-section.tsx";
-import { jobStatusStyles } from "../../board/job-status-styles";
-import { ContactsSection } from "../contacts/contacts-section";
-import { FollowUpsSection } from "../follow-ups/follow-ups-section";
-import { ApplicationLifecycleActions } from "../lifecycle/application-lifecycle-actions";
-import { ApplicationDetailsSection } from "../overview/application-details-section";
-import { ApplicationUnsavedWarning } from "../overview/application-unsaved-warning";
-import { ApplicationWorkspaceHeader } from "../overview/application-workspace-header";
-import { useApplicationFields } from "../overview/use-application-fields";
-import { PreparationSection } from "../preparation/preparation-section";
+import { ContactsSection } from "../contacts/contacts-section.tsx";
+import { FollowUpsSection } from "../follow-ups/follow-ups-section.tsx";
+import { ApplicationLifecycleActions } from "../lifecycle/application-lifecycle-actions.tsx";
+import { ApplicationDetailsSection } from "../overview/application-details-section.tsx";
+import { ApplicationUnsavedWarning } from "../overview/application-unsaved-warning.tsx";
+import { ApplicationWorkspaceHeader } from "../overview/application-workspace-header.tsx";
+import { PreparationSection } from "../preparation/preparation-section.tsx";
+import { applicationWorkspaceContentStyles } from "./application-workspace-content.styles.ts";
+import {
+  type ApplicationWorkspaceContentProps,
+  useApplicationWorkspaceContent,
+} from "./application-workspace-content.ts";
 
-export function ApplicationWorkspaceContent({ data }: { data: ApplicationDetailResponse["data"] }) {
-  const { application, contacts, events, followUpTasks, preparation } = data;
-  const applicationFields = useApplicationFields(application);
+const styles = applicationWorkspaceContentStyles();
+export function ApplicationWorkspaceContent(props: ApplicationWorkspaceContentProps) {
+  const view = useApplicationWorkspaceContent(props);
 
   return (
-    <div
-      className={jobStatusStyles({ status: application.status }).workspace({
-        className: "mx-auto w-full min-w-0 max-w-7xl space-y-5 px-4 pb-12 sm:px-6",
-      })}
-    >
+    <div className={view.slotClasses.root}>
       <ApplicationWorkspaceHeader
-        application={application}
-        fields={applicationFields}
-        actions={<ApplicationLifecycleActions application={application} />}
+        application={view.application}
+        fields={view.applicationFields}
+        actions={<ApplicationLifecycleActions application={view.application} />}
       />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)]">
-        <div className="space-y-5">
-          <ApplicationDetailsSection fields={applicationFields} />
-          <ApplicationUnsavedWarning fields={applicationFields} />
-          <PreparationSection applicationId={application.id} preparation={preparation} />
-          <ContactsSection applicationId={application.id} contacts={contacts} />
-          <FollowUpsSection applicationId={application.id} tasks={followUpTasks} />
+      <div className={styles.columns()}>
+        <div className={styles.details()}>
+          <ApplicationDetailsSection fields={view.applicationFields} />
+          <ApplicationUnsavedWarning fields={view.applicationFields} />
+          <PreparationSection applicationId={view.application.id} preparation={view.preparation} />
+          <ContactsSection applicationId={view.application.id} contacts={view.contacts} />
+          <FollowUpsSection applicationId={view.application.id} tasks={view.followUpTasks} />
         </div>
         <ApplicationActivitySection
-          applicationId={application.id}
-          events={events}
-          className="workspace-activity mt-0 self-start rounded-2xl border bg-surface p-5"
+          applicationId={view.application.id}
+          events={view.events}
+          className={styles.activity()}
         />
       </div>
     </div>

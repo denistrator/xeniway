@@ -1,18 +1,13 @@
-import type { ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { authCardStyles } from "./auth-card.styles.ts";
+import type { AuthCardProps } from "./auth-card.ts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.tsx";
 
-export function AuthCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
+const styles = authCardStyles();
+
+export function AuthCard({ title, description, children }: AuthCardProps) {
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center bg-canvas">
-      <Card className="w-full">
+    <div className={styles.root()}>
+      <Card className={styles.card()}>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>

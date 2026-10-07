@@ -1,20 +1,20 @@
-import { useTranslation } from "react-i18next";
-import { AppRoutes } from "./app-routes";
-import { AuthFailureHandler } from "./components/auth-failure-handler";
-import { LanguageSync } from "./features/preferences/language-sync";
-import { ThemeSync } from "./features/preferences/theme-sync";
+import { appStyles } from "./App.styles.ts";
+import { useApp } from "./App.ts";
+import { AppRoutes } from "./app-routes.tsx";
+import { AuthFailureHandler } from "./components/auth-failure-handler.tsx";
+import { LanguageSync } from "./features/preferences/language-sync.tsx";
+import { ThemeSync } from "./features/preferences/theme-sync.tsx";
 
-export { AuthFailureHandler } from "./components/auth-failure-handler";
+export { AuthFailureHandler } from "./components/auth-failure-handler.tsx";
+
+const styles = appStyles();
 
 export function App() {
-  const { t } = useTranslation();
+  const view = useApp();
   return (
     <>
-      <a
-        href="#main-content"
-        className="skip-link fixed start-4 top-4 z-[100] -translate-y-24 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-canvas shadow-lg transition-transform focus:translate-y-0"
-      >
-        {t("accessibility.skipToMainContent")}
+      <a href="#main-content" className={styles.skipLink()}>
+        {view.skipToMainContent}
       </a>
       <ThemeSync />
       <LanguageSync />

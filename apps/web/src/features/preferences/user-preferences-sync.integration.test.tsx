@@ -7,7 +7,7 @@ import { userPreferencesKeys } from "../../lib/api";
 import { authKeys } from "../../lib/queries";
 import { store } from "../../store";
 import { initializeTestI18n } from "../../test/initialize-test-i18n";
-import { UserPreferencesSync } from "./user-preferences-sync";
+import { UserPreferencesSync } from "./user-preferences-sync.tsx";
 
 afterEach(() => {
   vi.restoreAllMocks();

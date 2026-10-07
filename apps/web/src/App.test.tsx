@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test } from "vitest";
-import { AuthFailureHandler } from "./App";
+import { AuthFailureHandler } from "./App.tsx";
 import { applicationKeys, userPreferencesKeys } from "./lib/api";
 import { authKeys } from "./lib/queries";
 import { userPreferencesStorageKey } from "./lib/user-preferences";

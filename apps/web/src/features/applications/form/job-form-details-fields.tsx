@@ -1,66 +1,72 @@
 import { CalendarDays, CircleDot, FileText, StickyNote } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { FloatingLabel } from "../../../components/ui/floating-label";
-import { Input } from "../../../components/ui/input";
-import { getStatusLabel, jobStatuses } from "../board/job-status";
-import type { ApplicationFormState as FormState } from "./application-form";
+import { FloatingLabel } from "../../../components/ui/floating-label.tsx";
+import { Input } from "../../../components/ui/input.tsx";
+import { jobFormDetailsFieldsStyles } from "./job-form-details-fields.styles.ts";
+import { type JobFormDetailsFieldsProps, useJobFormDetailsFieldsPresentation } from "./job-form-details-fields.ts";
 
-export function JobFormDetailsFields({
-  form,
-  update,
-}: {
-  form: FormState;
-  update: (field: keyof FormState, value: string) => void;
-}) {
-  const { t } = useTranslation();
+const styles = jobFormDetailsFieldsStyles();
+
+export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps) {
+  const {
+    statusLabel,
+    changeStatus,
+    statusOptions,
+    appliedDateLabel,
+    changeAppliedDate,
+    descriptionLabel,
+    changeDescription,
+    notesLabel,
+    changeNotes,
+  } = useJobFormDetailsFieldsPresentation({ form, update });
+
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FloatingLabel htmlFor="job-status" label={t("applications.form.status")} icon={CircleDot}>
+      <div className={styles.statusDate()}>
+        <FloatingLabel htmlFor="job-status" label={statusLabel} icon={CircleDot}>
           <select
             id="job-status"
-            className="peer"
+            className={styles.statusInput()}
             name="status"
             value={form.status}
-            onChange={(event) => update("status", event.target.value)}
+            onChange={changeStatus}
           >
-            {jobStatuses.map((status) => (
-              <option key={status} value={status}>
-                {getStatusLabel(t, status)}
+            {statusOptions.map((option) => (
+              <option className={styles.statusOption()} key={option.status} value={option.status}>
+                {option.label}
               </option>
             ))}
           </select>
         </FloatingLabel>
-        <FloatingLabel htmlFor="job-applied-at" label={t("applications.form.appliedDate")} icon={CalendarDays}>
+        <FloatingLabel htmlFor="job-applied-at" label={appliedDateLabel} icon={CalendarDays}>
           <Input
             id="job-applied-at"
-            className="peer"
+            className={styles.appliedDateInput()}
             name="appliedAt"
             placeholder=" "
             type="date"
             value={form.appliedAt}
-            onChange={(event) => update("appliedAt", event.target.value)}
+            onChange={changeAppliedDate}
           />
         </FloatingLabel>
       </div>
-      <FloatingLabel htmlFor="job-description" label={t("applications.form.description")} icon={FileText}>
+      <FloatingLabel htmlFor="job-description" label={descriptionLabel} icon={FileText}>
         <textarea
           id="job-description"
-          className="peer min-h-24"
+          className={styles.descriptionInput()}
           name="description"
           placeholder=" "
           value={form.description}
-          onChange={(event) => update("description", event.target.value)}
+          onChange={changeDescription}
         />
       </FloatingLabel>
-      <FloatingLabel htmlFor="job-notes" label={t("applications.form.notes")} icon={StickyNote}>
+      <FloatingLabel htmlFor="job-notes" label={notesLabel} icon={StickyNote}>
         <textarea
           id="job-notes"
-          className="peer min-h-24"
+          className={styles.notesInput()}
           name="notes"
           placeholder=" "
           value={form.notes}
-          onChange={(event) => update("notes", event.target.value)}
+          onChange={changeNotes}
         />
       </FloatingLabel>
     </>

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { changeLocale, initializeI18n } from "../../../i18n/i18n";
-import { getResetToken, PasswordResetPage } from "./password-reset-page";
+import { getResetToken, PasswordResetPage } from "./password-reset-page.tsx";
 
 vi.mock("../../../lib/queries", () => ({
   useCsrfToken: () => ({ isPending: false }),
@@ -34,5 +34,6 @@ describe("password reset page", () => {
     await user.click(screen.getByRole("button", { name: "Оновити пароль" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Паролі мають збігатися");
+    expect(screen.getByRole("alert")).toHaveFocus();
   });
 });

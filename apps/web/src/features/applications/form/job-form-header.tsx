@@ -1,36 +1,27 @@
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import type { JobFormPresentation } from "../../../store";
+import { Button } from "../../../components/ui/button.tsx";
+import { jobFormHeaderStyles } from "./job-form-header.styles.ts";
+import { type JobFormHeaderProps, useJobFormHeaderPresentation } from "./job-form-header.ts";
 
-export function JobFormHeader({
-  presentation,
-  onClose,
-  onSwitchPresentation,
-}: {
-  presentation: JobFormPresentation;
-  onClose: () => void;
-  onSwitchPresentation: () => void;
-}) {
-  const { t } = useTranslation();
-  const switchLabel =
-    presentation === "drawer" ? t("applications.editor.switchToModal") : t("applications.editor.switchToDrawer");
+const styles = jobFormHeaderStyles();
+
+export function JobFormHeader({ presentation, onClose, onSwitchPresentation }: JobFormHeaderProps) {
+  const { switchLabel, addLabel, closeLabel } = useJobFormHeaderPresentation({
+    presentation,
+    onClose,
+    onSwitchPresentation,
+  });
+
   return (
-    <div className="mb-6 flex items-center justify-between gap-4">
-      <h2 id="job-form-title" className="font-display text-2xl font-bold tracking-tight text-ink">
-        {t("applications.editor.add")}
+    <div className={styles.root()}>
+      <h2 id="job-form-title" className={styles.title()}>
+        {addLabel}
       </h2>
-      <div className="flex items-center gap-1">
+      <div className={styles.actions()}>
         <Button variant="ghost" size="icon" aria-label={switchLabel} title={switchLabel} onClick={onSwitchPresentation}>
           {presentation === "drawer" ? <PanelRightOpen aria-hidden="true" /> : <PanelRightClose aria-hidden="true" />}
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("applications.editor.close")}
-          data-dialog-initial-focus
-          onClick={onClose}
-        >
+        <Button variant="ghost" size="icon" aria-label={closeLabel} data-dialog-initial-focus onClick={onClose}>
           ×
         </Button>
       </div>

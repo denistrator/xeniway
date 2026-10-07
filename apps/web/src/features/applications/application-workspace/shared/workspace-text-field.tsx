@@ -1,59 +1,18 @@
 import InlineEdit from "@atlaskit/inline-edit";
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../../components/ui/button";
-import { textAreaStyles } from "../../../../components/ui/field-styles";
-import { useCanMutate } from "../../../offline/offline-access";
-import { useInlineEditFocus } from "./use-inline-edit-focus";
-import { workspaceFieldStyles } from "./workspace-field-styles";
+import { Button } from "../../../../components/ui/button.tsx";
+import { workspaceTextFieldStyles } from "./workspace-text-field.styles.ts";
+import type { WorkspaceTextFieldProps } from "./workspace-text-field.ts";
+import { useWorkspaceTextField } from "./workspace-text-field.ts";
 
-export type WorkspaceTextFieldController = {
-  savedValue: string | null;
-  draft: string;
-  editing: boolean;
-  pending: boolean;
-  state: "error" | "invalid" | null;
-  setDraft(value: string): void;
-  beginEdit(): void;
-  cancel(): void;
-  save(value?: string): Promise<unknown>;
-};
-
-export type WorkspaceFieldFeedback = {
-  kind: "error" | "invalid";
-  text: string;
-} | null;
-
-type WorkspaceTextFieldProps = {
-  id: string;
-  label: string;
-  headingLevel: 2 | 3;
-  className: string;
-  headingClassName: string;
-  controller: WorkspaceTextFieldController;
-  feedback: WorkspaceFieldFeedback;
-};
-
-export function WorkspaceTextField({
-  id,
-  label,
-  headingLevel,
-  className,
-  headingClassName,
-  controller,
-  feedback,
-}: WorkspaceTextFieldProps) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
-  const focus = useInlineEditFocus<HTMLElement, HTMLTextAreaElement>(controller.editing, true, canMutate);
-  const Heading = headingLevel === 2 ? "h2" : "h3";
-  const hasError = feedback?.kind === "error" || feedback?.kind === "invalid";
-  const styles = workspaceFieldStyles({ error: hasError });
+const styles = workspaceTextFieldStyles();
+export function WorkspaceTextField(props: WorkspaceTextFieldProps) {
+  const view = useWorkspaceTextField(props);
   const readView = () => (
-    <div className={styles.readView()}>
-      <p className={styles.value()}>{controller.savedValue || t("applications.workspace.notProvided")}</p>
-      {canMutate && (
-        <span aria-hidden="true" className={styles.editLabel()}>
-          {t("applications.workspace.actions.edit")}
+    <div className={view.slotClasses.readView}>
+      <p className={view.slotClasses.value}>{view.readValue}</p>
+      {view.canMutate && (
+        <span aria-hidden="true" className={view.slotClasses.editLabel}>
+          {view.editLabel}
         </span>
       )}
     </div>
@@ -61,103 +20,82 @@ export function WorkspaceTextField({
 
   return (
     <section
-      ref={focus.container}
-      onFocusCapture={focus.onFocusCapture}
+      ref={view.focus.container}
+      onFocusCapture={view.focus.onFocusCapture}
       tabIndex={-1}
-      aria-labelledby={`${id}-heading`}
-      className={styles.root({ className: `${className} focus-visible:outline-2` })}
+      aria-labelledby={`${view.id}-heading`}
+      className={view.slotClasses.root}
     >
-      <Heading id={`${id}-heading`} className={styles.heading({ className: headingClassName })}>
-        {label}
-      </Heading>
-      {!canMutate && !controller.editing ? (
+      <view.Heading id={`${view.id}-heading`} className={view.slotClasses.heading}>
+        {view.label}
+      </view.Heading>
+      {!view.canMutate && !view.controller.editing ? (
         readView()
       ) : (
         <InlineEdit<string>
-          key={controller.editing ? "editing" : "reading"}
-          defaultValue={controller.savedValue ?? ""}
-          isEditing={controller.editing}
+          key={view.controller.editing ? "editing" : "reading"}
+          defaultValue={view.controller.savedValue ?? ""}
+          isEditing={view.controller.editing}
           keepEditViewOpenOnBlur
-          hideActionButtons={!canMutate}
+          hideActionButtons={!view.canMutate}
           readViewFitContainerWidth
-          editButtonLabel={label}
-          editLabel={t("applications.workspace.actions.edit")}
-          confirmButtonLabel={t("applications.workspace.saveNamed", { name: label.toLowerCase() })}
-          cancelButtonLabel={t("applications.workspace.actions.cancel")}
+          editButtonLabel={view.label}
+          editLabel={view.editLabel}
+          confirmButtonLabel={view.saveNamed}
+          cancelButtonLabel={view.cancelLabel}
           readView={readView}
           editView={(fieldProps, ref) => (
             <>
-              <label htmlFor={id} className="sr-only">
-                {label}
+              <label htmlFor={view.id} className={styles.label()}>
+                {view.label}
               </label>
               <textarea
-                id={id}
-                ref={(element) => {
-                  ref.current = element;
-                  focus.input.current = element;
-                }}
+                id={view.id}
+                ref={view.bindInputRef(ref)}
                 value={fieldProps.value ?? ""}
-                readOnly={!canMutate}
+                readOnly={!view.canMutate}
                 rows={5}
                 maxLength={10000}
-                onChange={(event) => {
-                  fieldProps.onChange(event.target.value);
-                  controller.setDraft(event.target.value);
-                }}
-                aria-invalid={hasError}
-                aria-describedby={hasError ? `${id}-message` : undefined}
-                className={textAreaStyles({ className: "leading-6" })}
+                onChange={view.bindChange(fieldProps)}
+                aria-invalid={view.hasError}
+                aria-describedby={view.hasError ? `${view.id}-message` : undefined}
+                className={view.slotClasses.input}
               />
             </>
           )}
-          onEdit={() => {
-            if (canMutate) {
-              controller.beginEdit();
-            }
-          }}
-          onCancel={controller.cancel}
-          onConfirm={(value) => {
-            if (canMutate) {
-              void controller.save(value);
-            }
-          }}
+          onEdit={view.beginEdit}
+          onCancel={view.controller.cancel}
+          onConfirm={view.confirmEdit}
         />
       )}
-      {!canMutate && controller.editing && (
-        <div className="mt-2 flex gap-2">
-          <Button
-            type="button"
-            disabled
-            aria-label={t("applications.workspace.saveNamed", { name: label.toLowerCase() })}
-          >
-            {t("applications.workspace.actions.save")}
+      {!view.canMutate && view.controller.editing && (
+        <div className={styles.offlineActions()}>
+          <Button type="button" disabled aria-label={view.saveNamed}>
+            {view.saveLabel}
           </Button>
           <Button
-            ref={focus.readOnlyCancel}
+            ref={view.focus.readOnlyCancel}
             type="button"
             variant="outline"
-            onClick={controller.cancel}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                controller.cancel();
-              }
-            }}
+            onClick={view.controller.cancel}
+            onKeyDown={view.cancelOnEscape}
           >
-            {t("applications.workspace.actions.cancel")}
+            {view.cancelLabel}
           </Button>
         </div>
       )}
-      {(controller.pending || feedback) && (
+      {(view.controller.pending || view.feedback) && (
         <p
-          id={`${id}-message`}
-          role={hasError ? "alert" : "status"}
+          id={`${view.id}-message`}
+          role={view.hasError ? "alert" : "status"}
           aria-live="polite"
-          className={styles.feedback({ className: "mt-2" })}
+          className={view.slotClasses.feedback}
         >
-          {controller.pending ? t("applications.workspace.actions.saving") : feedback?.text}
+          {view.controller.pending ? view.savingLabel : view.feedback?.text}
         </p>
       )}
     </section>
   );
 }
+
+export type { WorkspaceFieldFeedback, WorkspaceTextFieldController } from "./workspace-text-field.ts";

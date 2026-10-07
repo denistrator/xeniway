@@ -4,6 +4,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
+### Localize preference-selector accessible labels
+
+- **Where:** `apps/web/src/features/preferences/language-selector.ts` and `theme-selector.ts`.
+- **Evidence:** The language selector translates the language name but hardcodes the English action text; the theme selector's accessible label and option names are English in every locale. This predates the frontend presentation refactor.
+- **Direction:** Add translated selector action/theme labels to the four dictionaries and use them when preparing accessible names.
+- **Guardrails:** Preserve selector keyboard behavior, explicit local-first preference changes, supported locale values, and Hebrew document direction. Update behavioral selector/browser assertions to use the active locale's names, without style assertions.
+
 ### Full offline synchronization
 
 - **Area:** Offline application writes beyond read-only downloads.

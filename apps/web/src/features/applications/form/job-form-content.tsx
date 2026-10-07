@@ -1,20 +1,6 @@
-import type { CreateApplicationInput } from "@xeniway/shared";
-import type { RefObject } from "react";
-import type { JobFormPresentation } from "../../../store";
-import { JobForm } from "./job-form";
-import { JobFormHeader } from "./job-form-header";
-
-export type JobFormContentProps = {
-  presentation: JobFormPresentation;
-  submitting: boolean;
-  onSave: (input: CreateApplicationInput) => void;
-  onClose: () => void;
-  onSwitchPresentation: () => void;
-};
-
-export type JobFormDialogProps = JobFormContentProps & {
-  dialogRef: RefObject<HTMLElement | null>;
-};
+import { JobForm } from "./job-form.tsx";
+import type { JobFormContentProps } from "./job-form-content.ts";
+import { JobFormHeader } from "./job-form-header.tsx";
 
 export function JobFormContent({
   presentation,
@@ -30,3 +16,5 @@ export function JobFormContent({
     </>
   );
 }
+
+export type { JobFormContentProps, JobFormDialogProps } from "./job-form-content.ts";

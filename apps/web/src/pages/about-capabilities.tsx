@@ -1,20 +1,22 @@
-import { useTranslation } from "react-i18next";
-import { capabilities } from "./about-page-data";
+import { aboutCapabilitiesStyles } from "./about-capabilities.styles.ts";
+import { useAboutCapabilities } from "./about-capabilities.ts";
+
+const styles = aboutCapabilitiesStyles();
 
 export function AboutCapabilities() {
-  const { t } = useTranslation();
+  const view = useAboutCapabilities();
   return (
-    <section aria-labelledby="capabilities-title">
-      <div className="mb-5 max-w-2xl">
-        <h2 id="capabilities-title" className="font-display text-3xl font-bold tracking-tight text-ink">
-          {t("about.capabilitiesTitle")}
+    <section aria-labelledby="capabilities-title" className={styles.root()}>
+      <div className={styles.intro()}>
+        <h2 id="capabilities-title" className={styles.heading()}>
+          {view.title}
         </h2>
       </div>
-      <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-[1.15fr_0.85fr]">
-        {capabilities.map((capability, index) => (
-          <article key={capability} className="border-t border-line pt-4">
-            <h3 className="font-semibold text-ink">{t(`about.capability${index + 1}Title`)}</h3>
-            <p className="mt-2 text-sm leading-6 text-ink">{t(`about.capability${index + 1}Text`)}</p>
+      <div className={styles.items()}>
+        {view.capabilities.map((capability) => (
+          <article key={capability.id} className={styles.item()}>
+            <h3 className={styles.itemHeading()}>{capability.title}</h3>
+            <p className={styles.itemDescription()}>{capability.text}</p>
           </article>
         ))}
       </div>

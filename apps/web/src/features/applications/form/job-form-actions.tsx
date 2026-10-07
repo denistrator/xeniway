@@ -1,14 +1,16 @@
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import { useCanMutate } from "../../offline/offline-access";
+import { Button } from "../../../components/ui/button.tsx";
+import { jobFormActionsStyles } from "./job-form-actions.styles.ts";
+import { type JobFormActionsProps, useJobFormActionsPresentation } from "./job-form-actions.ts";
 
-export function JobFormActions({ submitting }: { submitting: boolean }) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
+const styles = jobFormActionsStyles();
+
+export function JobFormActions({ submitting }: JobFormActionsProps) {
+  const { canMutate, savingLabel } = useJobFormActionsPresentation({ submitting });
+
   return (
-    <div className="mt-auto flex flex-wrap items-center gap-2">
+    <div className={styles.root()}>
       <Button type="submit" disabled={submitting || !canMutate}>
-        {submitting ? t("applications.form.saving") : t("applications.form.save")}
+        {savingLabel}
       </Button>
     </div>
   );

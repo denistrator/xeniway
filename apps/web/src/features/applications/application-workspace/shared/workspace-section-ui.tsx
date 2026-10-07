@@ -1,8 +1,16 @@
-import type { RefObject } from "react";
-import { Button } from "../../../../components/ui/button";
-import { CardHeader, CardTitle } from "../../../../components/ui/card";
-import { useCanMutate } from "../../../offline/offline-access";
-import { workspaceFieldStyles } from "./workspace-field-styles";
+import { Button } from "../../../../components/ui/button.tsx";
+import { CardHeader, CardTitle } from "../../../../components/ui/card.tsx";
+import { workspaceSectionUiStyles } from "./workspace-section-ui.styles.ts";
+import {
+  createWorkspaceSectionAction,
+  useWorkspaceFormActions,
+  type WorkspaceFieldErrorProps,
+  type WorkspaceFormActionsProps,
+  type WorkspaceMutationStatusProps,
+  type WorkspaceSectionHeaderProps,
+} from "./workspace-section-ui.ts";
+
+const styles = workspaceSectionUiStyles();
 
 export function WorkspaceSectionHeader({
   headingId,
@@ -11,49 +19,23 @@ export function WorkspaceSectionHeader({
   actionRef,
   actionDisabled,
   onAction,
-}: {
-  headingId: string;
-  title: string;
-  actionLabel: string;
-  actionRef: RefObject<HTMLButtonElement | null>;
-  actionDisabled: boolean;
-  onAction(trigger: HTMLButtonElement): void;
-}) {
+}: WorkspaceSectionHeaderProps) {
+  const handleAction = createWorkspaceSectionAction(onAction);
   return (
-    <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
-      <CardTitle id={headingId} className="workspace-section-title font-display text-xl">
+    <CardHeader className={styles.header()}>
+      <CardTitle id={headingId} className={styles.title()}>
         {title}
       </CardTitle>
-      <Button
-        ref={actionRef}
-        type="button"
-        size="sm"
-        disabled={actionDisabled}
-        onClick={(event) => onAction(event.currentTarget)}
-      >
+      <Button ref={actionRef} type="button" size="sm" disabled={actionDisabled} onClick={handleAction}>
         {actionLabel}
       </Button>
     </CardHeader>
   );
 }
 
-export function WorkspaceMutationStatus({
-  pending,
-  pendingText,
-  text,
-  isError,
-}: {
-  pending: boolean;
-  pendingText: string;
-  text: string | null;
-  isError: boolean;
-}) {
+export function WorkspaceMutationStatus({ pending, pendingText, text, isError }: WorkspaceMutationStatusProps) {
   return (
-    <p
-      role={isError ? "alert" : undefined}
-      aria-live="polite"
-      className={workspaceFieldStyles({ error: isError }).feedback({ className: "mt-3" })}
-    >
+    <p role={isError ? "alert" : undefined} aria-live="polite" className={styles.status({ error: isError })}>
       {pending ? pendingText : text}
     </p>
   );
@@ -65,29 +47,23 @@ export function WorkspaceFormActions({
   savingLabel,
   cancelLabel,
   onCancel,
-}: {
-  pending: boolean;
-  saveLabel: string;
-  savingLabel: string;
-  cancelLabel: string;
-  onCancel(): void;
-}) {
-  const canMutate = useCanMutate();
+}: WorkspaceFormActionsProps) {
+  const view = useWorkspaceFormActions(pending);
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button type="submit" size="sm" disabled={!canMutate || pending}>
+    <div className={styles.actions()}>
+      <Button type="submit" size="sm" disabled={view.saveDisabled}>
         {pending ? savingLabel : saveLabel}
       </Button>
-      <Button type="button" variant="outline" size="sm" disabled={canMutate && pending} onClick={onCancel}>
+      <Button type="button" variant="outline" size="sm" disabled={view.cancelDisabled} onClick={onCancel}>
         {cancelLabel}
       </Button>
     </div>
   );
 }
 
-export function WorkspaceFieldError({ id, text }: { id: string; text: string }) {
+export function WorkspaceFieldError({ id, text }: WorkspaceFieldErrorProps) {
   return (
-    <p id={id} role="alert" className="mt-1 text-sm text-rose-600">
+    <p id={id} role="alert" className={styles.error()}>
       {text}
     </p>
   );

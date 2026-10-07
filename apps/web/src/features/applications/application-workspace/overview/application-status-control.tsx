@@ -1,137 +1,44 @@
-import type { JobApplication } from "@xeniway/shared";
-import { useEffect, useEffectEvent, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { tv } from "tailwind-variants";
-import { useCanMutate } from "../../../offline/offline-access";
-import { getStatusLabel, jobStatuses } from "../../board/job-status";
-import { jobStatusStyles } from "../../board/job-status-styles";
-import type { ApplicationFieldsController } from "./use-application-fields";
+import { applicationStatusControlStyles } from "./application-status-control.styles.ts";
 
-const optionMarkerStyles = tv({
-  base: "pointer-events-none size-4 rounded-full border-3",
-  variants: { selected: { true: "border-accent", false: "border-transparent" } },
-});
+import { type ApplicationStatusControlProps, useApplicationStatusControl } from "./application-status-control.ts";
 
-export function ApplicationStatusControl({
-  application,
-  fields,
-}: {
-  application: JobApplication;
-  fields: ApplicationFieldsController;
-}) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
-  const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const selectedOptionRef = useRef<HTMLInputElement>(null);
-  const wasOpen = useRef(false);
-  const isOpen = fields.compact.activeField === "status";
-  const closeMenu = useEffectEvent(() => fields.compact.blur("status"));
-
-  useEffect(() => {
-    if (isOpen) {
-      wasOpen.current = true;
-      selectedOptionRef.current?.focus();
-    } else if (wasOpen.current) {
-      if (triggerRef.current?.disabled) {
-        menuRef.current?.focus();
-      } else {
-        triggerRef.current?.focus();
-      }
-      wasOpen.current = false;
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        closeMenu();
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") {
-        return;
-      }
-      closeMenu();
-      if (triggerRef.current?.disabled) {
-        menuRef.current?.focus();
-      } else {
-        triggerRef.current?.focus();
-      }
-    };
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("mousedown", closeOnOutsideClick);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [isOpen]);
+const styles = applicationStatusControlStyles();
+export function ApplicationStatusControl(props: ApplicationStatusControlProps) {
+  const view = useApplicationStatusControl(props);
 
   return (
-    <div
-      ref={menuRef}
-      tabIndex={-1}
-      data-compact-edit-field="status"
-      className="workspace-inline-edit relative min-w-0 focus-visible:outline-2"
-    >
+    <div ref={view.menuRef} tabIndex={-1} data-compact-edit-field="status" className={styles.root()}>
       <button
-        ref={triggerRef}
+        ref={view.triggerRef}
         type="button"
-        aria-label={`${t("applications.form.status")}, ${t("applications.workspace.changeStatus")}`}
+        aria-label={view.triggerLabel}
         aria-haspopup="dialog"
-        aria-expanded={isOpen}
+        aria-expanded={view.isOpen}
         aria-controls="application-status-options"
-        disabled={!canMutate || fields.fields.status.pending}
-        onClick={() => {
-          if (isOpen) {
-            fields.compact.cancel("status");
-          } else {
-            fields.compact.requestEdit("status");
-          }
-        }}
-        className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-2"
+        disabled={!view.canMutate || view.fields.fields.status.pending}
+        onClick={view.toggleStatus}
+        className={styles.trigger()}
       >
-        <span
-          aria-hidden="true"
-          className={jobStatusStyles({ status: application.status }).marker({ className: "size-2 rounded-full" })}
-        />
-        {getStatusLabel(t, application.status)}
+        <span aria-hidden="true" className={view.slotClasses.marker} />
+        {view.statusLabel}
       </button>
-      {isOpen && (
-        <fieldset
-          id="application-status-options"
-          className="absolute start-0 top-full z-20 mt-2 min-w-56 rounded-xl border border-line bg-surface p-2 shadow-lg"
-        >
-          <legend className="sr-only">{t("applications.form.status")}</legend>
-          {jobStatuses.map((option) => (
-            <label
-              key={option}
-              className="relative flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent-hover has-[:focus-visible]:outline-2"
-            >
+      {view.isOpen && (
+        <fieldset id="application-status-options" className={styles.options()}>
+          <legend className={styles.legend()}>{view.legendLabel}</legend>
+          {view.options.map(({ option, label, selected, onChange, markerClassName }) => (
+            <label key={option} className={styles.option()}>
               <input
-                ref={option === application.status ? selectedOptionRef : undefined}
+                ref={selected ? view.selectedOptionRef : undefined}
                 type="radio"
                 name="application-status"
                 value={option}
-                checked={option === application.status}
-                disabled={!canMutate || fields.fields.status.pending}
-                onChange={() => {
-                  if (canMutate) {
-                    void fields.compact.selectStatus(option);
-                  }
-                }}
-                className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                checked={selected}
+                disabled={!view.canMutate || view.fields.fields.status.pending}
+                onChange={onChange}
+                className={styles.input()}
               />
-              <span
-                aria-hidden="true"
-                className={jobStatusStyles({ status: option }).marker({
-                  className: optionMarkerStyles({ selected: option === application.status }),
-                })}
-              />
-              {getStatusLabel(t, option)}
+              <span aria-hidden="true" className={markerClassName} />
+              {label}
             </label>
           ))}
         </fieldset>

@@ -1,107 +1,80 @@
-import { useId } from "react";
-import { useTranslation } from "react-i18next";
-import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles";
-import { Input } from "../../../../components/ui/input";
-import { editorFormStyles } from "../../../../components/ui/surface-styles";
-import { useCanMutate } from "../../../offline/offline-access";
-import { WorkspaceFieldError, WorkspaceFormActions } from "../shared/workspace-section-ui";
-import type { FollowUpsController } from "./use-follow-ups-controller";
+import { Input } from "../../../../components/ui/input.tsx";
+import { WorkspaceFieldError, WorkspaceFormActions } from "../shared/workspace-section-ui.tsx";
+import { followUpFormStyles } from "./follow-up-form.styles.ts";
 
-export function FollowUpForm({ controller }: { controller: FollowUpsController }) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
-  const formId = useId();
-  const { editor } = controller;
-  if (!editor.target) {
+import { type FollowUpFormProps, useFollowUpForm } from "./follow-up-form.ts";
+
+const styles = followUpFormStyles();
+export function FollowUpForm(props: FollowUpFormProps) {
+  const view = useFollowUpForm(props);
+
+  if (!view.editor.target) {
     return null;
   }
-
   return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        if (canMutate) {
-          void editor.submit(event);
-        } else {
-          event.preventDefault();
-        }
-      }}
-      className={editorFormStyles()}
-    >
-      <h3 className="font-display text-lg text-ink">
-        {t(editor.target === "new" ? "applications.workspace.followUps.add" : "applications.workspace.followUps.edit")}
-      </h3>
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
-        <div>
-          <label htmlFor={`${formId}-title`} className={fieldLabelStyles()}>
-            {t("applications.workspace.followUps.task")}
+    <form noValidate onSubmit={view.handleSubmit} className={styles.root()}>
+      <h3 className={styles.heading()}>{view.heading}</h3>
+      <div className={styles.fields()}>
+        <div className={styles.titleField()}>
+          <label htmlFor={`${view.formId}-title`} className={styles.titleLabel()}>
+            {view.taskLabel}
           </label>
           <Input
-            id={`${formId}-title`}
-            ref={editor.titleRef}
+            id={`${view.formId}-title`}
+            ref={view.editor.titleRef}
             name="title"
-            readOnly={!canMutate}
+            readOnly={!view.canMutate}
             required
             maxLength={255}
-            value={editor.draft.title}
-            className={fieldErrorStyles({ invalid: Boolean(editor.errors.title) })}
-            aria-invalid={Boolean(editor.errors.title) || undefined}
-            aria-describedby={editor.errors.title ? `${formId}-title-error` : undefined}
-            onChange={(event) => editor.setTitle(event.target.value)}
+            value={view.editor.draft.title}
+            className={view.slotClasses.titleInput}
+            aria-invalid={Boolean(view.editor.errors.title) || undefined}
+            aria-describedby={view.editor.errors.title ? `${view.formId}-title-error` : undefined}
+            onChange={view.changeTitle}
           />
-          {editor.errors.title && (
-            <WorkspaceFieldError
-              id={`${formId}-title-error`}
-              text={t(`applications.workspace.validation.${editor.errors.title}`)}
-            />
-          )}
+          {view.titleError && <WorkspaceFieldError id={`${view.formId}-title-error`} text={view.titleError} />}
         </div>
-        <div>
-          <label htmlFor={`${formId}-dueDate`} className={fieldLabelStyles()}>
-            {t("applications.workspace.followUps.dueDate")}
+        <div className={styles.dateField()}>
+          <label htmlFor={`${view.formId}-dueDate`} className={styles.dateLabel()}>
+            {view.dueDateLabel}
           </label>
           <Input
-            id={`${formId}-dueDate`}
-            ref={editor.dateRef}
+            id={`${view.formId}-dueDate`}
+            ref={view.editor.dateRef}
             name="dueDate"
-            readOnly={!canMutate}
+            readOnly={!view.canMutate}
             type="date"
             required
-            value={editor.draft.dueDate}
-            className={fieldErrorStyles({ invalid: Boolean(editor.errors.dueDate) })}
-            aria-invalid={Boolean(editor.errors.dueDate) || undefined}
-            aria-describedby={editor.errors.dueDate ? `${formId}-dueDate-error` : undefined}
-            onChange={(event) => editor.setDueDate(event.target.value)}
+            value={view.editor.draft.dueDate}
+            className={view.slotClasses.dateInput}
+            aria-invalid={Boolean(view.editor.errors.dueDate) || undefined}
+            aria-describedby={view.editor.errors.dueDate ? `${view.formId}-dueDate-error` : undefined}
+            onChange={view.changeDueDate}
           />
-          {editor.errors.dueDate && (
-            <WorkspaceFieldError
-              id={`${formId}-dueDate-error`}
-              text={t(`applications.workspace.validation.${editor.errors.dueDate}`)}
-            />
-          )}
+          {view.dateError && <WorkspaceFieldError id={`${view.formId}-dueDate-error`} text={view.dateError} />}
         </div>
       </div>
-      <div>
-        <label htmlFor={`${formId}-notes`} className={fieldLabelStyles()}>
-          {t("applications.workspace.followUps.notes")}
+      <div className={styles.notesField()}>
+        <label htmlFor={`${view.formId}-notes`} className={styles.notesLabel()}>
+          {view.notesLabel}
         </label>
         <textarea
-          id={`${formId}-notes`}
+          id={`${view.formId}-notes`}
           name="notes"
-          readOnly={!canMutate}
+          readOnly={!view.canMutate}
           rows={3}
           maxLength={10000}
-          value={editor.draft.notes}
-          onChange={(event) => editor.setNotes(event.target.value)}
-          className={textAreaStyles()}
+          value={view.editor.draft.notes}
+          onChange={view.changeNotes}
+          className={styles.notes()}
         />
       </div>
       <WorkspaceFormActions
-        pending={controller.pending}
-        saveLabel={t("applications.workspace.followUps.save")}
-        savingLabel={t("applications.workspace.actions.saving")}
-        cancelLabel={t("applications.workspace.actions.cancel")}
-        onCancel={editor.close}
+        pending={view.controller.pending}
+        saveLabel={view.saveLabel}
+        savingLabel={view.savingLabel}
+        cancelLabel={view.cancelLabel}
+        onCancel={view.editor.close}
       />
     </form>
   );

@@ -1,12 +1,14 @@
-import type { JobApplication } from "@xeniway/shared";
-import { type ReactNode, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Card, CardContent } from "../../../components/ui/card";
-import { collectionActionStyles } from "../../../components/ui/surface-styles";
+import { Card, CardContent } from "../../../components/ui/card.tsx";
 import { ApplicationActivity } from "../activity/application-activity.tsx";
-import { getStatusLabel } from "../board/job-status";
-import { ApplicationCollectionActions } from "./application-collection-actions";
+import { ApplicationCollectionActions } from "./application-collection-actions.tsx";
+import { applicationCollectionCardStyles } from "./application-collection-card.styles.ts";
+import {
+  type ApplicationCollectionCardProps,
+  useApplicationCollectionCardPresentation,
+} from "./application-collection-card.ts";
+
+const styles = applicationCollectionCardStyles();
 
 export function ApplicationCollectionCard({
   job,
@@ -16,33 +18,20 @@ export function ApplicationCollectionCard({
   onRestore,
   onDelete,
   busy,
-}: {
-  job: JobApplication;
-  details: ReactNode;
-  restoreLabel: ReactNode;
-  deleteLabel: ReactNode;
-  onRestore: () => void;
-  onDelete: () => void;
-  busy: boolean;
-}) {
-  const { t } = useTranslation();
-  const [activityOpen, setActivityOpen] = useState(false);
+}: ApplicationCollectionCardProps) {
+  const { activityOpen, statusLabel, workspacePath, openLabel, activityId, toggleActivity, activityLabel } =
+    useApplicationCollectionCardPresentation({ job, details, restoreLabel, deleteLabel, onRestore, onDelete, busy });
 
   return (
     <Card>
-      <CardContent className="space-y-4 p-5">
-        <div className="min-w-0">
-          <h2 className="break-words font-semibold text-ink">{job.company}</h2>
-          <p className="break-words text-sm leading-6 text-muted">{job.position}</p>
-          {job.location && <p className="mt-1 break-words text-sm leading-6 text-muted">{job.location}</p>}
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {t("applications.blacklist.status", { status: getStatusLabel(t, job.status) })}
-          </p>
-          <Link
-            className="mt-2 inline-flex rounded-lg text-sm font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2"
-            to={`/applications/${job.id}`}
-          >
-            {t("applications.workspace.open")}
+      <CardContent className={styles.content()}>
+        <div className={styles.summary()}>
+          <h2 className={styles.company()}>{job.company}</h2>
+          <p className={styles.position()}>{job.position}</p>
+          {job.location && <p className={styles.location()}>{job.location}</p>}
+          <p className={styles.status()}>{statusLabel}</p>
+          <Link className={styles.workspaceLink()} to={workspacePath}>
+            {openLabel}
           </Link>
           {details}
         </div>
@@ -56,14 +45,14 @@ export function ApplicationCollectionCard({
         <button
           type="button"
           aria-expanded={activityOpen}
-          aria-controls={`application-activity-${job.id}`}
-          className={collectionActionStyles()}
-          onClick={() => setActivityOpen((open) => !open)}
+          aria-controls={activityId}
+          className={styles.activityButton()}
+          onClick={toggleActivity}
         >
-          {t(activityOpen ? "applications.activity.hide" : "applications.activity.view")}
+          {activityLabel}
         </button>
         {activityOpen && (
-          <div id={`application-activity-${job.id}`}>
+          <div className={styles.activityContent()} id={activityId}>
             <ApplicationActivity applicationId={job.id} />
           </div>
         )}

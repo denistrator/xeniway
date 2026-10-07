@@ -1,87 +1,37 @@
-import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { compactControlStyles } from "../../components/ui/compact-control-styles";
-import { changeLocale, type SupportedLocale, supportedLocales } from "../../i18n/i18n";
-import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
-import { useCanMutate } from "../offline/offline-access";
+import { languageSelectorStyles } from "./language-selector.styles.ts";
+import { useLanguageSelector } from "./language-selector.ts";
 
-const options: Array<{ value: SupportedLocale; label: string; flag: string }> = [
-  { value: "en", label: "EN", flag: "🇬🇧" },
-  { value: "ru", label: "RU", flag: "🇷🇺" },
-  { value: "uk", label: "UK", flag: "🇺🇦" },
-  { value: "he", label: "HE", flag: "🇮🇱" },
-];
-
+const styles = languageSelectorStyles();
 export function LanguageSelector() {
-  const { i18n, t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const currentLocale = i18n.resolvedLanguage ?? "en";
-  const currentOption = options.find((option) => option.value === currentLocale) ?? options[0];
-  const user = useCurrentUser();
-  const canMutate = useCanMutate();
-  const updatePreferences = useUpdateUserPreferences();
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
-  }, [open]);
-
-  async function handleChange(locale: SupportedLocale) {
-    try {
-      await changeLocale(locale);
-      if (user.data && canMutate) {
-        updatePreferences.mutate({ selectedLanguage: locale });
-      }
-      setOpen(false);
-    } catch {
-      // Keep the current locale when a lazy dictionary cannot be loaded.
-    }
-  }
-
+  const { open, containerRef, currentOption, label, toggleOpen, menuOptions } = useLanguageSelector();
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={styles.root()}>
       <button
-        aria-label={`Language: ${t(`common.language.${currentOption.value}`)}. Change language`}
+        aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={compactControlStyles()}
-        onClick={() => setOpen((value) => !value)}
+        className={styles.trigger()}
+        onClick={toggleOpen}
         type="button"
       >
         {currentOption.label}
       </button>
       {open && (
-        <div
-          role="menu"
-          className="absolute end-0 top-full z-30 mt-2 min-w-48 rounded-lg border border-line bg-surface p-2 shadow-lg"
-        >
-          {supportedLocales.map((locale) => {
-            const option = options.find((candidate) => candidate.value === locale);
-            if (!option) {
-              return null;
-            }
-            return (
-              <button
-                key={locale}
-                role="menuitem"
-                type="button"
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-start text-sm text-ink hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                onClick={() => void handleChange(locale)}
-              >
-                <span aria-hidden="true">{option.flag}</span>
-                <span>{t(`common.language.${locale}`)}</span>
-              </button>
-            );
-          })}
+        <div role="menu" className={styles.menu()}>
+          {menuOptions.map((option) => (
+            <button
+              key={option.value}
+              role="menuitem"
+              type="button"
+              className={styles.option()}
+              onClick={option.onSelect}
+            >
+              <span aria-hidden="true" className={styles.flag()}>
+                {option.flag}
+              </span>
+              <span className={styles.optionLabel()}>{option.translatedLabel}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>

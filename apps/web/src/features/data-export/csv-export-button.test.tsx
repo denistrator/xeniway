@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeI18n } from "../../i18n/i18n";
-import { CsvExportButton } from "./csv-export-button";
+import { CsvExportButton } from "./csv-export-button.tsx";
 
 const { mutate, useExportMutation } = vi.hoisted(() => ({
   mutate: vi.fn(),

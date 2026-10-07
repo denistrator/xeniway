@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
-import { ApplicationSearch } from "../../../components/application-search";
-import { PageIntro } from "../../../components/page-intro";
-import { emptyStateStyles } from "../../../components/ui/surface-styles";
-import { useCanMutate } from "../../offline/offline-access";
+import { ApplicationSearch } from "../../../components/application-search.tsx";
+import { PageIntro } from "../../../components/page-intro.tsx";
+import { applicationCollectionStyles } from "./application-collection.styles.ts";
+import { type ApplicationCollectionProps, useApplicationCollectionPresentation } from "./application-collection.ts";
+
+const styles = applicationCollectionStyles();
 
 export function ApplicationCollection({
   title,
@@ -17,51 +18,31 @@ export function ApplicationCollection({
   children,
   removeAllLabel,
   onRemoveAll,
-}: {
-  title: string;
-  description: string;
-  loadingMessage: string;
-  emptyMessage: string;
-  noMatchMessage: string;
-  errorMessage?: string;
-  loading: boolean;
-  isEmpty: boolean;
-  hasResults: boolean;
-  children: ReactNode;
-  removeAllLabel: string;
-  onRemoveAll: () => void;
-}) {
-  const canMutate = useCanMutate();
+}: ApplicationCollectionProps) {
+  const { canMutate } = useApplicationCollectionPresentation();
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-6">
+    <div className={styles.root()}>
       <PageIntro title={title} description={description} />
-      <div className="flex flex-wrap gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
+      <div className={styles.toolbar()}>
         <ApplicationSearch />
-        <button
-          disabled={!canMutate}
-          type="button"
-          className="h-10 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          onClick={onRemoveAll}
-        >
+        <button disabled={!canMutate} type="button" className={styles.removeAllButton()} onClick={onRemoveAll}>
           {removeAllLabel}
         </button>
       </div>
       {loading && (
-        <p role="status" aria-live="polite" className="py-10 text-center text-sm leading-6 text-muted">
+        <p role="status" aria-live="polite" className={styles.loading()}>
           {loadingMessage}
         </p>
       )}
       {errorMessage && (
-        <p
-          role="alert"
-          className="rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
-        >
+        <p role="alert" className={styles.error()}>
           {errorMessage}
         </p>
       )}
-      {isEmpty && <p className={emptyStateStyles({ page: true })}>{emptyMessage}</p>}
-      {hasResults && <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{children}</div>}
-      {!loading && !isEmpty && !hasResults && <p className={emptyStateStyles({ page: true })}>{noMatchMessage}</p>}
+      {isEmpty && <p className={styles.empty()}>{emptyMessage}</p>}
+      {hasResults && <div className={styles.results()}>{children}</div>}
+      {!loading && !isEmpty && !hasResults && <p className={styles.noMatch()}>{noMatchMessage}</p>}
     </div>
   );
 }

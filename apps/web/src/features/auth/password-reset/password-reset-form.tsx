@@ -1,12 +1,11 @@
 import { LockKeyhole } from "lucide-react";
-import type { FormEvent, RefObject } from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "../../../components/ui/button";
-import { FloatingLabel } from "../../../components/ui/floating-label";
-import { Input } from "../../../components/ui/input";
-import { getApiErrorKey } from "../../../i18n/format";
-import { ApiRequestError } from "../../../lib/api";
-import { authErrorStyles } from "../auth-styles";
+import { Button } from "../../../components/ui/button.tsx";
+import { FloatingLabel } from "../../../components/ui/floating-label.tsx";
+import { Input } from "../../../components/ui/input.tsx";
+import { passwordResetFormStyles } from "./password-reset-form.styles.ts";
+import { type PasswordResetFormProps, usePasswordResetForm } from "./password-reset-form.ts";
+
+const styles = passwordResetFormStyles();
 
 export function PasswordResetForm({
   password,
@@ -17,23 +16,19 @@ export function PasswordResetForm({
   onPasswordChange,
   onConfirmationChange,
   onSubmit,
-}: {
-  password: string;
-  confirmation: string;
-  error: unknown;
-  pending: boolean;
-  errorRef: RefObject<HTMLParagraphElement | null>;
-  onPasswordChange: (value: string) => void;
-  onConfirmationChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  const { t } = useTranslation();
+}: PasswordResetFormProps) {
+  const { labels, hasError, handlePasswordChange, handleConfirmationChange, submitLabel } = usePasswordResetForm({
+    error,
+    pending,
+    onPasswordChange,
+    onConfirmationChange,
+  });
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <FloatingLabel htmlFor="reset-password" label={t("auth.fields.newPassword")} icon={LockKeyhole}>
+    <form className={styles.form()} onSubmit={onSubmit}>
+      <FloatingLabel htmlFor="reset-password" label={labels.newPassword} icon={LockKeyhole}>
         <Input
           id="reset-password"
-          className="peer"
+          className={styles.passwordInput()}
           name="password"
           type="password"
           autoComplete="new-password"
@@ -41,13 +36,13 @@ export function PasswordResetForm({
           required
           minLength={8}
           value={password}
-          onChange={(event) => onPasswordChange(event.target.value)}
+          onChange={handlePasswordChange}
         />
       </FloatingLabel>
-      <FloatingLabel htmlFor="reset-password-confirmation" label={t("auth.fields.confirmPassword")} icon={LockKeyhole}>
+      <FloatingLabel htmlFor="reset-password-confirmation" label={labels.confirmPassword} icon={LockKeyhole}>
         <Input
           id="reset-password-confirmation"
-          className="peer"
+          className={styles.confirmationInput()}
           name="passwordConfirmation"
           type="password"
           autoComplete="new-password"
@@ -55,16 +50,16 @@ export function PasswordResetForm({
           required
           minLength={8}
           value={confirmation}
-          onChange={(event) => onConfirmationChange(event.target.value)}
+          onChange={handleConfirmationChange}
         />
       </FloatingLabel>
-      {Boolean(error) && (
-        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={authErrorStyles()}>
-          {error instanceof ApiRequestError ? t(getApiErrorKey(error.code)) : String(error)}
+      {hasError && (
+        <p ref={errorRef} role="alert" aria-live="assertive" tabIndex={-1} className={styles.error()}>
+          {labels.error}
         </p>
       )}
-      <Button className="w-full" type="submit" disabled={pending}>
-        {pending ? t("auth.resetPassword.pending") : t("auth.resetPassword.submit")}
+      <Button className={styles.submitButton()} type="submit" disabled={pending}>
+        {submitLabel}
       </Button>
     </form>
   );

@@ -7,7 +7,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
-import { Layout } from "./layout";
+import { Layout } from "./layout.tsx";
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   createMutation: null as UseMutationResult<unknown, Error, CreateApplicationInput> | null,
 }));
 
-vi.mock("./site-header", () => ({ SiteHeader: () => null }));
+vi.mock("./site-header.tsx", () => ({ SiteHeader: () => null }));
 vi.mock("../lib/queries", async () => {
   const { useMutation } = await import("@tanstack/react-query");
   return {

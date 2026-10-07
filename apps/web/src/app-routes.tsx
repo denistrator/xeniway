@@ -1,40 +1,18 @@
-import { lazy } from "react";
 import { Route, Routes } from "react-router-dom";
-import { Layout } from "./components/layout";
-import { GuestOnly, RequireAuth } from "./route-guards";
-
-const AboutPage = lazy(() => import("./pages/about-page").then(({ AboutPage }) => ({ default: AboutPage })));
-const ArchivePage = lazy(() =>
-  import("./features/applications/archive/archive-page").then(({ ArchivePage }) => ({ default: ArchivePage })),
-);
-const BlacklistPage = lazy(() =>
-  import("./features/applications/blacklist/blacklist-page").then(({ BlacklistPage }) => ({ default: BlacklistPage })),
-);
-const ForgotPasswordPage = lazy(() =>
-  import("./features/auth/forgot-password/forgot-password-page").then(({ ForgotPasswordPage }) => ({
-    default: ForgotPasswordPage,
-  })),
-);
-const HomePage = lazy(() => import("./pages/home-page").then(({ HomePage }) => ({ default: HomePage })));
-const ApplicationWorkspacePage = lazy(() =>
-  import("./features/applications/application-workspace/page/application-workspace-page").then(
-    ({ ApplicationWorkspacePage }) => ({ default: ApplicationWorkspacePage }),
-  ),
-);
-const LoginPage = lazy(() =>
-  import("./features/auth/login/login-page").then(({ LoginPage }) => ({ default: LoginPage })),
-);
-const NotFoundPage = lazy(() =>
-  import("./pages/not-found-page").then(({ NotFoundPage }) => ({ default: NotFoundPage })),
-);
-const PasswordResetPage = lazy(() =>
-  import("./features/auth/password-reset/password-reset-page").then(({ PasswordResetPage }) => ({
-    default: PasswordResetPage,
-  })),
-);
-const RegisterPage = lazy(() =>
-  import("./features/auth/register/register-page").then(({ RegisterPage }) => ({ default: RegisterPage })),
-);
+import {
+  AboutPage,
+  ApplicationWorkspacePage,
+  ArchivePage,
+  BlacklistPage,
+  ForgotPasswordPage,
+  HomePage,
+  LoginPage,
+  NotFoundPage,
+  PasswordResetPage,
+  RegisterPage,
+} from "./app-routes.ts";
+import { Layout } from "./components/layout.tsx";
+import { GuestOnly, RequireAuth } from "./route-guards.tsx";
 
 export function AppRoutes() {
   return (
