@@ -21,7 +21,9 @@ export function HomePage() {
   const [dangerOpen, setDangerOpen] = useState(false);
   const [countdown, setCountdown] = useState(5);
   useEffect(() => {
-    if (!dangerOpen) return;
+    if (!dangerOpen) {
+      return;
+    }
     setCountdown(5);
     const timer = window.setInterval(() => setCountdown((value) => Math.max(value - 1, 0)), 1000);
     return () => window.clearInterval(timer);

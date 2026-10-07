@@ -209,7 +209,9 @@ describe("offline durable storage", () => {
         isSystem: true,
       },
     ];
-    if (!query) throw new Error("Missing fixture detail");
+    if (!query) {
+      throw new Error("Missing fixture detail");
+    }
     query.state.data = data;
     await saveOfflineSnapshot(1, state);
     await markOfflineReady(1, "build-1");

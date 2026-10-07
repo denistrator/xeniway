@@ -30,7 +30,9 @@ function controlNotifications() {
     // Drain callbacks scheduled by callbacks too, without advancing network work.
     let count = 0;
     while (scheduled.length) {
-      if (++count > 1000) throw new Error("Query notifications did not settle");
+      if (++count > 1000) {
+        throw new Error("Query notifications did not settle");
+      }
       scheduled.shift()?.();
     }
   };
@@ -218,7 +220,9 @@ test.each(["transport", "server"] as const)(
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
-        if (failure === "transport") throw new TypeError("Network unavailable");
+        if (failure === "transport") {
+          throw new TypeError("Network unavailable");
+        }
         return errorResponse(500);
       }),
     );
@@ -261,13 +265,17 @@ test.each(["before mount", "during restoration"])(
       await saveOfflineSnapshot(user.id, snapshot, generation);
       await markOfflineReady(user.id, "runtime-test", generation);
       const account = await restoreOfflineAccount();
-      if (!account) throw new Error("Missing ready fixture download");
+      if (!account) {
+        throw new Error("Missing ready fixture download");
+      }
 
       client.setQueryData(offlineAuthKey, { data: { user: timing === "before mount" ? otherUser : user } });
       const runtime = createOfflineAccessRuntime(client, { restoration: restoration.promise });
       stop = runtime.start();
       flush();
-      if (timing === "during restoration") client.setQueryData(offlineAuthKey, { data: { user: otherUser } });
+      if (timing === "during restoration") {
+        client.setQueryData(offlineAuthKey, { data: { user: otherUser } });
+      }
       restoration.resolve({ account, snapshot });
       await restoration.promise;
       flush();

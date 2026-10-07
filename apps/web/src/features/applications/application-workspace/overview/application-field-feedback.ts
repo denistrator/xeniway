@@ -23,15 +23,19 @@ export function getApplicationFieldFeedback(
   label: string,
   t: TFunction,
 ): WorkspaceFieldFeedback {
-  if (!controller.state) return null;
+  if (!controller.state) {
+    return null;
+  }
 
-  return {
-    kind: controller.state,
-    text:
-      controller.state === "error"
-        ? controller.errorKey
-          ? t(controller.errorKey)
-          : t("applications.workspace.saveFailedNamed", { name: label.toLowerCase() })
-        : t("applications.form.checkDetails"),
-  };
+  let text: string;
+  if (controller.state === "error") {
+    if (controller.errorKey) {
+      text = t(controller.errorKey);
+    } else {
+      text = t("applications.workspace.saveFailedNamed", { name: label.toLowerCase() });
+    }
+  } else {
+    text = t("applications.form.checkDetails");
+  }
+  return { kind: controller.state, text };
 }

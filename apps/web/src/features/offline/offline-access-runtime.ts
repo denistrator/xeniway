@@ -1,4 +1,11 @@
-import { type DehydratedState, hydrate, notifyManager, type QueryClient, QueryObserver } from "@tanstack/react-query";
+import {
+  type DehydratedState,
+  hydrate,
+  notifyManager,
+  type QueryClient,
+  QueryObserver,
+  type QueryObserverResult,
+} from "@tanstack/react-query";
 import type { CurrentUserResponse } from "@xeniway/shared";
 import {
   ApiRequestError,
@@ -27,6 +34,23 @@ export type OfflineRuntimeOptions = {
   restoration?: Promise<OfflineRestoration | null>;
 };
 
+function readBroadcastMessage(value: unknown) {
+  if (!value || typeof value !== "object" || !("type" in value)) {
+    return null;
+  }
+  return {
+    type: value.type,
+    userId: "userId" in value && typeof value.userId === "number" ? value.userId : undefined,
+    preservePublicCsrf: "preservePublicCsrf" in value && value.preservePublicCsrf === true,
+  };
+}
+
+function isSessionRejected(result: QueryObserverResult<OfflineAuthData>): boolean {
+  const isRejectedRequest = result.error instanceof ApiRequestError && [401, 403].includes(result.error.status);
+  const isSignedOut = result.isSuccess && result.data.data.user === null;
+  return isRejectedRequest || isSignedOut;
+}
+
 /** One mounted provider owns one runtime. Construction has no subscriptions or I/O. */
 export function createOfflineAccessRuntime(client: QueryClient, options: OfflineRuntimeOptions = {}) {
   const authUser = () => client.getQueryData<OfflineAuthData>(offlineAuthKey)?.data.user;
@@ -36,11 +60,15 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     account: options.initialAccount,
     restoring: Boolean(options.restoration),
   });
-  if (client.getQueryState(offlineAuthKey)?.error) state = transitionAccess(state, { type: "SESSION_UNAVAILABLE" });
+  if (client.getQueryState(offlineAuthKey)?.error) {
+    state = transitionAccess(state, { type: "SESSION_UNAVAILABLE" });
+  }
   let snapshot = selectAccess(state, Date.now());
   const listeners = new Set<() => void>();
   const notifySubscribers = () => {
-    for (const listener of listeners) listener();
+    for (const listener of listeners) {
+      listener();
+    }
   };
   const scheduleNotification = notifyManager.batchCalls(notifySubscribers);
   let active = false;
@@ -56,12 +84,19 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
 
   function dispatch(event: AccessEvent, notification: "scheduled" | "immediate" = "scheduled") {
     const next = transitionAccess(state, event);
-    if (next === state) return;
+    if (next === state) {
+      return;
+    }
     state = next;
     snapshot = selectAccess(state, Date.now());
-    if (notification === "immediate") notifySubscribers();
-    else scheduleNotification();
-    if (active) synchronizeDownloadResources();
+    if (notification === "immediate") {
+      notifySubscribers();
+    } else {
+      scheduleNotification();
+    }
+    if (active) {
+      synchronizeDownloadResources();
+    }
   }
 
   function broadcast(message: { type: string; userId?: number; preservePublicCsrf?: boolean }) {
@@ -78,7 +113,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     void client.cancelQueries({ queryKey: offlineAuthKey, exact: true });
     cancelPrivateQueries();
     client.removeQueries({ queryKey: userPreferencesKeys.all });
-    if (!preservePublicCsrf) client.removeQueries({ queryKey: ["auth", "csrf"] });
+    if (!preservePublicCsrf) {
+      client.removeQueries({ queryKey: ["auth", "csrf"] });
+    }
     client.setQueryData(offlineAuthKey, { data: { user: null } });
   }
 
@@ -92,7 +129,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   function rejectSession() {
-    if (state.session.status === "signed-out") return;
+    if (state.session.status === "signed-out") {
+      return;
+    }
     const preservePublicCsrf = state.session.status !== "verified";
     dispatch({ type: "SESSION_REJECTED" });
     clearSessionCache(preservePublicCsrf);
@@ -101,24 +140,33 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   function assertWrite() {
-    if (!snapshot.canMutate || !navigator.onLine || authUser()?.id !== snapshot.readAccountId)
+    if (!snapshot.canMutate || !navigator.onLine || authUser()?.id !== snapshot.readAccountId) {
       throw new ApiRequestError("Verified online access is required", "OFFLINE_READ_ONLY", 0);
+    }
   }
 
   async function retryConnection() {
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     const operation = ++nextOperation;
     const startedLifetime = lifetime;
     dispatch({ type: "VERIFY_STARTED", operation });
     // Invalidation alone can reuse a cold in-flight check from the previous session.
     void client.cancelQueries({ queryKey: offlineAuthKey, exact: true }, { silent: true, revert: false });
     await client.invalidateQueries({ queryKey: offlineAuthKey });
-    if (!active || startedLifetime !== lifetime) return;
+    if (!active || startedLifetime !== lifetime) {
+      return;
+    }
     const result = client.getQueryState<OfflineAuthData>(offlineAuthKey);
     if (result?.status === "success" && result.data?.data.user && navigator.onLine) {
       dispatch({ type: "VERIFY_SUCCEEDED", operation, userId: result.data.data.user.id });
-      if (snapshot.canMutate) void client.invalidateQueries({ queryKey: applicationKeys.all });
-    } else dispatch({ type: "VERIFY_FAILED", operation, online: navigator.onLine });
+      if (snapshot.canMutate) {
+        void client.invalidateQueries({ queryKey: applicationKeys.all });
+      }
+    } else {
+      dispatch({ type: "VERIFY_FAILED", operation, online: navigator.onLine });
+    }
   }
 
   async function removeDownload() {
@@ -126,7 +174,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     dispatch({ type: "DOWNLOAD_REMOVED" });
     broadcast({ type: "removed", userId: ownerId });
     try {
-      if (ownerId) await clearOfflineAccount(ownerId);
+      if (ownerId) {
+        await clearOfflineAccount(ownerId);
+      }
     } catch (error) {
       dispatch({ type: "STORAGE_FAILED" });
       throw error;
@@ -138,7 +188,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     clearSessionCache(false);
     broadcast({ type: "logout" });
     await clearDeviceRecords();
-    if (input.discloseRemoteLimit) dispatch({ type: "LOCAL_LOGOUT_REPORTED" });
+    if (input.discloseRemoteLimit) {
+      dispatch({ type: "LOCAL_LOGOUT_REPORTED" });
+    }
   }
 
   async function prepareDownload(input: { consent: boolean; refresh?: boolean }) {
@@ -151,8 +203,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       state.download.status === "preparing" ||
       !snapshot.canMutate ||
       !(refresh ? snapshot.account?.userId === user.id : input.consent)
-    )
+    ) {
       return;
+    }
     assertWrite();
     const operation = ++nextOperation;
     const startedLifetime = lifetime;
@@ -165,8 +218,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         authUser()?.id !== user.id ||
         state.download.status !== "preparing" ||
         state.download.operation !== operation
-      )
+      ) {
         throw new OfflinePreparationChangedError();
+      }
     };
     try {
       const account = await prepareOfflineAccount(
@@ -183,12 +237,16 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       assertPreparationOwner();
       dispatch({ type: "PREPARATION_SUCCEEDED", operation, account });
     } catch {
-      if (active && startedLifetime === lifetime) dispatch({ type: "PREPARATION_FAILED", operation });
+      if (active && startedLifetime === lifetime) {
+        dispatch({ type: "PREPARATION_FAILED", operation });
+      }
     }
   }
 
   async function persist(account: OfflineAccountMetadata) {
-    if (!active || !snapshot.canMutate || snapshot.account !== account) return;
+    if (!active || !snapshot.canMutate || snapshot.account !== account) {
+      return;
+    }
     try {
       await saveOfflineSnapshot(
         account.userId,
@@ -196,7 +254,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         account.preparationId ?? null,
       );
     } catch (error) {
-      if (!(error instanceof OfflinePreparationChangedError)) dispatch({ type: "STORAGE_FAILED" });
+      if (!(error instanceof OfflinePreparationChangedError)) {
+        dispatch({ type: "STORAGE_FAILED" });
+      }
     }
   }
 
@@ -212,7 +272,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         stopWorkerUpdates = checkOfflineWorkerUpdate(() => dispatch({ type: "WORKER_UPDATE_AVAILABLE" }));
         expiryTimer = setTimeout(
           () => {
-            if (snapshot.account !== account) return;
+            if (snapshot.account !== account) {
+              return;
+            }
             client.removeQueries({ queryKey: applicationKeys.account(account.userId) });
             dispatch({ type: "DOWNLOAD_EXPIRED", account });
             void clearOfflineAccount(account.userId, account.preparationId ?? null).catch(() =>
@@ -224,37 +286,53 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       }
     }
     const shouldPersist = Boolean(account && snapshot.canMutate && account.userId === snapshot.readAccountId);
-    if (!shouldPersist) clearTimeout(persistTimer);
-    if (shouldPersist && account && (!persistenceEnabled || accountChanged)) void persist(account);
+    if (!shouldPersist) {
+      clearTimeout(persistTimer);
+    }
+    const needsPersistence = !persistenceEnabled || accountChanged;
+    if (shouldPersist && account && needsPersistence) {
+      void persist(account);
+    }
     persistenceEnabled = shouldPersist;
   }
 
+  function handleRemoteSessionChange(userId: number | undefined) {
+    dispatch({ type: "RESTORATION_CANCELLED" });
+    if (snapshot.account && snapshot.account.userId !== userId) {
+      dispatch({ type: "DOWNLOAD_REPLACED" });
+      cancelPrivateQueries();
+    }
+    void retryConnection();
+  }
+
   function handleMessage(event: MessageEvent) {
-    const message: unknown = event.data;
-    if (!message || typeof message !== "object" || !("type" in message)) return;
-    const userId = "userId" in message && typeof message.userId === "number" ? message.userId : undefined;
+    const message = readBroadcastMessage(event.data);
+    if (!message) {
+      return;
+    }
+    const userId = message.userId;
     switch (message.type) {
       case "account-replaced":
         dispatch({ type: "DOWNLOAD_REPLACED" });
-        if (userId !== authUser()?.id) cancelPrivateQueries();
-        break;
-      case "session-changed":
-        dispatch({ type: "RESTORATION_CANCELLED" });
-        if (snapshot.account && snapshot.account.userId !== userId) {
-          dispatch({ type: "DOWNLOAD_REPLACED" });
+        if (userId !== authUser()?.id) {
           cancelPrivateQueries();
         }
-        void retryConnection();
+        break;
+      case "session-changed":
+        handleRemoteSessionChange(userId);
         break;
       case "removed":
-        if (userId !== undefined) removedRestorationOwners.add(userId);
-        if (userId !== snapshot.account?.userId) return;
+        if (userId !== undefined) {
+          removedRestorationOwners.add(userId);
+        }
+        if (userId !== snapshot.account?.userId) {
+          return;
+        }
         dispatch({ type: "DOWNLOAD_REMOVED" });
         cancelPrivateQueries();
         break;
       case "logout": {
-        const preservePublicCsrf =
-          "preservePublicCsrf" in message && message.preservePublicCsrf === true && state.session.status !== "verified";
+        const preservePublicCsrf = message.preservePublicCsrf && state.session.status !== "verified";
         dispatch({ type: "SIGNED_OUT" });
         clearSessionCache(preservePublicCsrf);
         break;
@@ -262,11 +340,60 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     }
   }
 
+  function acceptVerifiedSession(userId: number) {
+    const previousOwner = state.session.status === "verified" ? state.session.userId : snapshot.account?.userId;
+    const oldAccount = snapshot.account;
+    dispatch({ type: "SESSION_VERIFIED", userId });
+    if (!previousOwner || previousOwner === userId) {
+      return;
+    }
+    cancelPrivateQueries();
+    broadcast({ type: "session-changed", userId });
+    if (oldAccount) {
+      discardAccountDownload(oldAccount);
+    }
+  }
+
+  function discardAccountDownload(account: OfflineAccountMetadata) {
+    void clearOfflineAccount(account.userId, account.preparationId ?? null).catch(() =>
+      dispatch({ type: "STORAGE_FAILED" }),
+    );
+  }
+
+  function canRestoreAccount(account: OfflineAccountMetadata): boolean {
+    const ownerId = authUser()?.id;
+    const wasRemoved = removedRestorationOwners.has(account.userId);
+    const matchesOwner = !ownerId || ownerId === account.userId;
+    const isSignedOut = state.session.status === "signed-out";
+    const isUnexpired = account.expiresAt > Date.now();
+    return !wasRemoved && matchesOwner && !isSignedOut && isUnexpired;
+  }
+
+  function restoreAccount(restored: OfflineRestoration | null, restorationEpoch: number) {
+    if (state.epoch !== restorationEpoch) {
+      if (restored) {
+        discardAccountDownload(restored.account);
+      }
+      return;
+    }
+    if (restored && canRestoreAccount(restored.account)) {
+      hydrate(client, restored.snapshot);
+      dispatch({ type: "RESTORED", epoch: restorationEpoch, account: restored.account });
+      return;
+    }
+    dispatch({ type: "RESTORED", epoch: restorationEpoch, account: null });
+    if (restored) {
+      discardAccountDownload(restored.account);
+    }
+  }
+
   function start() {
     active = true;
     const startedLifetime = ++lifetime;
     channel = typeof BroadcastChannel === "function" ? new BroadcastChannel("xeniway-offline") : null;
-    if (channel) channel.onmessage = handleMessage;
+    if (channel) {
+      channel.onmessage = handleMessage;
+    }
     let observedData: OfflineAuthData | undefined;
     let observedAt = -1;
     const observer = new QueryObserver<OfflineAuthData>(client, {
@@ -277,14 +404,17 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       staleTime: 60_000,
       networkMode: "always",
     });
-    const observeSession = (result: ReturnType<typeof observer.getCurrentResult>) => {
-      if (!active || lifetime !== startedLifetime) return;
-      // A retry retains its previous error until the new request settles.
-      if (result.isError && result.isFetching) return;
-      const rejected =
-        (result.error instanceof ApiRequestError && [401, 403].includes(result.error.status)) ||
-        (result.isSuccess && result.data.data.user === null);
-      if (rejected) {
+    const observeVerifiedSession = (data: OfflineAuthData, updatedAt: number) => {
+      const alreadyObserved = observedData === data && observedAt === updatedAt;
+      if (!data.data.user || alreadyObserved) {
+        return;
+      }
+      observedData = data;
+      observedAt = updatedAt;
+      acceptVerifiedSession(data.data.user.id);
+    };
+    const applySessionResult = (result: QueryObserverResult<OfflineAuthData>) => {
+      if (isSessionRejected(result)) {
         rejectSession();
         return;
       }
@@ -292,25 +422,20 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         dispatch({ type: "SESSION_UNAVAILABLE" });
         return;
       }
-      if (
-        !result.isSuccess ||
-        !result.data.data.user ||
-        (observedData === result.data && observedAt === result.dataUpdatedAt)
-      )
+      if (!result.isSuccess) {
         return;
-      observedData = result.data;
-      observedAt = result.dataUpdatedAt;
-      const previousOwner = state.session.status === "verified" ? state.session.userId : snapshot.account?.userId;
-      const oldAccount = snapshot.account;
-      dispatch({ type: "SESSION_VERIFIED", userId: result.data.data.user.id });
-      if (previousOwner && previousOwner !== result.data.data.user.id) {
-        cancelPrivateQueries();
-        broadcast({ type: "session-changed", userId: result.data.data.user.id });
-        if (oldAccount)
-          void clearOfflineAccount(oldAccount.userId, oldAccount.preparationId ?? null).catch(() =>
-            dispatch({ type: "STORAGE_FAILED" }),
-          );
       }
+      observeVerifiedSession(result.data, result.dataUpdatedAt);
+    };
+    const observeSession = (result: QueryObserverResult<OfflineAuthData>) => {
+      if (!active || lifetime !== startedLifetime) {
+        return;
+      }
+      // A retry retains its previous error until the new request settles.
+      if (result.isError && result.isFetching) {
+        return;
+      }
+      applySessionResult(result);
     };
     // Apply authorization immediately; only React subscriber notifications are scheduled.
     const unsubscribeAuth = observer.subscribe(observeSession);
@@ -324,8 +449,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         event.query.queryKey[1] !== account.userId ||
         event.type !== "updated" ||
         !["success", "error"].includes(event.action.type)
-      )
+      ) {
         return;
+      }
       clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         void persist(account);
@@ -348,39 +474,20 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     synchronizeDownloadResources();
     const restorationEpoch = state.epoch;
     void options.restoration?.then((restored) => {
-      if (!active || lifetime !== startedLifetime) return;
-      if (state.epoch !== restorationEpoch) {
-        if (restored)
-          void clearOfflineAccount(restored.account.userId, restored.account.preparationId ?? null).catch(() =>
-            dispatch({ type: "STORAGE_FAILED" }),
-          );
+      if (!active || lifetime !== startedLifetime) {
         return;
       }
-      const ownerId = authUser()?.id;
-      if (
-        restored &&
-        !removedRestorationOwners.has(restored.account.userId) &&
-        (!ownerId || ownerId === restored.account.userId) &&
-        state.session.status !== "signed-out" &&
-        restored.account.expiresAt > Date.now()
-      ) {
-        hydrate(client, restored.snapshot);
-        dispatch({ type: "RESTORED", epoch: restorationEpoch, account: restored.account });
-      } else {
-        dispatch({ type: "RESTORED", epoch: restorationEpoch, account: null });
-        if (restored)
-          void clearOfflineAccount(restored.account.userId, restored.account.preparationId ?? null).catch(() =>
-            dispatch({ type: "STORAGE_FAILED" }),
-          );
-      }
+      restoreAccount(restored, restorationEpoch);
     });
     return () => {
       active = false;
       lifetime += 1;
-      if (state.connection.status === "verifying")
+      if (state.connection.status === "verifying") {
         dispatch({ type: "VERIFY_FAILED", operation: state.connection.operation, online: navigator.onLine });
-      if (state.download.status === "preparing")
+      }
+      if (state.download.status === "preparing") {
         dispatch({ type: "PREPARATION_CANCELLED", operation: state.download.operation });
+      }
       unsubscribeAuth();
       unsubscribeCache();
       window.removeEventListener("offline", lost);
@@ -413,8 +520,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     signOutLocally,
     prepareDownload,
     confirmSignIn: (userId: number) => {
-      if (active && authUser()?.id === userId)
+      if (active && authUser()?.id === userId) {
         dispatch({ type: "SIGN_IN_SUCCEEDED", userId, online: navigator.onLine });
+      }
     },
     reportLocalLogout: () => dispatch({ type: "LOCAL_LOGOUT_REPORTED" }),
   };

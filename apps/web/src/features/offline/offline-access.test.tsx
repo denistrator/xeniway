@@ -51,8 +51,11 @@ test.each(["local", "cross-tab"])("%s logout cannot be undone by a delayed sessi
   try {
     await waitFor(() => expect(client.getQueryState(authKeys.me)?.fetchStatus).toBe("fetching"));
     await act(async () => {
-      if (mode === "local") await view.result.current.signOutLocally();
-      else channels.find((channel) => channel.onmessage)?.onmessage?.({ data: { type: "logout" } });
+      if (mode === "local") {
+        await view.result.current.signOutLocally();
+      } else {
+        channels.find((channel) => channel.onmessage)?.onmessage?.({ data: { type: "logout" } });
+      }
     });
     expect(view.result.current.readAccountId).toBeNull();
     await act(async () => {
@@ -74,8 +77,9 @@ test("a transient server failure retains a verified read-only route without a do
   vi.stubGlobal(
     "fetch",
     vi.fn(async (path: string) => {
-      if (path.endsWith("/me"))
+      if (path.endsWith("/me")) {
         return new Response(JSON.stringify({ data: { user: { id: 1, email: "candidate@example.com" } } }));
+      }
       return available
         ? new Response(JSON.stringify({ data: { applications: [] } }))
         : new Response(JSON.stringify({ error: { code: "INTERNAL_SERVER_ERROR", message: "Server error" } }), {
@@ -108,11 +112,14 @@ test("sign-in after a rejected connection retry restores the authenticated write
   vi.stubGlobal(
     "fetch",
     vi.fn(async (path: string) => {
-      if (path.endsWith("/me"))
+      if (path.endsWith("/me")) {
         return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Unauthorized" } }), {
           status: 401,
         });
-      if (path.endsWith("/csrf")) return new Response(JSON.stringify({ data: { csrfToken: "public-csrf" } }));
+      }
+      if (path.endsWith("/csrf")) {
+        return new Response(JSON.stringify({ data: { csrfToken: "public-csrf" } }));
+      }
       return new Response(JSON.stringify({ data: { user, csrfToken: "session-csrf" } }));
     }),
   );
@@ -143,11 +150,14 @@ test.each(["login", "register"] as const)(
     vi.stubGlobal(
       "fetch",
       vi.fn(async (path: string) => {
-        if (path.endsWith("/me"))
+        if (path.endsWith("/me")) {
           return new Response(JSON.stringify({ error: { code: "REQUEST_FAILED", message: "Unavailable" } }), {
             status: 500,
           });
-        if (path.endsWith("/csrf")) return new Response(JSON.stringify({ data: { csrfToken: "public-csrf" } }));
+        }
+        if (path.endsWith("/csrf")) {
+          return new Response(JSON.stringify({ data: { csrfToken: "public-csrf" } }));
+        }
         return new Response(JSON.stringify({ data: { user, csrfToken: "session-csrf" } }));
       }),
     );
@@ -182,7 +192,9 @@ test.each(["previous owner", "rejected"])(
     vi.stubGlobal(
       "fetch",
       vi.fn(async (path: string) => {
-        if (path.endsWith("/me")) return pending;
+        if (path.endsWith("/me")) {
+          return pending;
+        }
         return new Response(JSON.stringify({ data: { user: signedIn, csrfToken: "new-csrf" } }));
       }),
     );
@@ -289,7 +301,9 @@ test("an old tab's expiry timer cannot delete a renewed same-owner download", as
   const client = new QueryClient();
   client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
   const old = await ready(client);
-  if (!old) throw new Error("Missing fixture account");
+  if (!old) {
+    throw new Error("Missing fixture account");
+  }
   const now = Date.now();
   const generation = await enableOfflineAccount({
     version: 1,
@@ -359,7 +373,9 @@ test.each([
   const source = new QueryClient();
   const account = await ready(source);
   expect(account).not.toBeNull();
-  if (!account) throw new Error("Ready profile missing");
+  if (!account) {
+    throw new Error("Ready profile missing");
+  }
   const snapshot = offlineQuerySnapshot(source, account.userId);
   let resolve!: (value: { account: OfflineAccountMetadata; snapshot: DehydratedState }) => void;
   const restoration = new Promise<{ account: OfflineAccountMetadata; snapshot: DehydratedState }>((done) => {
@@ -370,18 +386,25 @@ test.each([
   await waitFor(() => expect(client.getQueryState(authKeys.me)?.status).toBe("error"));
   expect(result.current.checking).toBe(true);
   await act(async () => {
-    if (revocation === "local-clear") await result.current.removeDownload();
-    else if (revocation === "logout-reauthenticated") {
-      await result.current.signOutLocally();
-      client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
-    } else if (revocation !== "none") {
-      for (const channel of channels)
-        channel.onmessage?.({
-          data: {
-            type: revocation === "unrelated-removed" ? "removed" : revocation,
-            userId: ["account-replaced", "session-changed", "unrelated-removed"].includes(revocation) ? 2 : 1,
-          },
-        });
+    switch (revocation) {
+      case "local-clear":
+        await result.current.removeDownload();
+        break;
+      case "logout-reauthenticated":
+        await result.current.signOutLocally();
+        client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
+        break;
+      case "none":
+        break;
+      default:
+        for (const channel of channels) {
+          channel.onmessage?.({
+            data: {
+              type: revocation === "unrelated-removed" ? "removed" : revocation,
+              userId: ["account-replaced", "session-changed", "unrelated-removed"].includes(revocation) ? 2 : 1,
+            },
+          });
+        }
     }
     resolve({ account, snapshot });
     await restoration;
@@ -406,8 +429,9 @@ async function ready(client: QueryClient) {
     verifiedAt: now,
     expiresAt: now + OFFLINE_RETENTION_MS,
   });
-  for (const list of ["active", "archive", "blacklist"] as const)
+  for (const list of ["active", "archive", "blacklist"] as const) {
     client.setQueryData(applicationKeys.list(1, list), { data: { applications: [] } });
+  }
   await saveOfflineSnapshot(1, offlineQuerySnapshot(client, 1));
   await markOfflineReady(1, "test");
   return restoreOfflineAccount(Date.now());
@@ -467,10 +491,11 @@ test("rejection of a previously verified session refreshes its authenticated CSR
   vi.stubGlobal(
     "fetch",
     vi.fn(async (path: string) => {
-      if (path.endsWith("/me"))
+      if (path.endsWith("/me")) {
         return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Unauthorized" } }), {
           status: 401,
         });
+      }
       csrfRequests += 1;
       return new Response(JSON.stringify({ data: { csrfToken: csrfRequests === 1 ? "session-csrf" : "public-csrf" } }));
     }),
@@ -530,7 +555,9 @@ test.each(["transport", "server"])(
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
-        if (failure === "transport") throw new TypeError("Network unavailable");
+        if (failure === "transport") {
+          throw new TypeError("Network unavailable");
+        }
         return new Response(JSON.stringify({ error: { code: "REQUEST_FAILED", message: "Failed" } }), { status: 500 });
       }),
     );

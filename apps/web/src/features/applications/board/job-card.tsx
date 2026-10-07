@@ -1,6 +1,6 @@
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import type { JobApplication } from "@xeniway/shared";
-import { useEffect, useRef } from "react";
+import { type KeyboardEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../i18n/format";
 import { useCanMutate } from "../../offline/offline-access";
@@ -26,39 +26,59 @@ export function JobCard({
   const canMutate = useCanMutate();
   const cardRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!cardRef.current || !canMutate) return;
+    if (!cardRef.current || !canMutate) {
+      return;
+    }
     return draggable({
       element: cardRef.current,
       getInitialData: () => ({ type: "job-application", applicationId: job.id }),
       onDragStart,
     });
   }, [job.id, onDragStart, canMutate]);
+
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (!canMutate) {
+      return;
+    }
+    let direction: Parameters<typeof onKeyboardMove>[0] | null = null;
+    if (event.shiftKey) {
+      switch (event.key) {
+        case "ArrowLeft":
+          direction = "previousStatus";
+          break;
+        case "ArrowRight":
+          direction = "nextStatus";
+          break;
+      }
+    } else {
+      switch (event.key) {
+        case "ArrowUp":
+          direction = "up";
+          break;
+        case "ArrowDown":
+          direction = "down";
+          break;
+        case "Home":
+          direction = "first";
+          break;
+        case "End":
+          direction = "last";
+          break;
+      }
+    }
+    if (!direction) {
+      return;
+    }
+    event.preventDefault();
+    onKeyboardMove(direction);
+  }
+
   return (
     <button
       type="button"
       ref={cardRef}
       onClick={onOpen}
-      onKeyDown={(event) => {
-        if (!canMutate) return;
-        const direction = event.shiftKey
-          ? event.key === "ArrowLeft"
-            ? "previousStatus"
-            : event.key === "ArrowRight"
-              ? "nextStatus"
-              : null
-          : event.key === "ArrowUp"
-            ? "up"
-            : event.key === "ArrowDown"
-              ? "down"
-              : event.key === "Home"
-                ? "first"
-                : event.key === "End"
-                  ? "last"
-                  : null;
-        if (!direction) return;
-        event.preventDefault();
-        onKeyboardMove(direction);
-      }}
+      onKeyDown={handleKeyDown}
       aria-keyshortcuts={canMutate ? "ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight" : undefined}
       aria-label={`${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. ${t("applications.board.openDetails")}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`}
       className="w-full cursor-grab rounded-xl border border-line bg-surface p-4 text-start shadow-sm transition-[background-color,box-shadow,transform] hover:-translate-y-1 hover:bg-surface-hover hover:shadow-lg active:cursor-grabbing"

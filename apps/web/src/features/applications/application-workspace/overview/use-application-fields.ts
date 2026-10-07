@@ -44,7 +44,9 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
   }
 
   function requestEdit(field: EditableApplicationField) {
-    if (activeField === field) return;
+    if (activeField === field) {
+      return;
+    }
     if (warningField) {
       nextField.current = field;
       return;
@@ -54,16 +56,22 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
       nextField.current = field;
       return;
     }
-    if (activeField) fields[activeField].cancel();
+    if (activeField) {
+      fields[activeField].cancel();
+    }
     fields[field].beginEdit();
     setActiveField(field);
   }
 
   function blur(field: EditableApplicationField, requestedField?: EditableApplicationField) {
-    if (field !== activeField) return;
+    if (field !== activeField) {
+      return;
+    }
     if (isDirty(field)) {
       setWarningField(field);
-      if (requestedField) nextField.current = requestedField;
+      if (requestedField) {
+        nextField.current = requestedField;
+      }
       return;
     }
     fields[field].cancel();
@@ -79,7 +87,9 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
 
   async function save(field: EditableApplicationField, value?: string) {
     const saved = await fields[field].save(value);
-    if (!saved) return false;
+    if (!saved) {
+      return false;
+    }
     setActiveField(null);
     setWarningField(null);
     const requestedField = nextField.current;
@@ -92,16 +102,22 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
   }
 
   async function saveWarning() {
-    if (warningField) await save(warningField);
+    if (warningField) {
+      await save(warningField);
+    }
   }
 
   function cancelWarning() {
-    if (warningField) cancel(warningField);
+    if (warningField) {
+      cancel(warningField);
+    }
   }
 
   async function selectStatus(value: JobStatus) {
     const saved = await status.save(value);
-    if (saved) setActiveField(null);
+    if (saved) {
+      setActiveField(null);
+    }
   }
 
   return {

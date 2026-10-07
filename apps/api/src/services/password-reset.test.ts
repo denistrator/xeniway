@@ -31,7 +31,9 @@ function createHarness() {
     },
     updatePasswordHash: async (id: number, passwordHash: string) => {
       const user = users.get(id);
-      if (!user) return false;
+      if (!user) {
+        return false;
+      }
       user.passwordHash = passwordHash;
       return true;
     },
@@ -47,7 +49,11 @@ function createHarness() {
   } satisfies SessionRepository;
   const tokenRepository = {
     invalidateForUser: async (userId: number) => {
-      for (const token of resetTokens) if (token.userId === userId && !token.usedAt) token.usedAt = new Date();
+      for (const token of resetTokens) {
+        if (token.userId === userId && !token.usedAt) {
+          token.usedAt = new Date();
+        }
+      }
     },
     create: async (input: { userId: number; tokenHash: string; expiresAt: Date }) => {
       resetTokens.push(input);
@@ -56,7 +62,9 @@ function createHarness() {
       const token = resetTokens.find(
         (candidate) => candidate.tokenHash === tokenHash && !candidate.usedAt && candidate.expiresAt > now,
       );
-      if (!token) return null;
+      if (!token) {
+        return null;
+      }
       token.usedAt = now;
       return { userId: token.userId };
     },

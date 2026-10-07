@@ -23,7 +23,9 @@ const assets = createWorkerAssets(self.__WB_MANIFEST, self.location.origin);
 self.addEventListener("message", (event) => {
   const message = parseWorkerRequest(event.data);
   const port = event.ports[0];
-  if (!message || !port || !event.source?.url || new URL(event.source.url).origin !== self.location.origin) return;
+  if (!message || !port || !event.source?.url || new URL(event.source.url).origin !== self.location.origin) {
+    return;
+  }
   event.waitUntil(
     (async () => {
       const buildId = await assets.buildId;
@@ -46,7 +48,9 @@ self.addEventListener("message", (event) => {
       try {
         await assets.prepare();
         // The client requests first control only after explicit consent, and messages its active worker.
-        if (message.claimClients) await self.clients.claim();
+        if (message.claimClients) {
+          await self.clients.claim();
+        }
         respond({ type: "ASSETS_READY", ...identity });
       } catch (error) {
         respond({
@@ -59,8 +63,9 @@ self.addEventListener("message", (event) => {
   );
 });
 self.addEventListener("fetch", (event) => {
-  if (assets.shouldHandle(event.request))
+  if (assets.shouldHandle(event.request)) {
     event.respondWith(assets.respond(event.request).then((response) => response ?? fetch(event.request)));
+  }
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(

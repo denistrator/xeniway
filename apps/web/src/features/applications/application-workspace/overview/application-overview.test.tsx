@@ -52,7 +52,9 @@ test.each([
 
     expect(headingBlock).toHaveClass("border-s-4", "bg-linear-to-r", "rtl:bg-linear-to-l", "to-transparent");
     expect(headingBlock).toHaveClass(`border-s-${color}`, `from-${color}/8`, `dark:from-${darkColor}/12`);
-    if (color !== darkColor) expect(headingBlock).toHaveClass(`dark:border-s-${darkColor}`);
+    if (color !== darkColor) {
+      expect(headingBlock).toHaveClass(`dark:border-s-${darkColor}`);
+    }
     expect(headingBlock).toContainElement(heading);
     expect(headingBlock).not.toContainElement(screen.getByRole("navigation", { name: "Application actions" }));
     expect(headingBlock).not.toContainElement(screen.getByRole("button", { name: "Location, Edit" }));
@@ -176,8 +178,11 @@ test.each(["About", "Company research", "Location"])(
     expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("textbox", { name: label })).toBeNull();
-    if (label === "Location") expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
-    else expect(screen.getByRole("region", { name: label })).toHaveFocus();
+    if (label === "Location") {
+      expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
+    } else {
+      expect(screen.getByRole("region", { name: label })).toHaveFocus();
+    }
     expect(fetcher).not.toHaveBeenCalled();
   },
 );
@@ -208,8 +213,11 @@ test.each([
   expect(screen.getByRole("button", { name: `Save ${label.toLowerCase()}` })).toBeDisabled();
   await user.keyboard("{Enter}");
   expect(screen.queryByRole("textbox", { name: label })).toBeNull();
-  if (label === "Location") expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
-  else expect(screen.getByRole("region", { name: label })).toHaveFocus();
+  if (label === "Location") {
+    expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
+  } else {
+    expect(screen.getByRole("region", { name: label })).toHaveFocus();
+  }
   expect(fetcher).not.toHaveBeenCalled();
 });
 
@@ -255,11 +263,16 @@ test.each([
   expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
   await user.click(screen.getByRole("button", { name: "Cancel" }));
   expect(screen.queryByRole("textbox", { name: input })).toBeNull();
-  expect(
-    screen.getByRole("region", {
-      name: action === "Add contact" ? "Contacts" : action === "Add follow-up" ? "Follow-ups" : "Activity",
-    }),
-  ).toHaveFocus();
+  let regionName = "Activity";
+  switch (action) {
+    case "Add contact":
+      regionName = "Contacts";
+      break;
+    case "Add follow-up":
+      regionName = "Follow-ups";
+      break;
+  }
+  expect(screen.getByRole("region", { name: regionName })).toHaveFocus();
   expect(fetcher).not.toHaveBeenCalled();
 });
 
@@ -336,9 +349,16 @@ test.each(["No", "backdrop", "Escape"])(
     const dialog = screen.getByRole("alertdialog");
     expect(within(dialog).getByRole("button", { name: "Archive application" })).toBeDisabled();
     expect(within(dialog).getByRole("button", { name: "No" })).toBeEnabled();
-    if (dismiss === "Escape") await user.keyboard("{Escape}");
-    else if (dismiss === "backdrop") await user.click(screen.getAllByRole("button", { name: "No" })[0]);
-    else await user.click(within(dialog).getByRole("button", { name: "No" }));
+    switch (dismiss) {
+      case "Escape":
+        await user.keyboard("{Escape}");
+        break;
+      case "backdrop":
+        await user.click(screen.getAllByRole("button", { name: "No" })[0]);
+        break;
+      default:
+        await user.click(within(dialog).getByRole("button", { name: "No" }));
+    }
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(screen.getByRole("navigation", { name: "Application actions" })).toHaveFocus();
     expect(fetcher).not.toHaveBeenCalled();

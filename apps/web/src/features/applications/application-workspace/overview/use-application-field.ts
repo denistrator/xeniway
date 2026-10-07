@@ -51,7 +51,9 @@ export function useApplicationField(
 
   useEffect(() => {
     setSavedValue(value);
-    if (!editing) setDraft(value ?? "");
+    if (!editing) {
+      setDraft(value ?? "");
+    }
   }, [editing, value]);
 
   function beginEdit() {

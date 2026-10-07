@@ -72,12 +72,17 @@ describe("application workspace contracts", () => {
       ["profileUrl", 500],
       ["notes", 10_000],
     ] as const) {
-      const value =
-        field === "email"
-          ? `${"a".repeat(limit - 12)}@example.com`
-          : field === "profileUrl"
-            ? `https://example.com/${"a".repeat(limit - 20)}`
-            : "x".repeat(limit);
+      let value: string;
+      switch (field) {
+        case "email":
+          value = `${"a".repeat(limit - 12)}@example.com`;
+          break;
+        case "profileUrl":
+          value = `https://example.com/${"a".repeat(limit - 20)}`;
+          break;
+        default:
+          value = "x".repeat(limit);
+      }
       expect(
         createApplicationContactInputSchema.safeParse({ name: "Ada", role: "Recruiter", [field]: value }).success,
       ).toBe(true);

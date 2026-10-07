@@ -30,7 +30,9 @@ export class DrizzleUserRepository implements UserRepository {
     lastName?: string | null;
   }): Promise<UserRow> {
     const [row] = await this.database.insert(users).values(input).returning();
-    if (!row) throw new Error("Unable to create user");
+    if (!row) {
+      throw new Error("Unable to create user");
+    }
     return row;
   }
 
@@ -87,7 +89,9 @@ export class DrizzleUserPreferencesRepository implements UserPreferencesReposito
         set: { ...input, updatedAt: new Date() },
       })
       .returning();
-    if (!row) throw new Error("Unable to update user preferences");
+    if (!row) {
+      throw new Error("Unable to update user preferences");
+    }
     return row;
   }
 
@@ -100,7 +104,9 @@ export class DrizzleUserPreferencesRepository implements UserPreferencesReposito
         set: { wasIntroduced: true, updatedAt: new Date() },
       })
       .returning();
-    if (!row) throw new Error("Unable to update user preferences");
+    if (!row) {
+      throw new Error("Unable to update user preferences");
+    }
     return row;
   }
 }

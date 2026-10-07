@@ -71,7 +71,22 @@ test("handles a card drop once across nested drop targets", () => {
   expect(onDrop).toHaveBeenCalledTimes(1);
 });
 
-test("opens the application workspace by click while preserving keyboard reordering", () => {
+test.each([
+  { key: "ArrowUp", shiftKey: false, direction: "up" },
+  { key: "ArrowDown", shiftKey: false, direction: "down" },
+  { key: "Home", shiftKey: false, direction: "first" },
+  { key: "End", shiftKey: false, direction: "last" },
+  { key: "ArrowLeft", shiftKey: true, direction: "previousStatus" },
+  { key: "ArrowRight", shiftKey: true, direction: "nextStatus" },
+  { key: "ArrowLeft", shiftKey: false, direction: null },
+  { key: "ArrowRight", shiftKey: false, direction: null },
+  { key: "ArrowUp", shiftKey: true, direction: null },
+  { key: "ArrowDown", shiftKey: true, direction: null },
+  { key: "Home", shiftKey: true, direction: null },
+  { key: "End", shiftKey: true, direction: null },
+  { key: "Enter", shiftKey: false, direction: null },
+  { key: "Tab", shiftKey: false, direction: null },
+])("opens by click and handles $key with shiftKey=$shiftKey", ({ key, shiftKey, direction }) => {
   const onOpen = vi.fn();
   const onKeyboardMove = vi.fn();
   render(
@@ -90,10 +105,16 @@ test("opens the application workspace by click while preserving keyboard reorder
 
   const card = screen.getByRole("button", { name: /Activate to open application workspace/ });
   fireEvent.click(card);
-  fireEvent.keyDown(card, { key: "ArrowUp" });
+  const defaultAllowed = fireEvent.keyDown(card, { key, shiftKey });
 
   expect(onOpen).toHaveBeenCalledWith(job.id);
-  expect(onKeyboardMove).toHaveBeenCalledWith(job.id, "saved", "up");
+  if (direction) {
+    expect(onKeyboardMove).toHaveBeenCalledWith(job.id, "saved", direction);
+    expect(defaultAllowed).toBe(false);
+  } else {
+    expect(onKeyboardMove).not.toHaveBeenCalled();
+    expect(defaultAllowed).toBe(true);
+  }
 });
 
 test("preserves the hovered insertion point when dropping on the placeholder", () => {

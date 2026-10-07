@@ -29,10 +29,14 @@ export async function requireAuthenticatedMutation(
   request: Request,
 ): Promise<GuardResult> {
   const result = await requireAuthenticatedUser(auth, set, request);
-  if (!result.ok) return result;
+  if (!result.ok) {
+    return result;
+  }
 
   const csrfError = await requireValidCsrf(auth, set, request);
-  if (csrfError) return { ok: false, response: csrfError };
+  if (csrfError) {
+    return { ok: false, response: csrfError };
+  }
 
   return result;
 }
@@ -42,6 +46,8 @@ export async function requireValidCsrf(
   set: ResponseSet,
   request: Request,
 ): Promise<ApiError | null> {
-  if (await verifyRequestCsrf(auth, set, request)) return null;
+  if (await verifyRequestCsrf(auth, set, request)) {
+    return null;
+  }
   return errorResponseWithStatus(set, 403, "CSRF_ERROR", "Invalid CSRF token");
 }

@@ -29,8 +29,11 @@ export function ApplicationActivityForm({
     <form
       className={styles.root()}
       onSubmit={(event) => {
-        if (canMutate) void form.submit(event);
-        else event.preventDefault();
+        if (canMutate) {
+          void form.submit(event);
+        } else {
+          event.preventDefault();
+        }
       }}
     >
       <label className={styles.label()} htmlFor="activity-type">

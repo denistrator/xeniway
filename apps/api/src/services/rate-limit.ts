@@ -22,9 +22,12 @@ export class SlidingWindowRateLimiter implements RateLimiter {
   private readonly maxEntries: number;
 
   constructor(private readonly options: RateLimiterOptions) {
-    if (!Number.isInteger(options.limit) || options.limit < 1) throw new Error("Rate limit must be a positive integer");
-    if (!Number.isFinite(options.windowMs) || options.windowMs <= 0)
+    if (!Number.isInteger(options.limit) || options.limit < 1) {
+      throw new Error("Rate limit must be a positive integer");
+    }
+    if (!Number.isFinite(options.windowMs) || options.windowMs <= 0) {
       throw new Error("Rate-limit window must be positive");
+    }
     this.now = options.now ?? Date.now;
     this.maxEntries = options.maxEntries ?? 10_000;
   }
@@ -50,10 +53,16 @@ export class SlidingWindowRateLimiter implements RateLimiter {
   }
 
   private prune(currentTime: number): void {
-    if (this.entries.size < this.maxEntries) return;
+    if (this.entries.size < this.maxEntries) {
+      return;
+    }
     for (const [key, entry] of this.entries) {
-      if (entry.resetAt <= currentTime) this.entries.delete(key);
-      if (this.entries.size < this.maxEntries) break;
+      if (entry.resetAt <= currentTime) {
+        this.entries.delete(key);
+      }
+      if (this.entries.size < this.maxEntries) {
+        break;
+      }
     }
   }
 }

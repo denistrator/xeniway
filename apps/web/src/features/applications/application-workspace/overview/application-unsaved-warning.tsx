@@ -8,7 +8,9 @@ export function ApplicationUnsavedWarning({ fields }: { fields: ApplicationField
   const { t } = useTranslation();
   const canMutate = useCanMutate();
   const warningField = fields.compact.warningField;
-  if (!warningField) return null;
+  if (!warningField) {
+    return null;
+  }
 
   return (
     <ConfirmationModal
@@ -20,7 +22,9 @@ export function ApplicationUnsavedWarning({ fields }: { fields: ApplicationField
       noLabel={t("applications.workspace.actions.cancel")}
       yesDisabled={!canMutate || fields.fields[warningField].pending}
       onYes={() => {
-        if (canMutate) void fields.saveWarning();
+        if (canMutate) {
+          void fields.saveWarning();
+        }
       }}
       onNo={fields.cancelWarning}
     />

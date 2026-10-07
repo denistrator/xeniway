@@ -18,7 +18,9 @@ export function ApplicationActivityTimeline({
     () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
     [locale],
   );
-  if (events.length === 0) return <p className="text-sm text-muted">{t("applications.activity.empty")}</p>;
+  if (events.length === 0) {
+    return <p className="text-sm text-muted">{t("applications.activity.empty")}</p>;
+  }
 
   return (
     <ol aria-label={t("applications.activity.timeline")} className="space-y-3 max-h-screen overflow-y-auto">

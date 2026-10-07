@@ -23,7 +23,9 @@ export function ArchivePage() {
   const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
   const [removeAllOpen, setRemoveAllOpen] = useState(false);
   async function remove() {
-    if (!pendingRemoval) return;
+    if (!pendingRemoval) {
+      return;
+    }
     await mutations.remove.mutateAsync(pendingRemoval.id);
     setPendingRemoval(null);
   }

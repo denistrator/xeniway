@@ -48,7 +48,9 @@ try {
     const [applied] = await client<{ id: string }[]>`
       SELECT "id" FROM "schema_migrations" WHERE "id" = ${migration.id}
     `;
-    if (applied) continue;
+    if (applied) {
+      continue;
+    }
 
     const sql = await Bun.file(new URL(`../../drizzle/${migration.file}`, import.meta.url)).text();
     await client.begin(async (transaction) => {

@@ -12,7 +12,9 @@ export function useJobForm({ onSubmit }: { onSubmit: (input: CreateApplicationIn
   const errorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    if (error) errorRef.current?.focus();
+    if (error) {
+      errorRef.current?.focus();
+    }
   }, [error]);
 
   function update(field: keyof FormState, value: string) {

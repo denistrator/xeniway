@@ -32,8 +32,11 @@ export function useApplicationActivityController(applicationId: number) {
   }
 
   function returnFocus(target: HTMLElement | null) {
-    if (target?.matches(":disabled")) target.closest("section")?.focus();
-    else target?.focus();
+    if (target?.matches(":disabled")) {
+      target.closest("section")?.focus();
+    } else {
+      target?.focus();
+    }
   }
 
   async function save(input: ApplicationEventInput) {
@@ -46,7 +49,9 @@ export function useApplicationActivityController(applicationId: number) {
   }
 
   async function remove() {
-    if (!deleting) return;
+    if (!deleting) {
+      return;
+    }
     try {
       await mutations.remove.mutateAsync(deleting.id);
       cancelDelete();

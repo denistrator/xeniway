@@ -28,7 +28,9 @@ export function ThemeSelector() {
   const changeTheme = (nextTheme: ThemePreference) => {
     dispatch(setTheme(nextTheme));
     writeLocalUserPreferences({ theme: nextTheme });
-    if (user.data && canMutate) updatePreferences.mutate({ selectedTheme: nextTheme });
+    if (user.data && canMutate) {
+      updatePreferences.mutate({ selectedTheme: nextTheme });
+    }
   };
 
   return (

@@ -15,28 +15,39 @@ const NAVIGATION_PATHS = new Set([
   "/forgot-password",
 ]);
 function publicAsset(url: URL): boolean {
-  return (
-    !url.search &&
-    !url.hash &&
-    (url.pathname === "/index.html" ||
-      url.pathname === "/manifest.webmanifest" ||
-      /^\/(pwa-(192|512|maskable-512)|apple-touch-icon)\.png$/.test(url.pathname) ||
-      /^\/favicon\.(ico|png)$/.test(url.pathname) ||
-      /^\/assets\/[\w.-]+\.(js|css|png|svg|ico|woff2?)$/.test(url.pathname))
-  );
+  if (url.search || url.hash) {
+    return false;
+  }
+  const isPublicDocument = url.pathname === "/index.html" || url.pathname === "/manifest.webmanifest";
+  const isInstallIcon = /^\/(pwa-(192|512|maskable-512)|apple-touch-icon)\.png$/.test(url.pathname);
+  const isFavicon = /^\/favicon\.(ico|png)$/.test(url.pathname);
+  const isGeneratedAsset = /^\/assets\/[\w.-]+\.(js|css|png|svg|ico|woff2?)$/.test(url.pathname);
+  return isPublicDocument || isInstallIcon || isFavicon || isGeneratedAsset;
 }
 function navigation(request: Request): boolean {
   const path = new URL(request.url).pathname;
   return request.mode === "navigate" && (NAVIGATION_PATHS.has(path) || /^\/applications\/[1-9]\d*$/.test(path));
 }
 function validContent(url: string, response: Response): boolean {
-  if (!response.ok || response.redirected || response.type === "opaque") return false;
+  if (!response.ok || response.redirected || response.type === "opaque") {
+    return false;
+  }
   const type = response.headers.get("content-type")?.split(";")[0].trim();
-  if (url.endsWith(".html")) return type === "text/html";
-  if (url.endsWith(".webmanifest")) return ["application/manifest+json", "application/json"].includes(type ?? "");
-  if (url.endsWith(".js")) return ["application/javascript", "text/javascript"].includes(type ?? "");
-  if (url.endsWith(".css")) return type === "text/css";
-  if (/\.(png|svg|ico)$/.test(url)) return type?.startsWith("image/") ?? false;
+  if (url.endsWith(".html")) {
+    return type === "text/html";
+  }
+  if (url.endsWith(".webmanifest")) {
+    return ["application/manifest+json", "application/json"].includes(type ?? "");
+  }
+  if (url.endsWith(".js")) {
+    return ["application/javascript", "text/javascript"].includes(type ?? "");
+  }
+  if (url.endsWith(".css")) {
+    return type === "text/css";
+  }
+  if (/\.(png|svg|ico)$/.test(url)) {
+    return type?.startsWith("image/") ?? false;
+  }
   return type?.startsWith("font/") || type === "application/font-woff" || type === "application/octet-stream";
 }
 
@@ -45,16 +56,23 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
   const entries = manifest
     .map((entry) => {
       const url = new URL(entry.url, `${origin}/`);
-      if (
-        url.origin !== origin ||
-        !publicAsset(url) ||
-        entry.url.includes("..") ||
-        (entry.revision !== null && typeof entry.revision !== "string")
-      )
+      const isPublicUrl = url.origin === origin && publicAsset(url);
+      const hasTraversal = entry.url.includes("..");
+      const hasInvalidRevision = entry.revision !== null && typeof entry.revision !== "string";
+      if (!isPublicUrl || hasTraversal || hasInvalidRevision) {
         throw new Error("Unsafe offline asset manifest");
+      }
       return { url: url.href, revision: entry.revision };
     })
-    .sort((a, b) => (a.url < b.url ? -1 : a.url > b.url ? 1 : 0));
+    .sort((a, b) => {
+      if (a.url < b.url) {
+        return -1;
+      }
+      if (a.url > b.url) {
+        return 1;
+      }
+      return 0;
+    });
   if (
     !entries.some((entry) => entry.url === `${origin}/index.html`) ||
     new Set(entries.map((entry) => entry.url)).size !== entries.length
@@ -67,15 +85,21 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
   const cacheName = buildId.then((id) => `${CACHE_PREFIX}${id}`);
   let preparing: Promise<string> | null = null;
   async function validRevision(entry: PublicAssetEntry, response: Response): Promise<boolean> {
-    return (
-      entry.revision === null ||
-      (/^[a-f0-9]{64}$/.test(entry.revision) &&
-        (await assetRevision(new Uint8Array(await response.clone().arrayBuffer()))) === entry.revision)
-    );
+    if (entry.revision === null) {
+      return true;
+    }
+    const isDigest = /^[a-f0-9]{64}$/.test(entry.revision);
+    if (!isDigest) {
+      return false;
+    }
+    const bodyRevision = await assetRevision(new Uint8Array(await response.clone().arrayBuffer()));
+    return bodyRevision === entry.revision;
   }
   async function readReadyManifest(cache: Cache, name: string): Promise<PublicCacheManifest | null> {
     const markerResponse = await cache.match(marker);
-    if (!markerResponse) return null;
+    if (!markerResponse) {
+      return null;
+    }
     let value: unknown;
     try {
       value = await markerResponse.json();
@@ -92,7 +116,9 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
       !Array.isArray(value.urls) ||
       !value.urls.includes(`${origin}/index.html`) ||
       !value.urls.every((url) => {
-        if (typeof url !== "string") return false;
+        if (typeof url !== "string") {
+          return false;
+        }
         try {
           const parsed = new URL(url);
           return parsed.origin === origin && publicAsset(parsed);
@@ -100,8 +126,9 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
           return false;
         }
       })
-    )
+    ) {
       return null;
+    }
     return { buildId: value.buildId, urls: value.urls };
   }
   async function isCurrentBuildReady(cache: Cache, check: ReadinessCheck): Promise<boolean> {
@@ -111,32 +138,52 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
       ready.buildId !== (await buildId) ||
       ready.urls.length !== urls.size ||
       !ready.urls.every((url) => urls.has(url))
-    )
+    ) {
       return false;
+    }
     return (
       check === "marker" ||
       (
         await Promise.all(
           entries.map(async (entry) => {
             const response = await cache.match(entry.url);
-            return !!response && validContent(entry.url, response) && (await validRevision(entry, response));
+            if (!response) {
+              return false;
+            }
+            return validContent(entry.url, response) && (await validRevision(entry, response));
           }),
         )
       ).every(Boolean)
     );
   }
+  async function readPreviousAsset(
+    cache: Cache,
+    name: string,
+    url: string,
+    check: ReadinessCheck,
+  ): Promise<Response | undefined> {
+    const ready = await readReadyManifest(cache, name);
+    if (!ready?.urls.includes(url)) {
+      return undefined;
+    }
+    // Shell fallback needs every referenced asset; individual asset fallback needs only its own response.
+    if (check === "complete" && !(await Promise.all(ready.urls.map((entry) => cache.match(entry)))).every(Boolean)) {
+      return undefined;
+    }
+    return cache.match(url);
+  }
+
   async function findPreviousAsset(url: string, check: ReadinessCheck): Promise<Response | undefined> {
     const current = await cacheName;
     for (const name of (await caches.keys()).reverse()) {
-      if (!name.startsWith(CACHE_PREFIX) || name === current) continue;
-      const cache = await caches.open(name);
-      const ready = await readReadyManifest(cache, name);
-      if (!ready?.urls.includes(url)) continue;
-      // Shell fallback needs every referenced asset; individual asset fallback needs only its own response.
-      if (check === "complete" && !(await Promise.all(ready.urls.map((entry) => cache.match(entry)))).every(Boolean))
+      if (!name.startsWith(CACHE_PREFIX) || name === current) {
         continue;
-      const response = await cache.match(url);
-      if (response) return response;
+      }
+      const cache = await caches.open(name);
+      const response = await readPreviousAsset(cache, name, url, check);
+      if (response) {
+        return response;
+      }
     }
     return undefined;
   }
@@ -144,21 +191,28 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
     const id = await buildId;
     const name = await cacheName;
     const cache = await caches.open(name);
-    if (await isCurrentBuildReady(cache, "complete")) return id;
+    if (await isCurrentBuildReady(cache, "complete")) {
+      return id;
+    }
     try {
       const responses = await Promise.all(
         entries.map(async (entry) => {
           const response = await fetch(
             new Request(entry.url, { credentials: "omit", cache: "reload", redirect: "error" }),
           );
-          if (!validContent(entry.url, response) || (response.url && response.url !== entry.url))
+          const wasRedirected = Boolean(response.url && response.url !== entry.url);
+          if (!validContent(entry.url, response) || wasRedirected) {
             throw new Error(`Offline asset unavailable: ${new URL(entry.url).pathname}`);
-          if (!(await validRevision(entry, response)))
+          }
+          if (!(await validRevision(entry, response))) {
             throw new Error(`Offline asset revision mismatch: ${new URL(entry.url).pathname}`);
+          }
           return response;
         }),
       );
-      for (let i = 0; i < entries.length; i++) await cache.put(entries[i].url, responses[i]);
+      for (let i = 0; i < entries.length; i++) {
+        await cache.put(entries[i].url, responses[i]);
+      }
       await cache.put(
         marker,
         new Response(JSON.stringify({ buildId: id, urls: [...urls] }), {
@@ -174,47 +228,76 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
   }
   function shouldHandle(request: Request): boolean {
     const url = new URL(request.url);
-    return (
-      request.method === "GET" &&
-      url.origin === origin &&
-      !url.search &&
-      !url.hash &&
-      (publicAsset(url) || navigation(request))
-    );
+    const isSameOriginRead = request.method === "GET" && url.origin === origin;
+    const isCleanUrl = !url.search && !url.hash;
+    if (!isSameOriginRead || !isCleanUrl) {
+      return false;
+    }
+    const isPublicRequest = publicAsset(url) || navigation(request);
+    return isPublicRequest;
   }
+
+  async function findCachedAsset(url: string, check: ReadinessCheck): Promise<Response | undefined> {
+    const cache = await caches.open(await cacheName);
+    if (urls.has(url) && (await isCurrentBuildReady(cache, check))) {
+      const response = await cache.match(url);
+      if (response) {
+        return response;
+      }
+    }
+    return findPreviousAsset(url, check);
+  }
+
+  async function respondToNavigation(request: Request): Promise<Response> {
+    try {
+      return await fetch(request);
+    } catch (error) {
+      const shell = await findCachedAsset(`${origin}/index.html`, "complete");
+      if (shell) {
+        return shell;
+      }
+      throw error;
+    }
+  }
+
+  async function hasCompletePublicAssets(cache: Cache, name: string): Promise<boolean> {
+    const ready = await readReadyManifest(cache, name);
+    if (!ready) {
+      return false;
+    }
+    return (
+      await Promise.all(
+        ready.urls.map(async (url) => {
+          const response = await cache.match(url);
+          if (!response) {
+            return false;
+          }
+          return validContent(url, response);
+        }),
+      )
+    ).every(Boolean);
+  }
+
   return {
     buildId,
     prepare(): Promise<string> {
-      if (!preparing)
+      if (!preparing) {
         preparing = prepare().finally(() => {
           preparing = null;
         });
+      }
       return preparing;
     },
     shouldHandle,
     async respond(request: Request): Promise<Response | undefined> {
-      if (!shouldHandle(request)) return undefined;
+      if (!shouldHandle(request)) {
+        return undefined;
+      }
       if (navigation(request)) {
-        try {
-          return await fetch(request);
-        } catch (error) {
-          const cache = await caches.open(await cacheName);
-          if (await isCurrentBuildReady(cache, "complete")) {
-            const shell = await cache.match(`${origin}/index.html`);
-            if (shell) return shell;
-          }
-          const previous = await findPreviousAsset(`${origin}/index.html`, "complete");
-          if (previous) return previous;
-          throw error;
-        }
+        return respondToNavigation(request);
       }
       try {
-        const cache = await caches.open(await cacheName);
-        if (urls.has(request.url) && (await isCurrentBuildReady(cache, "marker"))) {
-          const response = await cache.match(request.url);
-          if (response) return response;
-        }
-        return await findPreviousAsset(request.url, "marker");
+        return await findCachedAsset(request.url, "marker");
       } catch {
         // Public caching is optional for ordinary asset requests. Let the fetch
         // handler use the original network request; explicit preparation still rejects.
@@ -222,27 +305,22 @@ export function createWorkerAssets(manifest: PublicAssetEntry[], origin: string)
       }
     },
     async cleanupIfUnused(clientCount: number): Promise<void> {
-      if (clientCount !== 0) return;
+      if (clientCount !== 0) {
+        return;
+      }
       const name = await cacheName;
       let previousKept = false;
       // CacheStorage.keys preserves creation order. Retain the newest complete previous
       // generation even when this newly activated build has not been opted into yet.
       for (const key of (await caches.keys()).reverse()) {
-        if (!key.startsWith(CACHE_PREFIX)) continue;
+        if (!key.startsWith(CACHE_PREFIX)) {
+          continue;
+        }
         const cache = await caches.open(key);
-        const ready = await readReadyManifest(cache, key);
-        const complete =
-          !!ready &&
-          (
-            await Promise.all(
-              ready.urls.map(async (url) => {
-                const response = await cache.match(url);
-                return !!response && validContent(url, response);
-              }),
-            )
-          ).every(Boolean);
-        if (complete && (key === name || !previousKept)) {
-          if (key !== name) previousKept = true;
+        const complete = await hasCompletePublicAssets(cache, key);
+        const shouldKeepGeneration = key === name || !previousKept;
+        if (complete && shouldKeepGeneration) {
+          previousKept = previousKept || key !== name;
           continue;
         }
         await caches.delete(key);

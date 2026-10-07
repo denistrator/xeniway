@@ -15,7 +15,9 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const errorRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (login.error) errorRef.current?.focus();
+    if (login.error) {
+      errorRef.current?.focus();
+    }
   }, [login.error]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

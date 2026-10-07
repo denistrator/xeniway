@@ -13,8 +13,15 @@ const exportFields: readonly CsvExportField[] = [
   { header: "Status", read: ({ application }) => application.status },
   {
     header: "Board",
-    read: ({ application }) =>
-      application.archivedAt ? "archive" : application.blacklistedAt ? "blacklist" : "active",
+    read: ({ application }) => {
+      if (application.archivedAt) {
+        return "archive";
+      }
+      if (application.blacklistedAt) {
+        return "blacklist";
+      }
+      return "active";
+    },
   },
   { header: "Location", read: ({ application }) => application.location },
   { header: "Job URL", read: ({ application }) => application.jobUrl },
@@ -29,7 +36,12 @@ const exportFields: readonly CsvExportField[] = [
 ];
 
 function csvCell(value: unknown): string {
-  const text = value == null ? "" : typeof value === "string" ? value : JSON.stringify(value);
+  let text = "";
+  if (typeof value === "string") {
+    text = value;
+  } else if (value != null) {
+    text = JSON.stringify(value);
+  }
   const safeText = /^[\s\uFEFF]*[=+\-@]/.test(text) ? `'${text}` : text;
   return `"${safeText.replaceAll('"', '""')}"`;
 }

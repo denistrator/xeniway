@@ -41,7 +41,9 @@ export function createDependencies(): AppDependencies {
 
   function removeForApplication<T extends { applicationId: number }>(records: T[], applicationId: number): void {
     for (let index = records.length - 1; index >= 0; index--) {
-      if (records[index]?.applicationId === applicationId) records.splice(index, 1);
+      if (records[index]?.applicationId === applicationId) {
+        records.splice(index, 1);
+      }
     }
   }
 
@@ -81,7 +83,9 @@ export function createDependencies(): AppDependencies {
     },
     async updatePasswordHash(id, passwordHash) {
       const user = users.find((candidate) => candidate.id === id);
-      if (!user) return false;
+      if (!user) {
+        return false;
+      }
       user.passwordHash = passwordHash;
       return true;
     },
@@ -100,7 +104,9 @@ export function createDependencies(): AppDependencies {
     },
     async deleteForUser(userId) {
       for (const [id, session] of sessions) {
-        if (session.userId === userId) sessions.delete(id);
+        if (session.userId === userId) {
+          sessions.delete(id);
+        }
       }
     },
     async deleteExpired() {},
@@ -108,7 +114,9 @@ export function createDependencies(): AppDependencies {
 
   const applicationRepository: ApplicationRepository = {
     async loadWorkspace(userId, applicationId) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       return {
         preparation: preparations.get(applicationId) ?? emptyPreparation(),
         contacts: contacts
@@ -117,15 +125,20 @@ export function createDependencies(): AppDependencies {
         followUpTasks: followUpTasks
           .filter((task) => task.applicationId === applicationId)
           .sort((left, right) => {
-            if (!!left.completedAt !== !!right.completedAt) return left.completedAt ? 1 : -1;
-            if (!left.completedAt && !right.completedAt)
+            if (Boolean(left.completedAt) !== Boolean(right.completedAt)) {
+              return left.completedAt ? 1 : -1;
+            }
+            if (!left.completedAt && !right.completedAt) {
               return left.dueDate.localeCompare(right.dueDate) || left.id - right.id;
+            }
             return (left.completedAt ?? "").localeCompare(right.completedAt ?? "") || left.id - right.id;
           }),
       };
     },
     async updatePreparation(userId, applicationId, input) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       const previous = preparations.get(applicationId) ?? emptyPreparation();
       const preparation: ApplicationPreparation = {
         companyResearch: input.companyResearch === undefined ? previous.companyResearch : input.companyResearch,
@@ -138,7 +151,9 @@ export function createDependencies(): AppDependencies {
       return preparation;
     },
     async createContact(userId, applicationId, input) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       const now = new Date().toISOString();
       const contact: ApplicationContact = {
         id: nextContactId++,
@@ -156,27 +171,39 @@ export function createDependencies(): AppDependencies {
       return contact;
     },
     async updateContact(userId, applicationId, contactId, input) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       const contact = contacts.find((item) => item.id === contactId && item.applicationId === applicationId);
-      if (!contact) return null;
-      if (input.name !== undefined) contact.name = input.name;
-      if (input.role !== undefined) contact.role = input.role;
-      if (input.email !== undefined) contact.email = input.email;
-      if (input.phone !== undefined) contact.phone = input.phone;
-      if (input.profileUrl !== undefined) contact.profileUrl = input.profileUrl;
-      if (input.notes !== undefined) contact.notes = input.notes;
-      contact.updatedAt = new Date().toISOString();
+      if (!contact) {
+        return null;
+      }
+      Object.assign(contact, {
+        name: input.name ?? contact.name,
+        role: input.role ?? contact.role,
+        email: input.email === undefined ? contact.email : input.email,
+        phone: input.phone === undefined ? contact.phone : input.phone,
+        profileUrl: input.profileUrl === undefined ? contact.profileUrl : input.profileUrl,
+        notes: input.notes === undefined ? contact.notes : input.notes,
+        updatedAt: new Date().toISOString(),
+      });
       return contact;
     },
     async deleteContact(userId, applicationId, contactId) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return false;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return false;
+      }
       const index = contacts.findIndex((item) => item.id === contactId && item.applicationId === applicationId);
-      if (index === -1) return false;
+      if (index === -1) {
+        return false;
+      }
       contacts.splice(index, 1);
       return true;
     },
     async createFollowUpTask(userId, applicationId, input) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       const now = new Date().toISOString();
       const task: ApplicationFollowUpTask = {
         id: nextTaskId++,
@@ -192,26 +219,46 @@ export function createDependencies(): AppDependencies {
       return task;
     },
     async updateFollowUpTask(userId, applicationId, taskId, input) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       const task = followUpTasks.find((item) => item.id === taskId && item.applicationId === applicationId);
-      if (!task) return null;
-      if (input.title !== undefined) task.title = input.title;
-      if (input.dueDate !== undefined) task.dueDate = input.dueDate;
-      if (input.notes !== undefined) task.notes = input.notes;
+      if (!task) {
+        return null;
+      }
+      if (input.title !== undefined) {
+        task.title = input.title;
+      }
+      if (input.dueDate !== undefined) {
+        task.dueDate = input.dueDate;
+      }
+      if (input.notes !== undefined) {
+        task.notes = input.notes;
+      }
       task.updatedAt = new Date().toISOString();
       return task;
     },
     async completeFollowUpTask(userId, applicationId, taskId) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return null;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return null;
+      }
       const task = followUpTasks.find((item) => item.id === taskId && item.applicationId === applicationId);
-      if (!task) return null;
-      if (!task.completedAt) task.completedAt = task.updatedAt = new Date().toISOString();
+      if (!task) {
+        return null;
+      }
+      if (!task.completedAt) {
+        task.completedAt = task.updatedAt = new Date().toISOString();
+      }
       return task;
     },
     async deleteFollowUpTask(userId, applicationId, taskId) {
-      if (!(await this.findById(userId, applicationId, { anyState: true }))) return false;
+      if (!(await this.findById(userId, applicationId, { anyState: true }))) {
+        return false;
+      }
       const index = followUpTasks.findIndex((item) => item.id === taskId && item.applicationId === applicationId);
-      if (index === -1) return false;
+      if (index === -1) {
+        return false;
+      }
       followUpTasks.splice(index, 1);
       return true;
     },
@@ -230,13 +277,17 @@ export function createDependencies(): AppDependencies {
       return followUpTasks.filter((task) => applicationUserIds.get(task.applicationId) === userId);
     },
     async listEvents(userId, applicationId) {
-      if (applicationUserIds.get(applicationId) !== userId) return [];
+      if (applicationUserIds.get(applicationId) !== userId) {
+        return [];
+      }
       return events
         .filter((event) => event.applicationId === applicationId)
         .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id - left.id);
     },
     async createEvent(userId, applicationId, input) {
-      if (applicationUserIds.get(applicationId) !== userId) return null;
+      if (applicationUserIds.get(applicationId) !== userId) {
+        return null;
+      }
       const now = new Date().toISOString();
       const event: ApplicationEvent = {
         id: events.length + 1,
@@ -254,11 +305,15 @@ export function createDependencies(): AppDependencies {
       return event;
     },
     async updateEvent(userId, applicationId, eventId, input) {
-      if (applicationUserIds.get(applicationId) !== userId) return null;
+      if (applicationUserIds.get(applicationId) !== userId) {
+        return null;
+      }
       const event = events.find(
         (candidate) => candidate.id === eventId && candidate.applicationId === applicationId && !candidate.isSystem,
       );
-      if (!event) return null;
+      if (!event) {
+        return null;
+      }
       Object.assign(event, input, {
         occurredAt: input.occurredAt ? new Date(input.occurredAt).toISOString() : event.occurredAt,
         updatedAt: new Date().toISOString(),
@@ -266,34 +321,41 @@ export function createDependencies(): AppDependencies {
       return event;
     },
     async deleteEvent(userId, applicationId, eventId) {
-      if (applicationUserIds.get(applicationId) !== userId) return false;
+      if (applicationUserIds.get(applicationId) !== userId) {
+        return false;
+      }
       const index = events.findIndex(
         (candidate) => candidate.id === eventId && candidate.applicationId === applicationId && !candidate.isSystem,
       );
-      if (index === -1) return false;
+      if (index === -1) {
+        return false;
+      }
       events.splice(index, 1);
       return true;
     },
     async list(userId, options = {}) {
       return applications
-        .filter(
-          (application) =>
-            (options.archived ? application.archivedAt : !application.archivedAt) &&
-            !application.blacklistedAt &&
-            (!options.status || application.status === options.status) &&
-            applicationUserIds.get(application.id) === userId,
-        )
+        .filter((application) => {
+          const matchesArchive = options.archived ? Boolean(application.archivedAt) : !application.archivedAt;
+          const matchesStatus = !options.status || application.status === options.status;
+          const belongsToUser = applicationUserIds.get(application.id) === userId;
+          return matchesArchive && !application.blacklistedAt && matchesStatus && belongsToUser;
+        })
         .sort((left, right) => left.sortOrder - right.sortOrder);
     },
     async findById(userId, id, options = {}) {
       return (
-        applications.find(
-          (application) =>
-            application.id === id &&
-            applicationUserIds.get(id) === userId &&
-            (options.anyState ||
-              ((options.archived ? !!application.archivedAt : !application.archivedAt) && !application.blacklistedAt)),
-        ) ?? null
+        applications.find((application) => {
+          const matchesIdentity = application.id === id && applicationUserIds.get(id) === userId;
+          if (!matchesIdentity) {
+            return false;
+          }
+          if (options.anyState) {
+            return true;
+          }
+          const matchesArchive = options.archived ? Boolean(application.archivedAt) : !application.archivedAt;
+          return matchesArchive && !application.blacklistedAt;
+        }) ?? null
       );
     },
     async create(userId, input) {
@@ -328,29 +390,38 @@ export function createDependencies(): AppDependencies {
       if (
         owned.length !== applicationIds.length ||
         !owned.every((application) => applicationIds.includes(application.id))
-      )
+      ) {
         return false;
+      }
       for (const [sortOrder, id] of applicationIds.entries()) {
         const application = owned.find((candidate) => candidate.id === id);
-        if (application) application.sortOrder = sortOrder;
+        if (application) {
+          application.sortOrder = sortOrder;
+        }
       }
       return true;
     },
     async update(userId, id, input) {
       const application = await this.findById(userId, id);
-      if (!application) return null;
+      if (!application) {
+        return null;
+      }
       Object.assign(application, input, { updatedAt: new Date().toISOString() });
       return application;
     },
     async archive(userId, id) {
       const application = await this.findById(userId, id);
-      if (!application) return false;
+      if (!application) {
+        return false;
+      }
       application.archivedAt = new Date().toISOString();
       return true;
     },
     async restore(userId, id) {
       const application = await this.findById(userId, id, { archived: true });
-      if (!application) return false;
+      if (!application) {
+        return false;
+      }
       application.archivedAt = null;
       return true;
     },
@@ -358,16 +429,24 @@ export function createDependencies(): AppDependencies {
       const application = applications.find(
         (candidate) => candidate.id === id && applicationUserIds.get(id) === userId,
       );
-      if (!application) return false;
+      if (!application) {
+        return false;
+      }
       applications.splice(applications.indexOf(application), 1);
       removeApplicationData(id);
       return true;
     },
     async removeAll(userId, board) {
       const matches = applications.filter((application) => {
-        if (applicationUserIds.get(application.id) !== userId) return false;
-        if (board === "archive") return !!application.archivedAt;
-        if (board === "blacklist") return !!application.blacklistedAt;
+        if (applicationUserIds.get(application.id) !== userId) {
+          return false;
+        }
+        if (board === "archive") {
+          return Boolean(application.archivedAt);
+        }
+        if (board === "blacklist") {
+          return Boolean(application.blacklistedAt);
+        }
         return !application.archivedAt && !application.blacklistedAt;
       });
       for (const application of matches) {
@@ -378,7 +457,9 @@ export function createDependencies(): AppDependencies {
     },
     async listBlacklisted(userId) {
       return applications
-        .filter((application) => applicationUserIds.get(application.id) === userId && !!application.blacklistedAt)
+        .filter(
+          (application) => applicationUserIds.get(application.id) === userId && Boolean(application.blacklistedAt),
+        )
         .sort((left, right) => (right.blacklistedAt ?? "").localeCompare(left.blacklistedAt ?? ""));
     },
     async blacklist(userId, id, reason) {
@@ -389,16 +470,20 @@ export function createDependencies(): AppDependencies {
           !candidate.archivedAt &&
           !candidate.blacklistedAt,
       );
-      if (!application) return false;
+      if (!application) {
+        return false;
+      }
       application.blacklistedAt = new Date().toISOString();
       application.blacklistReason = reason ?? null;
       return true;
     },
     async unblacklist(userId, id) {
       const application = applications.find(
-        (candidate) => candidate.id === id && applicationUserIds.get(id) === userId && !!candidate.blacklistedAt,
+        (candidate) => candidate.id === id && applicationUserIds.get(id) === userId && Boolean(candidate.blacklistedAt),
       );
-      if (!application) return false;
+      if (!application) {
+        return false;
+      }
       application.blacklistedAt = null;
       application.blacklistReason = null;
       return true;
@@ -407,7 +492,11 @@ export function createDependencies(): AppDependencies {
 
   const passwordResetTokens: PasswordResetTokenRepository = {
     async invalidateForUser(userId) {
-      for (const token of resetTokens) if (token.userId === userId && !token.usedAt) token.usedAt = new Date();
+      for (const token of resetTokens) {
+        if (token.userId === userId && !token.usedAt) {
+          token.usedAt = new Date();
+        }
+      }
     },
     async create(input) {
       resetTokens.push({ ...input, usedAt: null });
@@ -416,7 +505,9 @@ export function createDependencies(): AppDependencies {
       const token = resetTokens.find(
         (candidate) => candidate.tokenHash === tokenHash && !candidate.usedAt && candidate.expiresAt > now,
       );
-      if (!token) return null;
+      if (!token) {
+        return null;
+      }
       token.usedAt = now;
       return { userId: token.userId };
     },
@@ -452,9 +543,15 @@ export function createDependencies(): AppDependencies {
         createdAt: now,
         updatedAt: now,
       };
-      if (input.selectedLanguage !== undefined) row.selectedLanguage = input.selectedLanguage;
-      if (input.selectedTheme !== undefined) row.selectedTheme = input.selectedTheme;
-      if (input.selectedFormPresentation !== undefined) row.selectedFormPresentation = input.selectedFormPresentation;
+      if (input.selectedLanguage !== undefined) {
+        row.selectedLanguage = input.selectedLanguage;
+      }
+      if (input.selectedTheme !== undefined) {
+        row.selectedTheme = input.selectedTheme;
+      }
+      if (input.selectedFormPresentation !== undefined) {
+        row.selectedFormPresentation = input.selectedFormPresentation;
+      }
       row.updatedAt = now;
       userPreferences.set(userId, row);
       return row;
@@ -498,7 +595,9 @@ export function createDependencies(): AppDependencies {
 export function cookieValue(response: Response, name: string): string {
   const cookie = response.headers.get("set-cookie") ?? "";
   const match = cookie.match(new RegExp(`${name}=([^;]+)`));
-  if (!match?.[1]) throw new Error(`Missing ${name} cookie`);
+  if (!match?.[1]) {
+    throw new Error(`Missing ${name} cookie`);
+  }
   return match[1];
 }
 

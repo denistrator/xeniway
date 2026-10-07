@@ -35,9 +35,11 @@ export function JobBoard({
               dropTarget={board.dropTarget}
               setDropTarget={board.setDropTarget}
               onKeyboardMove={(id, currentStatus, direction) => {
-                if (direction === "previousStatus" || direction === "nextStatus")
+                if (direction === "previousStatus" || direction === "nextStatus") {
                   board.moveToAdjacentStatus(id, currentStatus, direction);
-                else board.reorderWithinStatus(currentStatus, id, direction);
+                } else {
+                  board.reorderWithinStatus(currentStatus, id, direction);
+                }
               }}
               onOpen={(id) => navigate(`/applications/${id}`)}
             />

@@ -154,7 +154,9 @@ export function useAuthMutations() {
           queryClient.removeQueries({ queryKey: applicationKeys.all });
           queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
         }
-        if (!(await remote)) access.reportLocalLogout();
+        if (!(await remote)) {
+          access.reportLocalLogout();
+        }
       },
     }),
   };
@@ -184,7 +186,9 @@ export function useUpdateUserPreferences() {
   });
 
   useEffect(() => {
-    if (userId !== undefined) controllerRef.current?.abort();
+    if (userId !== undefined) {
+      controllerRef.current?.abort();
+    }
     return () => controllerRef.current?.abort();
   }, [userId]);
 
@@ -210,7 +214,9 @@ export function useCompleteIntroduction() {
     mutationFn: () => markUserIntroduced(csrfToken),
     onSuccess: (response) => {
       const userId = queryClient.getQueryData<CurrentUserQueryData>(authKeys.me)?.data.user?.id;
-      if (userId) queryClient.setQueryData(userPreferencesKeys.current(userId), response);
+      if (userId) {
+        queryClient.setQueryData(userPreferencesKeys.current(userId), response);
+      }
       writeLocalUserPreferences({ wasIntroduced: response.data.preferences.wasIntroduced });
     },
   });
@@ -325,7 +331,9 @@ export function useApplicationFollowUpMutations(applicationId: number) {
         queryClient.setQueryData<ApplicationDetailResponse>(
           applicationKeys.detail(userId ?? 0, applicationId),
           (current) => {
-            if (!current || !Array.isArray(current.data.followUpTasks)) return current;
+            if (!current || !Array.isArray(current.data.followUpTasks)) {
+              return current;
+            }
             return {
               ...current,
               data: {

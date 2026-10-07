@@ -29,13 +29,17 @@ export function JobManager({
   const canMutate = useCanMutate();
   const updatePreferences = useUpdateUserPreferences();
 
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   const switchPresentation = () => {
     const nextPresentation = presentation === "drawer" ? "modal" : "drawer";
     dispatch(setJobFormPresentation(nextPresentation));
     writeLocalUserPreferences({ formPresentation: nextPresentation });
-    if (user.data && canMutate) updatePreferences.mutate({ selectedFormPresentation: nextPresentation });
+    if (user.data && canMutate) {
+      updatePreferences.mutate({ selectedFormPresentation: nextPresentation });
+    }
   };
   const props = {
     presentation,

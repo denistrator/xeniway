@@ -20,7 +20,9 @@ export function ForgotPasswordPage() {
   const errorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    if (request.error) errorRef.current?.focus();
+    if (request.error) {
+      errorRef.current?.focus();
+    }
   }, [request.error]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

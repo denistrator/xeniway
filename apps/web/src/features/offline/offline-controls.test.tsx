@@ -34,7 +34,9 @@ const clients: QueryClient[] = [];
 
 function currentRuntime() {
   const runtime = vi.mocked(offlineRuntime.createOfflineAccessRuntime).mock.results.at(-1)?.value;
-  if (!runtime) throw new Error("Missing mounted offline runtime");
+  if (!runtime) {
+    throw new Error("Missing mounted offline runtime");
+  }
   return runtime;
 }
 
@@ -76,7 +78,9 @@ function renderControls(client = createClient(), title = en.offline.title as str
     </QueryClientProvider>
   );
   const view = render(element());
-  if (!profile.canMutate) act(() => window.dispatchEvent(new Event("xeniway:server-unavailable")));
+  if (!profile.canMutate) {
+    act(() => window.dispatchEvent(new Event("xeniway:server-unavailable")));
+  }
   fireEvent.click(screen.getByText(title, { selector: "summary" }));
   return { ...view, client, refresh: () => view.rerender(element()) };
 }
@@ -115,15 +119,18 @@ beforeEach(async () => {
     verifiedAt: now,
     expiresAt: now + OFFLINE_RETENTION_MS,
   });
-  for (const collection of ["active", "archive", "blacklist"] as const)
+  for (const collection of ["active", "archive", "blacklist"] as const) {
     source.setQueryData(applicationKeys.list(1, collection), { data: { applications: [] } });
+  }
   await saveOfflineSnapshot(1, offlineQuerySnapshot(source, 1), preparationId);
   accountFixture = { ...(await markOfflineReady(1, "build", preparationId)), preparationId };
   source.clear();
 });
 afterEach(async () => {
   cleanup();
-  for (const client of clients.splice(0)) client.clear();
+  for (const client of clients.splice(0)) {
+    client.clear();
+  }
   await clearOfflineDevice();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -183,10 +190,18 @@ test.each(["/", "/archive", "/blacklist", "/applications/3"])(
   "shows the current %s download timestamp and reacts to refresh",
   async (route) => {
     const client = createClient();
-    const key =
-      route === "/applications/3"
-        ? applicationKeys.detail(1, 3)
-        : applicationKeys.list(1, route === "/archive" ? "archive" : route === "/blacklist" ? "blacklist" : "active");
+    let key: readonly unknown[] = applicationKeys.list(1, "active");
+    switch (route) {
+      case "/applications/3":
+        key = applicationKeys.detail(1, 3);
+        break;
+      case "/archive":
+        key = applicationKeys.list(1, "archive");
+        break;
+      case "/blacklist":
+        key = applicationKeys.list(1, "blacklist");
+        break;
+    }
     const first = new Date("2026-10-01T12:00:00Z").getTime();
     const next = first + 60_000;
     client.setQueryData(key, { data: {} }, { updatedAt: first });
@@ -214,13 +229,20 @@ test("a saved same-owner download authorizes refresh without another checkbox", 
 });
 
 test.each(["offline", "unverified", "development"])("refresh cannot start when %s", async (mode) => {
-  if (mode === "offline") vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
-  if (mode === "unverified") profile.canMutate = false;
-  if (mode === "development") vi.stubEnv("DEV", true);
+  if (mode === "offline") {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  }
+  if (mode === "unverified") {
+    profile.canMutate = false;
+  }
+  if (mode === "development") {
+    vi.stubEnv("DEV", true);
+  }
   renderControls();
   const button = screen.queryByRole("button", { name: "Refresh offline data" });
-  if (mode === "development") expect(button).toBeNull();
-  else {
+  if (mode === "development") {
+    expect(button).toBeNull();
+  } else {
     expect(button).toBeInTheDocument();
     await waitFor(() => expect(button).toBeDisabled());
     fireEvent.click(button as HTMLElement);
@@ -325,7 +347,9 @@ test.each(["initial", "refresh"])(
     profile.downloaded = mode === "refresh";
     const pending = pendingPreparation();
     const view = renderControls();
-    if (mode === "initial") fireEvent.click(screen.getByRole("checkbox"));
+    if (mode === "initial") {
+      fireEvent.click(screen.getByRole("checkbox"));
+    }
     fireEvent.click(
       screen.getByRole("button", {
         name: mode === "refresh" ? "Refresh offline data" : "Make available offline on this device",
@@ -465,7 +489,9 @@ test("replacement notification does not cancel the initiating tab's preparation"
     }
     postMessage(data: unknown) {
       for (const recipient of channels) {
-        if (recipient !== this) queueMicrotask(() => recipient.onmessage?.(new MessageEvent("message", { data })));
+        if (recipient !== this) {
+          queueMicrotask(() => recipient.onmessage?.(new MessageEvent("message", { data })));
+        }
       }
     }
     close() {
@@ -476,8 +502,9 @@ test("replacement notification does not cancel the initiating tab's preparation"
   preparation.mockImplementation(
     async (...args: Parameters<typeof import("./prepare-offline").prepareOfflineAccount>) => {
       const notifyReplacement = args[5];
-      if (notifyReplacement) notifyReplacement(1);
-      else {
+      if (notifyReplacement) {
+        notifyReplacement(1);
+      } else {
         const sender = new BrowserChannel();
         sender.postMessage({ type: "account-replaced", userId: 1 });
         sender.close();
@@ -519,8 +546,9 @@ test("a restarted runtime can prepare again after disposal cancels a pending run
 
 test("the existing remove action still clears offline data", async () => {
   const client = createClient();
-  for (const collection of ["active", "archive", "blacklist"] as const)
+  for (const collection of ["active", "archive", "blacklist"] as const) {
     client.setQueryData(applicationKeys.list(1, collection), { data: { applications: [] } });
+  }
   renderControls(client);
   expect(await loadOfflineSnapshot(1)).not.toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Remove offline data" }));
@@ -532,9 +560,13 @@ test.each(["offline", "auth error", "owner mismatch"])(
   "click guards detect %s before the component rerenders",
   async (change) => {
     const view = renderControls();
-    if (change === "offline") vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
-    if (change === "owner mismatch") view.client.setQueryData(["auth", "me"], { data: { user: null } });
-    if (change === "auth error")
+    if (change === "offline") {
+      vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    }
+    if (change === "owner mismatch") {
+      view.client.setQueryData(["auth", "me"], { data: { user: null } });
+    }
+    if (change === "auth error") {
       await view.client
         .fetchQuery({
           queryKey: ["auth", "me"],
@@ -544,6 +576,7 @@ test.each(["offline", "auth error", "owner mismatch"])(
           staleTime: 0,
         })
         .catch(() => {});
+    }
     fireEvent.click(screen.getByRole("button", { name: "Refresh offline data" }));
     expect(preparation).not.toHaveBeenCalled();
     expect(access.download.status).not.toBe("preparing");
@@ -556,11 +589,13 @@ test.each(["offline", "auth error", "unverified"])(
     const pending = pendingPreparation();
     const view = renderControls();
     fireEvent.click(screen.getByRole("button", { name: "Refresh offline data" }));
-    if (change === "offline") vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    if (change === "offline") {
+      vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    }
     if (change === "unverified") {
       act(() => window.dispatchEvent(new Event("xeniway:server-unavailable")));
     }
-    if (change === "auth error")
+    if (change === "auth error") {
       await act(async () => {
         await view.client
           .fetchQuery({
@@ -572,6 +607,7 @@ test.each(["offline", "auth error", "unverified"])(
           })
           .catch(() => {});
       });
+    }
     await act(async () => pending.resolve(savedAccount()));
     expect(access.account).toBeNull();
     expect(screen.queryByText(/Ready offline until/)).not.toBeInTheDocument();
@@ -585,8 +621,9 @@ test.each([
   ["he", he],
 ] as const)("%s has aligned offline copy and localized live progress", async (locale, dictionary) => {
   expect(Object.keys(dictionary.offline).sort()).toEqual(Object.keys(en.offline).sort());
-  for (const key of ["refresh", "progress", "coverage", "refreshReplacement"] as const)
+  for (const key of ["refresh", "progress", "coverage", "refreshReplacement"] as const) {
     expect(dictionary.offline[key]).not.toBe("");
+  }
   await changeLocale(locale);
   const pending = pendingPreparation();
   renderControls(createClient(), dictionary.offline.title);

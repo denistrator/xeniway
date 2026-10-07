@@ -5,6 +5,13 @@ import { useCurrentUser, useUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences, writeLocalUserPreferences } from "../../lib/user-preferences";
 import { setJobFormPresentation, setTheme } from "../../store";
 
+function resolvePreference<T>(current: T, initial: T, server: T | null): T {
+  if (current !== initial) {
+    return current;
+  }
+  return server ?? current;
+}
+
 export function UserPreferencesSync() {
   const dispatch = useDispatch();
   const user = useCurrentUser();
@@ -19,14 +26,19 @@ export function UserPreferencesSync() {
 
     const serverPreferences = preferences.data;
     const preferenceKey = JSON.stringify([userId, serverPreferences]);
-    if (appliedPreferenceKey.current === preferenceKey) return;
+    if (appliedPreferenceKey.current === preferenceKey) {
+      return;
+    }
     appliedPreferenceKey.current = preferenceKey;
 
     let cancelled = false;
     const localPreferences = readLocalUserPreferences();
-    if (serverPreferences.selectedTheme) dispatch(setTheme(serverPreferences.selectedTheme));
-    if (serverPreferences.selectedFormPresentation)
+    if (serverPreferences.selectedTheme) {
+      dispatch(setTheme(serverPreferences.selectedTheme));
+    }
+    if (serverPreferences.selectedFormPresentation) {
       dispatch(setJobFormPresentation(serverPreferences.selectedFormPresentation));
+    }
 
     async function applyServerLanguage() {
       if (serverPreferences.selectedLanguage) {
@@ -36,21 +48,22 @@ export function UserPreferencesSync() {
           return;
         }
       }
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
       const currentPreferences = readLocalUserPreferences();
       writeLocalUserPreferences({
-        language:
-          currentPreferences.language !== localPreferences.language
-            ? currentPreferences.language
-            : (serverPreferences.selectedLanguage ?? currentPreferences.language),
-        theme:
-          currentPreferences.theme !== localPreferences.theme
-            ? currentPreferences.theme
-            : (serverPreferences.selectedTheme ?? currentPreferences.theme),
-        formPresentation:
-          currentPreferences.formPresentation !== localPreferences.formPresentation
-            ? currentPreferences.formPresentation
-            : (serverPreferences.selectedFormPresentation ?? currentPreferences.formPresentation),
+        language: resolvePreference(
+          currentPreferences.language,
+          localPreferences.language,
+          serverPreferences.selectedLanguage,
+        ),
+        theme: resolvePreference(currentPreferences.theme, localPreferences.theme, serverPreferences.selectedTheme),
+        formPresentation: resolvePreference(
+          currentPreferences.formPresentation,
+          localPreferences.formPresentation,
+          serverPreferences.selectedFormPresentation,
+        ),
         wasIntroduced: serverPreferences.wasIntroduced,
       });
     }
@@ -62,7 +75,9 @@ export function UserPreferencesSync() {
   }, [dispatch, preferences.data, userId]);
 
   useEffect(() => {
-    if (!userId) appliedPreferenceKey.current = null;
+    if (!userId) {
+      appliedPreferenceKey.current = null;
+    }
   }, [userId]);
 
   return null;

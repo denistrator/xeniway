@@ -66,7 +66,9 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
           onYes={() => {
-            if (canMutate) activity.remove();
+            if (canMutate) {
+              activity.remove();
+            }
           }}
           onNo={activity.cancelDelete}
           yesDisabled={!canMutate || activity.mutations.remove.isPending}

@@ -50,12 +50,18 @@ export type FollowUpsController = {
 
 export function validateFollowUpDraft(draft: FollowUpDraft) {
   const result = createApplicationFollowUpTaskInputSchema.safeParse({ ...draft, notes: draft.notes || null });
-  if (result.success) return { input: result.data, errors: {} as FollowUpErrors, firstField: null };
+  if (result.success) {
+    return { input: result.data, errors: {} as FollowUpErrors, firstField: null };
+  }
 
   const errors: FollowUpErrors = {};
   for (const issue of result.error.issues) {
-    if (issue.path[0] === "title") errors.title = "titleRequired";
-    if (issue.path[0] === "dueDate") errors.dueDate = draft.dueDate ? "invalidDate" : "dateRequired";
+    if (issue.path[0] === "title") {
+      errors.title = "titleRequired";
+    }
+    if (issue.path[0] === "dueDate") {
+      errors.dueDate = draft.dueDate ? "invalidDate" : "dateRequired";
+    }
   }
   return { input: null, errors, firstField: result.error.issues[0]?.path[0] as "title" | "dueDate" | undefined };
 }
@@ -79,7 +85,9 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     mutations.remove.isPending;
 
   useEffect(() => {
-    if (!editorTarget) return;
+    if (!editorTarget) {
+      return;
+    }
     const task = editorTarget === "new" ? undefined : editorTarget;
     setDraft({ title: task?.title ?? "", dueDate: task?.dueDate ?? "", notes: task?.notes ?? "" });
     setErrors({});
@@ -100,7 +108,9 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     const parsed = (
       editorTarget === "new" ? createApplicationFollowUpTaskInputSchema : updateApplicationFollowUpTaskInputSchema
     ).safeParse(input);
-    if (!parsed.success) return;
+    if (!parsed.success) {
+      return;
+    }
     const saved = await runWorkspaceMutation(
       async () => {
         if (editorTarget === "new") {
@@ -113,7 +123,9 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
       "saved",
       "saveFailed",
     );
-    if (saved) setEditorTarget(null);
+    if (saved) {
+      setEditorTarget(null);
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -121,8 +133,14 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     const result = validateFollowUpDraft(draft);
     if (!result.input) {
       setErrors(result.errors);
-      if (result.firstField === "title") titleRef.current?.focus();
-      else if (result.firstField === "dueDate") dateRef.current?.focus();
+      switch (result.firstField) {
+        case "title":
+          titleRef.current?.focus();
+          break;
+        case "dueDate":
+          dateRef.current?.focus();
+          break;
+      }
       return;
     }
     setErrors({});
@@ -150,7 +168,9 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
   }
 
   async function confirmDeletion() {
-    if (!deletionTarget) return;
+    if (!deletionTarget) {
+      return;
+    }
     await runWorkspaceMutation(
       () => mutations.remove.mutateAsync(deletionTarget.id),
       setStatus,

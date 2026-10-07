@@ -129,7 +129,9 @@ export const FollowUpsSection = memo(function FollowUpsSection({
                           disabled={!canMutate || controller.pending}
                           aria-label={t("applications.workspace.followUps.completeNamed", { name: task.title })}
                           onClick={() => {
-                            if (canMutate) void controller.complete(task.id);
+                            if (canMutate) {
+                              void controller.complete(task.id);
+                            }
                           }}
                         >
                           {t("applications.workspace.followUps.complete")}
@@ -156,7 +158,9 @@ export const FollowUpsSection = memo(function FollowUpsSection({
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
           onYes={() => {
-            if (canMutate) void controller.deletion.confirm();
+            if (canMutate) {
+              void controller.deletion.confirm();
+            }
           }}
           onNo={controller.deletion.cancel}
           yesDisabled={!canMutate || controller.pending}

@@ -27,9 +27,16 @@ test.each(["No", "backdrop", "Escape"])(
     const dialog = screen.getByRole("alertdialog");
     expect(within(dialog).getByRole("button", { name: "Yes" })).toBeDisabled();
     expect(within(dialog).getByRole("button", { name: "No" })).toBeEnabled();
-    if (dismiss === "Escape") await user.keyboard("{Escape}");
-    else if (dismiss === "backdrop") await user.click(screen.getAllByRole("button", { name: "No" })[0]);
-    else await user.click(within(dialog).getByRole("button", { name: "No" }));
+    switch (dismiss) {
+      case "Escape":
+        await user.keyboard("{Escape}");
+        break;
+      case "backdrop":
+        await user.click(screen.getAllByRole("button", { name: "No" })[0]);
+        break;
+      default:
+        await user.click(within(dialog).getByRole("button", { name: "No" }));
+    }
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(screen.getByRole("region", { name: "Activity" })).toHaveFocus();
     expect(screen.getByText("Recruiter context")).toBeVisible();

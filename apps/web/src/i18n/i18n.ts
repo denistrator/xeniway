@@ -18,14 +18,18 @@ const localeLoaders: Record<Exclude<SupportedLocale, "en">, () => Promise<{ defa
 };
 
 export function resolveLocale(storedLocale: string | null, browserLanguage?: string): SupportedLocale {
-  if (supportedLocales.includes(storedLocale as SupportedLocale)) return storedLocale as SupportedLocale;
+  if (supportedLocales.includes(storedLocale as SupportedLocale)) {
+    return storedLocale as SupportedLocale;
+  }
 
   const browserLocale = browserLanguage?.toLowerCase().split("-")[0];
   return supportedLocales.includes(browserLocale as SupportedLocale) ? (browserLocale as SupportedLocale) : "en";
 }
 
 async function ensureLocaleResources(locale: SupportedLocale) {
-  if (i18n.hasResourceBundle(locale, "translation") || locale === "en") return;
+  if (i18n.hasResourceBundle(locale, "translation") || locale === "en") {
+    return;
+  }
 
   const resources = await localeLoaders[locale]();
   i18n.addResourceBundle(locale, "translation", resources.default, true, true);

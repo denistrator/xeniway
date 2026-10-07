@@ -29,8 +29,12 @@ test.each([
 ])("shows actions for the application's current board", ({ state, present, absent }) => {
   renderLifecycle(createApplication(state));
 
-  for (const label of present) expect(screen.getByRole("button", { name: label })).toBeVisible();
-  for (const label of absent) expect(screen.queryByRole("button", { name: label })).toBeNull();
+  for (const label of present) {
+    expect(screen.getByRole("button", { name: label })).toBeVisible();
+  }
+  for (const label of absent) {
+    expect(screen.queryByRole("button", { name: label })).toBeNull();
+  }
 });
 
 test("requires confirmation before archiving", async () => {

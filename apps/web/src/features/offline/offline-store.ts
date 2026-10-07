@@ -39,14 +39,19 @@ const snapshotRecordShape = {
 function validAccount(value: unknown, now: number, metadata: false): value is OfflineAccountRecord;
 function validAccount(value: unknown, now: number, metadata: true): value is OfflineAccountMetadata;
 function validAccount(value: unknown, now: number, metadata: boolean): value is OfflineAccountRecord {
-  if (!isTimestamp(now)) return false;
+  if (!isTimestamp(now)) {
+    return false;
+  }
   if (metadata) {
     if (
       !hasShape(value, accountMetadataShape) ||
       (value.ready ? typeof value.buildId !== "string" : value.buildId !== null)
-    )
+    ) {
       return false;
-  } else if (!hasShape(value, accountShape)) return false;
+    }
+  } else if (!hasShape(value, accountShape)) {
+    return false;
+  }
   return (
     value.verifiedAt <= now && value.expiresAt > now && value.expiresAt - value.verifiedAt === OFFLINE_RETENTION_MS
   );
@@ -87,7 +92,9 @@ async function transact<T>(action: (tx: Transaction) => Promise<T>): Promise<T> 
 }
 async function activeAccount(tx: Transaction, now?: number): Promise<OfflineAccountMetadata | null> {
   const value = await tx.objectStore("accounts").get("active");
-  if (validAccount(value, now ?? Date.now(), true)) return value;
+  if (validAccount(value, now ?? Date.now(), true)) {
+    return value;
+  }
   // Corrupt identities cannot safely select an owner; remove all private records.
   await tx.objectStore("accounts").clear();
   await tx.objectStore("snapshots").clear();
@@ -97,7 +104,9 @@ function requireOwner(
   account: OfflineAccountMetadata | null,
   userId: number,
 ): asserts account is OfflineAccountMetadata {
-  if (!account || account.userId !== userId) throw new Error("Offline account is disabled, expired or superseded");
+  if (!account || account.userId !== userId) {
+    throw new Error("Offline account is disabled, expired or superseded");
+  }
 }
 export class OfflinePreparationChangedError extends Error {
   constructor() {
@@ -127,15 +136,21 @@ async function readSnapshot(
     value.savedAt <= readAt
   ) {
     const snapshot = validateStoredSnapshot(account.userId, value.snapshot, value.savedAt);
-    if (snapshot) return snapshot;
+    if (snapshot) {
+      return snapshot;
+    }
   }
   await tx.objectStore("snapshots").delete(account.userId);
-  if (account.ready) await tx.objectStore("accounts").put({ ...account, ready: false, buildId: null }, "active");
+  if (account.ready) {
+    await tx.objectStore("accounts").put({ ...account, ready: false, buildId: null }, "active");
+  }
   return null;
 }
 
 export async function enableOfflineAccount(record: OfflineAccountRecord): Promise<string> {
-  if (!validAccount(record, Date.now(), false)) throw new Error("Invalid offline account record");
+  if (!validAccount(record, Date.now(), false)) {
+    throw new Error("Invalid offline account record");
+  }
   // A fresh opt-in always starts preparation again, including for the same account.
   const preparationId = crypto.randomUUID();
   await transact(async (tx) => {
@@ -155,9 +170,13 @@ export async function assertOfflinePreparation(userId: number, preparationId: st
 export async function restoreOfflineAccount(now?: number): Promise<OfflineAccountMetadata | null> {
   return transact(async (tx) => {
     const account = await activeAccount(tx, now);
-    if (!account?.ready) return null;
+    if (!account?.ready) {
+      return null;
+    }
     const snapshot = await readSnapshot(tx, account, now);
-    if (!snapshot || !hasPreparedLists(snapshot)) return null;
+    if (!snapshot || !hasPreparedLists(snapshot)) {
+      return null;
+    }
     const preparationId = await tx.objectStore("accounts").get("preparation");
     return typeof preparationId === "string" ? { ...account, preparationId } : account;
   });
@@ -182,7 +201,9 @@ export async function saveOfflineSnapshot(
 export async function loadOfflineSnapshot(userId: number, now?: number): Promise<DehydratedState | null> {
   return transact(async (tx) => {
     const account = await activeAccount(tx, now);
-    if (!account?.ready || account.userId !== userId) return null;
+    if (!account?.ready || account.userId !== userId) {
+      return null;
+    }
     const snapshot = await readSnapshot(tx, account, now);
     return snapshot && hasPreparedLists(snapshot) ? snapshot : null;
   });
@@ -192,8 +213,9 @@ export async function clearOfflineAccount(userId: number, preparationId?: string
     if (
       preparationId !== undefined &&
       ((await tx.objectStore("accounts").get("preparation")) ?? null) !== preparationId
-    )
+    ) {
       return false;
+    }
     const account = await activeAccount(tx, Date.now());
     // Old tabs may clear their own owner key but cannot clear the new active identity.
     await tx.objectStore("snapshots").delete(userId);
@@ -217,16 +239,21 @@ export async function markOfflineReady(
   buildId: string,
   preparationId?: string,
 ): Promise<OfflineAccountMetadata> {
-  if (typeof buildId !== "string" || !buildId.trim()) throw new Error("Offline readiness requires a build ID");
+  if (typeof buildId !== "string" || !buildId.trim()) {
+    throw new Error("Offline readiness requires a build ID");
+  }
   return transact(async (tx) => {
     await requirePreparation(tx, preparationId);
     const now = Date.now();
     const account = await activeAccount(tx, now);
     requireOwner(account, userId);
     const snapshot = await readSnapshot(tx, account, now);
-    if (!snapshot || !hasPreparedLists(snapshot)) throw new Error("Offline preparation requires all three lists");
-    if (preparationId !== undefined && !hasPreparedWorkspaces(snapshot))
+    if (!snapshot || !hasPreparedLists(snapshot)) {
+      throw new Error("Offline preparation requires all three lists");
+    }
+    if (preparationId !== undefined && !hasPreparedWorkspaces(snapshot)) {
       throw new Error("Offline preparation requires all workspaces");
+    }
     const ready = { ...account, ready: true, buildId };
     await tx.objectStore("accounts").put(ready, "active");
     const generation = await tx.objectStore("accounts").get("preparation");

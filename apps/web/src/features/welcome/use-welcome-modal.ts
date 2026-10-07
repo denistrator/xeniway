@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { trapTabFocus } from "../../lib/trap-tab-focus";
 import type { WelcomeAction } from "./welcome-modal";
 
 export function useWelcomeModal(onComplete: (action: WelcomeAction) => void) {
@@ -24,30 +25,22 @@ export function useWelcomeModal(onComplete: (action: WelcomeAction) => void) {
         complete("stay");
         return;
       }
-      if (event.key !== "Tab") return;
-      const dialog = closeRef.current?.closest("[role='dialog']");
-      if (!dialog) return;
-      const focusable = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex='-1'])",
-        ),
-      );
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
+      if (event.key !== "Tab") {
+        return;
       }
+      const dialog = closeRef.current?.closest("[role='dialog']");
+      if (!dialog) {
+        return;
+      }
+      trapTabFocus(event, dialog);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       queueMicrotask(() => {
-        if (!closeRef.current?.isConnected) document.getElementById("main-content")?.focus();
+        if (!closeRef.current?.isConnected) {
+          document.getElementById("main-content")?.focus();
+        }
       });
     };
   }, [complete]);

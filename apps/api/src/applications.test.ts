@@ -629,8 +629,12 @@ describe("application workspace API", () => {
     csrf = true,
   ) {
     const headers = new Headers({ cookie: `session_id=${account.sessionId}` });
-    if (body !== undefined) headers.set("content-type", "application/json");
-    if (csrf) headers.set("x-csrf-token", account.payload.data.csrfToken);
+    if (body !== undefined) {
+      headers.set("content-type", "application/json");
+    }
+    if (csrf) {
+      headers.set("x-csrf-token", account.payload.data.csrfToken);
+    }
     return app.handle(
       new Request(`http://localhost/api/applications/${path}`, {
         method,

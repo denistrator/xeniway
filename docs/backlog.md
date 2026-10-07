@@ -48,6 +48,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Possible direction:** Trace form initialization and submission timing across sequential browser contexts; check whether late initialization resets user input. Reproduce before changing implementation or test waits.
 - **Guardrails:** Preserve generic unknown-account responses, CSRF, rate limiting, and normal user input. Do not mask the issue with arbitrary delays or weaker assertions.
 
+### Investigate intermittent company-research save browser failure
+
+- **Area:** Workspace preparation inline editing and the complete browser workflow.
+- **Why:** During the global control-flow refactor, the serial browser suite once failed to display the company-research text after Save. The unchanged workflow passed immediately in isolation. Preparation editing code was unchanged; the surrounding focus and route-handler changes were verified as braces-only AST-equivalent edits. The underlying cause is not established.
+- **Possible direction:** Capture the input value, preparation request/response, editor transitions, and focus around Save in repeated full-suite runs to distinguish a timing-sensitive test from a persistence defect.
+- **Guardrails:** Preserve one-field preparation patches, owner-scoped writes, CSRF, confirm/cancel behavior, and keyboard focus. Do not weaken assertions or add arbitrary delays.
+
 ### Finish the immutable offline/PWA security report
 
 - **Area:** Security-review tooling for the `d487081..3fbb00a` offline/PWA change.

@@ -16,7 +16,9 @@ const delayed = vi.hoisted(() => {
 });
 vi.mock("./pages/about-page", () => ({
   AboutPage: () => {
-    if (!delayed.ready) throw delayed.promise;
+    if (!delayed.ready) {
+      throw delayed.promise;
+    }
     return <h1>About loaded</h1>;
   },
 }));

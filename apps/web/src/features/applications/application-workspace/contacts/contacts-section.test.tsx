@@ -12,6 +12,22 @@ beforeEach(async () => {
 
 afterEach(() => vi.unstubAllGlobals());
 
+test.each([
+  { label: "Name", type: "text", autoComplete: "name", maxLength: "255" },
+  { label: "Role", type: "text", autoComplete: "off", maxLength: "255" },
+  { label: "Email", type: "email", autoComplete: "email", maxLength: "255" },
+  { label: "Phone", type: "tel", autoComplete: "tel", maxLength: "100" },
+  { label: "Profile URL", type: "url", autoComplete: "off", maxLength: "500" },
+])("preserves input attributes for $label", async ({ label, type, autoComplete, maxLength }) => {
+  const user = userEvent.setup();
+  renderApplicationWorkspace();
+  await user.click(screen.getByRole("button", { name: "Add contact" }));
+  const input = screen.getByRole("textbox", { name: label });
+  expect(input).toHaveAttribute("type", type);
+  expect(input).toHaveAttribute("autocomplete", autoComplete);
+  expect(input).toHaveAttribute("maxlength", maxLength);
+});
+
 test("contacts show safe links, plain notes, and an actionable empty state", () => {
   renderApplicationWorkspace({ contacts: [workspaceContact] });
   expect(screen.getByRole("link", { name: "ari@example.com" })).toHaveAttribute("href", "mailto:ari@example.com");

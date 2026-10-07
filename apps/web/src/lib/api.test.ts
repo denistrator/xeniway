@@ -8,14 +8,53 @@ import {
   listApplications,
   markUserIntroduced,
   parseApiError,
+  requestJson,
   requestPasswordReset,
   updateUserPreferences,
   userPreferencesKeys,
 } from "./api";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("web API helpers", () => {
+  it.each([
+    { path: "/api/applications/1", status: 401, eventType: "xeniway:auth-expired" },
+    { path: "/api/user/preferences", status: 401, eventType: null },
+    { path: "/api/applications", status: 503, eventType: "xeniway:server-unavailable" },
+    { path: "/api/user/preferences", status: 500, eventType: "xeniway:server-unavailable" },
+    { path: "/api/auth/me", status: 503, eventType: null },
+  ])("preserves error identity and notifications for $path ($status)", async ({ path, status, eventType }) => {
+    const events = vi.spyOn(window, "dispatchEvent");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "REQUEST_FAILED", message: "Request failed" } }), { status }),
+      ),
+    );
+
+    await expect(requestJson(path)).rejects.toMatchObject({
+      name: "ApiRequestError",
+      code: "REQUEST_FAILED",
+      message: "Request failed",
+      status,
+    });
+    expect(events.mock.calls.map(([event]) => event.type)).toEqual(eventType ? [eventType] : []);
+  });
+
+  it("does not report aborted private requests as server outages", async () => {
+    const events = vi.spyOn(window, "dispatchEvent");
+    const error = new DOMException("Aborted", "AbortError");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(error));
+
+    await expect(requestJson("/api/applications")).rejects.toBe(error);
+
+    expect(events).not.toHaveBeenCalled();
+  });
+
   it("downloads the authenticated CSV export as a blob with its server filename", async () => {
     const fetchMock = vi.fn().mockImplementation(
       async () =>
@@ -90,7 +129,9 @@ describe("web API helpers", () => {
       expect.objectContaining({ credentials: "include" }),
     );
     const request = fetchMock.mock.calls[1]?.[1];
-    if (!request) throw new Error("Expected the preference completion request");
+    if (!request) {
+      throw new Error("Expected the preference completion request");
+    }
     expect((request.headers as Headers).get("x-csrf-token")).toBe("csrf-token");
     expect(request.method).toBe("POST");
   });
@@ -118,7 +159,9 @@ describe("web API helpers", () => {
     });
 
     const request = fetchMock.mock.calls[0]?.[1];
-    if (!request) throw new Error("Expected the preference update request");
+    if (!request) {
+      throw new Error("Expected the preference update request");
+    }
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/user/preferences",
       expect.objectContaining({ method: "PATCH", credentials: "include" }),
@@ -147,7 +190,9 @@ describe("web API helpers", () => {
       expect.objectContaining({ method: "POST", credentials: "include", headers: expect.any(Headers) }),
     );
     const firstRequest = fetchMock.mock.calls[0]?.[1];
-    if (!firstRequest) throw new Error("Expected the first request");
+    if (!firstRequest) {
+      throw new Error("Expected the first request");
+    }
     expect((firstRequest.headers as Headers).get("x-csrf-token")).toBe("csrf-token");
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,

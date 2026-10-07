@@ -21,7 +21,9 @@ export function RegisterPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (validationError || register.error) errorRef.current?.focus();
+    if (validationError || register.error) {
+      errorRef.current?.focus();
+    }
   }, [register.error, validationError]);
 
   function update(field: keyof RegisterFormState, value: string) {

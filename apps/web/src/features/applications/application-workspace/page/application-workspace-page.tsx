@@ -16,16 +16,20 @@ export function ApplicationWorkspacePage() {
   const { t } = useTranslation();
   const access = useOfflineAccess();
 
-  if (id === null || (detail.error instanceof ApiRequestError && detail.error.code === "NOT_FOUND"))
+  if (id === null || (detail.error instanceof ApiRequestError && detail.error.code === "NOT_FOUND")) {
     return <NotFoundPage />;
-  if (!access.canReadRemote && !detail.data)
+  }
+  if (!access.canReadRemote && !detail.data) {
     return (
       <p role="status" className="mx-auto max-w-7xl px-6">
         {t("offline.notDownloaded")}
       </p>
     );
-  if (detail.isPending) return <LoadingScreen />;
-  if (!detail.data || (detail.error instanceof ApiRequestError && detail.error.status < 500))
+  }
+  if (detail.isPending) {
+    return <LoadingScreen />;
+  }
+  if (!detail.data || (detail.error instanceof ApiRequestError && detail.error.status < 500)) {
     return (
       <div role="alert" className="mx-auto max-w-7xl px-6 py-8 text-sm text-rose-600">
         <p>{t(getApiErrorKey(detail.error instanceof ApiRequestError ? detail.error.code : "REQUEST_FAILED"))}</p>
@@ -34,6 +38,7 @@ export function ApplicationWorkspacePage() {
         </button>
       </div>
     );
+  }
 
   return <ApplicationWorkspaceContent key={detail.data.application.id} data={detail.data} />;
 }

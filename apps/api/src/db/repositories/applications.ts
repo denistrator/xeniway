@@ -64,7 +64,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       .from(jobApplications)
       .where(ownedApplication(userId, applicationId))
       .limit(1);
-    if (!application) return null;
+    if (!application) {
+      return null;
+    }
 
     const [preparationRows, contactRows, taskRows] = await Promise.all([
       this.database
@@ -103,7 +105,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     input: UpdateApplicationPreparationInput,
   ): Promise<ApplicationPreparation | null> {
     return this.database.transaction(async (transaction) => {
-      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
+      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) {
+        return null;
+      }
       const [row] = await transaction
         .insert(applicationWorkspaces)
         .values({
@@ -134,7 +138,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     input: CreateApplicationContactInput,
   ): Promise<ApplicationContact | null> {
     return this.database.transaction(async (transaction) => {
-      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
+      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) {
+        return null;
+      }
       const [row] = await transaction
         .insert(applicationContacts)
         .values({
@@ -148,7 +154,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
           notes: input.notes,
         })
         .returning();
-      if (!row) throw new Error("Unable to create application contact");
+      if (!row) {
+        throw new Error("Unable to create application contact");
+      }
       return toApplicationContact(row);
     });
   }
@@ -202,7 +210,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
     input: CreateApplicationFollowUpTaskInput,
   ): Promise<ApplicationFollowUpTask | null> {
     return this.database.transaction(async (transaction) => {
-      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) return null;
+      if (!(await this.hasOwnedParent(transaction, userId, applicationId))) {
+        return null;
+      }
       const [row] = await transaction
         .insert(applicationFollowUpTasks)
         .values({
@@ -213,7 +223,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
           notes: input.notes,
         })
         .returning();
-      if (!row) throw new Error("Unable to create follow-up task");
+      if (!row) {
+        throw new Error("Unable to create follow-up task");
+      }
       return toApplicationFollowUpTask(row);
     });
   }
@@ -260,7 +272,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       .set({ completedAt: new Date(), updatedAt: new Date() })
       .where(and(scope, isNull(applicationFollowUpTasks.completedAt)))
       .returning();
-    if (completed) return toApplicationFollowUpTask(completed);
+    if (completed) {
+      return toApplicationFollowUpTask(completed);
+    }
     const [existing] = await this.database.select().from(applicationFollowUpTasks).where(scope).limit(1);
     return existing ? toApplicationFollowUpTask(existing) : null;
   }
@@ -360,7 +374,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         .where(ownedApplication(userId, applicationId))
         .for("share")
         .limit(1);
-      if (!application) return null;
+      if (!application) {
+        return null;
+      }
       const [row] = await transaction
         .insert(applicationEvents)
         .values({
@@ -374,7 +390,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
           isSystem: false,
         })
         .returning();
-      if (!row) throw new Error("Unable to create application event");
+      if (!row) {
+        throw new Error("Unable to create application event");
+      }
       return toApplicationEvent(row);
     });
   }
@@ -420,7 +438,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
 
   async list(userId: number, options: { status?: JobStatus; archived?: boolean } = {}) {
     const conditions = [eq(jobApplications.userId, userId)];
-    if (options.status) conditions.push(eq(jobApplications.status, options.status));
+    if (options.status) {
+      conditions.push(eq(jobApplications.status, options.status));
+    }
     conditions.push(options.archived ? isNotNull(jobApplications.archivedAt) : isNull(jobApplications.archivedAt));
     conditions.push(isNull(jobApplications.blacklistedAt));
 
@@ -460,7 +480,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         .insert(jobApplications)
         .values({ ...input, userId })
         .returning();
-      if (!row) throw new Error("Unable to create application");
+      if (!row) {
+        throw new Error("Unable to create application");
+      }
       await this.recordSystemEvent(transaction, userId, row.id, "application_created");
       return toJobApplication(row);
     });
@@ -474,13 +496,17 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)))
         .for("update")
         .limit(1);
-      if (!before) return null;
+      if (!before) {
+        return null;
+      }
       const [row] = await transaction
         .update(jobApplications)
         .set({ ...input, updatedAt: new Date() })
         .where(ownedApplication(userId, id))
         .returning();
-      if (!row) return null;
+      if (!row) {
+        return null;
+      }
       if (row.status !== before.status) {
         await this.recordSystemEvent(transaction, userId, id, "status_changed", {
           from: before.status,
@@ -490,7 +516,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
       const fieldsChanged = Object.entries(input).some(
         ([key, value]) => key !== "status" && value !== undefined && before[key as keyof typeof before] !== value,
       );
-      if (fieldsChanged) await this.recordSystemEvent(transaction, userId, id, "application_edited");
+      if (fieldsChanged) {
+        await this.recordSystemEvent(transaction, userId, id, "application_edited");
+      }
       return toJobApplication(row);
     });
   }
@@ -508,7 +536,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
             inArray(jobApplications.id, applicationIds),
           ),
         );
-      if (rows.length !== applicationIds.length) return false;
+      if (rows.length !== applicationIds.length) {
+        return false;
+      }
       for (const [sortOrder, id] of applicationIds.entries()) {
         await transaction
           .update(jobApplications)
@@ -526,7 +556,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         .set({ archivedAt: new Date(), updatedAt: new Date() })
         .where(and(ownedApplication(userId, id), isNull(jobApplications.archivedAt)))
         .returning({ id: jobApplications.id });
-      if (!row) return false;
+      if (!row) {
+        return false;
+      }
       await this.recordSystemEvent(transaction, userId, id, "archived");
       return true;
     });
@@ -539,7 +571,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         .set({ archivedAt: null, updatedAt: new Date() })
         .where(and(ownedApplication(userId, id), isNotNull(jobApplications.archivedAt)))
         .returning({ id: jobApplications.id });
-      if (!row) return false;
+      if (!row) {
+        return false;
+      }
       await this.recordSystemEvent(transaction, userId, id, "restored_from_archive");
       return true;
     });
@@ -551,12 +585,15 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
   }
 
   async removeAll(userId: number, board: ApplicationBoard): Promise<number> {
-    const boardFilter =
-      board === "archive"
-        ? isNotNull(jobApplications.archivedAt)
-        : board === "blacklist"
-          ? isNotNull(jobApplications.blacklistedAt)
-          : and(isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt));
+    let boardFilter = and(isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt));
+    switch (board) {
+      case "archive":
+        boardFilter = isNotNull(jobApplications.archivedAt);
+        break;
+      case "blacklist":
+        boardFilter = isNotNull(jobApplications.blacklistedAt);
+        break;
+    }
     const result = await this.database
       .delete(jobApplications)
       .where(and(eq(jobApplications.userId, userId), boardFilter));
@@ -581,7 +618,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
           and(ownedApplication(userId, id), isNull(jobApplications.archivedAt), isNull(jobApplications.blacklistedAt)),
         )
         .returning({ id: jobApplications.id });
-      if (!row) return false;
+      if (!row) {
+        return false;
+      }
       await this.recordSystemEvent(transaction, userId, id, "blacklisted");
       return true;
     });
@@ -594,7 +633,9 @@ export class DrizzleApplicationRepository implements ApplicationRepository {
         .set({ blacklistedAt: null, blacklistReason: null, updatedAt: new Date() })
         .where(and(ownedApplication(userId, id), isNotNull(jobApplications.blacklistedAt)))
         .returning({ id: jobApplications.id });
-      if (!row) return false;
+      if (!row) {
+        return false;
+      }
       await this.recordSystemEvent(transaction, userId, id, "restored_from_blacklist");
       return true;
     });

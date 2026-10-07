@@ -26,7 +26,9 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
   };
 
   async function restore() {
-    if (!canMutate) return;
+    if (!canMutate) {
+      return;
+    }
     setRestoreErrorKey(null);
     try {
       await lifecycle.execute("restore");
@@ -36,7 +38,9 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
   }
 
   async function executeConfirmedAction() {
-    if (!canMutate || !pendingAction) return;
+    if (!canMutate || !pendingAction) {
+      return;
+    }
     setActionErrorKey(null);
     try {
       await lifecycle.execute(pendingAction);
@@ -47,8 +51,12 @@ export function ApplicationLifecycleActions({ application }: { application: JobA
   }
 
   function request(action: ApplicationLifecycleAction) {
-    if (!canMutate) return;
-    if (document.activeElement instanceof HTMLElement) rememberFocus(document.activeElement);
+    if (!canMutate) {
+      return;
+    }
+    if (document.activeElement instanceof HTMLElement) {
+      rememberFocus(document.activeElement);
+    }
     setActionErrorKey(null);
     setPendingAction(action);
   }

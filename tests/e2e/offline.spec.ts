@@ -36,7 +36,9 @@ async function prepare(page: Page) {
 test("ordinary startup does not register a worker or load the create host before consent", async ({ page }) => {
   const scripts: string[] = [];
   page.on("request", (request) => {
-    if (request.resourceType() === "script") scripts.push(request.url());
+    if (request.resourceType() === "script") {
+      scripts.push(request.url());
+    }
   });
   await login(page);
   expect(await page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length)).toBe(0);
@@ -129,7 +131,9 @@ test("a transient server error without a download stays on the requested board a
   await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
   let checks = 0;
   page.on("request", (request) => {
-    if (new URL(request.url()).pathname === "/api/auth/me") checks += 1;
+    if (new URL(request.url()).pathname === "/api/auth/me") {
+      checks += 1;
+    }
   });
   await page.unroute("**/api/applications/archive");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
@@ -291,7 +295,9 @@ test("offline reload opens never-visited workspaces from every board without wri
   ).toEqual(ids);
   let writes = 0;
   page.on("request", (request) => {
-    if (new URL(request.url()).pathname.startsWith("/api/") && request.method() !== "GET") writes += 1;
+    if (new URL(request.url()).pathname.startsWith("/api/") && request.method() !== "GET") {
+      writes += 1;
+    }
   });
   await context.setOffline(true);
   await page.reload();
@@ -329,8 +335,11 @@ test("offline reload opens never-visited workspaces from every board without wri
   await expect(page.getByText("This workspace has not been downloaded. Connect to open it.")).toBeVisible();
   const cachedUrls = await page.evaluate(async () => {
     const urls: string[] = [];
-    for (const key of await caches.keys())
-      for (const request of await (await caches.open(key)).keys()) urls.push(request.url);
+    for (const key of await caches.keys()) {
+      for (const request of await (await caches.open(key)).keys()) {
+        urls.push(request.url);
+      }
+    }
     return urls;
   });
   expect(cachedUrls.length).toBeGreaterThan(0);
@@ -530,8 +539,9 @@ test("removing downloads in another tab removes cached-device access", async ({ 
   await expect(second.getByText(/Ready offline until/)).toBeVisible();
   await context.setOffline(true);
   const settings = page.locator("details");
-  if ((await settings.getAttribute("open")) === null)
+  if ((await settings.getAttribute("open")) === null) {
     await page.getByText("Offline access on this device", { exact: true }).click();
+  }
   await page.getByRole("button", { name: "Remove offline data", exact: true }).click();
   await expect(second).toHaveURL(/\/login$/);
   await expect(second.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);

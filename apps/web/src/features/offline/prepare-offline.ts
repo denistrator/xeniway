@@ -25,7 +25,9 @@ const collectionRequests = [
 ] as const;
 
 function notifyAccountReplacement(userId: number) {
-  if (typeof BroadcastChannel !== "function") return;
+  if (typeof BroadcastChannel !== "function") {
+    return;
+  }
   const channel = new BroadcastChannel("xeniway-offline");
   channel.postMessage({ type: "account-replaced", userId });
   channel.close();
@@ -51,14 +53,18 @@ export async function prepareOfflineAccount(
   let stopped = false;
   let preparationFailure: unknown;
   const stopPreparation = (error: unknown) => {
-    if (!stopped) preparationFailure = error;
+    if (!stopped) {
+      preparationFailure = error;
+    }
     stopped = true;
   };
   const assertCurrent = async () => {
     assertOwner();
     await assertOfflinePreparation(user.id, preparationId);
     assertOwner();
-    if (stopped) throw preparationFailure;
+    if (stopped) {
+      throw preparationFailure;
+    }
   };
   client.setQueryDefaults(applicationKeys.account(user.id), { gcTime: OFFLINE_RETENTION_MS });
   async function fetchCurrent<T>(queryKey: readonly unknown[], request: () => Promise<T>): Promise<T> {
@@ -89,7 +95,9 @@ export async function prepareOfflineAccount(
       ),
     );
     const lists = results.map((result) => {
-      if (result.status === "rejected") throw result.reason;
+      if (result.status === "rejected") {
+        throw result.reason;
+      }
       return result.value;
     });
     await assertCurrent();
@@ -106,7 +114,9 @@ export async function prepareOfflineAccount(
             await assertCurrent();
             const id = ids[nextIndex++];
             // Another worker may consume the final ID while this one checks durable ownership.
-            if (id === undefined) return;
+            if (id === undefined) {
+              return;
+            }
             await fetchCurrent(applicationKeys.detail(user.id, id), () => getApplicationDetail(id));
             await assertCurrent();
             completed += 1;
@@ -119,7 +129,9 @@ export async function prepareOfflineAccount(
       }),
     );
     const failure = workers.find((result) => result.status === "rejected");
-    if (failure?.status === "rejected") throw failure.reason;
+    if (failure?.status === "rejected") {
+      throw failure.reason;
+    }
   }
   async function persistPreparedAccount(ids: number[], buildId: string) {
     await assertCurrent();

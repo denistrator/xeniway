@@ -12,7 +12,9 @@ export function useInlineEditFocus<Container extends HTMLElement, InputElement e
   const readOnlyCancel = useRef<HTMLButtonElement>(null);
 
   function onFocusCapture(event: FocusEvent<Container>) {
-    if (event.target instanceof HTMLElement) focusedElement.current = event.target;
+    if (event.target instanceof HTMLElement) {
+      focusedElement.current = event.target;
+    }
   }
 
   useLayoutEffect(() => {

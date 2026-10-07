@@ -87,18 +87,20 @@ describe("consent-gated worker registration", () => {
     expect(worker.messages).not.toContainEqual({ type: "SKIP_WAITING" });
   });
   it("propagates worker preparation failure", async () => {
-    if (registration.active)
+    if (registration.active) {
       registration.active.reply = (message) => ({
         type: message.type === "GET_BUILD_ID" ? "BUILD_ID" : "ASSETS_FAILED",
         requestId: message.requestId,
         buildId: "build-1",
         message: "Quota exhausted",
       });
+    }
     await expect(prepareOfflineAssets()).rejects.toThrow("Quota exhausted");
   });
   it("rejects mismatched request IDs and build IDs", async () => {
-    if (registration.active)
+    if (registration.active) {
       registration.active.reply = () => ({ type: "ASSETS_READY", requestId: "other", buildId: "other-build" });
+    }
     await expect(prepareOfflineAssets()).rejects.toThrow();
   });
   it("propagates unsupported and denied registration", async () => {
@@ -143,17 +145,20 @@ describe("consent-gated worker registration", () => {
     expect(callback).not.toHaveBeenCalled();
   });
   it("rejects a matching request ID paired with the wrong preparation build", async () => {
-    if (registration.active)
+    if (registration.active) {
       registration.active.reply = (message) => ({
         type: message.type === "GET_BUILD_ID" ? "BUILD_ID" : "ASSETS_READY",
         requestId: message.requestId,
         buildId: message.type === "GET_BUILD_ID" ? "build-1" : "build-2",
       });
+    }
     await expect(prepareOfflineAssets()).rejects.toThrow("identity mismatch");
   });
   it("rejects a silent worker after a bounded timeout", async () => {
     vi.useFakeTimers();
-    if (registration.active) registration.active.postMessage = () => {};
+    if (registration.active) {
+      registration.active.postMessage = () => {};
+    }
     const assertion = expect(prepareOfflineAssets()).rejects.toThrow("timed out");
     await vi.runAllTimersAsync();
     await assertion;
@@ -174,12 +179,16 @@ describe("consent-gated worker registration", () => {
   });
   it.each(["invalid reply", "postMessage failure"])("releases ports and timers after %s", async (failure) => {
     vi.useFakeTimers();
-    if (!registration.active) throw new Error("Missing worker fixture");
-    if (failure === "invalid reply") registration.active.reply = () => null;
-    else
+    if (!registration.active) {
+      throw new Error("Missing worker fixture");
+    }
+    if (failure === "invalid reply") {
+      registration.active.reply = () => null;
+    } else {
       registration.active.postMessage = () => {
         throw new Error("postMessage denied");
       };
+    }
     await expect(prepareOfflineAssets()).rejects.toThrow(
       failure === "invalid reply" ? "identity mismatch" : "postMessage denied",
     );

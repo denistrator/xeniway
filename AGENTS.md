@@ -39,7 +39,25 @@ The newcomer setup sequence and current command table live in `README.md`; keep 
 
 Use TypeScript with two-space indentation, double-quoted imports and strings, semicolons, and trailing commas consistent with the existing source. Use `camelCase` for values and functions, `PascalCase` for React components and types, and kebab-case for route/page filenames. Keep API JSON camelCase and wrapped in the documented `data` or `error` envelope, except for the direct `/api/health` response. Prefer the shared Zod schemas at all browser/API boundaries.
 
-Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for the supported TypeScript and TSX files.
+Use braces and multiline bodies for every `if`/`else` and loop, including one-statement guards. Keep simple ternaries for short two-way values; replace nested ternaries with explicit control-flow statements. Preserve evaluation order, branch priority, and TypeScript narrowing when refactoring control flow.
+
+Avoid redundant `else` blocks after branches that exit with `return`, `throw`, `break`, or `continue`; keep the remaining path at the outer indentation level. Preserve nesting when a later check depends on an earlier condition or an `else` represents an intentional alternative.
+
+Do not reassign function parameters; use named local values for normalized or transformed inputs. `style/noParameterAssign` enforces this while allowing property assignments, including Redux Toolkit's intentional Immer-backed reducer updates. This allowance does not make arbitrary object mutation safe.
+
+Declare each variable separately; do not combine multiple declarators in one `const`, `let`, or `var` statement. `style/useSingleVarDeclarator` enforces this.
+
+Use explicit `Boolean`, `Number`, and `String` conversions rather than coercion shorthand; `complexity/noImplicitCoercions` enforces this. Keep direct truthiness guards where they narrow nullable values, and preserve conversion semantics when refactoring. Use `T[]` and `readonly T[]` array types consistently; `style/useConsistentArrayType` enforces shorthand syntax.
+
+Keep each function's cognitive complexity at or below 15; `complexity/noExcessiveCognitiveComplexity` is an error. Prefer early guards, flat discriminant switches, and cohesive named helpers. Preserve evaluation order, cancellation, ownership, and fallback behavior. Do not add suppressions, raise the limit, or fragment logic into meaningless helpers just to satisfy the score.
+
+Break complex boolean expressions into named `const` predicates that describe their meaning, then combine those predicates in a short condition or return value. Keep simple guards and render-only conditions inline. Do not eagerly evaluate awaited work, side effects, expensive checks, or property access that depends on an earlier guard; use early returns or retain short-circuiting where needed. This is a code-review convention, not a separate Biome rule.
+
+Prefer `switch` over an `if`/`else if` chain when choosing among multiple values of the same discriminant, such as a field, status, action, route, or keyboard key. Use `if` for ranges, independent predicates, and compound conditions; do not use `switch (true)` as a substitute. Keep intentional fallbacks and no-op cases explicit where needed, prevent accidental fallthrough, and scope case-local declarations with braces.
+
+Keep JSX focused on presentation. Move multi-branch event handling and nontrivial field/value calculations into named handlers or helpers outside the returned markup. Keep simple bindings, render-only mappings, and short argument-passing callbacks inline; do not introduce extra components, hooks, or memoization solely to move a few lines.
+
+Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for JavaScript and TypeScript source, tests, scripts, and root configuration files. Generated `dist` output and dependencies are excluded. `style/noNestedTernary`, `style/noUselessElse`, and `style/useBlockStatements` enforce the control-flow conventions.
 
 Add API endpoints to the matching domain router and register domain routers through `apps/api/src/routes/index.ts`; keep `apps/api/src/app.ts` focused on service construction, global middleware, and error handling. Reuse typed guards from `routes/support/auth-guard.ts` for authenticated reads and authenticated mutations. Use the CSRF-only guard for public credential/password-reset flows and logout, which may operate without an authenticated user context. Keep the public health probe and CSRF-session bootstrap outside authenticated guards, and leave route-specific validation, repository operations, response schemas, and exceptional error handling visible in their endpoint handlers. Do not add generic CRUD route factories.
 

@@ -15,6 +15,22 @@ export function ApplicationActivity({ applicationId }: { applicationId: number }
     return <ApplicationActivitySection applicationId={applicationId} events={detail.data.events} />;
   }
 
+  let feedback = null;
+  if (!access.canReadRemote) {
+    feedback = <p className="text-sm text-muted">{t("offline.notDownloaded")}</p>;
+  } else if (detail.isPending) {
+    feedback = <p className="text-sm text-muted">{t("common.loading")}</p>;
+  } else if (detail.isError) {
+    feedback = (
+      <p role="alert" className="text-sm text-rose-600">
+        {t("applications.activity.loadFailed")}{" "}
+        <button type="button" onClick={() => detail.refetch()}>
+          {t("common.actions.retry")}
+        </button>
+      </p>
+    );
+  }
+
   return (
     <section aria-labelledby={headingId} className="mt-6 border-t border-line pt-5">
       <div className="flex items-center justify-between gap-3">
@@ -26,18 +42,7 @@ export function ApplicationActivity({ applicationId }: { applicationId: number }
         </button>
       </div>
       <div className="mt-4" aria-live="polite">
-        {!access.canReadRemote ? (
-          <p className="text-sm text-muted">{t("offline.notDownloaded")}</p>
-        ) : detail.isPending ? (
-          <p className="text-sm text-muted">{t("common.loading")}</p>
-        ) : detail.isError ? (
-          <p role="alert" className="text-sm text-rose-600">
-            {t("applications.activity.loadFailed")}{" "}
-            <button type="button" onClick={() => detail.refetch()}>
-              {t("common.actions.retry")}
-            </button>
-          </p>
-        ) : null}
+        {feedback}
       </div>
     </section>
   );

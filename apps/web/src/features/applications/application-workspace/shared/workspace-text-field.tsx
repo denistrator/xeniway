@@ -111,11 +111,15 @@ export function WorkspaceTextField({
             </>
           )}
           onEdit={() => {
-            if (canMutate) controller.beginEdit();
+            if (canMutate) {
+              controller.beginEdit();
+            }
           }}
           onCancel={controller.cancel}
           onConfirm={(value) => {
-            if (canMutate) void controller.save(value);
+            if (canMutate) {
+              void controller.save(value);
+            }
           }}
         />
       )}

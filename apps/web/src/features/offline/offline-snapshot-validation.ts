@@ -16,12 +16,18 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 export function hasShape<S extends Shape>(value: unknown, shape: S): value is ValidatedShape<S> {
-  if (!isRecord(value)) return false;
+  if (!isRecord(value)) {
+    return false;
+  }
   let fieldCount = 0;
   for (const key in shape) {
-    if (!Object.hasOwn(shape, key)) continue;
+    if (!Object.hasOwn(shape, key)) {
+      continue;
+    }
     fieldCount += 1;
-    if (!Object.hasOwn(value, key) || !shape[key](value[key])) return false;
+    if (!Object.hasOwn(value, key) || !shape[key](value[key])) {
+      return false;
+    }
   }
   return Object.keys(value).length === fieldCount;
 }
@@ -112,8 +118,12 @@ const eventShape = {
   isSystem: (value: unknown): value is boolean => typeof value === "boolean",
 };
 function isEvent(value: unknown): value is ValidatedShape<typeof eventShape> {
-  if (!hasShape(value, eventShape)) return false;
-  if (value.id > 0) return true;
+  if (!hasShape(value, eventShape)) {
+    return false;
+  }
+  if (value.id > 0) {
+    return true;
+  }
   // The API derives exactly this immutable marker for pre-history applications.
   return (
     value.id === -value.applicationId &&
@@ -143,21 +153,32 @@ type OfflineQueryKey =
   | ["applications", number, "detail", number];
 
 function eligibleKey(key: unknown, userId: number): key is OfflineQueryKey {
-  return (
-    Array.isArray(key) &&
-    key.length === 4 &&
-    key[0] === "applications" &&
-    key[1] === userId &&
-    ((key[2] === "list" && (key[3] === "active" || key[3] === "archive" || key[3] === "blacklist")) ||
-      (key[2] === "detail" && isPositiveId(key[3])))
-  );
+  if (!Array.isArray(key) || key.length !== 4) {
+    return false;
+  }
+  const belongsToAccount = key[0] === "applications" && key[1] === userId;
+  if (!belongsToAccount) {
+    return false;
+  }
+  const isCollection = key[3] === "active" || key[3] === "archive" || key[3] === "blacklist";
+  const isListKey = key[2] === "list" && isCollection;
+  const isDetailKey = key[2] === "detail" && isPositiveId(key[3]);
+  return isListKey || isDetailKey;
 }
 function validResponse(value: unknown, key: readonly unknown[]): boolean {
-  if (!hasShape(value, responseEnvelopeShape)) return false;
-  if (key[2] === "list") return hasShape(value.data, listShape);
-  if (!hasShape(value.data, workspaceShape)) return false;
+  if (!hasShape(value, responseEnvelopeShape)) {
+    return false;
+  }
+  if (key[2] === "list") {
+    return hasShape(value.data, listShape);
+  }
+  if (!hasShape(value.data, workspaceShape)) {
+    return false;
+  }
   const data = value.data;
-  if (data.events.some((item) => item.id < 0 && item.createdAt !== data.application.createdAt)) return false;
+  if (data.events.some((item) => item.id < 0 && item.createdAt !== data.application.createdAt)) {
+    return false;
+  }
   return (
     data.application.id === key[3] &&
     [data.events, data.contacts, data.followUpTasks].every((items) =>
@@ -179,18 +200,22 @@ export function deriveOfflineSnapshot(userId: number, value: unknown, now: numbe
       !eligibleKey(query.queryKey, userId) ||
       !isRecord(query.state) ||
       query.state.status !== "success"
-    )
+    ) {
       continue;
+    }
     const state = query.state;
     if (
       !validResponse(state.data, query.queryKey) ||
       !isTimestamp(state.dataUpdatedAt) ||
       state.dataUpdatedAt > now ||
       !isTimestamp(state.dataUpdateCount)
-    )
+    ) {
       throw new Error("Invalid offline application response");
+    }
     const queryHash = hashKey(query.queryKey);
-    if (hashes.has(queryHash)) throw new Error("Duplicate offline application query");
+    if (hashes.has(queryHash)) {
+      throw new Error("Duplicate offline application query");
+    }
     hashes.add(queryHash);
     queries.push({
       queryKey: [...query.queryKey],
@@ -242,19 +267,24 @@ const storedQueryShape = {
 
 /** Stored records must already be canonical. Filtering corrupt storage could silently hide unsafe queries. */
 export function validateStoredSnapshot(userId: number, value: unknown, savedAt: number): DehydratedState | null {
-  if (!hasShape(value, storedSnapshotShape)) return null;
+  if (!hasShape(value, storedSnapshotShape)) {
+    return null;
+  }
   const queries: DehydratedState["queries"] = [];
   const hashes = new Set<string>();
   for (const query of value.queries) {
-    if (!hasShape(query, storedQueryShape) || !eligibleKey(query.queryKey, userId)) return null;
+    if (!hasShape(query, storedQueryShape) || !eligibleKey(query.queryKey, userId)) {
+      return null;
+    }
     if (
       query.dehydratedAt !== savedAt ||
       query.queryHash !== hashKey(query.queryKey) ||
       hashes.has(query.queryHash) ||
       query.state.dataUpdatedAt > savedAt ||
       !validResponse(query.state.data, query.queryKey)
-    )
+    ) {
       return null;
+    }
     hashes.add(query.queryHash);
     queries.push({ ...query, queryKey: [...query.queryKey], state: { ...query.state } });
   }

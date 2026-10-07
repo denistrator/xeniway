@@ -83,7 +83,9 @@ function validateDraft(draft: ContactDraft) {
     profileUrl: draft.profileUrl || null,
     notes: draft.notes || null,
   });
-  if (result.success) return { input: result.data, errors: {} as ContactErrors, firstField: null };
+  if (result.success) {
+    return { input: result.data, errors: {} as ContactErrors, firstField: null };
+  }
 
   const errors: ContactErrors = {};
   for (const issue of result.error.issues) {
@@ -108,7 +110,9 @@ export function useContactsController(applicationId: number): ContactsController
   const pending = mutations.create.isPending || mutations.update.isPending || mutations.remove.isPending;
 
   useEffect(() => {
-    if (!editorTarget) return;
+    if (!editorTarget) {
+      return;
+    }
     setDraft(createDraft(editorTarget === "new" ? undefined : editorTarget));
     setErrors({});
     firstFieldRef.current?.focus();
@@ -127,17 +131,24 @@ export function useContactsController(applicationId: number): ContactsController
     const parsed = (
       editorTarget === "new" ? createApplicationContactInputSchema : updateApplicationContactInputSchema
     ).safeParse(input);
-    if (!parsed.success) return;
+    if (!parsed.success) {
+      return;
+    }
     const saved = await runWorkspaceMutation(
       async () => {
-        if (editorTarget === "new") await mutations.create.mutateAsync(parsed.data as CreateApplicationContactInput);
-        else if (editorTarget) await mutations.update.mutateAsync({ contactId: editorTarget.id, input: parsed.data });
+        if (editorTarget === "new") {
+          await mutations.create.mutateAsync(parsed.data as CreateApplicationContactInput);
+        } else if (editorTarget) {
+          await mutations.update.mutateAsync({ contactId: editorTarget.id, input: parsed.data });
+        }
       },
       setStatus,
       "saved",
       "saveFailed",
     );
-    if (saved) setEditorTarget(null);
+    if (saved) {
+      setEditorTarget(null);
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -170,7 +181,9 @@ export function useContactsController(applicationId: number): ContactsController
   }
 
   async function confirmDeletion() {
-    if (!deletionTarget) return;
+    if (!deletionTarget) {
+      return;
+    }
     await runWorkspaceMutation(
       () => mutations.remove.mutateAsync(deletionTarget.id),
       setStatus,

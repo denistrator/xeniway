@@ -14,7 +14,9 @@ export type ServerConfig = {
 
 function required(environment: Environment, name: string): string {
   const value = environment[name]?.trim();
-  if (!value) throw new Error(`${name} is required`);
+  if (!value) {
+    throw new Error(`${name} is required`);
+  }
   return value;
 }
 

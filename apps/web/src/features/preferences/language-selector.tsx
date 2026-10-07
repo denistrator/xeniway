@@ -23,9 +23,13 @@ export function LanguageSelector() {
   const updatePreferences = useUpdateUserPreferences();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const closeOnOutsideClick = (event: MouseEvent) => {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) setOpen(false);
+      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
@@ -34,7 +38,9 @@ export function LanguageSelector() {
   async function handleChange(locale: SupportedLocale) {
     try {
       await changeLocale(locale);
-      if (user.data && canMutate) updatePreferences.mutate({ selectedLanguage: locale });
+      if (user.data && canMutate) {
+        updatePreferences.mutate({ selectedLanguage: locale });
+      }
       setOpen(false);
     } catch {
       // Keep the current locale when a lazy dictionary cannot be loaded.
@@ -60,7 +66,9 @@ export function LanguageSelector() {
         >
           {supportedLocales.map((locale) => {
             const option = options.find((candidate) => candidate.value === locale);
-            if (!option) return null;
+            if (!option) {
+              return null;
+            }
             return (
               <button
                 key={locale}

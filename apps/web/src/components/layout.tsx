@@ -43,13 +43,19 @@ function WelcomeHost() {
   const preferences = useUserPreferences(open && user.data ? user.data.id : null);
   const completeIntroduction = useCompleteIntroduction();
 
-  if (!open || preferences.isPending || preferences.error || preferences.data?.wasIntroduced !== false) return null;
+  if (!open || preferences.isPending || preferences.error || preferences.data?.wasIntroduced !== false) {
+    return null;
+  }
 
   function handleComplete(action: WelcomeAction) {
     writeLocalUserPreferences({ wasIntroduced: true });
     dispatch(closeWelcome());
-    if (action === "board") navigate("/", { replace: true });
-    if (action === "about") navigate("/about");
+    if (action === "board") {
+      navigate("/", { replace: true });
+    }
+    if (action === "about") {
+      navigate("/about");
+    }
     completeIntroduction.mutate();
   }
 

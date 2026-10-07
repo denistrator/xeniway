@@ -2,12 +2,13 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
     "includes": [
-      "apps/**/*.ts",
-      "apps/**/*.tsx",
-      "packages/**/*.ts",
-      "scripts/**/*.ts",
-      "tests/**/*.ts",
-      "playwright.config.ts",
+      "apps/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+      "packages/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+      "scripts/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+      "tests/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+      "*.{js,jsx,ts,tsx,mjs,cjs}",
+      "!!**/dist",
+      "!!**/node_modules",
       "!!.worktrees"
     ]
   },
@@ -28,6 +29,33 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
+      "style": {
+        "noNestedTernary": "error",
+        "noParameterAssign": {
+          "level": "error",
+          "options": {
+            "propertyAssignment": "allow"
+          }
+        },
+        "noUselessElse": "error",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "useSingleVarDeclarator": "error",
+        "useBlockStatements": "error"
+      },
+      "complexity": {
+        "noImplicitCoercions": "error",
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": {
+            "maxAllowedComplexity": 15
+          }
+        }
+      },
       "a11y": {
         "noLabelWithoutControl": "off"
       }

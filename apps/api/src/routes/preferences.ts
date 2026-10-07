@@ -9,7 +9,9 @@ export function preferencesRoute({ preferences, auth }: PreferencesRouteDependen
   return new Elysia()
     .get("/api/user/preferences", async ({ request, set }) => {
       const authorization = await requireAuthenticatedUser(auth, set, request);
-      if (!authorization.ok) return authorization.response;
+      if (!authorization.ok) {
+        return authorization.response;
+      }
       const row = await preferences.findByUserId(authorization.context.userId);
       const response: UserPreferencesResponse = {
         data: {
@@ -29,17 +31,23 @@ export function preferencesRoute({ preferences, auth }: PreferencesRouteDependen
     })
     .patch("/api/user/preferences", async ({ request, set }) => {
       const authorization = await requireAuthenticatedMutation(auth, set, request);
-      if (!authorization.ok) return authorization.response;
+      if (!authorization.ok) {
+        return authorization.response;
+      }
       const body = await request.json().catch(() => null);
       const parsed = updateUserPreferencesInputSchema.safeParse(body);
-      if (!parsed.success) return validationError(set, parsed.error);
+      if (!parsed.success) {
+        return validationError(set, parsed.error);
+      }
       const row = await preferences.update(authorization.context.userId, parsed.data);
       const response: UserPreferencesResponse = { data: { preferences: toUserPreferences(row) } };
       return response;
     })
     .post("/api/user/preferences/introduced", async ({ request, set }) => {
       const authorization = await requireAuthenticatedMutation(auth, set, request);
-      if (!authorization.ok) return authorization.response;
+      if (!authorization.ok) {
+        return authorization.response;
+      }
       const row = await preferences.markIntroduced(authorization.context.userId);
       const response: UserPreferencesResponse = { data: { preferences: toUserPreferences(row) } };
       return response;

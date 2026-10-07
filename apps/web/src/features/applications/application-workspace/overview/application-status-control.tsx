@@ -33,22 +33,34 @@ export function ApplicationStatusControl({
       wasOpen.current = true;
       selectedOptionRef.current?.focus();
     } else if (wasOpen.current) {
-      if (triggerRef.current?.disabled) menuRef.current?.focus();
-      else triggerRef.current?.focus();
+      if (triggerRef.current?.disabled) {
+        menuRef.current?.focus();
+      } else {
+        triggerRef.current?.focus();
+      }
       wasOpen.current = false;
     }
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
     const closeOnOutsideClick = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) closeMenu();
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        closeMenu();
+      }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape") {
+        return;
+      }
       closeMenu();
-      if (triggerRef.current?.disabled) menuRef.current?.focus();
-      else triggerRef.current?.focus();
+      if (triggerRef.current?.disabled) {
+        menuRef.current?.focus();
+      } else {
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener("mousedown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
@@ -74,8 +86,11 @@ export function ApplicationStatusControl({
         aria-controls="application-status-options"
         disabled={!canMutate || fields.fields.status.pending}
         onClick={() => {
-          if (isOpen) fields.compact.cancel("status");
-          else fields.compact.requestEdit("status");
+          if (isOpen) {
+            fields.compact.cancel("status");
+          } else {
+            fields.compact.requestEdit("status");
+          }
         }}
         className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-2"
       >
@@ -104,7 +119,9 @@ export function ApplicationStatusControl({
                 checked={option === application.status}
                 disabled={!canMutate || fields.fields.status.pending}
                 onChange={() => {
-                  if (canMutate) void fields.compact.selectStatus(option);
+                  if (canMutate) {
+                    void fields.compact.selectStatus(option);
+                  }
                 }}
                 className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
               />

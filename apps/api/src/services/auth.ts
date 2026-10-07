@@ -73,27 +73,37 @@ export class AuthService {
   }
 
   async getCurrentUser(sessionId: string | undefined): Promise<User | null> {
-    if (!sessionId) return null;
+    if (!sessionId) {
+      return null;
+    }
     const session = await this.sessions.findActive(sessionId);
-    if (!session?.userId) return null;
+    if (!session?.userId) {
+      return null;
+    }
     const user = await this.users.findById(session.userId);
     return user ? toUser(user) : null;
   }
 
   async verifyCsrf(sessionId: string | undefined, csrfToken: string | undefined): Promise<boolean> {
-    if (!sessionId || !csrfToken) return false;
+    if (!sessionId || !csrfToken) {
+      return false;
+    }
     const session = await this.sessions.findActive(sessionId);
     return session?.csrfToken === csrfToken;
   }
 
   async getCsrfToken(sessionId: string | undefined): Promise<string | null> {
-    if (!sessionId) return null;
+    if (!sessionId) {
+      return null;
+    }
     const session = await this.sessions.findActive(sessionId);
     return session?.csrfToken ?? null;
   }
 
   async logout(sessionId: string | undefined): Promise<void> {
-    if (sessionId) await this.sessions.delete(sessionId);
+    if (sessionId) {
+      await this.sessions.delete(sessionId);
+    }
   }
 
   async deleteExpiredSessions(): Promise<void> {

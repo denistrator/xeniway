@@ -345,7 +345,9 @@ describe("user preference repository operations", () => {
 const databaseDescribe = process.env.DATABASE_URL ? describe : describe.skip;
 
 function required<T>(value: T | null): T {
-  if (value === null) throw new Error("Expected repository to create a record");
+  if (value === null) {
+    throw new Error("Expected repository to create a record");
+  }
   return value;
 }
 
@@ -389,8 +391,12 @@ databaseDescribe("application workspace persistence", () => {
   });
 
   afterEach(async () => {
-    if (ownerId) await database.delete(users).where(eq(users.id, ownerId));
-    if (otherId) await database.delete(users).where(eq(users.id, otherId));
+    if (ownerId) {
+      await database.delete(users).where(eq(users.id, ownerId));
+    }
+    if (otherId) {
+      await database.delete(users).where(eq(users.id, otherId));
+    }
   });
 
   afterAll(async () => {

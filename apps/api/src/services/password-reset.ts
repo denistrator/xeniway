@@ -31,15 +31,18 @@ export class PasswordResetService {
 
   async request(input: PasswordResetRequestInput): Promise<void> {
     const rateLimit = await this.rateLimiter.consume(`password-reset:${input.email}`);
-    if (!rateLimit.allowed)
+    if (!rateLimit.allowed) {
       throw new PasswordResetError(
         "Too many password reset requests",
         "PASSWORD_RESET_RATE_LIMITED",
         rateLimit.retryAfterSeconds,
       );
+    }
 
     const user = await this.users.findByEmail(input.email);
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     const rawToken = randomBytes(32).toString("base64url");
     const expiresAt = new Date(this.now().getTime() + RESET_TOKEN_TTL_MS);
@@ -52,12 +55,14 @@ export class PasswordResetService {
 
   async confirm(input: PasswordResetConfirmInput): Promise<void> {
     const consumed = await this.tokens.consume(hashToken(input.token), this.now());
-    if (!consumed)
+    if (!consumed) {
       throw new PasswordResetError("This password reset link is invalid or expired", "PASSWORD_RESET_INVALID");
+    }
 
     const passwordHash = await this.passwordHasher.hash(input.password);
-    if (!(await this.users.updatePasswordHash(consumed.userId, passwordHash)))
+    if (!(await this.users.updatePasswordHash(consumed.userId, passwordHash))) {
       throw new PasswordResetError("This password reset link is invalid or expired", "PASSWORD_RESET_INVALID");
+    }
     await this.sessions.deleteForUser(consumed.userId);
   }
 }

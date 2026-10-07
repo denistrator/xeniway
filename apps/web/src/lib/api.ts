@@ -55,7 +55,9 @@ export function setAuthenticatedRequestGuard(guard: (() => void) | null) {
   authenticatedRequestGuard = guard;
 }
 export function assertAuthenticatedWrite() {
-  if (!navigator.onLine) throw new ApiRequestError("Offline access is read-only", "OFFLINE_READ_ONLY", 0);
+  if (!navigator.onLine) {
+    throw new ApiRequestError("Offline access is read-only", "OFFLINE_READ_ONLY", 0);
+  }
   authenticatedRequestGuard?.();
 }
 
@@ -82,24 +84,36 @@ export function parseApiError(payload: unknown): ParsedApiError {
 }
 
 export async function requestJson<T>(path: string, init: RequestInit = {}, csrfToken?: string): Promise<T> {
-  if (init.method && init.method !== "GET" && (path.startsWith("/api/applications") || path.startsWith("/api/user/")))
-    assertAuthenticatedWrite();
-  const headers = new Headers(init.headers);
-  if (init.body && !headers.has("content-type")) headers.set("content-type", "application/json");
-  if (csrfToken) headers.set("x-csrf-token", csrfToken);
-
   const privateRequest = path.startsWith("/api/applications") || path.startsWith("/api/user/");
+  if (init.method && init.method !== "GET" && privateRequest) {
+    assertAuthenticatedWrite();
+  }
+  const headers = new Headers(init.headers);
+  if (init.body && !headers.has("content-type")) {
+    headers.set("content-type", "application/json");
+  }
+  if (csrfToken) {
+    headers.set("x-csrf-token", csrfToken);
+  }
+
   let response: Response;
   try {
     response = await fetch(path, { ...init, headers, credentials: "include" });
   } catch (error) {
-    if (privateRequest && !(error instanceof DOMException && error.name === "AbortError"))
+    if (privateRequest && !(error instanceof DOMException && error.name === "AbortError")) {
       window.dispatchEvent(new Event("xeniway:server-unavailable"));
+    }
     throw error;
   }
+  return readJsonResponse<T>(response, path, privateRequest);
+}
+
+async function readJsonResponse<T>(response: Response, path: string, privateRequest: boolean): Promise<T> {
   const payload: unknown = await response.json();
   if (!response.ok) {
-    if (privateRequest && response.status >= 500) window.dispatchEvent(new Event("xeniway:server-unavailable"));
+    if (privateRequest && response.status >= 500) {
+      window.dispatchEvent(new Event("xeniway:server-unavailable"));
+    }
     const error = parseApiError(payload);
     if (response.status === 401 && path.startsWith("/api/applications") && typeof window !== "undefined") {
       window.dispatchEvent(new Event("xeniway:auth-expired"));

@@ -33,6 +33,16 @@ function hasPathComponent(path: string, names: readonly string[]): boolean {
   return components.some((component) => names.includes(component.toLowerCase()));
 }
 
+function isDatabaseDump(path: string, basename: string): boolean {
+  const hasDumpExtension = /\.(?:backup|bak|dmp|dump|pgdump|sql\.(?:bz2|gz|xz|zip))$/.test(path);
+  const hasDatabaseName =
+    /^(?:database|db|dev(?:elopment)?|prod(?:uction)?|stag(?:e|ing))(?:[-_.][a-z0-9-]+)*\.sql$/.test(basename);
+  const hasBackupLocation =
+    hasPathComponent(path, ["backup", "backups", "dump", "dumps"]) || /(?:backup|dump)/.test(basename);
+  const isBackupSql = /\.sql$/.test(path) && hasBackupLocation;
+  return hasDumpExtension || hasDatabaseName || isBackupSql;
+}
+
 export function findForbiddenPath(path: string): Finding | null {
   const lowerPath = path.toLowerCase();
   const basename = lowerPath.split("/").at(-1) ?? lowerPath;
@@ -80,12 +90,7 @@ export function findForbiddenPath(path: string): Finding | null {
     return { path, rule: "worktree-metadata" };
   }
 
-  if (
-    /\.(?:backup|bak|dmp|dump|pgdump|sql\.(?:bz2|gz|xz|zip))$/.test(lowerPath) ||
-    /^(?:database|db|dev(?:elopment)?|prod(?:uction)?|stag(?:e|ing))(?:[-_.][a-z0-9-]+)*\.sql$/.test(basename) ||
-    (/\.sql$/.test(lowerPath) &&
-      (hasPathComponent(lowerPath, ["backup", "backups", "dump", "dumps"]) || /(?:backup|dump)/.test(basename)))
-  ) {
+  if (isDatabaseDump(lowerPath, basename)) {
     return { path, rule: "database-dump" };
   }
 

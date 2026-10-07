@@ -11,17 +11,32 @@ export function useApplicationLifecycle(application: JobApplication) {
   const board = getApplicationBoard(application);
 
   async function execute(action: ApplicationLifecycleAction) {
-    if (action === "archive") await mutations.archive.mutateAsync(application.id);
-    if (action === "blacklist") await mutations.blacklist.mutateAsync({ id: application.id, input: { reason: null } });
-    if (action === "restore") {
-      if (board === "archive") await mutations.restore.mutateAsync(application.id);
-      else await mutations.unblacklist.mutateAsync(application.id);
+    switch (action) {
+      case "archive":
+        await mutations.archive.mutateAsync(application.id);
+        break;
+      case "blacklist":
+        await mutations.blacklist.mutateAsync({ id: application.id, input: { reason: null } });
+        break;
+      case "restore":
+        if (board === "archive") {
+          await mutations.restore.mutateAsync(application.id);
+        } else {
+          await mutations.unblacklist.mutateAsync(application.id);
+        }
+        break;
+      case "delete":
+        await mutations.remove.mutateAsync(application.id);
+        break;
     }
-    if (action === "delete") await mutations.remove.mutateAsync(application.id);
 
-    if (action === "delete") navigate(board === "archive" ? "/archive" : "/blacklist");
-    else if (action === "restore" && board === "blacklist" && application.archivedAt) navigate("/archive");
-    else navigate("/");
+    if (action === "delete") {
+      navigate(board === "archive" ? "/archive" : "/blacklist");
+    } else if (action === "restore" && board === "blacklist" && application.archivedAt) {
+      navigate("/archive");
+    } else {
+      navigate("/");
+    }
   }
 
   return {

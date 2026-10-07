@@ -30,7 +30,9 @@ export function ApplicationWorkspaceNavigation({ application }: { application: J
           disabled={neighbors[direction] === null}
           onClick={() => {
             const id = neighbors[direction];
-            if (id !== null) navigate(`/applications/${id}`);
+            if (id !== null) {
+              navigate(`/applications/${id}`);
+            }
           }}
         >
           <Icon aria-hidden="true" className="size-4 rtl:rotate-180" />

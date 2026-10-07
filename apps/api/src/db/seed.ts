@@ -231,8 +231,10 @@ function buildLifecycleApplication(
 }
 
 function buildPreparation(index: number, specialName?: "MINIMAL" | "MAXED"): SeedPreparation | null {
-  if (specialName === "MINIMAL") return null;
-  if (specialName === "MAXED")
+  if (specialName === "MINIMAL") {
+    return null;
+  }
+  if (specialName === "MAXED") {
     return {
       companyResearch:
         "The company builds cloud collaboration software for distributed teams. Recent public updates describe investment in reliability, accessibility, and enterprise administration. Review its product and engineering blog before the interview.",
@@ -241,7 +243,10 @@ function buildPreparation(index: number, specialName?: "MINIMAL" | "MAXED"): See
       interviewerQuestions:
         "How does the team balance platform reliability work with product delivery? What would you like this hire to improve in the first six months? How are technical decisions documented across teams?",
     };
-  if (index % 5 === 0) return null;
+  }
+  if (index % 5 === 0) {
+    return null;
+  }
   return {
     companyResearch:
       index % 4 === 0 ? null : "Review the company's product, engineering blog, and recent team updates.",
@@ -253,7 +258,9 @@ function buildPreparation(index: number, specialName?: "MINIMAL" | "MAXED"): See
 }
 
 function buildContacts(index: number, specialName?: "MINIMAL" | "MAXED"): CreateApplicationContactInput[] {
-  if (specialName === "MINIMAL") return [];
+  if (specialName === "MINIMAL") {
+    return [];
+  }
   const count = specialName === "MAXED" ? 3 : index % 4;
   return contactExamples.slice(0, count).map((contact, contactIndex) => ({
     ...contact,
@@ -269,27 +276,36 @@ function buildContacts(index: number, specialName?: "MINIMAL" | "MAXED"): Create
 }
 
 function buildFollowUps(index: number, today: Date, specialName?: "MINIMAL" | "MAXED"): SeedFixture["followUps"] {
-  if (specialName === "MINIMAL") return [];
+  if (specialName === "MINIMAL") {
+    return [];
+  }
   const count = specialName === "MAXED" ? 3 : index % 4;
   const offsets = [-3, 0, 7];
-  return Array.from({ length: count }, (_, taskIndex) => ({
-    title: ["Send a thank-you note", "Check in with the recruiter", "Prepare for the next interview"][taskIndex],
-    dueDate: shiftDate(today, offsets[taskIndex] ?? 7)
-      .toISOString()
-      .slice(0, 10),
-    notes:
-      taskIndex === 1 || specialName === "MAXED" ? "Keep the message concise and specific to the conversation." : null,
-    completedAt:
-      specialName === "MAXED" && taskIndex === 1
-        ? new Date(timestampAt(shiftDate(today, -1), 15))
-        : specialName !== "MAXED" && (index + taskIndex) % 3 === 1
-          ? new Date(timestampAt(shiftDate(today, -1), 15))
+  return Array.from({ length: count }, (_, taskIndex) => {
+    let completedAt: Date | null = null;
+    const isCompletedMaxedTask = specialName === "MAXED" && taskIndex === 1;
+    const isCompletedRegularTask = specialName !== "MAXED" && (index + taskIndex) % 3 === 1;
+    if (isCompletedMaxedTask || isCompletedRegularTask) {
+      completedAt = new Date(timestampAt(shiftDate(today, -1), 15));
+    }
+    return {
+      title: ["Send a thank-you note", "Check in with the recruiter", "Prepare for the next interview"][taskIndex],
+      dueDate: shiftDate(today, offsets[taskIndex] ?? 7)
+        .toISOString()
+        .slice(0, 10),
+      notes:
+        taskIndex === 1 || specialName === "MAXED"
+          ? "Keep the message concise and specific to the conversation."
           : null,
-  }));
+      completedAt,
+    };
+  });
 }
 
 function buildEvents(index: number, today: Date, specialName?: "MINIMAL" | "MAXED"): SeedEvent[] {
-  if (specialName === "MINIMAL") return [];
+  if (specialName === "MINIMAL") {
+    return [];
+  }
   const count = specialName === "MAXED" ? 3 : index % 4;
   return Array.from({ length: count }, (_, eventIndex) => {
     const example = activityExamples[(index + eventIndex) % activityExamples.length];
@@ -321,7 +337,15 @@ export function buildSeedFixtures(userKeys: string[], today = new Date()): SeedF
       })),
     ];
     return applications.map(({ application, scenario }, index) => {
-      const specialName = scenario === "minimal" ? "MINIMAL" : scenario === "maxed" ? "MAXED" : undefined;
+      let specialName: "MINIMAL" | "MAXED" | undefined;
+      switch (scenario) {
+        case "minimal":
+          specialName = "MINIMAL";
+          break;
+        case "maxed":
+          specialName = "MAXED";
+          break;
+      }
       return {
         scenario,
         application,
@@ -336,7 +360,9 @@ export function buildSeedFixtures(userKeys: string[], today = new Date()): SeedF
 
 async function seed(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error("DATABASE_URL is required");
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required");
+  }
   assertDevelopmentSeedAllowed({
     databaseUrl,
     nodeEnv: process.env.NODE_ENV,
@@ -381,7 +407,9 @@ async function seed(): Promise<void> {
     const applications = fixtures.map(({ application }) => {
       const account = seedAccounts.find((candidate) => candidate.key === application.userKey);
       const userId = account ? userIds.get(account.email) : undefined;
-      if (!userId) throw new Error(`Seed account missing for ${application.userKey}`);
+      if (!userId) {
+        throw new Error(`Seed account missing for ${application.userKey}`);
+      }
       const { userKey: _userKey, ...values } = application;
       return { ...values, userId };
     });
@@ -405,7 +433,9 @@ async function seed(): Promise<void> {
           ? [{ applicationId: inserted.id, userId: inserted.userId, ...fixture.preparation }]
           : [];
       });
-      if (workspaceRows.length) await transaction.insert(applicationWorkspaces).values(workspaceRows);
+      if (workspaceRows.length) {
+        await transaction.insert(applicationWorkspaces).values(workspaceRows);
+      }
 
       const contactRows = fixtures.flatMap((fixture) => {
         const inserted = insertedBySeedKey.get(fixture.application.seedKey);
@@ -413,7 +443,9 @@ async function seed(): Promise<void> {
           ? fixture.contacts.map((contact) => ({ ...contact, applicationId: inserted.id, userId: inserted.userId }))
           : [];
       });
-      if (contactRows.length) await transaction.insert(applicationContacts).values(contactRows);
+      if (contactRows.length) {
+        await transaction.insert(applicationContacts).values(contactRows);
+      }
 
       const followUpRows = fixtures.flatMap((fixture) => {
         const inserted = insertedBySeedKey.get(fixture.application.seedKey);
@@ -421,7 +453,9 @@ async function seed(): Promise<void> {
           ? fixture.followUps.map((followUp) => ({ ...followUp, applicationId: inserted.id, userId: inserted.userId }))
           : [];
       });
-      if (followUpRows.length) await transaction.insert(applicationFollowUpTasks).values(followUpRows);
+      if (followUpRows.length) {
+        await transaction.insert(applicationFollowUpTasks).values(followUpRows);
+      }
 
       const eventRows = fixtures.flatMap((fixture) => {
         const inserted = insertedBySeedKey.get(fixture.application.seedKey);
@@ -429,11 +463,15 @@ async function seed(): Promise<void> {
           ? fixture.events.map((event) => ({ ...event, applicationId: inserted.id, userId: inserted.userId }))
           : [];
       });
-      if (eventRows.length) await transaction.insert(applicationEvents).values(eventRows);
+      if (eventRows.length) {
+        await transaction.insert(applicationEvents).values(eventRows);
+      }
     });
   } finally {
     await client.end();
   }
 }
 
-if (import.meta.main) await seed();
+if (import.meta.main) {
+  await seed();
+}

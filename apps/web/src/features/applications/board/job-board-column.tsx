@@ -34,14 +34,18 @@ export function JobBoardColumn({
   const { t } = useTranslation();
   const columnRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (!columnRef.current) return;
+    if (!columnRef.current) {
+      return;
+    }
     return dropTargetForElements({
       element: columnRef.current,
       canDrop: ({ source }) => source.data.type === "job-application",
       getData: () => ({ status, index: columnJobs.length }),
       onDragEnter: () => setDropTarget({ status, index: columnJobs.length }),
       onDrop: ({ source, location, self }) => {
-        if (location.current.dropTargets[0]?.element !== self.element) return;
+        if (location.current.dropTargets[0]?.element !== self.element) {
+          return;
+        }
         onDrop(Number(source.data.applicationId), status, columnJobs);
       },
     });
@@ -119,7 +123,9 @@ function DropTargetItem({
 }) {
   const itemRef = useRef<HTMLLIElement>(null);
   useEffect(() => {
-    if (!itemRef.current) return;
+    if (!itemRef.current) {
+      return;
+    }
     return dropTargetForElements({
       element: itemRef.current,
       canDrop: ({ source }) => source.data.type === "job-application",
@@ -142,7 +148,9 @@ function DropPlaceholder({
 }) {
   const placeholderRef = useRef<HTMLLIElement>(null);
   useEffect(() => {
-    if (!placeholderRef.current || targetId === undefined || !onDrop) return;
+    if (!placeholderRef.current || targetId === undefined || !onDrop) {
+      return;
+    }
     return dropTargetForElements({
       element: placeholderRef.current,
       canDrop: ({ source }) => source.data.type === "job-application",

@@ -35,7 +35,9 @@ function createHarness() {
     },
     async updatePasswordHash(id, passwordHash) {
       const user = users.find((candidate) => candidate.id === id);
-      if (!user) return false;
+      if (!user) {
+        return false;
+      }
       user.passwordHash = passwordHash;
       return true;
     },
@@ -54,12 +56,16 @@ function createHarness() {
     },
     async deleteForUser(userId) {
       for (const [id, session] of sessions) {
-        if (session.userId === userId) sessions.delete(id);
+        if (session.userId === userId) {
+          sessions.delete(id);
+        }
       }
     },
     async deleteExpired() {
       for (const [id, session] of sessions) {
-        if (session.expiresAt <= new Date()) sessions.delete(id);
+        if (session.expiresAt <= new Date()) {
+          sessions.delete(id);
+        }
       }
     },
   };
@@ -111,7 +117,9 @@ describe("AuthService", () => {
     const { service, sessions } = createHarness();
     const registered = await service.register({ email: "candidate@example.com", password: "password123" });
     const session = sessions.get(registered.sessionId);
-    if (!session) throw new Error("Missing test session");
+    if (!session) {
+      throw new Error("Missing test session");
+    }
     session.expiresAt = new Date(0);
 
     await expect(service.getCurrentUser(registered.sessionId)).resolves.toBeNull();

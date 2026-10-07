@@ -21,10 +21,14 @@ function AuthenticatedCreateApplicationLoader({ openerRef }: CreateApplicationLo
   const [hasOpened, setHasOpened] = useState(false);
 
   useEffect(() => {
-    if (open) setHasOpened(true);
+    if (open) {
+      setHasOpened(true);
+    }
   }, [open]);
 
-  if (!open && !hasOpened) return null;
+  if (!open && !hasOpened) {
+    return null;
+  }
 
   return (
     <Suspense

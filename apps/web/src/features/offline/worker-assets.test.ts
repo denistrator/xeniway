@@ -31,7 +31,9 @@ beforeEach(async () => {
   cacheMap = new Map();
   storage = {
     open: vi.fn(async (name: string) => {
-      if (!cacheMap.has(name)) cacheMap.set(name, new MemoryCache());
+      if (!cacheMap.has(name)) {
+        cacheMap.set(name, new MemoryCache());
+      }
       return cacheMap.get(name) as unknown as Cache;
     }),
     keys: async () => [...cacheMap.keys()],
@@ -39,13 +41,14 @@ beforeEach(async () => {
   } as unknown as CacheStorage;
   network = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input instanceof Request ? input.url : input);
-    const contentType = url.endsWith(".html")
-      ? "text/html"
-      : url.endsWith(".js")
-        ? "text/javascript"
-        : url.endsWith(".css")
-          ? "text/css"
-          : "image/x-icon";
+    let contentType = "image/x-icon";
+    if (url.endsWith(".html")) {
+      contentType = "text/html";
+    } else if (url.endsWith(".js")) {
+      contentType = "text/javascript";
+    } else if (url.endsWith(".css")) {
+      contentType = "text/css";
+    }
     return new Response(`public:${url}`, { headers: { "content-type": contentType } });
   });
   vi.stubGlobal("crypto", webcrypto);
@@ -58,12 +61,17 @@ afterEach(() => {
 });
 function normalNetwork(): typeof fetch {
   const implementation = network.getMockImplementation();
-  if (!implementation) throw new Error("Missing network fixture");
+  if (!implementation) {
+    throw new Error("Missing network fixture");
+  }
   return implementation;
 }
 function denyCacheRead(operation: "open" | "match" | "keys", error: Error): void {
-  if (operation === "match") vi.spyOn(MemoryCache.prototype, "match").mockRejectedValue(error);
-  else vi.spyOn(storage, operation).mockRejectedValue(error);
+  if (operation === "match") {
+    vi.spyOn(MemoryCache.prototype, "match").mockRejectedValue(error);
+  } else {
+    vi.spyOn(storage, operation).mockRejectedValue(error);
+  }
 }
 function navigation(path: string): Request {
   return { url: `${origin}${path}`, method: "GET", mode: "navigate" } as Request;
@@ -374,8 +382,9 @@ describe("explicit public asset preparation", () => {
     expect([...cacheMap.keys()].filter((key) => key.startsWith("xeniway-public-")).length).toBeLessThanOrEqual(2);
   });
   it("retains every prepared generation while any window client remains", async () => {
-    for (const name of ["a", "b", "c"])
+    for (const name of ["a", "b", "c"]) {
       await createWorkerAssets([manifest[0], { url: `assets/${name}.js`, revision: null }], origin).prepare();
+    }
     const next = createWorkerAssets([manifest[0], { url: "assets/next.js", revision: null }], origin);
     const names = [...cacheMap.keys()];
     await next.cleanupIfUnused(1);

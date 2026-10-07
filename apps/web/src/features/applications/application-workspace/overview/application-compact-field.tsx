@@ -58,7 +58,9 @@ export function ApplicationCompactField({
 
   function handleBlur(event: FocusEvent<HTMLInputElement>) {
     const target = event.relatedTarget;
-    if (target instanceof Node && event.currentTarget.form?.contains(target)) return;
+    if (target instanceof Node && event.currentTarget.form?.contains(target)) {
+      return;
+    }
     const requestedField =
       target instanceof HTMLElement
         ? target.closest<HTMLElement>("[data-compact-edit-field]")?.dataset.compactEditField
@@ -117,10 +119,14 @@ export function ApplicationCompactField({
             </FloatingLabel>
           )}
           onEdit={() => {
-            if (canMutate) fields.compact.requestEdit(field);
+            if (canMutate) {
+              fields.compact.requestEdit(field);
+            }
           }}
           onConfirm={(value) => {
-            if (canMutate) fields.compact.save(field, value);
+            if (canMutate) {
+              fields.compact.save(field, value);
+            }
           }}
           onCancel={() => fields.compact.cancel(field)}
         />

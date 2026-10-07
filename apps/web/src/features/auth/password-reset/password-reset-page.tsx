@@ -21,12 +21,16 @@ export function PasswordResetPage() {
   const [submitted, setSubmitted] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (validationError || confirm.error) errorRef.current?.focus();
+    if (validationError || confirm.error) {
+      errorRef.current?.focus();
+    }
   }, [confirm.error, validationError]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token) return;
+    if (!token) {
+      return;
+    }
     if (password.length < 8) {
       setValidationError(t("auth.resetPassword.passwordTooShort"));
       return;
@@ -39,7 +43,9 @@ export function PasswordResetPage() {
     await confirm.mutateAsync({ token, password, passwordConfirmation });
     setSubmitted(true);
   }
-  if (!token || submitted) return <PasswordResetState submitted={submitted} />;
+  if (!token || submitted) {
+    return <PasswordResetState submitted={submitted} />;
+  }
   const error = validationError ?? (confirm.error instanceof Error ? confirm.error : null);
   return (
     <AuthCard title={t("auth.resetPassword.title")} description={t("auth.resetPassword.description")}>

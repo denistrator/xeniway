@@ -31,20 +31,26 @@ export function useJobBoard({
       .sort((left, right) => left.sortOrder - right.sortOrder)
       .map((job) => job.id);
     const reordered = moveApplication(applicationIds, id, direction);
-    if (reordered) onReorder(status, reordered);
+    if (reordered) {
+      onReorder(status, reordered);
+    }
   }
 
   function moveToAdjacentStatus(id: number, status: JobStatus, direction: StatusDirection) {
     const index = visibleStatuses.indexOf(status);
     const targetStatus = visibleStatuses[direction === "previousStatus" ? index - 1 : index + 1];
-    if (targetStatus) onStatusChange(id, targetStatus);
+    if (targetStatus) {
+      onStatusChange(id, targetStatus);
+    }
   }
 
   function handleColumnDrop(id: number, status: JobStatus, columnJobs: JobApplication[]) {
     const source = id === null ? undefined : jobs.find((job) => job.id === id);
-    if (source && source.status === status)
+    if (source && source.status === status) {
       onReorder(status, [...columnJobs.filter((job) => job.id !== source.id).map((job) => job.id), source.id]);
-    else if (id !== null) onStatusChange(id, status);
+    } else if (id !== null) {
+      onStatusChange(id, status);
+    }
     draggedIdRef.current = null;
     setDropTarget(null);
   }
@@ -57,13 +63,17 @@ export function useJobBoard({
     }
     const source = jobs.find((job) => job.id === id);
     if (!source || source.status !== status) {
-      if (source) onStatusChange(id, status);
+      if (source) {
+        onStatusChange(id, status);
+      }
       draggedIdRef.current = null;
       return;
     }
     const applicationIds = columnJobs.filter((job) => job.id !== id).map((job) => job.id);
     const reordered = insertApplication(applicationIds, id, targetId);
-    if (reordered) onReorder(status, reordered);
+    if (reordered) {
+      onReorder(status, reordered);
+    }
     draggedIdRef.current = null;
     setDropTarget(null);
   }

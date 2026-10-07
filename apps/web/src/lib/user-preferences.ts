@@ -26,7 +26,9 @@ const defaultPreferences: LocalUserPreferences = {
 };
 
 function getStorage(): Storage | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
 
   try {
     return window.localStorage;
@@ -36,7 +38,9 @@ function getStorage(): Storage | null {
 }
 
 function getDefaultLanguage(): SupportedLocale {
-  if (typeof window === "undefined") return defaultPreferences.language;
+  if (typeof window === "undefined") {
+    return defaultPreferences.language;
+  }
 
   const browserLanguage = window.navigator.language?.toLowerCase().split("-")[0];
   return supportedLocaleSchema.safeParse(browserLanguage).success
@@ -49,7 +53,9 @@ function getDefaults(): LocalUserPreferences {
 }
 
 function parsePreferences(value: unknown, defaults: LocalUserPreferences): LocalUserPreferences {
-  if (!value || typeof value !== "object") return { ...defaults };
+  if (!value || typeof value !== "object") {
+    return { ...defaults };
+  }
 
   const candidate = value as Record<string, unknown>;
   const theme = themePreferenceSchema.safeParse(candidate.theme);
@@ -92,6 +98,8 @@ export function writeLocalUserPreferences(partial: LocalUserPreferencesUpdate): 
   const current = readLocalUserPreferences();
   const next = parsePreferences({ ...current, ...partial }, current);
   const storage = getStorage();
-  if (storage) persistPreferences(storage, next);
+  if (storage) {
+    persistPreferences(storage, next);
+  }
   return next;
 }

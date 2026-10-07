@@ -8,7 +8,9 @@ export function applicationExportRoutes({ applications, auth }: ApplicationRoute
   return new Elysia()
     .get("/api/applications/export.csv", async ({ request, set }) => {
       const authorization = await requireAuthenticatedUser(auth, set, request);
-      if (!authorization.ok) return authorization.response;
+      if (!authorization.ok) {
+        return authorization.response;
+      }
 
       set.headers["content-type"] = "text/csv; charset=utf-8";
       set.headers["content-disposition"] =
@@ -21,7 +23,9 @@ export function applicationExportRoutes({ applications, auth }: ApplicationRoute
     })
     .get("/api/applications/export.zip", async ({ request, set }) => {
       const authorization = await requireAuthenticatedUser(auth, set, request);
-      if (!authorization.ok) return authorization.response;
+      if (!authorization.ok) {
+        return authorization.response;
+      }
       const userId = authorization.context.userId;
       const [records, contacts, followUps] = await Promise.all([
         applications.listForExport(userId),

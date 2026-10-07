@@ -12,14 +12,19 @@ export function FollowUpForm({ controller }: { controller: FollowUpsController }
   const canMutate = useCanMutate();
   const formId = useId();
   const { editor } = controller;
-  if (!editor.target) return null;
+  if (!editor.target) {
+    return null;
+  }
 
   return (
     <form
       noValidate
       onSubmit={(event) => {
-        if (canMutate) void editor.submit(event);
-        else event.preventDefault();
+        if (canMutate) {
+          void editor.submit(event);
+        } else {
+          event.preventDefault();
+        }
       }}
       className={editorFormStyles()}
     >

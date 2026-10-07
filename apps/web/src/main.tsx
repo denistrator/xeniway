@@ -21,13 +21,17 @@ const queryClient = new QueryClient({
 const root = document.getElementById("root");
 
 async function bootstrap() {
-  if (!root) throw new Error("The application root element is missing");
+  if (!root) {
+    throw new Error("The application root element is missing");
+  }
 
   await initializeI18n();
   const restoration = Promise.race([
     (async () => {
       const account = await restoreOfflineAccount();
-      if (!account) return null;
+      if (!account) {
+        return null;
+      }
       const snapshot = await loadOfflineSnapshot(account.userId);
       return snapshot ? { account, snapshot } : null;
     })().catch(() => null),

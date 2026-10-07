@@ -33,9 +33,12 @@ export class RedisRateLimiter implements RateLimiter {
     private readonly client: RedisRateLimitClient,
     private readonly options: RedisRateLimiterOptions,
   ) {
-    if (!Number.isInteger(options.limit) || options.limit < 1) throw new Error("Rate limit must be a positive integer");
-    if (!Number.isFinite(options.windowMs) || options.windowMs <= 0)
+    if (!Number.isInteger(options.limit) || options.limit < 1) {
+      throw new Error("Rate limit must be a positive integer");
+    }
+    if (!Number.isFinite(options.windowMs) || options.windowMs <= 0) {
       throw new Error("Rate-limit window must be positive");
+    }
     this.windowSeconds = Math.ceil(options.windowMs / 1_000);
   }
 
@@ -53,8 +56,12 @@ export class RedisRateLimiter implements RateLimiter {
           arguments: [String(this.windowSeconds)],
         }),
       );
-      if (!Number.isInteger(current)) throw new Error("Redis returned an invalid rate-limit count");
-      if (current <= this.options.limit) return { allowed: true, retryAfterSeconds: 0 };
+      if (!Number.isInteger(current)) {
+        throw new Error("Redis returned an invalid rate-limit count");
+      }
+      if (current <= this.options.limit) {
+        return { allowed: true, retryAfterSeconds: 0 };
+      }
 
       const ttl = await this.client.ttl(redisKey);
       return {

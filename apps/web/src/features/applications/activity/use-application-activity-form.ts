@@ -28,7 +28,9 @@ export function useApplicationActivityForm(
   const [error, setError] = useState<"invalid" | "saveFailed" | null>(null);
 
   useEffect(() => {
-    if (!editorKey) return;
+    if (!editorKey) {
+      return;
+    }
     setType(event?.isSystem ? "note" : ((event?.type as typeof type) ?? "note"));
     setTitle(event?.title ?? "");
     setDescription(event?.description ?? "");

@@ -54,8 +54,15 @@ test("preloads unique workspaces from all boards, persists their complete data, 
   const ids = [3, 4, 5];
   const fetchRequest = vi.fn(async (input: RequestInfo | URL) => {
     const url = path(input);
-    if (/\/\d+$/.test(url)) return json(workspace(Number(url.split("/").at(-1))));
-    const id = url.endsWith("/archive") ? 4 : url.endsWith("/blacklist") ? 5 : 3;
+    if (/\/\d+$/.test(url)) {
+      return json(workspace(Number(url.split("/").at(-1))));
+    }
+    let id = 3;
+    if (url.endsWith("/archive")) {
+      id = 4;
+    } else if (url.endsWith("/blacklist")) {
+      id = 5;
+    }
     return json({ data: { applications: [workspace(id).data.application, workspace(3).data.application] } });
   });
   vi.stubGlobal("fetch", fetchRequest);
@@ -79,10 +86,11 @@ test("preloads unique workspaces from all boards, persists their complete data, 
         .map((query) => query.queryKey[3])
         .sort(),
     ).toEqual(ids);
-    for (const id of ids)
+    for (const id of ids) {
       expect(
         saved?.queries.find((query) => query.queryKey[2] === "detail" && query.queryKey[3] === id)?.state.data,
       ).toEqual(workspace(id));
+    }
     expect(progress.mock.calls[0]).toEqual([{ completed: 0, total: 3 }]);
     expect(progress.mock.calls.at(-1)).toEqual([{ completed: 3, total: 3 }]);
     expect(client.getQueryData(applicationKeys.detail(1, 99))).toBeUndefined();
@@ -152,12 +160,16 @@ test.each(["active", "archive", "blacklist"] as const)(
       failActive();
       await expect.poll(() => client.getQueryState(applicationKeys.list(1, collection))?.status).toBe("error");
       expect(settled).toBe(false);
-      for (const release of pending) release();
+      for (const release of pending) {
+        release();
+      }
       expect(await preparation).toMatchObject({ message: "Collection failed" });
       expect(await restoreOfflineAccount()).toBeNull();
     } finally {
       failActive?.();
-      for (const release of pending) release();
+      for (const release of pending) {
+        release();
+      }
       await preparation;
       client.clear();
     }
@@ -173,7 +185,9 @@ test("uses at most four detail requests concurrently and waits for all before re
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
       const url = path(input);
-      if (!/\/\d+$/.test(url)) return json({ data: { applications: ids.map((id) => workspace(id).data.application) } });
+      if (!/\/\d+$/.test(url)) {
+        return json({ data: { applications: ids.map((id) => workspace(id).data.application) } });
+      }
       inFlight += 1;
       maximum = Math.max(maximum, inFlight);
       await new Promise<void>((resolve) =>
@@ -209,7 +223,9 @@ test("uses at most four detail requests concurrently and waits for all before re
     expect(maximum).toBe(4);
     expect(progress.mock.calls.at(-1)).toEqual([{ completed: 9, total: 9 }]);
   } finally {
-    while (pending.length) pending.shift()?.();
+    while (pending.length) {
+      pending.shift()?.();
+    }
     await preparation.catch(() => {});
     client.clear();
   }
@@ -243,7 +259,9 @@ test("settles all workspace workers before failure cleanup and suppresses late p
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
       const url = path(input);
-      if (!/\/\d+$/.test(url)) return json({ data: { applications: ids.map((id) => workspace(id).data.application) } });
+      if (!/\/\d+$/.test(url)) {
+        return json({ data: { applications: ids.map((id) => workspace(id).data.application) } });
+      }
       const id = Number(url.split("/").at(-1));
       requested.push(id);
       await new Promise<void>((resolve) => pending.set(id, resolve));
@@ -270,13 +288,17 @@ test("settles all workspace workers before failure cleanup and suppresses late p
     pending.get(2)?.();
     await expect.poll(() => client.getQueryState(applicationKeys.detail(1, 2))?.status).toBe("error");
     expect(settled).toBe(false);
-    for (const release of pending.values()) release();
+    for (const release of pending.values()) {
+      release();
+    }
     expect(await preparation).toMatchObject({ message: "Workspace failed" });
     expect(requested).toHaveLength(4);
     expect(progress.mock.calls).toEqual([[{ completed: 0, total: 5 }]]);
     expect(await restoreOfflineAccount()).toBeNull();
   } finally {
-    for (const release of pending.values()) release();
+    for (const release of pending.values()) {
+      release();
+    }
     await preparation;
     client.clear();
   }
@@ -359,7 +381,9 @@ test("a snapshot quota failure never claims readiness", async () => {
   );
   const put = IDBObjectStore.prototype.put;
   vi.spyOn(IDBObjectStore.prototype, "put").mockImplementation(function (this: IDBObjectStore, ...args) {
-    if (this.name === "snapshots") throw new DOMException("Full", "QuotaExceededError");
+    if (this.name === "snapshots") {
+      throw new DOMException("Full", "QuotaExceededError");
+    }
     return put.apply(this, args);
   });
   const client = new QueryClient();
@@ -437,7 +461,9 @@ test("an account change during preparation suppresses readiness", async () => {
         return "build-1";
       },
       () => {
-        if (changed) throw new Error("Account changed");
+        if (changed) {
+          throw new Error("Account changed");
+        }
       },
     ),
   ).rejects.toThrow("Account changed");

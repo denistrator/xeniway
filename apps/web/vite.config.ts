@@ -24,7 +24,9 @@ export default defineConfig({
           // Hash their emitted bytes too; the worker intentionally rejects MD5 revisions.
           options.injectManifest.additionalManifestEntries = await Promise.all(
             (options.injectManifest.additionalManifestEntries ?? []).map(async (entry) => {
-              if (typeof entry === "string" || entry.revision === null) return entry;
+              if (typeof entry === "string" || entry.revision === null) {
+                return entry;
+              }
               return {
                 ...entry,
                 revision: createHash("sha256")

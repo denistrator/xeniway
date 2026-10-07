@@ -73,23 +73,90 @@ export function createAccessState(input: {
 
 function verifiedSession(state: AccessState, userId: number): AccessState {
   const switched = state.session.status === "verified" && state.session.userId !== userId;
-  const downloadOwner =
-    state.download.status === "ready"
-      ? state.download.account.userId
-      : state.download.status === "preparing"
-        ? state.download.userId
-        : null;
+  let downloadOwner: number | null = null;
+  switch (state.download.status) {
+    case "ready":
+      downloadOwner = state.download.account.userId;
+      break;
+    case "preparing":
+      downloadOwner = state.download.userId;
+      break;
+  }
+  let memoryOwner: number | null = userId;
+  if (state.connection.status === "offline" && state.memoryOwner !== userId) {
+    memoryOwner = null;
+  }
   const wrongDownload = downloadOwner !== null && downloadOwner !== userId;
   return {
     ...state,
     session: { status: "verified", userId },
-    memoryOwner: state.connection.status === "offline" ? (state.memoryOwner === userId ? userId : null) : userId,
+    memoryOwner,
     download: switched || wrongDownload ? { status: "absent" } : state.download,
     epoch: switched || wrongDownload ? state.epoch + 1 : state.epoch,
   };
 }
 
-/** The sole policy authority. Asynchronous operations stay in the runtime. */
+function finishVerification(
+  state: AccessState,
+  event: Extract<AccessEvent, { type: "VERIFY_SUCCEEDED" | "VERIFY_FAILED" }>,
+): AccessState {
+  if (state.connection.status !== "verifying" || state.connection.operation !== event.operation) {
+    return state;
+  }
+  if (event.type === "VERIFY_SUCCEEDED") {
+    return { ...verifiedSession(state, event.userId), connection: { status: "online" } };
+  }
+  return { ...state, connection: { status: event.online ? "unavailable" : "offline" } };
+}
+
+function restoreDownload(state: AccessState, event: Extract<AccessEvent, { type: "RESTORED" }>): AccessState {
+  if (event.epoch !== state.epoch || state.session.status === "signed-out") {
+    return state;
+  }
+  return { ...state, download: event.account ? { status: "ready", account: event.account } : { status: "absent" } };
+}
+
+function updatePreparation(
+  state: AccessState,
+  event: Extract<
+    AccessEvent,
+    { type: "PREPARATION_PROGRESS" | "PREPARATION_SUCCEEDED" | "PREPARATION_FAILED" | "PREPARATION_CANCELLED" }
+  >,
+): AccessState {
+  if (state.download.status !== "preparing" || state.download.operation !== event.operation) {
+    return state;
+  }
+  switch (event.type) {
+    case "PREPARATION_CANCELLED":
+      return { ...state, download: { status: "absent" } };
+    case "PREPARATION_PROGRESS":
+      return { ...state, download: { ...state.download, progress: event.progress } };
+    case "PREPARATION_SUCCEEDED":
+      return { ...state, download: { status: "ready", account: event.account } };
+    case "PREPARATION_FAILED":
+      return { ...state, download: { status: "failed" } };
+  }
+}
+
+function signedOut(state: AccessState): AccessState {
+  return {
+    ...state,
+    session: { status: "signed-out" },
+    connection: state.connection.status === "offline" ? state.connection : { status: "online" },
+    download: { status: "absent" },
+    memoryOwner: null,
+    epoch: state.epoch + 1,
+  };
+}
+
+function expireDownload(state: AccessState, account: OfflineAccountMetadata): AccessState {
+  if (state.download.status !== "ready" || state.download.account !== account) {
+    return state;
+  }
+  return { ...state, download: { status: "absent" }, epoch: state.epoch + 1 };
+}
+
+/** The sole policy entry point. Asynchronous operations stay in the runtime. */
 export function transitionAccess(state: AccessState, event: AccessEvent): AccessState {
   switch (event.type) {
     case "CONNECTION_LOST":
@@ -115,31 +182,19 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
     case "VERIFY_STARTED":
       return { ...state, connection: { status: "verifying", operation: event.operation } };
     case "VERIFY_SUCCEEDED":
-      if (state.connection.status !== "verifying" || state.connection.operation !== event.operation) return state;
-      return { ...verifiedSession(state, event.userId), connection: { status: "online" } };
     case "VERIFY_FAILED":
-      if (state.connection.status !== "verifying" || state.connection.operation !== event.operation) return state;
-      return { ...state, connection: { status: event.online ? "unavailable" : "offline" } };
+      return finishVerification(state, event);
     case "SIGNED_OUT":
     case "SESSION_REJECTED":
-      return {
-        ...state,
-        session: { status: "signed-out" },
-        connection: state.connection.status === "offline" ? state.connection : { status: "online" },
-        download: { status: "absent" },
-        memoryOwner: null,
-        epoch: state.epoch + 1,
-      };
+      return signedOut(state);
     case "DOWNLOAD_REMOVED":
       return { ...state, download: { status: "absent" }, memoryOwner: null, epoch: state.epoch + 1 };
     case "DOWNLOAD_REPLACED":
       return { ...state, download: { status: "absent" }, epoch: state.epoch + 1 };
     case "RESTORED":
-      if (event.epoch !== state.epoch || state.session.status === "signed-out") return state;
-      return { ...state, download: event.account ? { status: "ready", account: event.account } : { status: "absent" } };
+      return restoreDownload(state, event);
     case "DOWNLOAD_EXPIRED":
-      if (state.download.status !== "ready" || state.download.account !== event.account) return state;
-      return { ...state, download: { status: "absent" }, epoch: state.epoch + 1 };
+      return expireDownload(state, event.account);
     case "PREPARATION_STARTED":
       return {
         ...state,
@@ -156,15 +211,7 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
     case "PREPARATION_SUCCEEDED":
     case "PREPARATION_FAILED":
     case "PREPARATION_CANCELLED":
-      if (state.download.status !== "preparing" || state.download.operation !== event.operation) return state;
-      if (event.type === "PREPARATION_CANCELLED") return { ...state, download: { status: "absent" } };
-      if (event.type === "PREPARATION_PROGRESS")
-        return { ...state, download: { ...state.download, progress: event.progress } };
-      return {
-        ...state,
-        download:
-          event.type === "PREPARATION_SUCCEEDED" ? { status: "ready", account: event.account } : { status: "failed" },
-      };
+      return updatePreparation(state, event);
     case "STORAGE_FAILED":
       return state.storageError ? state : { ...state, storageError: true };
     case "LOCAL_LOGOUT_REPORTED":
@@ -179,16 +226,16 @@ export function selectAccess(state: AccessState, now: number) {
     state.download.status === "ready" && state.download.account.expiresAt > now ? state.download.account : null;
   const canMutate = state.connection.status === "online" && state.session.status === "verified";
   const verifiedOwner = state.session.status === "verified" ? state.session.userId : null;
+  const awaitingAccess =
+    state.session.status === "checking" ||
+    state.connection.status === "verifying" ||
+    state.download.status === "restoring";
   return {
     account,
     readAccountId: canMutate ? verifiedOwner : (account?.userId ?? state.memoryOwner),
     canMutate,
     canReadRemote: canMutate,
-    checking:
-      !account &&
-      (state.session.status === "checking" ||
-        state.connection.status === "verifying" ||
-        state.download.status === "restoring"),
+    checking: !account && awaitingAccess,
     download: state.download,
     storageError: state.storageError,
     localLogout: state.localLogout,

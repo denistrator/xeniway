@@ -78,7 +78,9 @@ test("browses all workspace applications with keyboard controls and circular col
   const rtlNext = page.getByRole("button", { name: "המועמדות הבאה" });
   await expect(rtlNext.locator("svg")).toHaveCSS("rotate", "180deg");
   const bounds = await rtlNext.boundingBox();
-  if (!bounds) throw new Error("The next-application control must be visible");
+  if (!bounds) {
+    throw new Error("The next-application control must be visible");
+  }
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
   await rtlNext.click();
@@ -121,7 +123,9 @@ for (const authenticated of [false, true]) {
 
     let sessionRequests = 0;
     page.on("request", (request) => {
-      if (new URL(request.url()).pathname === "/api/auth/me") sessionRequests += 1;
+      if (new URL(request.url()).pathname === "/api/auth/me") {
+        sessionRequests += 1;
+      }
     });
     await page.goto("/");
     if (authenticated) {
@@ -148,7 +152,9 @@ for (const authenticated of [false, true]) {
 
 test("switches and persists the selected browser language", async ({ page }) => {
   await page.addInitScript(() => {
-    if (sessionStorage.getItem("e2e-preferences-reset")) return;
+    if (sessionStorage.getItem("e2e-preferences-reset")) {
+      return;
+    }
     localStorage.clear();
     sessionStorage.setItem("e2e-preferences-reset", "true");
   });
@@ -323,7 +329,9 @@ async function expectWorkspaceAccents(page: Page) {
       page.locator(".workspace-status-decor").evaluate((workspace) => {
         const marker = workspace.querySelector('[data-compact-edit-field="status"] > button > span');
         const metadata = workspace.querySelector(".workspace-metadata");
-        if (!marker || !metadata) return false;
+        if (!marker || !metadata) {
+          return false;
+        }
         const color = getComputedStyle(marker).backgroundColor;
         const titles = Array.from(workspace.querySelectorAll(".workspace-section-title"));
         return (
@@ -341,7 +349,9 @@ async function expectWorkspaceAccents(page: Page) {
 
 test("shows the welcome popup after login and registration", async ({ page }) => {
   await page.addInitScript(() => {
-    if (sessionStorage.getItem("e2e-preferences-reset")) return;
+    if (sessionStorage.getItem("e2e-preferences-reset")) {
+      return;
+    }
     localStorage.clear();
     sessionStorage.setItem("e2e-preferences-reset", "true");
   });
@@ -422,7 +432,9 @@ test("downloads the authenticated application data as CSV", async ({ page }) => 
   const downloadPath = await download.path();
   expect(download.suggestedFilename()).toMatch(/^xenia-way-export-\d{4}-\d{2}-\d{2}\.csv$/);
   expect(downloadPath).not.toBeNull();
-  if (!downloadPath) throw new Error("CSV download did not produce a local file");
+  if (!downloadPath) {
+    throw new Error("CSV download did not produce a local file");
+  }
   const csv = await readFile(downloadPath, "utf8");
   expect(csv).toContain('"company"');
   expect(csv).toContain('"activity"');
@@ -807,8 +819,9 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
   const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
-  if (await welcome.isVisible())
+  if (await welcome.isVisible()) {
     await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
+  }
 
   const savedColumn = page.getByRole("region", { name: "Saved applications" });
   const cards = savedColumn.locator("ul > li > button");
@@ -816,7 +829,9 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   await expect(cards.nth(1)).toBeVisible();
   expect(await cards.count()).toBeGreaterThanOrEqual(2);
   const secondCompany = await cards.nth(1).locator("p").first().textContent();
-  if (!secondCompany) throw new Error("Unable to locate the second saved application");
+  if (!secondCompany) {
+    throw new Error("Unable to locate the second saved application");
+  }
 
   await cards.nth(1).dragTo(cardTargets.nth(0));
   await expect(savedColumn.locator("ul > li > button").first()).toContainText(secondCompany);
@@ -839,7 +854,9 @@ test("supports keyboard reordering within a status", async ({ page }) => {
   const cards = savedColumn.locator('button[draggable="true"]');
   await expect(cards.nth(1)).toBeVisible();
   const secondCompany = await cards.nth(1).locator("p").first().textContent();
-  if (!secondCompany) throw new Error("Unable to locate the second saved application");
+  if (!secondCompany) {
+    throw new Error("Unable to locate the second saved application");
+  }
 
   await cards.nth(1).focus();
   await page.keyboard.press("ArrowUp");
@@ -957,7 +974,9 @@ test("permanently deletes a blacklisted application", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
   const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
-  if (await welcome.isVisible()) await welcome.getByRole("button", { name: "Go to board" }).click();
+  if (await welcome.isVisible()) {
+    await welcome.getByRole("button", { name: "Go to board" }).click();
+  }
 
   const company = `Blacklisted deletion ${Date.now()}`;
   await page.getByRole("button", { name: "Add job" }).click();
@@ -988,8 +1007,9 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
   const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
-  if (await welcome.isVisible())
+  if (await welcome.isVisible()) {
     await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
+  }
   for (const status of ["Saved", "Applied", "Interview", "Offer", "Rejected", "Withdrawn"]) {
     await expect(page.getByRole("heading", { name: status })).toBeVisible();
   }
@@ -1068,7 +1088,9 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   const appliedColumn = page.getByRole("heading", { name: "Applied" }).locator("xpath=../..");
   const sourceHandle = await applicationCard.elementHandle();
   const targetHandle = await appliedColumn.elementHandle();
-  if (!sourceHandle || !targetHandle) throw new Error("Unable to locate drag source or target");
+  if (!sourceHandle || !targetHandle) {
+    throw new Error("Unable to locate drag source or target");
+  }
   await page.evaluate(
     ([source, target]) => {
       const dataTransfer = new DataTransfer();

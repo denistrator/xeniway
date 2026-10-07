@@ -22,12 +22,15 @@ export function useOwnerMutation<TData, TVariables = void>(options: {
     retry: false,
     mutationFn: (invocation) => {
       assertAuthenticatedWrite();
-      if (!belongsToCurrentOwner(invocation))
+      if (!belongsToCurrentOwner(invocation)) {
         throw new ApiRequestError("The verified account changed", "OFFLINE_READ_ONLY", 0);
+      }
       return options.mutationFn(invocation.variables);
     },
     onSuccess: async (data, invocation) => {
-      if (belongsToCurrentOwner(invocation)) await options.onSuccess?.(data, invocation.variables);
+      if (belongsToCurrentOwner(invocation)) {
+        await options.onSuccess?.(data, invocation.variables);
+      }
     },
   });
   function ownerScopedCallbacks(
@@ -35,14 +38,19 @@ export function useOwnerMutation<TData, TVariables = void>(options: {
   ): MutateOptions<TData, Error, OwnerMutationInvocation<TVariables>> {
     return {
       onSuccess: (data, invocation, context, mutationContext) => {
-        if (belongsToCurrentOwner(invocation)) value?.onSuccess?.(data, invocation.variables, context, mutationContext);
+        if (belongsToCurrentOwner(invocation)) {
+          value?.onSuccess?.(data, invocation.variables, context, mutationContext);
+        }
       },
       onError: (error, invocation, context, mutationContext) => {
-        if (belongsToCurrentOwner(invocation)) value?.onError?.(error, invocation.variables, context, mutationContext);
+        if (belongsToCurrentOwner(invocation)) {
+          value?.onError?.(error, invocation.variables, context, mutationContext);
+        }
       },
       onSettled: (data, error, invocation, context, mutationContext) => {
-        if (belongsToCurrentOwner(invocation))
+        if (belongsToCurrentOwner(invocation)) {
           value?.onSettled?.(data, error, invocation.variables, context, mutationContext);
+        }
       },
     };
   }
@@ -54,8 +62,9 @@ export function useOwnerMutation<TData, TVariables = void>(options: {
     mutateAsync: async (variables: TVariables, value?: MutateOptions<TData, Error, TVariables>) => {
       const invocation = { ownerId: invocationOwnerId, variables };
       const result = await mutation.mutateAsync(invocation, ownerScopedCallbacks(value));
-      if (!belongsToCurrentOwner(invocation))
+      if (!belongsToCurrentOwner(invocation)) {
         throw new ApiRequestError("The verified account changed", "OFFLINE_READ_ONLY", 0);
+      }
       return result;
     },
   };

@@ -46,12 +46,14 @@ function quotedEnd(text: string, start: number, limit: number): number {
   const quote = text[start];
   let index = start + 1;
   while (index < limit) {
-    if (text[index] === "\\") {
-      index += 2;
-    } else if (text[index] === quote) {
-      return index + 1;
-    } else {
-      index += 1;
+    switch (text[index]) {
+      case "\\":
+        index += 2;
+        break;
+      case quote:
+        return index + 1;
+      default:
+        index += 1;
     }
   }
   return limit;
@@ -62,19 +64,25 @@ function structuredObjectRanges(text: string): TextRange[] {
   const starts: number[] = [];
   let index = 0;
   while (index < text.length) {
-    if (text[index] === '"' || text[index] === "'") {
-      index = quotedEnd(text, index, text.length);
-    } else if (text[index] === "{") {
-      starts.push(index);
-      index += 1;
-    } else if (text[index] === "}") {
-      const start = starts.pop();
-      if (start !== undefined) {
-        ranges.push({ start, end: index });
+    switch (text[index]) {
+      case '"':
+      case "'":
+        index = quotedEnd(text, index, text.length);
+        break;
+      case "{":
+        starts.push(index);
+        index += 1;
+        break;
+      case "}": {
+        const start = starts.pop();
+        if (start !== undefined) {
+          ranges.push({ start, end: index });
+        }
+        index += 1;
+        break;
       }
-      index += 1;
-    } else {
-      index += 1;
+      default:
+        index += 1;
     }
   }
   return ranges;

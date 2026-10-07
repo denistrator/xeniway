@@ -126,7 +126,9 @@ export const ContactsSection = memo(function ContactsSection({
           yesLabel={t("common.actions.yes")}
           noLabel={t("common.actions.no")}
           onYes={() => {
-            if (canMutate) void controller.deletion.confirm();
+            if (canMutate) {
+              void controller.deletion.confirm();
+            }
           }}
           onNo={controller.deletion.cancel}
           yesDisabled={!canMutate || controller.pending}
