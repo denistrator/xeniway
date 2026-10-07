@@ -1,5 +1,22 @@
 export const en = {
+  settings: {
+    export: {
+      title: "Export data",
+      description:
+        "Download a ZIP package containing your applications, preparation, contacts, and follow-ups. Activity history and salary are not included.",
+      unavailable: "Connect and verify your session to export your data.",
+    },
+    theme: {
+      title: "Theme",
+      description: "Choose a light or dark appearance, or follow your device settings.",
+      light: "Light",
+      system: "System",
+      dark: "Dark",
+    },
+    language: { description: "Choose the language used throughout the application." },
+  },
   offline: {
+    disconnected: "Offline or server unavailable",
     title: "Offline access on this device",
     productionOnly:
       "Offline access requires a production build. Run a production preview to test it; it is unavailable on the development server.",
@@ -53,6 +70,7 @@ export const en = {
     loading: "Loading…",
   },
   navigation: {
+    settings: "Settings",
     applications: "Applications",
     archive: "Archive",
     blacklist: "Blacklist",

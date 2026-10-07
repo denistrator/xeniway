@@ -1,7 +1,24 @@
 import type { TranslationDictionary } from "./en";
 
 const he = {
+  settings: {
+    export: {
+      title: "ייצוא נתונים",
+      description:
+        "הורידו קובץ ZIP המכיל את המועמדויות, ההכנה, אנשי הקשר והמעקבים שלכם. היסטוריית פעילות ושכר אינם כלולים.",
+      unavailable: "התחברו ואמתו את ההפעלה כדי לייצא את הנתונים.",
+    },
+    theme: {
+      title: "ערכת נושא",
+      description: "בחרו מראה בהיר או כהה, או השתמשו בהגדרות המכשיר.",
+      light: "בהיר",
+      system: "מערכת",
+      dark: "כהה",
+    },
+    language: { description: "בחרו את שפת הממשק של היישום." },
+  },
   offline: {
+    disconnected: "אין חיבור או שהשרת אינו זמין",
     title: "גישה לא מקוונת במכשיר זה",
     productionOnly:
       "גישה לא מקוונת דורשת גרסת production. כדי לבדוק אותה, הפעל תצוגה מקדימה של הגרסה; היא אינה זמינה בשרת הפיתוח.",
@@ -47,7 +64,13 @@ const he = {
     },
     loading: "בטעינה…",
   },
-  navigation: { applications: "מועמדויות", archive: "ארכיון", blacklist: "רשימה שחורה", about: "אודות" },
+  navigation: {
+    settings: "הגדרות",
+    applications: "מועמדויות",
+    archive: "ארכיון",
+    blacklist: "רשימה שחורה",
+    about: "אודות",
+  },
   accessibility: { skipToMainContent: "דילוג לתוכן הראשי", workspaceNavigation: "ניווט במרחב העבודה" },
   footer: { description: "© {{year}} Xenia Way · נבנה לחיפוש עבודה ממוקד" },
   applications: {

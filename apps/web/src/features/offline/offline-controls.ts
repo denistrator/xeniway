@@ -16,6 +16,7 @@ function getRouteQueryKey(pathname: string, owner: number | null): QueryKey | nu
     return applicationKeys.detail(owner, Number(detailId));
   }
   switch (pathname) {
+    case "/settings":
     case "/":
       return applicationKeys.list(owner, "active");
     case "/archive":
@@ -45,17 +46,18 @@ export function useOfflineControls() {
   const readOnly = Boolean(access.readAccountId && !access.canMutate);
   const hasDownloadNotice = Boolean(access.account || failed || access.download.status === "preparing");
   const hasDeviceNotice = access.localLogout || access.storageError || access.updateAvailable;
-  const notice = hasDownloadNotice || hasDeviceNotice || readOnly;
-  const canRetry = Boolean(access.readAccountId || failed) && !access.canMutate;
+  const notice = hasDownloadNotice || hasDeviceNotice || readOnly || access.isDisconnected;
+  const canRetry = Boolean(access.readAccountId || failed || access.isDisconnected) && !access.canMutate;
   const retry = () => void access.retryConnection().catch(() => {});
   return {
     access,
     downloadedAt,
     notice,
     canRetry,
-    visible: Boolean(access.readAccountId || notice),
     retry,
     title: t("offline.title"),
+    headingLabel: access.isDisconnected ? `${t("offline.title")} — ${t("offline.disconnected")}` : t("offline.title"),
+    loginLabel: t("common.actions.login"),
     retryLabel: t("common.actions.retry"),
   };
 }
@@ -137,7 +139,6 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
     remove,
     changeConsent,
     productionOnly: import.meta.env.DEV,
-    title: t("offline.title"),
     productionOnlyLabel: t("offline.productionOnly"),
     privacy: t("offline.privacy"),
     coverage: t("offline.coverage"),

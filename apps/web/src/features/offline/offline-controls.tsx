@@ -1,3 +1,5 @@
+import { WifiOff } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/button.tsx";
 import { offlineControlsStyles } from "./offline-controls.styles.ts";
 import {
@@ -12,17 +14,25 @@ const styles = offlineControlsStyles();
 
 export function OfflineControls() {
   const controls = useOfflineControls();
-  if (!controls.visible) {
-    return null;
-  }
   return (
     <section aria-label={controls.title} className={styles.root()}>
+      <h2 aria-label={controls.headingLabel} className={styles.heading()}>
+        {controls.title}
+        {controls.access.isDisconnected && <WifiOff aria-hidden="true" size={18} className={styles.connectionIcon()} />}
+      </h2>
       <OfflineNotices access={controls.access} downloadedAt={controls.downloadedAt} notice={controls.notice} />
-      {controls.canRetry && (
-        <Button variant="outline" size="sm" onClick={controls.retry}>
-          {controls.retryLabel}
-        </Button>
-      )}
+      <div className={styles.connectionActions()}>
+        {controls.canRetry && (
+          <Button variant="outline" size="sm" onClick={controls.retry}>
+            {controls.retryLabel}
+          </Button>
+        )}
+        {!controls.access.readAccountId && (
+          <Link to="/login" className={styles.loginLink()}>
+            {controls.loginLabel}
+          </Link>
+        )}
+      </div>
       {controls.access.readAccountId && <OfflineDownloadSettings access={controls.access} />}
     </section>
   );
@@ -51,16 +61,15 @@ function OfflineNotices(props: OfflineNoticesProps) {
 function OfflineDownloadSettings(props: OfflineDownloadSettingsProps) {
   const settings = useOfflineDownloadSettings(props);
   return (
-    <details className={styles.settings()}>
-      <summary className={styles.summary()}>{settings.title}</summary>
+    <div className={styles.settings()}>
       {settings.productionOnly && <p className={styles.productionNotice()}>{settings.productionOnlyLabel}</p>}
       <p className={styles.privacyNotice()}>{settings.privacy}</p>
       <p className={styles.coverageNotice()}>{settings.coverage}</p>
       {settings.hasDownload ? (
         <>
-          {settings.showRefresh && (
-            <>
-              <p className={styles.refreshNotice()}>{settings.refreshReplacement}</p>
+          {settings.showRefresh && <p className={styles.refreshNotice()}>{settings.refreshReplacement}</p>}
+          <div className={styles.downloadActions()}>
+            {settings.showRefresh && (
               <Button
                 variant="outline"
                 size="sm"
@@ -71,11 +80,11 @@ function OfflineDownloadSettings(props: OfflineDownloadSettingsProps) {
               >
                 {settings.refreshLabel}
               </Button>
-            </>
-          )}
-          <Button variant="outline" size="sm" disabled={settings.busy} onClick={settings.remove}>
-            {settings.removeLabel}
-          </Button>
+            )}
+            <Button variant="outline" size="sm" disabled={settings.busy} onClick={settings.remove}>
+              {settings.removeLabel}
+            </Button>
+          </div>
         </>
       ) : (
         settings.showEnable && (
@@ -102,6 +111,6 @@ function OfflineDownloadSettings(props: OfflineDownloadSettingsProps) {
           </>
         )
       )}
-    </details>
+    </div>
   );
 }

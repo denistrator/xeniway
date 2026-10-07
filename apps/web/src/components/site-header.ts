@@ -54,6 +54,9 @@ export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
     logoutLabel: logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout"),
     addJobLabel: t("common.actions.addJob"),
     loginLabel: t("common.actions.login"),
+    settingsLabel: access.isDisconnected
+      ? `${t("navigation.settings")} — ${t("offline.disconnected")}`
+      : t("navigation.settings"),
     email: user.data?.email ?? access.account?.email,
   };
 }

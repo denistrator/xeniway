@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 import type { ApplicationResponse, AuthResponse, CsrfResponse } from "@xeniway/shared";
@@ -85,7 +84,8 @@ test("provides public password recovery pages", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("link", { name: "Forgot your password?" }).click();
   await expect(page).toHaveURL(/\/forgot-password$/);
-  await page.getByLabel("Email").fill("unknown@example.com");
+  await expect(page.getByRole("heading", { name: "Forgot your password?", exact: true })).toBeVisible();
+  await page.getByLabel("Email", { exact: true }).fill("unknown@example.com");
   await page.getByRole("button", { name: "Send instructions" }).click();
   await expect(page.getByRole("status")).toContainText("If an account exists for that email");
 
@@ -94,6 +94,69 @@ test("provides public password recovery pages", async ({ page }) => {
   await page.getByLabel("Confirm password").fill("password123");
   await page.getByRole("button", { name: "Update password" }).click();
   await expect(page.getByRole("alert")).toContainText("invalid or expired");
+});
+
+test("opens settings from the header with keyboard access and localized reloads", async ({ page }) => {
+  await page.goto("/about");
+  await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Log in", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Settings", exact: true })).toHaveCount(0);
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `settings-${Date.now()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  await page.reload();
+  const settings = page.getByRole("link", { name: "Settings", exact: true });
+  await expect(page.getByRole("banner").getByRole("button", { name: "Export package" })).toHaveCount(0);
+  await expect(settings).toHaveAttribute("href", "/settings");
+  await expect(settings).toHaveText("");
+  await settings.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Theme: System. Change theme" })).toBeFocused();
+  await settings.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Offline access on this device", level: 2 })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Export data" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Export package", exact: true })).toBeEnabled();
+  const themeSelect = page.getByRole("combobox", { name: "Theme", exact: true });
+  await expect(themeSelect).toHaveText("System");
+  await themeSelect.focus();
+  await page.keyboard.press("Enter");
+  const themeSaved = page.waitForResponse(
+    (response) => response.url().endsWith("/api/user/preferences") && response.request().method() === "PATCH",
+  );
+  await page.getByRole("option", { name: "Dark", exact: true }).click();
+  expect((await themeSaved).ok()).toBe(true);
+  await expect(themeSelect).toHaveText("Dark");
+  await expect(page.getByRole("button", { name: "Theme: Dark. Change theme" })).toBeVisible();
+  await expect(themeSelect).toBeFocused();
+  await page.getByRole("button", { name: "Theme: Dark. Change theme" }).click();
+  await expect(themeSelect).toHaveText("Light");
+  const accessibility = await new AxeBuilder({ page }).include("main").analyze();
+  expect(accessibility.violations).toEqual([]);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("combobox", { name: "Language", exact: true }).click();
+  const languageSaved = page.waitForResponse(
+    (response) => response.url().endsWith("/api/user/preferences") && response.request().method() === "PATCH",
+  );
+  await page.getByRole("option", { name: "Hebrew", exact: true }).click();
+  expect((await languageSaved).ok()).toBe(true);
+  await expect(page.locator("html")).toHaveAttribute("lang", "he");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { name: "הגדרות", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ייצוא נתונים", level: 2 })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "הגדרות", level: 1 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "הגדרות", exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "שפה", exact: true })).toContainText("עברית");
+  await page.getByRole("button", { name: "Language: עברית. Change language" }).click();
+  await page.getByRole("menuitem", { name: "אנגלית" }).click();
+  await expect(page.getByRole("combobox", { name: "Language", exact: true })).toContainText("English");
 });
 
 test("shows the about page without authentication", async ({ page }) => {
@@ -307,38 +370,6 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await registeredWelcome.getByRole("button", { name: "About Xenia Way" }).click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(registeredWelcome).toHaveCount(0);
-});
-
-test("downloads the authenticated application data as CSV", async ({ page }) => {
-  await page.goto("/register");
-  await page.getByLabel("Email").fill(`csv-export-${Date.now()}@example.com`);
-  await page.getByLabel("Password", { exact: true }).fill("password123");
-  await page.getByLabel("Confirm password").fill("password123");
-  await page.getByRole("button", { name: "Create account" }).click();
-  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
-  await expect(welcome).toBeVisible();
-  await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
-
-  const headerActionLabels = await page
-    .locator("header button")
-    .evaluateAll((buttons) =>
-      buttons.map((button) => button.getAttribute("aria-label") || button.textContent?.trim() || ""),
-    );
-  const addJobIndex = headerActionLabels.findIndex((label) => label.includes("Add job"));
-  expect(headerActionLabels[addJobIndex + 1]).toBe("Export CSV");
-
-  const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export CSV" }).click();
-  const download = await downloadPromise;
-  const downloadPath = await download.path();
-  expect(download.suggestedFilename()).toMatch(/^xenia-way-export-\d{4}-\d{2}-\d{2}\.csv$/);
-  expect(downloadPath).not.toBeNull();
-  if (!downloadPath) {
-    throw new Error("CSV download did not produce a local file");
-  }
-  const csv = await readFile(downloadPath, "utf8");
-  expect(csv).toContain('"company"');
-  expect(csv).toContain('"activity"');
 });
 
 test("records and edits application activity across reloads", async ({ page }) => {

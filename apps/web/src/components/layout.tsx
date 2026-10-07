@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { CreateApplicationLoader } from "../features/applications/form/create-application-loader.tsx";
-import { OfflineControls } from "../features/offline/offline-controls.tsx";
 import { UserPreferencesSync } from "../features/preferences/user-preferences-sync.tsx";
 import { WelcomeModal } from "../features/welcome/welcome-modal.tsx";
 import { layoutStyles } from "./layout.styles.ts";
@@ -18,7 +17,6 @@ export function Layout() {
     <div className={styles.root()}>
       <SiteHeader onCreateDialogOpen={view.handleCreateDialogOpen} />
       <UserPreferencesSync />
-      <OfflineControls />
       <main id="main-content" tabIndex={-1} className={styles.main()}>
         <Suspense fallback={<LoadingScreen />}>
           <Outlet />

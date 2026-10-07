@@ -10,6 +10,7 @@ const NAVIGATION_PATHS = new Set([
   "/archive",
   "/blacklist",
   "/about",
+  "/settings",
   "/login",
   "/register",
   "/forgot-password",

@@ -1,6 +1,5 @@
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Settings, WifiOff } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
-import { CsvExportButton } from "../features/data-export/csv-export-button.tsx";
 import { LanguageSelector } from "../features/preferences/language-selector.tsx";
 import { ThemeSelector } from "../features/preferences/theme-selector.tsx";
 import { siteHeaderStyles } from "./site-header.styles.ts";
@@ -46,11 +45,25 @@ export function SiteHeader(props: SiteHeaderProps) {
                 <Plus aria-hidden="true" size={15} /> {view.addJobLabel}
               </Button>
             )}
-            {view.user.data && view.access.canMutate && <CsvExportButton />}
             {!view.user.isPending && !view.readAccountId && (
               <Button asChild variant="outline" size="sm">
                 <Link to="/login">{view.loginLabel}</Link>
               </Button>
+            )}
+            {view.readAccountId && (
+              <Link
+                to="/settings"
+                aria-label={view.settingsLabel}
+                title={view.settingsLabel}
+                className={styles.settingsLink()}
+              >
+                <Settings aria-hidden="true" size={17} strokeWidth={2} />
+                {view.access.isDisconnected && (
+                  <span className={styles.settingsNotice()}>
+                    <WifiOff aria-hidden="true" size={11} strokeWidth={2} />
+                  </span>
+                )}
+              </Link>
             )}
             <ThemeSelector />
             <LanguageSelector />

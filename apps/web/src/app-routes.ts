@@ -1,4 +1,7 @@
 import { lazy } from "react";
+export const SettingsPage = lazy(() =>
+  import("./pages/settings-page.tsx").then(({ SettingsPage }) => ({ default: SettingsPage })),
+);
 export const AboutPage = lazy(() => import("./pages/about-page.tsx").then(({ AboutPage }) => ({ default: AboutPage })));
 export const ArchivePage = lazy(() =>
   import("./features/applications/archive/archive-page.tsx").then(({ ArchivePage }) => ({ default: ArchivePage })),

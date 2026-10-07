@@ -15,6 +15,14 @@ const account = {
 };
 const verified = () => createAccessState({ online: true, userId: 1 });
 
+test.each(["CONNECTION_LOST", "SERVER_UNAVAILABLE"] as const)("%s exposes a disconnected indicator", (type) => {
+  const state = transitionAccess(verified(), { type });
+  expect(selectAccess(state, now)).toMatchObject({ isDisconnected: true, canMutate: false });
+  const checking = transitionAccess(state, { type: "VERIFY_STARTED", operation: 1 });
+  const recovered = transitionAccess(checking, { type: "VERIFY_SUCCEEDED", operation: 1, userId: 1 });
+  expect(selectAccess(recovered, now).isDisconnected).toBe(false);
+});
+
 test("connection loss immediately preserves verified memory reads without granting writes", () => {
   const state = transitionAccess(verified(), { type: "CONNECTION_LOST" });
   expect(selectAccess(state, now)).toMatchObject({ readAccountId: 1, canMutate: false, canReadRemote: false });

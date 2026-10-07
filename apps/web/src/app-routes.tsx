@@ -10,6 +10,7 @@ import {
   NotFoundPage,
   PasswordResetPage,
   RegisterPage,
+  SettingsPage,
 } from "./app-routes.ts";
 import { Layout } from "./components/layout.tsx";
 import { GuestOnly, RequireAuth } from "./route-guards.tsx";
@@ -19,6 +20,7 @@ export function AppRoutes() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/archive" element={<ArchivePage />} />

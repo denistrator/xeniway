@@ -240,7 +240,7 @@ describe("explicit public asset preparation", () => {
     expect(await result?.text()).toBe(`public:${origin}/assets/he-jkl.js`);
     expect(network).not.toHaveBeenCalled();
   });
-  it.each(["/", "/archive", "/blacklist", "/applications/3", "/login", "/register", "/forgot-password"])(
+  it.each(["/", "/settings", "/archive", "/blacklist", "/applications/3", "/login", "/register", "/forgot-password"])(
     "falls back to the clean shell for known navigation %s",
     async (path) => {
       const assets = createWorkerAssets(manifest, origin);

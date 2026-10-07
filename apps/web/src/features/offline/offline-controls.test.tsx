@@ -81,7 +81,7 @@ function renderControls(client = createClient(), title = en.offline.title as str
   if (!profile.canMutate) {
     act(() => window.dispatchEvent(new Event("xeniway:server-unavailable")));
   }
-  fireEvent.click(screen.getByText(title, { selector: "summary" }));
+  expect(screen.getByRole("heading", { name: new RegExp(title), level: 2 })).toBeVisible();
   return { ...view, client, refresh: () => view.rerender(element()) };
 }
 
@@ -186,7 +186,7 @@ test("query creation during rendering does not synchronously update the download
   client.clear();
 });
 
-test.each(["/", "/archive", "/blacklist", "/applications/3"])(
+test.each(["/settings", "/", "/archive", "/blacklist", "/applications/3"])(
   "shows the current %s download timestamp and reacts to refresh",
   async (route) => {
     const client = createClient();
@@ -226,6 +226,18 @@ test("a saved same-owner download authorizes refresh without another checkbox", 
   expect(screen.getByRole("button", { name: "Refresh offline data" })).toBeEnabled();
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Remove offline data" })).toBeEnabled();
+});
+
+test("offline access is expanded and names the disconnected section", async () => {
+  profile.canMutate = false;
+  renderControls();
+  await waitFor(() =>
+    expect(screen.getByRole("heading", { level: 2 })).toHaveAccessibleName(
+      "Offline access on this device — Offline or server unavailable",
+    ),
+  );
+  expect(screen.queryByRole("button", { expanded: false })).toBeNull();
+  expect(screen.getByRole("button", { name: "Remove offline data" })).toBeVisible();
 });
 
 test.each(["offline", "unverified", "development"])("refresh cannot start when %s", async (mode) => {

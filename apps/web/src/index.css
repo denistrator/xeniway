@@ -8,7 +8,7 @@
   --theme-canvas: oklch(96.43% 0.007 88.64);
   --theme-surface: oklch(99.42% 0.0069 88.64);
   --theme-ink: oklch(24.49% 0.0388 264.35);
-  --theme-muted: oklch(52.31% 0.0279 254.08);
+  --theme-muted: oklch(43% 0.02 258.28);
   --theme-line: oklch(87.06% 0.013 86.84);
   --theme-accent: oklch(48.7% 0.0742 187.6);
   --theme-accent-warm: oklch(55.68% 0.1021 46.18);
@@ -78,6 +78,11 @@ html[data-theme="light"] {
   transition-property: color, background-color, border-color, box-shadow, fill, stroke, transform, opacity;
   transition-duration: 180ms;
   transition-timing-function: ease-out;
+}
+
+/* Positioning transforms must settle immediately, not animate from the portal origin. */
+[data-radix-popper-content-wrapper] {
+  transition: none;
 }
 
 :where(a, button):focus-visible {

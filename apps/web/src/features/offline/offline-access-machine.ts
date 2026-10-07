@@ -232,6 +232,7 @@ export function selectAccess(state: AccessState, now: number) {
     state.download.status === "restoring";
   return {
     account,
+    isDisconnected: state.connection.status !== "online",
     readAccountId: canMutate ? verifiedOwner : (account?.userId ?? state.memoryOwner),
     canMutate,
     canReadRemote: canMutate,

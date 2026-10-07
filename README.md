@@ -11,7 +11,7 @@ This repository contains the current candidate-tracking product and its reproduc
 - Create applications in the modal or drawer, then edit company, position, location, salary, job URL, description, applied date, notes, and status directly in each application workspace.
 - Review each application's activity timeline, including automatic history for creation, edits, status changes, archive, and blacklist transitions. Add, edit, and remove dated notes, emails, calls, interviews, offers, rejections, and follow-ups.
 - Expand activity directly from archived and blacklisted cards without restoring the application first.
-- Download a ZIP package containing application/preparation, contact, and follow-up CSV files across all three boards. Activity history and salary are not included; see the [export contract](docs/api.md#data-export).
+- Download a ZIP package from Settings → Export data containing application/preparation, contact, and follow-up CSV files across all three boards. Export requires a verified online session. Activity history and salary are not included; see the [export contract](docs/api.md#data-export).
 - Search applications and filter the board by status.
 - Opt into seven-day, read-only downloads of all three boards and every application workspace on one browser profile, including activity, preparation, contacts, and follow-ups. Explicitly refresh downloads before going offline. See [offline privacy and deployment limits](docs/operations.md#offline-browsing-and-deployment); offline edits and automatic synchronization are not supported.
 - Install the production web app through a supported browser's native installation or Add to Home Screen action. Installation does not prepare private offline downloads. See [PWA installation](docs/operations.md#pwa-installation).
@@ -21,6 +21,7 @@ This repository contains the current candidate-tracking product and its reproduc
 - Register, sign in, restore a session, sign out, and recover a password through a one-time email link.
 - See a localized welcome introduction after the first successful login or registration, with links to the board and About page.
 - Use light, dark, or system theme preferences.
+- Open Settings using the header cog before the theme control. Offline access is an always-expanded section there; the cog and section title show a disconnected icon when the browser is offline or the API is unavailable. Theme and Language sections follow it, with icon-and-text selects. The header shortcuts remain available and share the same preferences.
 - Use the English, Russian, Ukrainian, or Hebrew interface with locale-aware dates.
 - Save language, theme, job-form presentation, and welcome-introduction preferences with your account.
 

@@ -23,14 +23,25 @@ async function login(page: Page) {
   await expect(page.getByRole("heading", { name: "Applications", exact: true })).toBeVisible();
 }
 
+async function openOfflineSettings(page: Page) {
+  await page.getByRole("link", { name: /^Settings(?: —|$)/ }).click();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Offline access on this device", exact: true })).toBeVisible();
+}
+
 async function prepare(page: Page) {
-  await page.getByText("Offline access on this device", { exact: true }).click();
+  await openOfflineSettings(page);
   await page
     .getByRole("checkbox", { name: "I understand and want to store my application data on this device." })
     .check();
   await page.getByRole("button", { name: "Make available offline on this device", exact: true }).click();
   await expect(page.getByText(/Ready offline until/)).toBeVisible({ timeout: 60_000 });
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await page
+    .getByRole("navigation", { name: "Workspace navigation" })
+    .getByRole("link", { name: "Applications", exact: true })
+    .click();
+  await expect(page.getByRole("heading", { name: "Applications", exact: true })).toBeVisible();
 }
 
 test("ordinary startup does not register a worker or load the create host before consent", async ({ page }) => {
@@ -43,7 +54,7 @@ test("ordinary startup does not register a worker or load the create host before
   await login(page);
   expect(await page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length)).toBe(0);
   expect(scripts.some((url) => /job-manager-host/.test(url))).toBe(false);
-  await page.getByText("Offline access on this device", { exact: true }).click();
+  await openOfflineSettings(page);
   await expect(page.getByRole("button", { name: "Make available offline on this device", exact: true })).toBeDisabled();
 });
 
@@ -125,6 +136,9 @@ test("a transient server error without a download stays on the requested board a
     .getByRole("link", { name: "Archive", exact: true })
     .click();
   await expect(page).toHaveURL(/\/archive$/);
+  await expect(page.getByRole("link", { name: "Settings — Offline or server unavailable", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
+  await openOfflineSettings(page);
   await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
   await expect(page.getByText(/cached applications are read-only/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Add job", exact: true })).toBeDisabled();
@@ -139,6 +153,11 @@ test("a transient server error without a download stays on the requested board a
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(page.getByRole("button", { name: "Add job", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Retry", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Settings", exact: true })).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Workspace navigation" })
+    .getByRole("link", { name: "Archive", exact: true })
+    .click();
   await expect(page.getByRole("button", { name: "Restore", exact: true }).first()).toBeVisible();
   expect(checks).toBeGreaterThan(0);
   await expect(page).toHaveURL(/\/archive$/);
@@ -321,7 +340,15 @@ test("offline reload opens never-visited workspaces from every board without wri
       await expect(next).toBeDisabled();
     }
   }
+  await expect(page.getByRole("link", { name: "Settings — Offline or server unavailable", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
+  await openOfflineSettings(page);
+  await expect(
+    page.getByRole("heading", { name: "Offline access on this device — Offline or server unavailable", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/cached applications are read-only/)).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   for (const [route, title] of [
     ["/", "Applications"],
     ["/archive", "Archive"],
@@ -366,6 +393,7 @@ test("refresh replaces complete workspace downloads with visible progress", asyn
     await held;
     await route.fulfill({ response, json: body });
   });
+  await openOfflineSettings(page);
   try {
     const refresh = page.getByRole("button", { name: "Refresh offline data", exact: true });
     await refresh.focus();
@@ -373,13 +401,16 @@ test("refresh replaces complete workspace downloads with visible progress", asyn
     await expect(page.getByText(/Downloaded \d+ of \d+ workspaces…/)).toBeVisible();
     await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
     await expect(refresh).toBeFocused();
-    expect(
-      await page.getByRole("region", { name: "Offline access on this device" }).evaluate((section) => {
-        const bounds = section.getBoundingClientRect();
-        return bounds.left >= 0 && bounds.right <= window.innerWidth && section.scrollWidth <= section.clientWidth;
-      }),
-    ).toBe(true);
     await expect(page.getByRole("button", { name: "Refresh offline data", exact: true })).toBeDisabled();
+    await page
+      .getByRole("navigation", { name: "Workspace navigation" })
+      .getByRole("link", { name: "Applications", exact: true })
+      .click();
+    await expect(page.getByRole("heading", { name: "Applications", exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
+    await openOfflineSettings(page);
+    await expect(page.getByText(/Downloaded \d+ of \d+ workspaces…/)).toBeVisible();
+    await page.getByRole("button", { name: "Refresh offline data", exact: true }).focus();
   } finally {
     release();
   }
@@ -401,7 +432,7 @@ test("a failed workspace download does not leave a partial ready snapshot", asyn
       body: JSON.stringify({ error: { code: "INTERNAL_SERVER_ERROR", message: "Server error" } }),
     }),
   );
-  await page.getByText("Offline access on this device", { exact: true }).click();
+  await openOfflineSettings(page);
   await page
     .getByRole("checkbox", { name: "I understand and want to store my application data on this device." })
     .check();
@@ -475,7 +506,11 @@ test("offline logout clears private device data and explains the remote-session 
   await page.reload();
   await page.getByRole("button", { name: "Logout", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /^Settings/ })).toHaveCount(0);
+  await page.goto("/settings");
   await expect(page.getByText(/Your remote session could not be revoked/)).toBeVisible();
+  await page.goto("/login");
   await page.reload();
   await expect(page).toHaveURL(/\/login$/);
 });
@@ -490,7 +525,7 @@ test("denied device storage does not break online browsing or claim readiness", 
     }),
   );
   await login(page);
-  await page.getByText("Offline access on this device", { exact: true }).click();
+  await openOfflineSettings(page);
   await page
     .getByRole("checkbox", { name: "I understand and want to store my application data on this device." })
     .check();
@@ -536,12 +571,9 @@ test("removing downloads in another tab removes cached-device access", async ({ 
   await prepare(page);
   const second = await context.newPage();
   await second.goto("/");
-  await expect(second.getByText(/Ready offline until/)).toBeVisible();
+  await expect(second.getByRole("heading", { name: "Applications", exact: true })).toBeVisible();
   await context.setOffline(true);
-  const settings = page.locator("details");
-  if ((await settings.getAttribute("open")) === null) {
-    await page.getByText("Offline access on this device", { exact: true }).click();
-  }
+  await openOfflineSettings(page);
   await page.getByRole("button", { name: "Remove offline data", exact: true }).click();
   await expect(second).toHaveURL(/\/login$/);
   await expect(second.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);
