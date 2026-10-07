@@ -229,7 +229,11 @@ test("offline reload opens never-visited workspaces from every board without wri
   const lists = await Promise.all(
     ["/api/applications", "/api/applications/archive", "/api/applications/blacklist"].map(
       async (url) =>
-        (await (await page.request.get(url)).json()).data.applications as Array<{ id: number; company: string }>,
+        (await (await page.request.get(url)).json()).data.applications as Array<{
+          id: number;
+          company: string;
+          status: string;
+        }>,
     ),
   );
   const application = lists[0][0];
@@ -295,6 +299,21 @@ test("offline reload opens never-visited workspaces from every board without wri
     expect(list.length).toBeGreaterThan(0);
     await page.goto(`/applications/${list[0].id}`);
     await expect(page.getByRole("heading", { name: list[0].company, exact: true })).toBeVisible();
+    const ordered = ["saved", "applied", "interview", "offer", "rejected", "withdrawn"].flatMap((status) =>
+      list.filter((item) => item.status === status),
+    );
+    const currentIndex = ordered.findIndex((item) => item.id === list[0].id);
+    const next = page.getByRole("button", { name: "Next application" });
+    if (ordered.length > 1) {
+      await next.click();
+      await expect(
+        page.getByRole("heading", { name: ordered[(currentIndex + 1) % ordered.length].company, exact: true }),
+      ).toBeFocused();
+      await page.getByRole("button", { name: "Previous application" }).click();
+      await expect(page.getByRole("heading", { name: list[0].company, exact: true })).toBeFocused();
+    } else {
+      await expect(next).toBeDisabled();
+    }
   }
   await expect(page.getByText(/cached applications are read-only/)).toBeVisible();
   for (const [route, title] of [

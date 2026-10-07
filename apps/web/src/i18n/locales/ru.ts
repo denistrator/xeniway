@@ -73,6 +73,9 @@ const ru = {
     workspace: {
       open: "Открыть рабочее пространство",
       backTo: "Вернуться: {{board}}",
+      navigationLabel: "Навигация по откликам",
+      previous: "Предыдущий отклик",
+      next: "Следующий отклик",
       actionsLabel: "Действия с откликом",
       archive: "В архив",
       blacklist: "В чёрный список",

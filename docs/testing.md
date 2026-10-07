@@ -84,3 +84,7 @@ Add focused tests when changing a shared schema, API route, repository rule, aut
 The suite has no coverage threshold. Quality is enforced through type safety, focused behavior tests, a real database-backed browser flow, and the complete CI command sequence.
 
 Workspace and activity tests explicitly call `apps/web/src/test/initialize-test-i18n.ts` in their setup to initialize the shared i18n instance and reset its locale to English. Tests may switch locale afterward. This keeps setup consistent without forcing initialization on unrelated tests or hiding it in a render helper.
+
+## Workspace navigation coverage
+
+The neighbor selector tests cover supplied ordering, empty columns, circular next/previous traversal, missing current applications, and single-item collections. The workspace page regression exercises route navigation, heading focus, editor reset, and wrapping back to a cached destination. The browser regression covers keyboard activation, circular navigation, automated accessibility, and narrow Hebrew RTL icon direction. Production offline coverage exercises next/previous navigation within downloaded active, archive, and blacklist collections and disables next for single-item collections.

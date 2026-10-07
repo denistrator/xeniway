@@ -35,5 +35,5 @@ export function ApplicationWorkspacePage() {
       </div>
     );
 
-  return <ApplicationWorkspaceContent data={detail.data} />;
+  return <ApplicationWorkspaceContent key={detail.data.application.id} data={detail.data} />;
 }

@@ -27,6 +27,64 @@ async function setBrowserPreferences(
   await page.reload();
 }
 
+test("browses all workspace applications with keyboard controls and circular column order", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `workspace-navigation-${Date.now()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const ids: number[] = [];
+  for (const [company, status] of [
+    ["First saved", "saved"],
+    ["Second saved", "saved"],
+    ["Only offer", "offer"],
+  ]) {
+    const response = await page.request.post("/api/applications", {
+      headers,
+      data: { company, status, position: "Engineer" },
+    });
+    expect(response.ok()).toBe(true);
+    ids.push(((await response.json()) as ApplicationResponse).data.application.id);
+  }
+  expect(
+    (
+      await page.request.post("/api/applications/reorder", {
+        headers,
+        data: { status: "saved", applicationIds: ids.slice(0, 2) },
+      })
+    ).ok(),
+  ).toBe(true);
+  await page.goto(`/applications/${ids[0]}`);
+  const next = page.getByRole("button", { name: "Next application" });
+  await expect(next).toBeEnabled();
+  await next.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Second saved" })).toBeFocused();
+  await next.click();
+  await expect(page.getByRole("heading", { name: "Only offer" })).toBeFocused();
+  await next.click();
+  await expect(page.getByRole("heading", { name: "First saved" })).toBeFocused();
+  await page.getByRole("button", { name: "Previous application" }).click();
+  await expect(page.getByRole("heading", { name: "Only offer" })).toBeFocused();
+  const accessibility = await new AxeBuilder({ page }).include("main").analyze();
+  expect(accessibility.violations).toEqual([]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Language: English. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Hebrew" }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  const rtlNext = page.getByRole("button", { name: "המועמדות הבאה" });
+  await expect(rtlNext.locator("svg")).toHaveCSS("rotate", "180deg");
+  const bounds = await rtlNext.boundingBox();
+  if (!bounds) throw new Error("The next-application control must be visible");
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+  await rtlNext.click();
+  await expect(page.getByRole("heading", { name: "First saved" })).toBeFocused();
+});
+
 test("provides public password recovery pages", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("link", { name: "Forgot your password?" }).click();

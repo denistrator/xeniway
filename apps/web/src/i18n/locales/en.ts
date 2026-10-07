@@ -69,6 +69,9 @@ export const en = {
     workspace: {
       open: "Open workspace",
       backTo: "Back to {{board}}",
+      navigationLabel: "Application navigation",
+      previous: "Previous application",
+      next: "Next application",
       actionsLabel: "Application actions",
       archive: "Archive application",
       blacklist: "Add to blacklist",

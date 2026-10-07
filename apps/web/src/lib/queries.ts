@@ -404,7 +404,16 @@ export function useUpdateApplicationMutation() {
   });
 }
 
-function useApplicationList(list: ApplicationList, queryFn: () => Promise<ApplicationListResponse>) {
+export function useApplicationCollection(list: ApplicationList, staleTime = 0) {
+  const requests = {
+    active: () => listApplications(),
+    archive: listArchivedApplications,
+    blacklist: listBlacklistedApplications,
+  };
+  return useApplicationList(list, requests[list], staleTime);
+}
+
+function useApplicationList(list: ApplicationList, queryFn: () => Promise<ApplicationListResponse>, staleTime = 0) {
   const access = useOfflineAccess();
   const userId = useReadAccountId();
   return useQuery({
@@ -412,6 +421,7 @@ function useApplicationList(list: ApplicationList, queryFn: () => Promise<Applic
     enabled: userId !== null && access.canReadRemote,
     gcTime: access.account ? OFFLINE_RETENTION_MS : 5 * 60_000,
     queryFn,
+    staleTime,
     retry: false,
     select: (response) => response.data.applications,
   });

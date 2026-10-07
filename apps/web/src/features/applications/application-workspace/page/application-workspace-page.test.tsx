@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { JobApplication } from "@xeniway/shared";
 import { Provider } from "react-redux";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { applicationKeys } from "../../../../lib/api";
 import { authKeys } from "../../../../lib/queries";
-import { store } from "../../../../store";
+import { setAllStatuses, setSearch, store } from "../../../../store";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
 import { ApplicationWorkspacePage } from "./application-workspace-page";
@@ -15,7 +17,11 @@ beforeEach(async () => {
   await initializeTestI18n();
 });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  store.dispatch(setSearch(""));
+  store.dispatch(setAllStatuses(true));
+});
 
 test("invalid IDs render not found without issuing a request", async () => {
   const fetcher = vi.fn();
@@ -83,18 +89,58 @@ test("composes every workspace domain from one application-detail request", asyn
   expect(screen.getByRole("heading", { name: "Follow-ups" })).toBeVisible();
   expect(screen.getByRole("heading", { name: "Activity" })).toBeVisible();
   expect(container.querySelector("main")).toBeNull();
+  expect(screen.getByRole("button", { name: "Previous application" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Next application" })).toBeDisabled();
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
   expect(fetcher).toHaveBeenCalledWith("/api/applications/3", expect.anything());
+});
+
+test("navigates through columns and wraps with fresh editor state and destination heading focus", async () => {
+  store.dispatch(setSearch("Northwind"));
+  store.dispatch(setAllStatuses(false));
+  const user = userEvent.setup();
+  const initial = createApplicationWorkspaceData();
+  const second = createApplicationWorkspaceData({ application: { ...initial.application, id: 4, company: "Contoso" } });
+  const last = createApplicationWorkspaceData({
+    application: { ...initial.application, id: 5, company: "Tailspin", status: "offer" },
+  });
+  const records = [initial, second, last];
+  const fetcher = vi.fn((path: string) => {
+    const record = records.find(({ application }) => path === `/api/applications/${application.id}`);
+    return Promise.resolve(new Response(JSON.stringify({ data: record })));
+  });
+  vi.stubGlobal("fetch", fetcher);
+  renderPage(
+    "/applications/3",
+    records.map(({ application }) => application),
+  );
+
+  expect(await screen.findByRole("heading", { name: "Northwind" })).toHaveFocus();
+  await user.click(screen.getByRole("button", { name: "About, Edit" }));
+  await user.type(screen.getByRole("textbox", { name: "About" }), "First application draft");
+  await user.click(screen.getByRole("button", { name: "Next application" }));
+  expect(await screen.findByRole("heading", { name: "Contoso" })).toHaveFocus();
+  expect(screen.queryByRole("textbox", { name: "About" })).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "Next application" }));
+  expect(await screen.findByRole("heading", { name: "Tailspin" })).toHaveFocus();
+  await user.click(screen.getByRole("button", { name: "Next application" }));
+  expect(await screen.findByRole("heading", { name: "Northwind" })).toHaveFocus();
+  await user.click(screen.getByRole("button", { name: "Previous application" }));
+  expect(await screen.findByRole("heading", { name: "Tailspin" })).toHaveFocus();
 });
 
 function workspaceResponse() {
   return new Response(JSON.stringify({ data: createApplicationWorkspaceData() }), { status: 200 });
 }
 
-function renderPage(path: string) {
+function renderPage(path: string, applications: JobApplication[] = []) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(authKeys.me, { data: { user: { id: 1, email: "test@example.com" } } });
   queryClient.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
+  for (const collection of ["active", "archive", "blacklist"] as const) {
+    queryClient.setQueryData(applicationKeys.list(1, collection), { data: { applications } });
+  }
   return render(
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>

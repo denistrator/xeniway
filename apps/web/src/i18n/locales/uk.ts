@@ -73,6 +73,9 @@ const uk = {
     workspace: {
       open: "Відкрити робочий простір",
       backTo: "Назад: {{board}}",
+      navigationLabel: "Навігація між відгуками",
+      previous: "Попередній відгук",
+      next: "Наступний відгук",
       actionsLabel: "Дії з відгуком",
       archive: "До архіву",
       blacklist: "До чорного списку",

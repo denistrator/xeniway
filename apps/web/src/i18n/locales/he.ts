@@ -54,6 +54,9 @@ const he = {
     workspace: {
       open: "פתיחת סביבת העבודה",
       backTo: "חזרה אל {{board}}",
+      navigationLabel: "ניווט בין מועמדויות",
+      previous: "המועמדות הקודמת",
+      next: "המועמדות הבאה",
       actionsLabel: "פעולות למשרה",
       archive: "העברה לארכיון",
       blacklist: "הוספה לרשימה השחורה",

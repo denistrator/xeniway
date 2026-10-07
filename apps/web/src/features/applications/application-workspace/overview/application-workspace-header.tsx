@@ -8,6 +8,7 @@ import { getApplicationBoard } from "../shared/application-board";
 import { sanitizeExternalUrl } from "../shared/sanitize-external-url";
 import { ApplicationCompactField } from "./application-compact-field";
 import { ApplicationStatusControl } from "./application-status-control";
+import { ApplicationWorkspaceNavigation } from "./application-workspace-navigation";
 import type { ApplicationFieldsController } from "./use-application-fields";
 
 export function ApplicationWorkspaceHeader({
@@ -105,14 +106,17 @@ export function ApplicationWorkspaceHeader({
 
   return (
     <header className="space-y-5">
-      <Link
-        className="inline-flex rounded-lg text-sm font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2"
-        to={board === "active" ? "/" : `/${board}`}
-      >
-        {t("applications.workspace.backTo", {
-          board: board === "active" ? t("navigation.applications") : t(`navigation.${board}`),
-        })}
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          className="inline-flex rounded-lg text-sm font-semibold text-accent underline-offset-4 hover:underline focus-visible:outline-2"
+          to={board === "active" ? "/" : `/${board}`}
+        >
+          {t("applications.workspace.backTo", {
+            board: board === "active" ? t("navigation.applications") : t(`navigation.${board}`),
+          })}
+        </Link>
+        <ApplicationWorkspaceNavigation application={application} />
+      </div>
       <div className="grid items-end gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className={jobStatusStyles({ status: application.status }).workspaceHeading()}>
           {headingFields.map((field) => (

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { compactControlStyles } from "../../components/ui/compact-control-styles";
 import { changeLocale, type SupportedLocale, supportedLocales } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { useCanMutate } from "../offline/offline-access";
@@ -46,7 +47,7 @@ export function LanguageSelector() {
         aria-label={`Language: ${t(`common.language.${currentOption.value}`)}. Change language`}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-line bg-surface px-2.5 text-xs font-semibold text-ink transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className={compactControlStyles()}
         onClick={() => setOpen((value) => !value)}
         type="button"
       >

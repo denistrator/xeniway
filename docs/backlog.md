@@ -41,6 +41,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open refactoring tasks
 
+### Investigate order-dependent password-recovery browser failure
+
+- **Area:** Public password-recovery form and browser test initialization.
+- **Why:** During workspace-navigation verification, the recovery workflow passed in isolation but failed twice immediately after the new navigation/registration workflow. The captured form had an empty email field and no success status despite the test filling and submitting it. The cause is not established.
+- **Possible direction:** Trace form initialization and submission timing across sequential browser contexts; check whether late initialization resets user input. Reproduce before changing implementation or test waits.
+- **Guardrails:** Preserve generic unknown-account responses, CSRF, rate limiting, and normal user input. Do not mask the issue with arbitrary delays or weaker assertions.
+
 ### Finish the immutable offline/PWA security report
 
 - **Area:** Security-review tooling for the `d487081..3fbb00a` offline/PWA change.
