@@ -27,7 +27,7 @@ export function ApplicationDetailsSection({ fields }: { fields: ApplicationField
         label={label}
         headingLevel={2}
         className="rounded-2xl border border-line bg-surface p-5"
-        headingClassName="font-display text-lg font-semibold text-ink"
+        headingClassName="workspace-section-title font-display text-lg font-semibold text-ink"
         controller={controller}
         feedback={getApplicationFieldFeedback(controller, label, t)}
       />

@@ -21,7 +21,7 @@ export function WorkspaceSectionHeader({
 }) {
   return (
     <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
-      <CardTitle id={headingId} className="font-display text-xl">
+      <CardTitle id={headingId} className="workspace-section-title font-display text-xl">
         {title}
       </CardTitle>
       <Button

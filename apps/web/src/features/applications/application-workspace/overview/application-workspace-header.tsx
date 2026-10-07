@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../../i18n/format";
+import { jobStatusStyles } from "../../board/job-status-styles";
 import { getApplicationBoard } from "../shared/application-board";
 import { sanitizeExternalUrl } from "../shared/sanitize-external-url";
 import { ApplicationCompactField } from "./application-compact-field";
@@ -113,7 +114,7 @@ export function ApplicationWorkspaceHeader({
         })}
       </Link>
       <div className="grid items-end gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="grid gap-2">
+        <div className={jobStatusStyles({ status: application.status }).workspaceHeading()}>
           {headingFields.map((field) => (
             <ApplicationCompactField key={field.field} fields={fields} {...field} />
           ))}
@@ -121,7 +122,7 @@ export function ApplicationWorkspaceHeader({
         </div>
         <div className="grid gap-2 lg:justify-items-end lg:self-center">{actions}</div>
       </div>
-      <div className="grid gap-4 rounded-2xl border border-line bg-surface p-5 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <div className="workspace-metadata grid gap-4 rounded-2xl border border-line bg-surface p-5 text-sm sm:grid-cols-2 lg:grid-cols-4">
         {metadataFields.map((field) => (
           <ApplicationCompactField key={field.field} fields={fields} {...field} />
         ))}

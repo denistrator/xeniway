@@ -59,6 +59,7 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 - **Where:** `apps/web/src/components/site-header.tsx`, the authenticated action/language-control groups.
 - **Why:** A production-preview check at 390×844 measured a 411 px document width, with the trailing language control beyond the viewport. The overflow existed before opening the create dialog and remained identical afterward; the dialog itself stayed within the viewport.
+- **Additional evidence:** The workspace status-decoration browser check at 390×844 in Hebrew measured a 399 px document width with both the original heading classes and the decorated heading. The RTL overflow therefore also needs coverage independently of the workspace decoration.
 - **Possible direction:** Let action groups wrap or adapt their layout at narrow widths while keeping account, Add job, export, theme, and language controls discoverable. Do not conceal the issue with document-wide overflow clipping.
 - **Guardrails:** Preserve action order, accessible labels, keyboard focus, touch targets, theme/language behavior, and all four locales including Hebrew RTL. Add narrow-viewport browser assertions.
 

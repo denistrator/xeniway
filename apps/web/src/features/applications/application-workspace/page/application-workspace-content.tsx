@@ -1,5 +1,6 @@
 import type { ApplicationDetailResponse } from "@xeniway/shared";
 import { ApplicationActivitySection } from "../../activity/application-activity-section";
+import { jobStatusStyles } from "../../board/job-status-styles";
 import { ContactsSection } from "../contacts/contacts-section";
 import { FollowUpsSection } from "../follow-ups/follow-ups-section";
 import { ApplicationLifecycleActions } from "../lifecycle/application-lifecycle-actions";
@@ -14,7 +15,11 @@ export function ApplicationWorkspaceContent({ data }: { data: ApplicationDetailR
   const applicationFields = useApplicationFields(application);
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-5 px-4 pb-12 sm:px-6">
+    <div
+      className={jobStatusStyles({ status: application.status }).workspace({
+        className: "mx-auto w-full min-w-0 max-w-7xl space-y-5 px-4 pb-12 sm:px-6",
+      })}
+    >
       <ApplicationWorkspaceHeader
         application={application}
         fields={applicationFields}
@@ -28,7 +33,11 @@ export function ApplicationWorkspaceContent({ data }: { data: ApplicationDetailR
           <ContactsSection applicationId={application.id} contacts={contacts} />
           <FollowUpsSection applicationId={application.id} tasks={followUpTasks} />
         </div>
-        <ApplicationActivitySection applicationId={application.id} events={events} />
+        <ApplicationActivitySection
+          applicationId={application.id}
+          events={events}
+          className="workspace-activity mt-0 self-start rounded-2xl border bg-surface p-5"
+        />
       </div>
     </div>
   );

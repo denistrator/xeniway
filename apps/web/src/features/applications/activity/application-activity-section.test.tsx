@@ -35,6 +35,8 @@ test("uses supplied events without fetching application details", () => {
   expect(screen.getByRole("button", { name: "Edit Recruiter context" })).toBeVisible();
   expect(screen.getAllByRole("button", { name: /Edit/ })).toHaveLength(1);
   expect(fetcher).not.toHaveBeenCalled();
+  expect(screen.getByRole("region", { name: "Activity" })).toHaveClass("mt-6", "border-t");
+  expect(screen.getByRole("region", { name: "Activity" })).not.toHaveClass("workspace-activity", "rounded-2xl");
 });
 
 test("creates activity and restores focus to the add action", async () => {

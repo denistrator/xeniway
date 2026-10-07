@@ -1,0 +1,18 @@
+:root {
+    --workspace-status-color: var(--color-slate-500);
+}
+
+.workspace-status-decor .workspace-metadata {
+    border-block-start: 2px solid var(--workspace-status-color);
+}
+
+.workspace-status-decor .workspace-section-title::before {
+    content: "";
+    display: inline-block;
+    inline-size: 1rem;
+    block-size: 2px;
+    margin-inline-end: 0.5rem;
+    border-radius: 9999px;
+    vertical-align: middle;
+    background-color: var(--workspace-status-color);
+}

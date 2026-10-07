@@ -3,6 +3,7 @@ import { memo, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
 import { collectionActionStyles } from "../../../components/ui/surface-styles";
+import { cn } from "../../../lib/utils";
 import { useCanMutate } from "../../offline/offline-access";
 import { ApplicationActivityForm } from "./application-activity-form";
 import { ApplicationActivityTimeline } from "./application-activity-timeline";
@@ -11,9 +12,11 @@ import { useApplicationActivityController } from "./use-application-activity-con
 export const ApplicationActivitySection = memo(function ApplicationActivitySection({
   applicationId,
   events,
+  className,
 }: {
   applicationId: number;
   events: ApplicationEvent[];
+  className?: string;
 }) {
   const { t } = useTranslation();
   const canMutate = useCanMutate();
@@ -24,10 +27,10 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
     <section
       tabIndex={-1}
       aria-labelledby={headingId}
-      className="mt-6 border-t border-line pt-5 focus-visible:outline-2"
+      className={cn("mt-6 border-t border-line pt-5 focus-visible:outline-2", className)}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 id={headingId} className="font-display text-lg font-semibold text-ink">
+        <h3 id={headingId} className="workspace-section-title font-display text-lg font-semibold text-ink">
           {t("applications.activity.heading")}
         </h3>
         <button

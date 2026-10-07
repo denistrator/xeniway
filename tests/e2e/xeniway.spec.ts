@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
+import type { ApplicationResponse, AuthResponse, CsrfResponse } from "@xeniway/shared";
 import { createRedisClient } from "../../apps/api/src/redis/client";
 
 test.describe.configure({ mode: "serial" });
@@ -134,6 +135,147 @@ test("uses floating labels for authentication fields", async ({ page }) => {
     await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("placeholder", " ");
   }
 });
+
+test("decorates workspace headings by status in light, dark, and narrow Hebrew layouts", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const bootstrapToken = ((await bootstrap.json()) as CsrfResponse).data.csrfToken;
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": bootstrapToken },
+    data: { email: `status-decor-${Date.now()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect(
+    (
+      await page.request.patch("/api/user/preferences", {
+        headers,
+        data: { selectedLanguage: "en", selectedTheme: "light" },
+      })
+    ).ok(),
+  ).toBe(true);
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const company = `Status decor ${Date.now()}`;
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company, position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+  const detailUrl = `/api/applications/${((await created.json()) as ApplicationResponse).data.application.id}`;
+  const workspaceUrl = detailUrl.replace("/api", "");
+  const headingBlock = page.locator('[data-compact-edit-field="status"]').locator("..");
+  const marker = page.locator('[data-compact-edit-field="status"] > button > span');
+
+  for (const status of ["saved", "applied", "interview", "offer", "rejected", "withdrawn"]) {
+    expect((await page.request.put(detailUrl, { headers, data: { status } })).ok()).toBe(true);
+    await page.goto(workspaceUrl);
+    await expect(page.getByRole("heading", { name: company })).toBeFocused();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    const lightMarker = await marker.evaluate((element) => getComputedStyle(element).backgroundColor);
+    await expect(headingBlock).toHaveCSS("border-left-width", "4px");
+    await expect(headingBlock).toHaveCSS("border-left-color", lightMarker);
+    await expect(headingBlock).toHaveCSS("background-image", /linear-gradient\(to right/);
+    await expectWorkspaceAccents(page);
+    await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
+    await expect
+      .poll(() =>
+        headingBlock.evaluate((element) => {
+          const statusMarker = element.querySelector('[data-compact-edit-field="status"] > button > span');
+          return (
+            statusMarker !== null &&
+            getComputedStyle(element).borderLeftColor === getComputedStyle(statusMarker).backgroundColor
+          );
+        }),
+      )
+      .toBe(true);
+    await expectWorkspaceAccents(page);
+  }
+
+  // Return to the persisted theme before exercising the real status control.
+  await page.reload();
+  const statusTrigger = page.getByRole("button", { name: "Status, Change status" });
+  await statusTrigger.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("radio", { name: "Withdrawn" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(statusTrigger).toBeFocused();
+  await page.keyboard.press("Enter");
+  await page.getByRole("radio", { name: "Offer", exact: true }).click();
+  await expect(statusTrigger).toBeFocused();
+  await expect(statusTrigger).toHaveText("Offer");
+  await expect(headingBlock).toHaveClass(/border-s-emerald-600/);
+  await expectWorkspaceAccents(page);
+  await page.reload();
+  await expect(statusTrigger).toHaveText("Offer");
+  await page.screenshot({ path: test.info().outputPath("workspace-status-light.png"), fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Language: English. Change language" }).click();
+  await page.getByRole("menuitem", { name: "Hebrew" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "he");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(headingBlock).toHaveCSS("border-right-width", "4px");
+  await expect(headingBlock).toHaveCSS("border-left-width", "0px");
+  await expect(headingBlock).toHaveCSS("background-image", /linear-gradient\(to left/);
+  await expect(headingBlock).toHaveCSS("overflow", "visible");
+  await expectWorkspaceAccents(page);
+  const sectionTitle = page.locator(".workspace-section-title").first();
+  expect(await sectionTitle.evaluate((element) => getComputedStyle(element, "::before").marginLeft)).toBe("8px");
+  const overflow = await headingBlock.evaluate((element) => {
+    const decoratedWidth = document.documentElement.scrollWidth;
+    const originalClass = element.className;
+    element.className = "grid gap-2";
+    const undecoratedWidth = document.documentElement.scrollWidth;
+    element.className = originalClass;
+    return {
+      decoratedWidth,
+      undecoratedWidth,
+    };
+  });
+  // The existing site-header RTL overflow must not grow with workspace decoration.
+  expect(overflow.decoratedWidth).toBeLessThanOrEqual(overflow.undecoratedWidth);
+  const headingBounds = await headingBlock.boundingBox();
+  expect(headingBounds).not.toBeNull();
+  expect(headingBounds?.x).toBeGreaterThanOrEqual(0);
+  expect((headingBounds?.x ?? 0) + (headingBounds?.width ?? 0)).toBeLessThanOrEqual(390);
+  await headingBlock.getByRole("button").last().click();
+  const menu = page.locator("#application-status-options");
+  await expect(menu).toBeVisible();
+  const bounds = await menu.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds?.x).toBeGreaterThanOrEqual(0);
+  expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(390);
+  await page.keyboard.press("Escape");
+  await page.screenshot({ path: test.info().outputPath("workspace-status-rtl.png"), fullPage: true });
+  const accessibility = await new AxeBuilder({ page }).include("main").analyze();
+  expect(accessibility.violations).toEqual([]);
+  expect((await page.request.delete(detailUrl, { headers })).ok()).toBe(true);
+});
+
+async function expectWorkspaceAccents(page: Page) {
+  await expect(page.locator(".workspace-metadata")).toHaveCSS("border-top-width", "2px");
+  await expect(page.locator(".workspace-activity")).toHaveCSS("border-left-width", "1px");
+  await expect
+    .poll(() =>
+      page.locator(".workspace-status-decor").evaluate((workspace) => {
+        const marker = workspace.querySelector('[data-compact-edit-field="status"] > button > span');
+        const metadata = workspace.querySelector(".workspace-metadata");
+        if (!marker || !metadata) return false;
+        const color = getComputedStyle(marker).backgroundColor;
+        const titles = Array.from(workspace.querySelectorAll(".workspace-section-title"));
+        return (
+          getComputedStyle(metadata).borderTopColor === color &&
+          titles.length === 6 &&
+          titles.every((title) => {
+            const decoration = getComputedStyle(title, "::before");
+            return decoration.backgroundColor === color && decoration.width === "16px" && decoration.height === "2px";
+          })
+        );
+      }),
+    )
+    .toBe(true);
+}
 
 test("shows the welcome popup after login and registration", async ({ page }) => {
   await page.addInitScript(() => {

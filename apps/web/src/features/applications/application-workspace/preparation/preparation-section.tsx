@@ -43,7 +43,7 @@ export const PreparationSection = memo(function PreparationSection({
     <section aria-labelledby={headingId}>
       <Card>
         <CardHeader>
-          <CardTitle id={headingId} className="font-display text-xl">
+          <CardTitle id={headingId} className="workspace-section-title font-display text-xl">
             {t("applications.workspace.preparation.heading")}
           </CardTitle>
           <p className="text-sm text-muted">{t("applications.workspace.preparation.help")}</p>
