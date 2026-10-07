@@ -77,13 +77,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Possible direction:** Let action groups wrap or adapt their layout at narrow widths while keeping account, Add job, export, theme, and language controls discoverable. Do not conceal the issue with document-wide overflow clipping.
 - **Guardrails:** Preserve action order, accessible labels, keyboard focus, touch targets, theme/language behavior, and all four locales including Hebrew RTL. Add narrow-viewport browser assertions.
 
-### Rewrite export tests from scratch
-
-- **Where:** API CSV/ZIP serializers and endpoints, browser API download helper, export button, and complete browser download workflow.
-- **Why:** All dedicated export tests were removed at the maintainer's request so coverage can be designed from scratch against the current documented contracts. Export implementation remains unchanged; this is an explicit coverage gap.
-- **Possible direction:** Rebuild serializer, API, client, component, and browser tests using the current API reference. Decode ZIP downloads as ZIP files and check each CSV independently rather than reading the archive as text.
-- **Guardrails:** Cover authentication and owner isolation, all three boards, explicit field allowlists and exclusions, CSV quoting/formula-injection protection, empty data, filenames and response headers, related records, and accessible pending/error/download behavior. No style assertions. This entry records pending work, not authorization to implement it now.
-
 ### Investigate measured frontend bundle costs
 
 - **Where:** The shared web entry chunk and `apps/web/src/features/applications/application-workspace` workspace chunk.

@@ -47,10 +47,22 @@ CI pins Bun 1.4.0 and matches Compose's PostgreSQL 16.15 and Redis 7.4.9. Servic
 | Shared contracts | `packages/shared/src/index.test.ts` | Input schemas and public response assumptions |
 | API | `apps/api/src/**/*.test.ts` | Authentication/CSRF, rate limiting, reset tokens and mail delivery, owner isolation, validation, lifecycle history, repository mapping, seed invariants |
 | Web | `apps/web/src/**/*.test.ts(x)` | API error handling, queries, UI behavior, preferences/locales, workspace editing, dialogs, offline lifecycle/storage |
-| Browser | `tests/e2e/xeniway.spec.ts` | Real server/database workflows, locale/RTL persistence, welcome/preferences, application lifecycle, activity, keyboard/drag ordering, accessibility |
+| Browser | `tests/e2e/xeniway.spec.ts`, `tests/e2e/export.spec.ts` | Real server/database workflows, locale/RTL persistence, welcome/preferences, application lifecycle, activity, keyboard/drag ordering, accessibility, decoded export downloads and retry |
 | Production offline | `tests/e2e/offline.spec.ts` | Built assets/worker, explicit consent, complete downloads, offline reload/navigation, lazy locales, reconnect, logout/account cleanup, storage failure/expiry |
 
-The ordinary config excludes `offline.spec.ts`. The offline config uses fresh Chromium contexts and real seeded services rather than Vite development assets. Coverage describes checked-in assertions, not a guarantee that every current workflow passes. Export-specific tests were intentionally removed pending a [from-scratch rewrite](backlog.md#rewrite-export-tests-from-scratch); CSV/ZIP serialization, export endpoint security, client download handling, loading, and error behavior currently have no dedicated automated coverage. Settings/header regressions cover the action's new location, signed-out absence, online availability, offline disabling, and translated section semantics; they do not replace the pending export rewrite.
+The ordinary config excludes `offline.spec.ts`. The offline config uses fresh Chromium contexts and real seeded services rather than Vite development assets. Coverage describes checked-in assertions, not a guarantee that every current workflow passes.
+
+### Export regression coverage
+
+The export tests were rewritten against the current [CSV/ZIP contract](api.md#data-export). Test-only `csv-parse` and `fflate` dependencies parse CSV records and unzip downloads; `tests/support/export.ts` contains expected headers independently of the production field definitions and preserves the UTF-8 BOM while decoding ZIP entries. No visual or style assertions are used.
+
+- `apps/api/src/routes/applications/export-csv.test.ts`: ordered application/contact/follow-up allowlists, field mapping and exclusions, all board labels, formula-like prefixes including whitespace/BOM, quoting/newlines/Unicode, nullable fields, BOM and CRLF, and header-only exports.
+- `apps/api/src/export.test.ts`: anonymous/invalid-session rejection before repository reads, owner isolation across every file and board, ignored caller-supplied owner IDs, response headers and filenames, CSV/ZIP agreement, missing preparation defaults, empty packages, and generic repository-failure responses.
+- `apps/web/src/lib/api-export.test.ts`: session credentials, binary payload and filenames, safe filename fallback, expired-session notification, structured/non-JSON/network failures, and offline/unverified request blocking.
+- `apps/web/src/features/data-export/csv-export-button.test.tsx`: real query/mutation flow, pending duplicate-click prevention, named download/temporary URL cleanup, accessible errors and retry, offline disabling, and suppression of a prior owner's pending download after logout or account switching. Only the network and browser download APIs unavailable in jsdom are substituted.
+- `tests/e2e/export.spec.ts`: keyboard download from Settings against real PostgreSQL-backed endpoints; ZIP entry names, decoded records from active/archive/blacklist boards, related parent IDs, exclusion of a second account's records, private-field omissions, formula protection, and failure/pending/retry behavior. Download paths are Playwright-managed artifacts. Fresh accounts isolate fixtures from development seed users.
+
+Settings/header regressions additionally cover the action's location, signed-out absence, online availability, offline disabling, and translated section semantics. The known inability to join related rows to application rows using the ZIP alone remains a [separate backlog item](backlog.md#make-exported-related-records-joinable); tests preserve the current contract rather than adding identifiers.
 
 ### Focused frontend regressions
 
