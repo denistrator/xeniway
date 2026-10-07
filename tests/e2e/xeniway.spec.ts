@@ -224,10 +224,14 @@ test("decorates workspace headings by status in light, dark, and narrow Hebrew l
   expect(await sectionTitle.evaluate((element) => getComputedStyle(element, "::before").marginLeft)).toBe("8px");
   const overflow = await headingBlock.evaluate((element) => {
     const decoratedWidth = document.documentElement.scrollWidth;
-    const originalClass = element.className;
-    element.className = "grid gap-2";
+    const originalClass = element.getAttribute("class");
+    element.setAttribute("class", "grid gap-2");
     const undecoratedWidth = document.documentElement.scrollWidth;
-    element.className = originalClass;
+    if (originalClass === null) {
+      element.removeAttribute("class");
+    } else {
+      element.setAttribute("class", originalClass);
+    }
     return {
       decoratedWidth,
       undecoratedWidth,

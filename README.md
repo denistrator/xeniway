@@ -115,7 +115,7 @@ Run commands from the repository root.
 | `bun run db:migrate` | Apply checked-in SQL migrations |
 | `bun run db:seed` | Recreate development accounts and deterministic fixtures |
 | `bun run check:public` | Check staged Git content for forbidden paths and likely secrets |
-| `bun run typecheck` | Typecheck shared, API, and web packages |
+| `bun run typecheck` | Typecheck shared, API, web, and Playwright E2E TypeScript projects |
 | `bun run test` | Run all Bun and Vitest unit suites |
 | `bun run build` | Build the web bundle and typecheck the API |
 | `bun run test:e2e` | Run the Playwright browser workflow |
