@@ -85,6 +85,8 @@ The checked-in `.github/workflows/ci.yml` workflow uses PostgreSQL and Redis ser
 
 ## Test design rules
 
+Web typechecking uses non-composite `tsc -p` checks for the browser app, Vite configuration, and service worker. Browser and Node checks retain incremental caches. Explicit `.tsx` imports ensure rendering files with matching `.ts` logic siblings are checked without a manual file list. `bun run build` runs the web typecheck command before Vite; the root typecheck command also checks shared contracts, API, and E2E separately. Project-reference/build-mode orchestration is not the verification entry point.
+
 CI runs the production offline suite before the ordinary development-server suite, sequentially against shared disposable fixtures. Browser cross-tab tests use origin-scoped native BroadcastChannel. Provider unit tests disable Node's process-wide channel, which lacks browser origin isolation and would incorrectly deliver messages across independent parallel test environments.
 
 Do not add automated style tests or assertions for class names, recipes, slot overrides, CSS properties, decorative layout, or visual snapshots. Keep coverage focused on behavior, semantics, accessibility, persistence, and security. Button tests retain native disabled state, forwarded refs, and asChild link semantics.

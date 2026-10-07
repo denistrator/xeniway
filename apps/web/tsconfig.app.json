@@ -2,20 +2,13 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "composite": true,
+    "incremental": true,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "types": [
       "vite/client"
     ]
   },
-  "files": [
-    "src/features/applications/activity/application-activity.tsx",
-    "src/features/applications/activity/application-activity-event.tsx",
-    "src/features/applications/activity/application-activity-form.tsx",
-    "src/features/applications/activity/application-activity-section.tsx",
-    "src/features/applications/activity/application-activity-timeline.tsx"
-  ],
   "include": [
     "src"
   ]

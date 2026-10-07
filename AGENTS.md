@@ -61,7 +61,7 @@ Use the same basename for colocated component files: `foo.ts` for logic, `foo.ts
 
 In `apps/web/src/features/applications/activity`, keep all production component behavior in its matching `foo.ts` file and all Tailwind classes in `foo.styles.ts` slot recipes. Give every native HTML element its own semantic slot, including unstyled elements; TSX should contain only component wiring, render conditions, list mapping, and bindings, with no inline event handlers or class literals.
 
-The web app enables TypeScript-extension imports. Add same-basename paired `.tsx` rendering files to the explicit `files` list in `apps/web/tsconfig.app.json`; TypeScript glob discovery otherwise prefers their `.ts` siblings.
+The web app enables TypeScript-extension imports and uses non-composite typechecking with incremental caches. Keep `include: ["src"]` and explicit `.ts`/`.tsx` imports; imported same-basename rendering files are checked automatically without a manual `files` list. TypeScript glob discovery alone prefers `.ts` siblings, so keep rendering files reachable through component or behavioral-test imports. The web typecheck command separately checks browser, Vite configuration, and service-worker environments; build runs those checks before Vite.
 
 Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for JavaScript and TypeScript source, tests, scripts, and root configuration files. Generated `dist` output and dependencies are excluded. `style/noNestedTernary`, `style/noUselessElse`, and `style/useBlockStatements` enforce the control-flow conventions.
 

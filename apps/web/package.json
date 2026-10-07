@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "vite",
     "preview": "vite preview --host 127.0.0.1 --port 4174 --strictPort",
-    "build": "tsc -b && tsc -p tsconfig.offline-worker.json && vite build",
-    "typecheck": "tsc -b --pretty false && tsc -p tsconfig.offline-worker.json --pretty false",
+    "build": "bun run typecheck && vite build",
+    "typecheck": "tsc -p tsconfig.app.json --pretty false && tsc -p tsconfig.node.json --pretty false && tsc -p tsconfig.offline-worker.json --pretty false",
     "test": "vitest run"
   },
   "dependencies": {
