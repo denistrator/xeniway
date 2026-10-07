@@ -1,48 +1,35 @@
-import { useId } from "react";
-import { useTranslation } from "react-i18next";
-import { collectionActionStyles } from "../../../components/ui/surface-styles";
-import { useApplicationDetail } from "../../../lib/queries";
-import { useOfflineAccess } from "../../offline/offline-access";
-import { ApplicationActivitySection } from "./application-activity-section";
+import { useApplicationActivity } from "./application-activity.ts";
+import type { ApplicationActivityProps } from "./application-activity.types";
+import { ApplicationActivitySection } from "./application-activity-section.tsx";
 
-export function ApplicationActivity({ applicationId }: { applicationId: number }) {
-  const { t } = useTranslation();
-  const detail = useApplicationDetail(applicationId);
-  const headingId = useId();
-  const access = useOfflineAccess();
+export function ApplicationActivity({ applicationId }: ApplicationActivityProps) {
+  const activity = useApplicationActivity(applicationId);
+  const styles = activity.styles;
 
-  if (detail.data) {
-    return <ApplicationActivitySection applicationId={applicationId} events={detail.data.events} />;
-  }
-
-  let feedback = null;
-  if (!access.canReadRemote) {
-    feedback = <p className="text-sm text-muted">{t("offline.notDownloaded")}</p>;
-  } else if (detail.isPending) {
-    feedback = <p className="text-sm text-muted">{t("common.loading")}</p>;
-  } else if (detail.isError) {
-    feedback = (
-      <p role="alert" className="text-sm text-rose-600">
-        {t("applications.activity.loadFailed")}{" "}
-        <button type="button" onClick={() => detail.refetch()}>
-          {t("common.actions.retry")}
-        </button>
-      </p>
-    );
+  if (activity.detail) {
+    return <ApplicationActivitySection applicationId={applicationId} events={activity.detail.events} />;
   }
 
   return (
-    <section aria-labelledby={headingId} className="mt-6 border-t border-line pt-5">
-      <div className="flex items-center justify-between gap-3">
-        <h3 id={headingId} className="font-display text-lg font-semibold text-ink">
-          {t("applications.activity.heading")}
+    <section aria-labelledby={activity.headingId} className={styles.root()}>
+      <div className={styles.header()}>
+        <h3 id={activity.headingId} className={styles.heading()}>
+          {activity.heading}
         </h3>
-        <button type="button" aria-disabled="true" className={collectionActionStyles()}>
-          {t("applications.activity.add")}
+        <button type="button" aria-disabled="true" className={styles.addButton()}>
+          {activity.addLabel}
         </button>
       </div>
-      <div className="mt-4" aria-live="polite">
-        {feedback}
+      <div className={styles.feedback()} aria-live="polite">
+        {activity.message && <p className={styles.message()}>{activity.message}</p>}
+        {activity.showError && (
+          <p role="alert" className={styles.error()}>
+            {activity.errorLabel}{" "}
+            <button type="button" onClick={activity.retry} className={styles.retryButton()}>
+              {activity.retryLabel}
+            </button>
+          </p>
+        )}
       </div>
     </section>
   );

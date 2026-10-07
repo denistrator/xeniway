@@ -1,8 +1,16 @@
 import type { ApplicationEvent, ApplicationEventInput } from "@xeniway/shared";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useApplicationEventMutations } from "../../../lib/queries";
+import { useCanMutate } from "../../offline/offline-access";
+import { applicationActivitySectionStyles } from "./application-activity-section.styles";
 
-export function useApplicationActivityController(applicationId: number) {
+const styles = applicationActivitySectionStyles();
+
+export function useApplicationActivitySection(applicationId: number, className?: string) {
+  const { t } = useTranslation();
+  const canMutate = useCanMutate();
+  const headingId = useId();
   const mutations = useApplicationEventMutations(applicationId);
   const [editing, setEditing] = useState<ApplicationEvent | "new" | null>(null);
   const [deleting, setDeleting] = useState<ApplicationEvent | null>(null);
@@ -62,7 +70,28 @@ export function useApplicationActivityController(applicationId: number) {
     }
   }
 
+  function confirmDelete() {
+    if (canMutate) {
+      void remove();
+    }
+  }
+
   return {
+    styles,
+    rootClassName: styles.root({ className }),
+    headingId,
+    actionsDisabled: !canMutate,
+    deleteDisabled: !canMutate || mutations.remove.isPending,
+    formKey: editing === "new" ? "new" : editing?.id,
+    editedEvent: editing === "new" ? undefined : (editing ?? undefined),
+    heading: t("applications.activity.heading"),
+    addLabel: t("applications.activity.add"),
+    deleteErrorLabel: t("applications.activity.deleteFailed"),
+    confirmationTitle: t("applications.confirmation.title"),
+    confirmationText: t("applications.activity.deleteConfirmation"),
+    yesLabel: t("common.actions.yes"),
+    noLabel: t("common.actions.no"),
+    confirmDelete,
     mutations,
     editing,
     deleting,

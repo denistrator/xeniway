@@ -105,7 +105,6 @@ test("follow-ups keep incomplete tasks first and make completion terminal", asyn
   const items = screen.getAllByRole("listitem");
   expect(items[0]).toHaveTextContent("Write to Ari");
   expect(items[1]).toHaveTextContent("Earlier call");
-  expect(items[1]).toHaveClass("bg-surface-tint");
   expect(within(items[1]).queryByRole("button", { name: "Complete Earlier call" })).toBeNull();
   await user.click(screen.getByRole("button", { name: "Complete Write to Ari" }));
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));

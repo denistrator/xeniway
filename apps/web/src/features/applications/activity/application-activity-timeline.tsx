@@ -1,41 +1,25 @@
-import type { ApplicationEvent } from "@xeniway/shared";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { ApplicationActivityEvent } from "./application-activity-event";
+import type { ApplicationActivityTimelineProps } from "./application-activity.types";
+import { ApplicationActivityEvent } from "./application-activity-event.tsx";
+import { useApplicationActivityTimeline } from "./application-activity-timeline.ts";
 
-export function ApplicationActivityTimeline({
-  events,
-  onEdit,
-  onDelete,
-}: {
-  events: ApplicationEvent[];
-  onEdit: (event: ApplicationEvent) => void;
-  onDelete: (event: ApplicationEvent) => void;
-}) {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? "en";
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
-    [locale],
-  );
-  if (events.length === 0) {
-    return <p className="text-sm text-muted">{t("applications.activity.empty")}</p>;
+export function ApplicationActivityTimeline({ events, onEdit, onDelete }: ApplicationActivityTimelineProps) {
+  const timeline = useApplicationActivityTimeline(events);
+  const styles = timeline.styles;
+  if (timeline.isEmpty) {
+    return <p className={styles.empty()}>{timeline.emptyLabel}</p>;
   }
-
   return (
-    <ol aria-label={t("applications.activity.timeline")} className="space-y-3 max-h-screen overflow-y-auto">
-      {[...events]
-        .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id - left.id)
-        .map((event) => (
-          <li key={event.id}>
-            <ApplicationActivityEvent
-              event={event}
-              formattedOccurredAt={dateFormatter.format(new Date(event.occurredAt))}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          </li>
-        ))}
+    <ol aria-label={timeline.timelineLabel} className={styles.list()}>
+      {timeline.items.map((item) => (
+        <li key={item.event.id} className={styles.item()}>
+          <ApplicationActivityEvent
+            event={item.event}
+            formattedOccurredAt={item.formattedOccurredAt}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </li>
+      ))}
     </ol>
   );
 }

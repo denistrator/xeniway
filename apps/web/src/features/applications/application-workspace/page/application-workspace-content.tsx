@@ -1,5 +1,5 @@
 import type { ApplicationDetailResponse } from "@xeniway/shared";
-import { ApplicationActivitySection } from "../../activity/application-activity-section";
+import { ApplicationActivitySection } from "../../activity/application-activity-section.tsx";
 import { jobStatusStyles } from "../../board/job-status-styles";
 import { ContactsSection } from "../contacts/contacts-section";
 import { FollowUpsSection } from "../follow-ups/follow-ups-section";

@@ -2,9 +2,14 @@ import {
   type ApplicationEvent,
   type ApplicationEventInput,
   applicationEventInputSchema,
-  type manualApplicationEventTypeSchema,
+  manualApplicationEventTypeSchema,
 } from "@xeniway/shared";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useCanMutate } from "../../offline/offline-access";
+import { applicationActivityFormStyles } from "./application-activity-form.styles";
+
+const styles = applicationActivityFormStyles();
 
 function toLocalDateTime(value: string) {
   const date = new Date(value);
@@ -17,6 +22,8 @@ export function useApplicationActivityForm(
   onSubmit: (input: ApplicationEventInput) => Promise<void>,
   editorKey: string | null = "mounted",
 ) {
+  const { t } = useTranslation();
+  const canMutate = useCanMutate();
   const initialFocus = useRef<HTMLSelectElement>(null);
   const [type, setType] = useState<(typeof manualApplicationEventTypeSchema.options)[number]>(
     event?.isSystem ? "note" : ((event?.type as (typeof manualApplicationEventTypeSchema.options)[number]) ?? "note"),
@@ -41,6 +48,9 @@ export function useApplicationActivityForm(
 
   const submit = async (formEvent: FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
+    if (!canMutate) {
+      return;
+    }
     const parsed = applicationEventInputSchema.safeParse({
       type,
       title,
@@ -62,7 +72,41 @@ export function useApplicationActivityForm(
     }
   };
 
+  function changeType(change: ChangeEvent<HTMLSelectElement>) {
+    setType(change.target.value as typeof type);
+  }
+
+  function changeTitle(change: ChangeEvent<HTMLInputElement>) {
+    setTitle(change.target.value);
+  }
+
+  function changeDescription(change: ChangeEvent<HTMLTextAreaElement>) {
+    setDescription(change.target.value);
+  }
+
+  function changeOccurredAt(change: ChangeEvent<HTMLInputElement>) {
+    setOccurredAt(change.target.value);
+  }
+
   return {
+    styles,
+    fieldsReadOnly: !canMutate,
+    saveDisabled: !canMutate || pending,
+    typeOptions: manualApplicationEventTypeSchema.options.map((value) => ({
+      value,
+      label: t(`applications.activity.types.${value}`),
+    })),
+    typeLabel: t("applications.activity.type"),
+    titleLabel: t("applications.activity.title"),
+    descriptionLabel: t("applications.activity.description"),
+    occurredAtLabel: t("applications.activity.occurredAt"),
+    errorLabel: error ? t(`applications.activity.${error}`) : null,
+    cancelLabel: t("applications.activity.cancel"),
+    saveLabel: t(pending ? "applications.activity.saving" : "applications.activity.save"),
+    changeType,
+    changeTitle,
+    changeDescription,
+    changeOccurredAt,
     initialFocus,
     type,
     setType,

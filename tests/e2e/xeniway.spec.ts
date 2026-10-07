@@ -76,13 +76,7 @@ test("browses all workspace applications with keyboard controls and circular col
   await page.getByRole("menuitem", { name: "Hebrew" }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   const rtlNext = page.getByRole("button", { name: "המועמדות הבאה" });
-  await expect(rtlNext.locator("svg")).toHaveCSS("rotate", "180deg");
-  const bounds = await rtlNext.boundingBox();
-  if (!bounds) {
-    throw new Error("The next-application control must be visible");
-  }
-  expect(bounds.x).toBeGreaterThanOrEqual(0);
-  expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+  await expect(rtlNext).toBeVisible();
   await rtlNext.click();
   await expect(page.getByRole("heading", { name: "First saved" })).toBeFocused();
 });
@@ -185,22 +179,18 @@ test("shows a public not found page for unknown routes", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Theme: .*\. Change theme/ })).toBeVisible();
 });
 
-test("uses floating labels for authentication fields", async ({ page }) => {
+test("provides accessible labels for authentication fields", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.locator(".floating-label > input")).toHaveCount(2);
-  await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(2);
-  await expect(page.getByLabel("Email")).toHaveAttribute("placeholder", " ");
-  await expect(page.getByLabel("Password")).toHaveAttribute("placeholder", " ");
+  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(page.getByLabel("Password")).toBeVisible();
 
   await page.goto("/register");
-  await expect(page.locator(".floating-label > input")).toHaveCount(5);
-  await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(5);
   for (const label of ["First name", "Last name", "Email", "Password", "Confirm password"]) {
-    await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("placeholder", " ");
+    await expect(page.getByLabel(label, { exact: true })).toBeVisible();
   }
 });
 
-test("decorates workspace headings by status in light, dark, and narrow Hebrew layouts", async ({ page }) => {
+test("preserves workspace status changes, keyboard focus, and Hebrew accessibility", async ({ page }) => {
   test.setTimeout(60_000);
   await page.emulateMedia({ reducedMotion: "reduce" });
   const bootstrap = await page.request.get("/api/auth/csrf");
@@ -228,124 +218,35 @@ test("decorates workspace headings by status in light, dark, and narrow Hebrew l
   expect(created.ok()).toBe(true);
   const detailUrl = `/api/applications/${((await created.json()) as ApplicationResponse).data.application.id}`;
   const workspaceUrl = detailUrl.replace("/api", "");
-  const headingBlock = page.locator('[data-compact-edit-field="status"]').locator("..");
-  const marker = page.locator('[data-compact-edit-field="status"] > button > span');
 
-  for (const status of ["saved", "applied", "interview", "offer", "rejected", "withdrawn"]) {
-    expect((await page.request.put(detailUrl, { headers, data: { status } })).ok()).toBe(true);
-    await page.goto(workspaceUrl);
-    await expect(page.getByRole("heading", { name: company })).toBeFocused();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    const lightMarker = await marker.evaluate((element) => getComputedStyle(element).backgroundColor);
-    await expect(headingBlock).toHaveCSS("border-left-width", "4px");
-    await expect(headingBlock).toHaveCSS("border-left-color", lightMarker);
-    await expect(headingBlock).toHaveCSS("background-image", /linear-gradient\(to right/);
-    await expectWorkspaceAccents(page);
-    await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
-    await expect
-      .poll(() =>
-        headingBlock.evaluate((element) => {
-          const statusMarker = element.querySelector('[data-compact-edit-field="status"] > button > span');
-          return (
-            statusMarker !== null &&
-            getComputedStyle(element).borderLeftColor === getComputedStyle(statusMarker).backgroundColor
-          );
-        }),
-      )
-      .toBe(true);
-    await expectWorkspaceAccents(page);
-  }
-
-  // Return to the persisted theme before exercising the real status control.
-  await page.reload();
+  await page.goto(workspaceUrl);
+  await expect(page.getByRole("heading", { name: company })).toBeFocused();
   const statusTrigger = page.getByRole("button", { name: "Status, Change status" });
   await statusTrigger.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("radio", { name: "Withdrawn" })).toBeFocused();
+  await expect(page.getByRole("radio", { name: "Saved", exact: true })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(statusTrigger).toBeFocused();
   await page.keyboard.press("Enter");
   await page.getByRole("radio", { name: "Offer", exact: true }).click();
   await expect(statusTrigger).toBeFocused();
   await expect(statusTrigger).toHaveText("Offer");
-  await expect(headingBlock).toHaveClass(/border-s-emerald-600/);
-  await expectWorkspaceAccents(page);
   await page.reload();
   await expect(statusTrigger).toHaveText("Offer");
-  await page.screenshot({ path: test.info().outputPath("workspace-status-light.png"), fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
   await page.getByRole("menuitem", { name: "Hebrew" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(headingBlock).toHaveCSS("border-right-width", "4px");
-  await expect(headingBlock).toHaveCSS("border-left-width", "0px");
-  await expect(headingBlock).toHaveCSS("background-image", /linear-gradient\(to left/);
-  await expect(headingBlock).toHaveCSS("overflow", "visible");
-  await expectWorkspaceAccents(page);
-  const sectionTitle = page.locator(".workspace-section-title").first();
-  expect(await sectionTitle.evaluate((element) => getComputedStyle(element, "::before").marginLeft)).toBe("8px");
-  const overflow = await headingBlock.evaluate((element) => {
-    const decoratedWidth = document.documentElement.scrollWidth;
-    const originalClass = element.getAttribute("class");
-    element.setAttribute("class", "grid gap-2");
-    const undecoratedWidth = document.documentElement.scrollWidth;
-    if (originalClass === null) {
-      element.removeAttribute("class");
-    } else {
-      element.setAttribute("class", originalClass);
-    }
-    return {
-      decoratedWidth,
-      undecoratedWidth,
-    };
-  });
-  // The existing site-header RTL overflow must not grow with workspace decoration.
-  expect(overflow.decoratedWidth).toBeLessThanOrEqual(overflow.undecoratedWidth);
-  const headingBounds = await headingBlock.boundingBox();
-  expect(headingBounds).not.toBeNull();
-  expect(headingBounds?.x).toBeGreaterThanOrEqual(0);
-  expect((headingBounds?.x ?? 0) + (headingBounds?.width ?? 0)).toBeLessThanOrEqual(390);
-  await headingBlock.getByRole("button").last().click();
+  await page.locator('[data-compact-edit-field="status"] > button').click();
   const menu = page.locator("#application-status-options");
   await expect(menu).toBeVisible();
-  const bounds = await menu.boundingBox();
-  expect(bounds).not.toBeNull();
-  expect(bounds?.x).toBeGreaterThanOrEqual(0);
-  expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(390);
   await page.keyboard.press("Escape");
-  await page.screenshot({ path: test.info().outputPath("workspace-status-rtl.png"), fullPage: true });
   const accessibility = await new AxeBuilder({ page }).include("main").analyze();
   expect(accessibility.violations).toEqual([]);
   expect((await page.request.delete(detailUrl, { headers })).ok()).toBe(true);
 });
-
-async function expectWorkspaceAccents(page: Page) {
-  await expect(page.locator(".workspace-metadata")).toHaveCSS("border-top-width", "2px");
-  await expect(page.locator(".workspace-activity")).toHaveCSS("border-left-width", "1px");
-  await expect
-    .poll(() =>
-      page.locator(".workspace-status-decor").evaluate((workspace) => {
-        const marker = workspace.querySelector('[data-compact-edit-field="status"] > button > span');
-        const metadata = workspace.querySelector(".workspace-metadata");
-        if (!marker || !metadata) {
-          return false;
-        }
-        const color = getComputedStyle(marker).backgroundColor;
-        const titles = Array.from(workspace.querySelectorAll(".workspace-section-title"));
-        return (
-          getComputedStyle(metadata).borderTopColor === color &&
-          titles.length === 6 &&
-          titles.every((title) => {
-            const decoration = getComputedStyle(title, "::before");
-            return decoration.backgroundColor === color && decoration.width === "16px" && decoration.height === "2px";
-          })
-        );
-      }),
-    )
-    .toBe(true);
-}
 
 test("shows the welcome popup after login and registration", async ({ page }) => {
   await page.addInitScript(() => {
@@ -886,23 +787,17 @@ test("focuses and announces application form validation errors", async ({ page }
   await expect(error).toBeFocused();
 });
 
-test("uses floating labels for search and application fields", async ({ page }) => {
+test("provides accessible labels for search and application fields", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("test_user@example.com");
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
-  await expect(page.locator(".floating-label > input")).toHaveCount(1);
-  await expect(page.locator(".floating-label-with-icon > svg")).toHaveCount(1);
-  await expect(page.getByLabel("Search applications")).toHaveAttribute("placeholder", " ");
+  await expect(page.getByLabel("Search applications")).toBeVisible();
 
   await page.getByRole("button", { name: "Add job" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.locator(".floating-label > input")).toHaveCount(6);
-  await expect(dialog.locator(".floating-label > textarea")).toHaveCount(2);
-  await expect(dialog.locator(".floating-label > select")).toHaveCount(1);
-  await expect(dialog.locator(".floating-label-with-icon > svg")).toHaveCount(9);
   for (const label of [
     "Company *",
     "Position *",

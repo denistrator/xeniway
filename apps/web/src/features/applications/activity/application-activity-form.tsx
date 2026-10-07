@@ -1,116 +1,78 @@
-import { type ApplicationEvent, type ApplicationEventInput, manualApplicationEventTypeSchema } from "@xeniway/shared";
-import { useTranslation } from "react-i18next";
-import { tv } from "tailwind-variants";
-import { useCanMutate } from "../../offline/offline-access";
-import { useApplicationActivityForm } from "./use-application-activity-form";
+import type { ApplicationActivityFormProps } from "./application-activity.types";
+import { useApplicationActivityForm } from "./application-activity-form.ts";
 
-const activityFormStyles = tv({
-  slots: {
-    root: "mt-4 space-y-3 rounded-xl border border-line bg-surface-tint p-4",
-    label: "block text-sm text-ink",
-    field: "w-full rounded-lg border border-line bg-surface p-2 text-ink",
-  },
-});
-const styles = activityFormStyles();
-
-export function ApplicationActivityForm({
-  event,
-  onSubmit,
-  onCancel,
-}: {
-  event?: ApplicationEvent;
-  onSubmit: (input: ApplicationEventInput) => Promise<void>;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
+export function ApplicationActivityForm({ event, onSubmit, onCancel }: ApplicationActivityFormProps) {
   const form = useApplicationActivityForm(event, onSubmit);
+  const styles = form.styles;
   return (
-    <form
-      className={styles.root()}
-      onSubmit={(event) => {
-        if (canMutate) {
-          void form.submit(event);
-        } else {
-          event.preventDefault();
-        }
-      }}
-    >
-      <label className={styles.label()} htmlFor="activity-type">
-        {t("applications.activity.type")}
+    <form className={styles.root()} onSubmit={form.submit}>
+      <label className={styles.typeLabel()} htmlFor="activity-type">
+        {form.typeLabel}
       </label>
       <select
         ref={form.initialFocus}
         id="activity-type"
         name="type"
-        disabled={!canMutate}
-        className={styles.field()}
+        disabled={form.fieldsReadOnly}
+        className={styles.typeSelect()}
         value={form.type}
-        onChange={(event) => form.setType(event.target.value as typeof form.type)}
+        onChange={form.changeType}
       >
-        {manualApplicationEventTypeSchema.options.map((type) => (
-          <option key={type} value={type}>
-            {t(`applications.activity.types.${type}`)}
+        {form.typeOptions.map((option) => (
+          <option key={option.value} value={option.value} className={styles.typeOption()}>
+            {option.label}
           </option>
         ))}
       </select>
-      <label className={styles.label()} htmlFor="activity-title">
-        {t("applications.activity.title")}
+      <label className={styles.titleLabel()} htmlFor="activity-title">
+        {form.titleLabel}
       </label>
       <input
         id="activity-title"
         name="title"
-        readOnly={!canMutate}
-        className={styles.field()}
+        readOnly={form.fieldsReadOnly}
+        className={styles.titleInput()}
         required
         maxLength={255}
         value={form.title}
-        onChange={(event) => form.setTitle(event.target.value)}
+        onChange={form.changeTitle}
       />
-      <label className={styles.label()} htmlFor="activity-description">
-        {t("applications.activity.description")}
+      <label className={styles.descriptionLabel()} htmlFor="activity-description">
+        {form.descriptionLabel}
       </label>
       <textarea
         id="activity-description"
         name="description"
-        readOnly={!canMutate}
-        className={styles.field()}
+        readOnly={form.fieldsReadOnly}
+        className={styles.descriptionInput()}
         maxLength={10000}
         value={form.description}
-        onChange={(event) => form.setDescription(event.target.value)}
+        onChange={form.changeDescription}
       />
-      <label className={styles.label()} htmlFor="activity-occurred-at">
-        {t("applications.activity.occurredAt")}
+      <label className={styles.occurredAtLabel()} htmlFor="activity-occurred-at">
+        {form.occurredAtLabel}
       </label>
       <input
         id="activity-occurred-at"
         name="occurredAt"
-        readOnly={!canMutate}
+        readOnly={form.fieldsReadOnly}
         type="datetime-local"
-        className={styles.field()}
+        className={styles.occurredAtInput()}
         required
         value={form.occurredAt}
-        onChange={(event) => form.setOccurredAt(event.target.value)}
+        onChange={form.changeOccurredAt}
       />
-      {form.error && (
-        <p role="alert" className="text-sm text-rose-600">
-          {t(`applications.activity.${form.error}`)}
+      {form.errorLabel && (
+        <p role="alert" className={styles.error()}>
+          {form.errorLabel}
         </p>
       )}
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          className="rounded-lg border border-line px-3 py-2 text-sm text-ink focus-visible:outline-2"
-          onClick={onCancel}
-        >
-          {t("applications.activity.cancel")}
+      <div className={styles.actions()}>
+        <button type="button" className={styles.cancelButton()} onClick={onCancel}>
+          {form.cancelLabel}
         </button>
-        <button
-          type="submit"
-          disabled={!canMutate || form.pending}
-          className="rounded-lg bg-accent px-3 py-2 text-sm text-white disabled:opacity-50 focus-visible:outline-2"
-        >
-          {t(form.pending ? "applications.activity.saving" : "applications.activity.save")}
+        <button type="submit" disabled={form.saveDisabled} className={styles.saveButton()}>
+          {form.saveLabel}
         </button>
       </div>
     </form>

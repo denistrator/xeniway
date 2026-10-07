@@ -57,6 +57,12 @@ Prefer `switch` over an `if`/`else if` chain when choosing among multiple values
 
 Keep JSX focused on presentation. Move multi-branch event handling and nontrivial field/value calculations into named handlers or helpers outside the returned markup. Keep simple bindings, render-only mappings, and short argument-passing callbacks inline; do not introduce extra components, hooks, or memoization solely to move a few lines.
 
+Use the same basename for colocated component files: `foo.ts` for logic, `foo.tsx` for rendering, `foo.styles.ts` for Tailwind Variants, and `foo.test.tsx` for component behavior tests. Do not prefix component logic filenames with `use-`; React hook function names must still start with `use`. When logic and rendering share a basename, import the rendering component with an explicit `.tsx` extension and its logic with `.ts` to avoid ambiguous module resolution. Shared contracts may remain in a separate `.types.ts` file. Apply this naming to new or refactored components; it does not require renaming unrelated existing files.
+
+In `apps/web/src/features/applications/activity`, keep all production component behavior in its matching `foo.ts` file and all Tailwind classes in `foo.styles.ts` slot recipes. Give every native HTML element its own semantic slot, including unstyled elements; TSX should contain only component wiring, render conditions, list mapping, and bindings, with no inline event handlers or class literals.
+
+The web app enables TypeScript-extension imports. Add same-basename paired `.tsx` rendering files to the explicit `files` list in `apps/web/tsconfig.app.json`; TypeScript glob discovery otherwise prefers their `.ts` siblings.
+
 Run `bun run format` after source edits and `bun run lint` before committing. Biome owns formatting and lint rules for JavaScript and TypeScript source, tests, scripts, and root configuration files. Generated `dist` output and dependencies are excluded. `style/noNestedTernary`, `style/noUselessElse`, and `style/useBlockStatements` enforce the control-flow conventions.
 
 Add API endpoints to the matching domain router and register domain routers through `apps/api/src/routes/index.ts`; keep `apps/api/src/app.ts` focused on service construction, global middleware, and error handling. Reuse typed guards from `routes/support/auth-guard.ts` for authenticated reads and authenticated mutations. Use the CSRF-only guard for public credential/password-reset flows and logout, which may operate without an authenticated user context. Keep the public health probe and CSRF-session bootstrap outside authenticated guards, and leave route-specific validation, repository operations, response schemas, and exceptional error handling visible in their endpoint handlers. Do not add generic CRUD route factories.
@@ -74,6 +80,8 @@ Password recovery must preserve the normal generic response for unknown accounts
 For frontend work, prefer semantic controls over ARIA recreation, associate every form control with a label, provide `name` and appropriate `autocomplete`, keep icon-only actions labeled, use `:focus-visible`, maintain keyboard alternatives for drag-and-drop, and preserve accessible modal/drawer behavior. Use `…` for loading copy and announce asynchronous status changes with an appropriate live region.
 
 ## Testing expectations
+
+Do not add automated style tests or assertions for class names, recipes, slot overrides, CSS properties, decorative layout, or visual snapshots. Keep automated coverage focused on behavior, semantics, accessibility, persistence, and security; inspect styling manually.
 
 Use Vitest for shared contracts, authentication, repository mapping, seed invariants, and API behavior. Use Playwright for complete browser workflows. New routes, validation rules, security behavior, ownership rules, archive transitions, user-visible workflows, and accessibility behavior require focused regression coverage where practical. Exercise keyboard navigation and responsive states for changed UI.
 

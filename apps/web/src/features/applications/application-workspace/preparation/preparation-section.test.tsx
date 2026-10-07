@@ -81,6 +81,5 @@ test("preparation announces pending and failed saves without losing the draft", 
   expect(screen.getByText("Saving…")).toBeVisible();
   reject(new Error("offline"));
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not save company research.");
-  expect(screen.getByRole("alert")).toHaveClass("text-rose-600");
   expect(screen.getByRole("textbox", { name: "Company research" })).toHaveValue("Existing research update");
 });

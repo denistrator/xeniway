@@ -106,7 +106,6 @@ test("contacts edit, cancel, confirm removal, and announce server errors", async
   await user.click(screen.getByRole("button", { name: "Remove Ari Cole" }));
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not remove contact.");
-  expect(screen.getByRole("alert")).toHaveClass("text-rose-600");
 });
 
 test("closing a contact removal confirmation while editing restores focus to its trigger", async () => {

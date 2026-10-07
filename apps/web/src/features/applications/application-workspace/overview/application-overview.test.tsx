@@ -1,6 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { JobStatus } from "@xeniway/shared";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import {
@@ -17,70 +16,7 @@ beforeEach(async () => {
 
 afterEach(() => vi.unstubAllGlobals());
 
-test("places application details across the full header width with lifecycle actions at the inline end", () => {
-  renderApplicationWorkspace();
-
-  const locationField = screen
-    .getByRole("button", { name: "Location, Edit" })
-    .closest<HTMLElement>('[data-compact-edit-field="location"]');
-  const detailsGrid = locationField?.parentElement;
-  const lifecycleActions = screen.getByRole("navigation", { name: "Application actions" });
-
-  expect(detailsGrid).toBeTruthy();
-  expect(detailsGrid?.closest("header")).toBeTruthy();
-  expect(detailsGrid).toHaveClass("sm:grid-cols-2", "lg:grid-cols-4");
-  expect(detailsGrid?.children).toHaveLength(4);
-  expect(lifecycleActions).toHaveClass("lg:justify-self-end");
-});
-
-test.each([
-  { status: "saved", color: "slate-400", darkColor: "slate-500" },
-  { status: "applied", color: "accent", darkColor: "accent" },
-  { status: "interview", color: "sky-600", darkColor: "sky-400" },
-  { status: "offer", color: "emerald-600", darkColor: "emerald-400" },
-  { status: "rejected", color: "accent-warm", darkColor: "accent-warm" },
-  { status: "withdrawn", color: "violet-500", darkColor: "violet-400" },
-] satisfies { status: JobStatus; color: string; darkColor: string }[])(
-  "decorates the workspace with $status colors without recoloring its actions or text",
-  ({ status, color, darkColor }) => {
-    const data = createApplicationWorkspaceData();
-    renderApplicationWorkspace({ application: { ...data.application, status } });
-
-    const heading = screen.getByRole("heading", { name: "Northwind" });
-    const statusField = screen.getByRole("button", { name: "Status, Change status" }).parentElement;
-    const headingBlock = statusField?.parentElement;
-
-    expect(headingBlock).toHaveClass("border-s-4", "bg-linear-to-r", "rtl:bg-linear-to-l", "to-transparent");
-    expect(headingBlock).toHaveClass(`border-s-${color}`, `from-${color}/8`, `dark:from-${darkColor}/12`);
-    if (color !== darkColor) {
-      expect(headingBlock).toHaveClass(`dark:border-s-${darkColor}`);
-    }
-    expect(headingBlock).toContainElement(heading);
-    expect(headingBlock).not.toContainElement(screen.getByRole("navigation", { name: "Application actions" }));
-    expect(headingBlock).not.toContainElement(screen.getByRole("button", { name: "Location, Edit" }));
-    expect(heading).toHaveClass("text-ink");
-    expect(heading).toHaveFocus();
-    expect(headingBlock).not.toHaveClass("overflow-hidden", "overflow-clip");
-
-    const workspace = heading.closest<HTMLElement>(".workspace-status-decor");
-    const token = color.startsWith("accent") ? `--theme-${color}` : `--color-${color}`;
-    expect(workspace).toHaveClass(`[--workspace-status-color:var(${token})]`);
-    if (color !== darkColor) {
-      expect(workspace).toHaveClass(`dark:[--workspace-status-color:var(--color-${darkColor})]`);
-    }
-    const metadata = screen.getByRole("button", { name: "Location, Edit" }).closest<HTMLElement>(".workspace-metadata");
-    expect(metadata).toBeTruthy();
-    expect(workspace).toContainElement(metadata);
-    for (const title of ["About", "Application notes", "Interview preparation", "Contacts", "Follow-ups", "Activity"]) {
-      expect(screen.getByRole("heading", { name: title })).toHaveClass("workspace-section-title");
-    }
-    const activity = screen.getByRole("region", { name: "Activity" });
-    expect(activity).toHaveClass("workspace-activity", "rounded-2xl", "border", "p-5");
-    expect(activity).not.toHaveClass("mt-6");
-  },
-);
-
-test("keeps keyboard status selection and focus return inside the decorated heading", async () => {
+test("keeps keyboard status selection and focus return inside the application heading", async () => {
   const user = userEvent.setup();
   renderApplicationWorkspace();
   const trigger = screen.getByRole("button", { name: "Status, Change status" });

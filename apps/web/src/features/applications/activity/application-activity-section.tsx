@@ -1,77 +1,58 @@
-import type { ApplicationEvent } from "@xeniway/shared";
-import { memo, useId } from "react";
-import { useTranslation } from "react-i18next";
+import { memo } from "react";
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal";
-import { collectionActionStyles } from "../../../components/ui/surface-styles";
-import { cn } from "../../../lib/utils";
-import { useCanMutate } from "../../offline/offline-access";
-import { ApplicationActivityForm } from "./application-activity-form";
-import { ApplicationActivityTimeline } from "./application-activity-timeline";
-import { useApplicationActivityController } from "./use-application-activity-controller";
+import type { ApplicationActivitySectionProps } from "./application-activity.types";
+import { ApplicationActivityForm } from "./application-activity-form.tsx";
+import { useApplicationActivitySection } from "./application-activity-section.ts";
+import { ApplicationActivityTimeline } from "./application-activity-timeline.tsx";
 
 export const ApplicationActivitySection = memo(function ApplicationActivitySection({
   applicationId,
   events,
   className,
-}: {
-  applicationId: number;
-  events: ApplicationEvent[];
-  className?: string;
-}) {
-  const { t } = useTranslation();
-  const canMutate = useCanMutate();
-  const activity = useApplicationActivityController(applicationId);
-  const headingId = useId();
-
+}: ApplicationActivitySectionProps) {
+  const activity = useApplicationActivitySection(applicationId, className);
+  const styles = activity.styles;
   return (
-    <section
-      tabIndex={-1}
-      aria-labelledby={headingId}
-      className={cn("mt-6 border-t border-line pt-5 focus-visible:outline-2", className)}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <h3 id={headingId} className="workspace-section-title font-display text-lg font-semibold text-ink">
-          {t("applications.activity.heading")}
+    <section tabIndex={-1} aria-labelledby={activity.headingId} className={activity.rootClassName}>
+      <div className={styles.header()}>
+        <h3 id={activity.headingId} className={styles.heading()}>
+          {activity.heading}
         </h3>
         <button
           ref={activity.addButton}
           type="button"
-          disabled={!canMutate}
-          className={collectionActionStyles()}
+          disabled={activity.actionsDisabled}
+          className={styles.addButton()}
           onClick={activity.beginAdd}
         >
-          {t("applications.activity.add")}
+          {activity.addLabel}
         </button>
       </div>
       {activity.editing && (
         <ApplicationActivityForm
-          key={activity.editing === "new" ? "new" : activity.editing.id}
-          event={activity.editing === "new" ? undefined : activity.editing}
+          key={activity.formKey}
+          event={activity.editedEvent}
           onSubmit={activity.save}
           onCancel={activity.closeForm}
         />
       )}
-      <div className="mt-4" aria-live="polite">
+      <div className={styles.timeline()} aria-live="polite">
         <ApplicationActivityTimeline events={events} onEdit={activity.beginEdit} onDelete={activity.setDeleting} />
         {activity.deleteError && (
-          <p role="alert" className="text-sm text-rose-600">
-            {t("applications.activity.deleteFailed")}
+          <p role="alert" className={styles.error()}>
+            {activity.deleteErrorLabel}
           </p>
         )}
       </div>
       {activity.deleting && (
         <ConfirmationModal
-          title={t("applications.confirmation.title")}
-          text={t("applications.activity.deleteConfirmation")}
-          yesLabel={t("common.actions.yes")}
-          noLabel={t("common.actions.no")}
-          onYes={() => {
-            if (canMutate) {
-              activity.remove();
-            }
-          }}
+          title={activity.confirmationTitle}
+          text={activity.confirmationText}
+          yesLabel={activity.yesLabel}
+          noLabel={activity.noLabel}
+          onYes={activity.confirmDelete}
           onNo={activity.cancelDelete}
-          yesDisabled={!canMutate || activity.mutations.remove.isPending}
+          yesDisabled={activity.deleteDisabled}
         />
       )}
     </section>

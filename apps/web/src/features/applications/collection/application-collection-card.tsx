@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "../../../components/ui/card";
 import { collectionActionStyles } from "../../../components/ui/surface-styles";
-import { ApplicationActivity } from "../activity/application-activity";
+import { ApplicationActivity } from "../activity/application-activity.tsx";
 import { getStatusLabel } from "../board/job-status";
 import { ApplicationCollectionActions } from "./application-collection-actions";
 

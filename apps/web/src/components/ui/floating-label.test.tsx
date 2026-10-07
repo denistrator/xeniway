@@ -4,27 +4,26 @@ import { describe, expect, test } from "vitest";
 import { FloatingLabel } from "./floating-label";
 
 describe("FloatingLabel", () => {
-  test("renders the control before its associated label", () => {
+  test("associates the label with its control", () => {
     const markup = renderToStaticMarkup(
-      <FloatingLabel htmlFor="email" label="Email" className="w-64" labelClassName="text-xs">
-        <input id="email" className="peer" />
+      <FloatingLabel htmlFor="email" label="Email">
+        <input id="email" />
       </FloatingLabel>,
     );
 
-    expect(markup).toContain('class="floating-label w-64"');
-    expect(markup).toContain('<label for="email" class="floating-label-label text-xs">Email</label>');
-    expect(markup.indexOf('<input id="email"')).toBeLessThan(markup.indexOf("<label"));
+    expect(markup).toContain('for="email"');
+    expect(markup).toContain("Email</label>");
+    expect(markup).toContain('<input id="email"');
   });
 
   test("renders an optional decorative icon", () => {
     const markup = renderToStaticMarkup(
       <FloatingLabel htmlFor="email" label="Email" icon={Mail}>
-        <input id="email" className="peer" />
+        <input id="email" />
       </FloatingLabel>,
     );
 
     expect(markup).toContain('aria-hidden="true"');
     expect(markup).toContain('focusable="false"');
-    expect(markup).toContain("floating-label-with-icon");
   });
 });

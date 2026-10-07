@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
-import { ApplicationActivityForm } from "./application-activity-form";
+import { ApplicationActivityForm } from "./application-activity-form.tsx";
 
 beforeEach(async () => {
   await initializeTestI18n();
