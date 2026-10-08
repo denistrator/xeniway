@@ -27,16 +27,15 @@ export function SiteHeader(props: SiteHeaderProps) {
           {view.readAccountId && (
             <div className={styles.account()}>
               <span className={styles.email()}>{view.email}</span>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
                 className={styles.logoutButton()}
                 onClick={view.handleLogout}
                 disabled={view.logout.isPending}
               >
                 <div className={styles.logoutText()}>{view.logoutLabel}</div>
                 <LogOut aria-hidden="true" size={15} strokeWidth={2} />
-              </Button>
+              </button>
             </div>
           )}
           <div className={styles.actions()}>

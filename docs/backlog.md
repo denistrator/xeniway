@@ -4,6 +4,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
+### Make the logout browser workflow independently runnable
+
+- **Where:** `tests/e2e/xeniway.spec.ts`, "logs out and returns to login".
+- **Evidence:** Running this test alone after seeding times out before logout: the welcome introduction backdrop intercepts the theme-button click. The test does not complete or dismiss onboarding before interacting with header controls.
+- **Possible direction:** Establish the test's own onboarding state or explicitly complete the welcome dialog rather than relying on earlier workflows updating the shared account.
+- **Guardrails:** Preserve coverage for theme persistence, private-data cleanup, and real logout; do not bypass the dialog with forced clicks or weaken production onboarding.
+
 ### Full offline synchronization
 
 - **Area:** Offline application writes beyond read-only downloads.
