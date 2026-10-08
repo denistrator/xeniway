@@ -7,7 +7,7 @@ import { i18n, initializeI18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences, useUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { setTheme, store } from "../../store";
-import { UserPreferencesSync } from "./user-preferences-sync.tsx";
+import { UserPreferencesSync } from "./user-preferences-sync.view";
 
 vi.mock("../../lib/queries", () => ({
   useCurrentUser: vi.fn(),

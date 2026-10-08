@@ -1,7 +1,7 @@
 import { Mail } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
-import { FloatingLabel } from "./floating-label.tsx";
+import { FloatingLabel } from "./floating-label.view";
 
 describe("FloatingLabel", () => {
   test("associates the label with its control", () => {

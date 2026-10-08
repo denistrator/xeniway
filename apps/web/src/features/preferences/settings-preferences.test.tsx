@@ -7,11 +7,11 @@ import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { setTheme, store } from "../../store";
 import { initializeTestI18n } from "../../test/initialize-test-i18n";
-import { useCanMutate } from "../offline/offline-access.ts";
-import { useSettingsPreferences } from "./settings-preferences.ts";
+import { useCanMutate } from "../offline/offline-access.model";
+import { useSettingsPreferences } from "./settings-preferences.model";
 
 vi.mock("../../lib/queries", () => ({ useCurrentUser: vi.fn(), useUpdateUserPreferences: vi.fn() }));
-vi.mock("../offline/offline-access.ts", () => ({ useCanMutate: vi.fn() }));
+vi.mock("../offline/offline-access.model", () => ({ useCanMutate: vi.fn() }));
 
 const mutate = vi.fn();
 

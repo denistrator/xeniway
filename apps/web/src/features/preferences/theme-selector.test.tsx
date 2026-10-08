@@ -8,8 +8,8 @@ import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { setTheme, store } from "../../store";
 import { initializeTestI18n } from "../../test/initialize-test-i18n";
-import { nextThemePreference } from "./theme-selector.ts";
-import { ThemeSelector } from "./theme-selector.tsx";
+import { nextThemePreference } from "./theme-selector.model";
+import { ThemeSelector } from "./theme-selector.view";
 
 vi.mock("../../lib/queries", () => ({
   useCurrentUser: vi.fn(),

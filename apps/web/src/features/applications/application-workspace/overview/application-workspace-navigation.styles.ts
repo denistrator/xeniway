@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { compactControlStyles } from "../../../../components/ui/compact-control-styles.ts";
+import { compactControlStyles } from "../../../../components/ui/compact-control-styles";
 
 export const applicationWorkspaceNavigationStyles = tv({
   slots: {

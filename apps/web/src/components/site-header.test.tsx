@@ -5,12 +5,12 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
-import { SiteHeader } from "./site-header.tsx";
+import { SiteHeader } from "./site-header.view";
 
 const mockCurrentUser = vi.fn();
 
-vi.mock("../features/preferences/language-selector.tsx", () => ({ LanguageSelector: () => null }));
-vi.mock("../features/preferences/theme-selector.tsx", () => ({ ThemeSelector: () => null }));
+vi.mock("../features/preferences/language-selector.view", () => ({ LanguageSelector: () => null }));
+vi.mock("../features/preferences/theme-selector.view", () => ({ ThemeSelector: () => null }));
 vi.mock("../lib/queries", () => ({
   useAuthMutations: () => ({ logout: { mutateAsync: vi.fn(), isPending: false } }),
   useCurrentUser: () => mockCurrentUser(),

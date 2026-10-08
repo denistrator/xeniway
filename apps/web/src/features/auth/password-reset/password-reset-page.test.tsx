@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { changeLocale, initializeI18n } from "../../../i18n/i18n";
-import { getResetToken, PasswordResetPage } from "./password-reset-page.tsx";
+import { getResetToken, PasswordResetPage } from "./password-reset-page.view";
 
 vi.mock("../../../lib/queries", () => ({
   useCsrfToken: () => ({ isPending: false }),

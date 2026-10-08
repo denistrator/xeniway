@@ -6,7 +6,7 @@ import { changeLocale, i18n, initializeI18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { store } from "../../store";
-import { LanguageSelector } from "./language-selector.tsx";
+import { LanguageSelector } from "./language-selector.view";
 
 vi.mock("../../lib/queries", () => ({ useCurrentUser: vi.fn(), useUpdateUserPreferences: vi.fn() }));
 

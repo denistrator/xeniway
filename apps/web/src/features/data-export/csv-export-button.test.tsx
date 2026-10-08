@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { setAuthenticatedRequestGuard } from "../../lib/api";
 import { initializeTestI18n } from "../../test/initialize-test-i18n";
-import { CsvExportButton } from "./csv-export-button.tsx";
+import { CsvExportButton } from "./csv-export-button.view";
 
 let client: QueryClient;
 let downloads: { filename: string; href: string; hidden: boolean }[];

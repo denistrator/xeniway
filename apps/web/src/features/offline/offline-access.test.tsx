@@ -8,7 +8,7 @@ import { applicationKeys, assertAuthenticatedWrite } from "../../lib/api";
 import { authKeys, useApplicationDetail, useApplications, useAuthMutations, useCsrfToken } from "../../lib/queries";
 import { store } from "../../store";
 import { createApplicationWorkspaceData } from "../applications/application-workspace/test-support/application-workspace-fixtures";
-import { OfflineAccessProvider, useOfflineAccess, useReadAccountId } from "./offline-access.tsx";
+import { OfflineAccessProvider, useOfflineAccess, useReadAccountId } from "./offline-access.view";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineDevice,

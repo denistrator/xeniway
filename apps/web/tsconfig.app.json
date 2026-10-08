@@ -3,15 +3,12 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "incremental": true,
-    "allowImportingTsExtensions": true,
+    "composite": true,
     "jsx": "react-jsx",
     "types": [
       "vite/client"
     ]
   },
-  "files": [
-    "src/main.tsx"
-  ],
   "include": [
     "src"
   ]

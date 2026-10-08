@@ -1,6 +1,6 @@
 import { type MutateOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiRequestError, assertAuthenticatedWrite } from "../../lib/api";
-import { useReadAccountId } from "./offline-access";
+import { useReadAccountId } from "./offline-access.model";
 
 type OwnerMutationInvocation<TVariables> = { ownerId: number | null; variables: TVariables };
 

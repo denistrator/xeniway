@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { jobStatusStyles } from "./job-status-styles.ts";
+import { jobStatusStyles } from "./job-status-styles";
 
 export const jobCardStyles = tv({
   extend: jobStatusStyles,

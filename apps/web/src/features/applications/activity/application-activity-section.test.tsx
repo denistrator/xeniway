@@ -5,7 +5,7 @@ import type { ApplicationEvent } from "@xeniway/shared";
 import { beforeEach, expect, test, vi } from "vitest";
 import { authKeys } from "../../../lib/queries";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
-import { ApplicationActivitySection } from "./application-activity-section.tsx";
+import { ApplicationActivitySection } from "./application-activity-section.view";
 
 const manualEvent: ApplicationEvent = {
   id: 1,

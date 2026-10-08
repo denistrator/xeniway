@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { emptyStateStyles } from "../../../components/ui/surface-styles.ts";
+import { emptyStateStyles } from "../../../components/ui/surface-styles";
 
 export const applicationCollectionStyles = tv({
   slots: {

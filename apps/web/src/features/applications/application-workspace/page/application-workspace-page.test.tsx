@@ -10,7 +10,7 @@ import { authKeys } from "../../../../lib/queries";
 import { setAllStatuses, setSearch, store } from "../../../../store";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
-import { ApplicationWorkspacePage } from "./application-workspace-page.tsx";
+import { ApplicationWorkspacePage } from "./application-workspace-page.view";
 
 beforeEach(async () => {
   vi.restoreAllMocks();

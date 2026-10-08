@@ -37,14 +37,14 @@ Approval checklist: opt-in private-device storage; seven-day retention; one offl
 
 ## Pre-implementation Code Evidence
 
-- `apps/web/src/main.tsx`: in-memory QueryClient, no persistence/bootstrap for private snapshots.
+- `apps/web/src/main.view.tsx`: in-memory QueryClient, no persistence/bootstrap for private snapshots.
 - `apps/web/vite.config.ts`: no service worker or offline build integration.
 - `apps/web/src/lib/api.ts`: application keys omit user ID; preferences keys already include it. The client emits `xeniway:auth-expired` on application 401 responses.
 - `apps/web/src/lib/queries.ts`: mutations capture CSRF in component hooks and mostly invalidate queries after success; current-user responses are fresh for one minute and failed queries do not retry on mount.
-- `apps/web/src/route-guards.tsx`: guards rely on `useCurrentUser`; no cached-device access state.
+- `apps/web/src/route-guards.view.tsx`: guards rely on `useCurrentUser`; no cached-device access state.
 - `apps/web/src/features/applications/form/use-job-form.ts`: form values are component state. Closing the modal/drawer unmounts form content even though the lazy host stays mounted after first use.
 - `apps/web/src/features/applications/application-workspace/preparation/use-preparation-field.ts`: confirming currently submits immediately through the existing preparation mutation.
-- `apps/web/src/app-routes.tsx`, `apps/web/src/i18n/i18n.ts`, and `create-application-loader.tsx`: routes, non-English dictionaries, and the create host load lazily.
+- `apps/web/src/app-routes.view.tsx`, `apps/web/src/i18n/i18n.ts`, and `create-application-loader.tsx`: routes, non-English dictionaries, and the create host load lazily.
 - `playwright.config.ts`: normal E2E uses development servers. Offline asset/update checks require a separate production-preview configuration.
 
 ## File and Interface Boundaries
@@ -142,7 +142,7 @@ No commit is included in this execution. Phase 2 below remains an approved-desig
 
 ### Task 6: Preparation drafts with explicit online confirmation
 
-**Files:** Create `apps/web/src/features/applications/application-workspace/preparation/use-preparation-draft.ts` and `use-preparation-draft.test.tsx`. Modify `use-preparation-field.ts`, `preparation-section.tsx`, `preparation-section.test.tsx`, `apps/web/src/features/applications/application-workspace/shared/workspace-text-field.tsx`, locale dictionaries, and `tests/e2e/offline.spec.ts`.
+**Files:** Create `apps/web/src/features/applications/application-workspace/preparation/use-preparation-draft.ts` and `use-preparation-draft.test.tsx`. Modify `use-preparation-field.ts`, `preparation-section.tsx`, `preparation-section.test.tsx`, `apps/web/src/features/applications/application-workspace/shared/workspace-text-field.view.tsx`, locale dictionaries, and `tests/e2e/offline.spec.ts`.
 
 **Interfaces:** Consumes field-level draft records containing `baseValue`, `value`, and `revision`. Keep `PreparationFieldController.savedValue` as server data; expose local-draft feedback separately. Do not redefine “saved” to mean both local and server persistence.
 

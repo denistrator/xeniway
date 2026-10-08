@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { expect, test } from "vitest";
-import { Button } from "./button.tsx";
+import { Button } from "./button.view";
 
 test("asChild retains link semantics", () => {
   render(

@@ -676,13 +676,13 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   const hostRelease = new Promise<void>((resolve) => {
     releaseHost = resolve;
   });
-  await page.route("**/form/job-manager-host.tsx*", async (route) => {
+  await page.route("**/form/job-manager-host.view.tsx*", async (route) => {
     await hostRelease;
     await route.continue();
   });
   const formHostRequests: string[] = [];
   page.on("request", (request) => {
-    if (new URL(request.url()).pathname.endsWith("/form/job-manager-host.tsx")) {
+    if (new URL(request.url()).pathname.endsWith("/form/job-manager-host.view.tsx")) {
       formHostRequests.push(request.url());
     }
   });

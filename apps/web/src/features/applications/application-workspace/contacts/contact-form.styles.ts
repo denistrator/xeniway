@@ -1,6 +1,6 @@
 import { tv } from "tailwind-variants";
-import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles.ts";
-import { editorFormStyles } from "../../../../components/ui/surface-styles.ts";
+import { fieldErrorStyles, fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles";
+import { editorFormStyles } from "../../../../components/ui/surface-styles";
 
 export const contactFormStyles = tv({
   slots: {

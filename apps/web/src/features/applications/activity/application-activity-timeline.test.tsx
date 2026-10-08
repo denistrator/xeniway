@@ -3,7 +3,7 @@ import type { ApplicationEvent } from "@xeniway/shared";
 import { beforeEach, expect, test, vi } from "vitest";
 import { changeLocale } from "../../../i18n/i18n";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
-import { ApplicationActivityTimeline } from "./application-activity-timeline.tsx";
+import { ApplicationActivityTimeline } from "./application-activity-timeline.view";
 
 beforeEach(async () => {
   await initializeTestI18n();

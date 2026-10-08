@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { collectionActionStyles } from "../../../components/ui/surface-styles.ts";
+import { collectionActionStyles } from "../../../components/ui/surface-styles";
 
 export const applicationCollectionCardStyles = tv({
   slots: {

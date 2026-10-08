@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { changeLocale } from "../i18n/i18n";
 import { store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
-import { SettingsPage } from "./settings-page.tsx";
+import { SettingsPage } from "./settings-page.view";
 
 let client: QueryClient;
 

@@ -7,7 +7,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { authKeys } from "../../../../lib/queries";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
-import { ApplicationLifecycleActions } from "./application-lifecycle-actions.tsx";
+import { ApplicationLifecycleActions } from "./application-lifecycle-actions.view";
 
 beforeEach(async () => {
   vi.restoreAllMocks();

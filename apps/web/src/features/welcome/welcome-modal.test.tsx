@@ -6,7 +6,7 @@ import { Provider } from "react-redux";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeI18n } from "../../i18n/i18n";
 import { store } from "../../store";
-import { WelcomeModal } from "./welcome-modal.tsx";
+import { WelcomeModal } from "./welcome-modal.view";
 
 beforeEach(async () => {
   await initializeI18n();

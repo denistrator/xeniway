@@ -4,8 +4,8 @@ import type { ApplicationDetailResponse } from "@xeniway/shared";
 import { MemoryRouter } from "react-router-dom";
 import { applicationKeys } from "../../../../lib/api";
 import { authKeys } from "../../../../lib/queries";
-import { OfflineAccessProvider } from "../../../offline/offline-access.tsx";
-import { ApplicationWorkspaceContent } from "../page/application-workspace-content.tsx";
+import { OfflineAccessProvider } from "../../../offline/offline-access.view";
+import { ApplicationWorkspaceContent } from "../page/application-workspace-content.view";
 import { createApplicationWorkspaceData } from "./application-workspace-fixtures";
 
 export function renderApplicationWorkspace(

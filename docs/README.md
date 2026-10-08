@@ -21,7 +21,7 @@ These are starting points, not permission to change unrelated behavior. Follow t
 
 | Area | Source starting point | Documentation to review/update |
 | --- | --- | --- |
-| UI rendering, behavior, or styling | [Web features](../apps/web/src/features); colocated `foo.tsx`, `foo.ts`, and `foo.styles.ts` | [Frontend conventions](../AGENTS.md#coding-conventions), [architecture](architecture.md), [testing](testing.md) |
+| UI rendering, behavior, or styling | [Web features](../apps/web/src/features); colocated `foo.view.tsx`, `foo.model.ts`, and `foo.styles.ts` | [Frontend conventions](../AGENTS.md#coding-conventions), [architecture](architecture.md), [testing](testing.md) |
 | Application workspace, preparation, contacts, or follow-ups | [Workspace feature](../apps/web/src/features/applications/application-workspace); [activity feature](../apps/web/src/features/applications/activity) for timelines | [API](api.md), [database](database.md), [testing](testing.md) |
 | Endpoint or authenticated operation | [Domain routers](../apps/api/src/routes), [router registration](../apps/api/src/routes/index.ts), [repository contracts](../apps/api/src/db/repository.ts) | [API](api.md), [architecture](architecture.md), [testing](testing.md) |
 | Input validation or public response type | [Shared contracts](../packages/shared/src/index.ts), then the consuming API handler and browser feature | [API](api.md); [database](database.md) if persistence changes |

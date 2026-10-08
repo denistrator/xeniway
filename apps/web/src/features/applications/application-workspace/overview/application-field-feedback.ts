@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import type { WorkspaceFieldFeedback } from "../shared/workspace-text-field";
+import type { WorkspaceFieldFeedback } from "../shared/workspace-text-field.model";
 import type { ApplicationFieldController, EditableApplicationField } from "./use-application-field";
 
 const fieldLabelKeys: Record<EditableApplicationField, string> = {

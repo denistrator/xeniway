@@ -4,8 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { authKeys } from "../../../lib/queries";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
-import { OfflineAccessProvider } from "../../offline/offline-access.tsx";
-import { ApplicationActivity } from "./application-activity.tsx";
+import { OfflineAccessProvider } from "../../offline/offline-access.view";
+import { ApplicationActivity } from "./application-activity.view";
 
 beforeEach(async () => {
   vi.restoreAllMocks();

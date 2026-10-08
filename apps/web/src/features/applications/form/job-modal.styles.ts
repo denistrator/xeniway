@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { dialogBackdropStyles } from "../../../components/ui/surface-styles.ts";
+import { dialogBackdropStyles } from "../../../components/ui/surface-styles";
 
 export const jobModalStyles = tv({
   slots: {

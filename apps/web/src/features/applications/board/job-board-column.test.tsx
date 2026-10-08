@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { JobApplication } from "@xeniway/shared";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeI18n } from "../../../i18n/i18n";
-import { JobBoardColumn } from "./job-board-column.tsx";
+import { JobBoardColumn } from "./job-board-column.view";
 
 const dropTargets: Array<{ element: HTMLElement; onDrop: (args: never) => void }> = [];
 

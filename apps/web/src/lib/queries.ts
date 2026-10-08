@@ -22,7 +22,7 @@ import type {
 } from "@xeniway/shared";
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { useOfflineAccess, useReadAccountId } from "../features/offline/offline-access";
+import { useOfflineAccess, useReadAccountId } from "../features/offline/offline-access.model";
 import { OFFLINE_RETENTION_MS } from "../features/offline/offline-types";
 import { useOwnerMutation } from "../features/offline/use-owner-mutation";
 import { closeWelcome, openWelcome } from "../store";

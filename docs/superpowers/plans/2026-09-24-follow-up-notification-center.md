@@ -44,7 +44,7 @@
 - `apps/web/src/features/notifications/notification-bell.tsx` — icon-only header link, accessible count, and badge.
 - `apps/web/src/features/notifications/notification-sync.tsx` — authenticated reconciliation triggers and summary-toast state.
 - `apps/web/src/features/notifications/notification-summary-toast.tsx` — responsive accessible toast presentation.
-- `apps/web/src/app-routes.tsx`, `components/layout.tsx`, and `components/site-header.tsx` — authenticated route, sync host, and header placement.
+- `apps/web/src/app-routes.view.tsx`, `components/layout.tsx`, and `components/site-header.tsx` — authenticated route, sync host, and header placement.
 - `apps/web/src/i18n/locales/{en,ru,uk,he}.ts` — aligned Notification Center labels, statuses, actions, errors, and toast copy.
 - `tests/e2e/xeniway.spec.ts` — end-to-end reminder, center, lifecycle, accessibility, and responsive coverage.
 - `docs/api.md`, `docs/architecture.md`, `docs/database.md`, `docs/testing.md`, `README.md`, and `AGENTS.md` — implemented contracts, system behavior, local setup implications, tests, and feature structure.
@@ -128,7 +128,7 @@ interface NotificationRepository {
 
 ## Task 4: Add Web API, Query State, and Reconciliation Triggers
 
-**Files:** `apps/web/src/lib/api.ts`, `apps/web/src/lib/queries.ts`, `apps/web/src/lib/queries.test.tsx`, `apps/web/src/features/notifications/notification-sync.tsx`, `apps/web/src/components/layout.tsx`
+**Files:** `apps/web/src/lib/api.ts`, `apps/web/src/lib/queries.ts`, `apps/web/src/lib/queries.test.tsx`, `apps/web/src/features/notifications/notification-sync.tsx`, `apps/web/src/components/layout.view.tsx`
 
 **Interfaces:**
 - Add `notificationKeys.all`, `.list(filter)`, and `.unreadCount()` under `apps/web/src/lib/api.ts`.
@@ -148,7 +148,7 @@ interface NotificationRepository {
 
 ## Task 5: Build the Notification Center and Header Entry
 
-**Files:** `apps/web/src/features/notifications/notification-center-page.tsx`, `notification-list.tsx`, `notification-bell.tsx`, `notification-center-page.test.tsx`, `notification-list.test.tsx`, `notification-bell.test.tsx`, `apps/web/src/app-routes.tsx`, `apps/web/src/components/site-header.tsx`, `apps/web/src/i18n/locales/en.ts`, `ru.ts`, `uk.ts`, and `he.ts`.
+**Files:** `apps/web/src/features/notifications/notification-center-page.tsx`, `notification-list.tsx`, `notification-bell.tsx`, `notification-center-page.test.tsx`, `notification-list.test.tsx`, `notification-bell.test.tsx`, `apps/web/src/app-routes.view.tsx`, `apps/web/src/components/site-header.view.tsx`, `apps/web/src/i18n/locales/en.ts`, `ru.ts`, `uk.ts`, and `he.ts`.
 
 **Interfaces:**
 - `NotificationCenterPage` consumes `useNotifications(filter)` and `useNotificationMutations()`; it does not fetch notification data with raw `fetch`.

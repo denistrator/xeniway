@@ -3,7 +3,7 @@ import { act, render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 import { expect, test, vi } from "vitest";
-import { AppRoutes } from "./app-routes.tsx";
+import { AppRoutes } from "./app-routes.view";
 import { store } from "./store";
 import { initializeTestI18n } from "./test/initialize-test-i18n";
 
@@ -14,7 +14,7 @@ const delayed = vi.hoisted(() => {
   });
   return { promise, finish, ready: false };
 });
-vi.mock("./pages/about-page.tsx", () => ({
+vi.mock("./pages/about-page.view", () => ({
   AboutPage: () => {
     if (!delayed.ready) {
       throw delayed.promise;
@@ -22,9 +22,9 @@ vi.mock("./pages/about-page.tsx", () => ({
     return <h1>About loaded</h1>;
   },
 }));
-vi.mock("./components/site-header.tsx", () => ({ SiteHeader: () => null }));
-vi.mock("./features/offline/offline-controls.tsx", () => ({ OfflineControls: () => null }));
-vi.mock("./features/preferences/user-preferences-sync.tsx", () => ({ UserPreferencesSync: () => null }));
+vi.mock("./components/site-header.view", () => ({ SiteHeader: () => null }));
+vi.mock("./features/offline/offline-controls.view", () => ({ OfflineControls: () => null }));
+vi.mock("./features/preferences/user-preferences-sync.view", () => ({ UserPreferencesSync: () => null }));
 vi.mock("./lib/queries", () => ({
   useCurrentUser: () => ({ data: null }),
   useUserPreferences: () => ({ isPending: false }),
