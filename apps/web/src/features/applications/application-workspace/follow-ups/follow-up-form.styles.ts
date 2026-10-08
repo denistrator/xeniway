@@ -1,6 +1,6 @@
 import { tv } from "tailwind-variants";
-import { fieldLabelStyles, textAreaStyles } from "../../../../components/ui/field-styles";
-import { editorFormStyles } from "../../../../components/ui/surface-styles";
+import { fieldLabelStyles, textAreaStyles } from "../../../../styles/shared/field-styles";
+import { editorFormStyles } from "../../../../styles/shared/surface-styles";
 
 export const followUpFormStyles = tv({
   slots: {

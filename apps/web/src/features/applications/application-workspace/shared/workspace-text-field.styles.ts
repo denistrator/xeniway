@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { textAreaStyles } from "../../../../components/ui/field-styles";
+import { textAreaStyles } from "../../../../styles/shared/field-styles";
 
 export const workspaceTextFieldStyles = tv({
   slots: {

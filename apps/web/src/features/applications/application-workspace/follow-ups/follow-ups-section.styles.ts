@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { emptyStateStyles } from "../../../../components/ui/surface-styles";
+import { emptyStateStyles } from "../../../../styles/shared/surface-styles";
 export const followUpStyles = tv({
   base: "flex flex-wrap items-start gap-4 rounded-xl border border-line p-4",
   variants: { completed: { true: "bg-surface-tint", false: "bg-surface" } },

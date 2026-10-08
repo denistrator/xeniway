@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { emptyStateStyles } from "../../../../components/ui/surface-styles";
+import { emptyStateStyles } from "../../../../styles/shared/surface-styles";
 
 export const contactsSectionStyles = tv({
   slots: {

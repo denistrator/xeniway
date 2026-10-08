@@ -1,5 +1,7 @@
 import { tv } from "tailwind-variants";
 
+// Shared recipes for empty states, dialog backdrops, collection actions, and editor forms.
+// Compose them in component styles; these helpers render no UI.
 export const emptyStateStyles = tv({
   base: "rounded-xl border border-dashed border-line p-5 text-sm text-muted",
   variants: { page: { true: "rounded-2xl p-12 text-center leading-6" } },

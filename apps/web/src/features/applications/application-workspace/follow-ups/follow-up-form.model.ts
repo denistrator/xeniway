@@ -1,7 +1,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { fieldErrorStyles } from "../../../../components/ui/field-styles";
+import { fieldErrorStyles } from "../../../../styles/shared/field-styles";
 
 import { useCanMutate } from "../../../offline/offline-access.view";
 import { followUpFormStyles } from "./follow-up-form.styles";

@@ -1,5 +1,5 @@
 import { tv } from "tailwind-variants";
-import { dialogBackdropStyles } from "./surface-styles";
+import { dialogBackdropStyles } from "../../styles/shared/surface-styles";
 
 export const confirmationModalStyles = tv({
   slots: {

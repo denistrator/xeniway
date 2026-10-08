@@ -1,5 +1,6 @@
 import { tv } from "tailwind-variants";
 
+// Shared field recipes composed by component styles; these helpers render no UI.
 // Shared validation overrides for native inputs and textareas.
 export const fieldErrorStyles = tv({
   variants: {
