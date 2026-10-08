@@ -104,6 +104,8 @@ The UI language is owned by i18next/react-i18next, not Redux. English initialize
 
 ## Request lifecycle
 
+`App.model.ts` owns theme synchronization and auth-expiry handling as private `useThemeSync` and `useAuthFailureHandler` hooks, without separate modules or renderless wrappers. The auth hook listens for `xeniway:auth-expired`, removes session, CSRF, application, and account-preference query caches without clearing browser preferences, and unregisters the listener on unmount.
+
 1. The browser acquires a CSRF token from `GET /api/auth/csrf`; the server creates an anonymous session when needed.
 2. Registration or login validates the shared schema, replaces the anonymous session, and sets an authenticated HttpOnly session cookie.
 3. `GET /api/auth/me` restores the current user on page load. All consumers share the `auth/me` query: successful results remain fresh for one minute, and failed checks do not retry just because another consumer mounts (including lazy-route and StrictMode remounts). Stale results still revalidate on mount, window focus, or reconnect; unsuccessful checks can recover on focus/reconnect or explicit refetch. Login/registration/logout update the shared cache immediately, and application authorization failures still clear account caches. A full page reload starts a new session check; this browser cache never replaces server-side authentication or ownership checks.
