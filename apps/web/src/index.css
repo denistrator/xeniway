@@ -28,6 +28,10 @@
   scrollbar-gutter: stable;
 }
 
+html:has(body[data-scroll-locked]) {
+  scrollbar-gutter: auto;
+}
+
 html[data-theme="dark"] {
   --theme-canvas: oklch(20.86% 0.0075 48.34);
   --theme-surface: oklch(25.44% 0.0131 51.58);
