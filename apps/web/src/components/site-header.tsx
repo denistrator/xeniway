@@ -41,12 +41,18 @@ export function SiteHeader(props: SiteHeaderProps) {
           )}
           <div className={styles.actions()}>
             {view.user.data && (
-              <Button disabled={!view.access.canMutate} variant="outline" size="sm" onClick={view.handleCreate}>
+              <Button
+                className={styles.actionButton()}
+                disabled={!view.access.canMutate}
+                variant="outline"
+                size="sm"
+                onClick={view.handleCreate}
+              >
                 <Plus aria-hidden="true" size={15} /> {view.addJobLabel}
               </Button>
             )}
             {!view.user.isPending && !view.readAccountId && (
-              <Button asChild variant="outline" size="sm">
+              <Button asChild className={styles.actionButton()} variant="outline" size="sm">
                 <Link to="/login">{view.loginLabel}</Link>
               </Button>
             )}

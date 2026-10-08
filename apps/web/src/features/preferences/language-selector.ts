@@ -59,7 +59,7 @@ export function useLanguageSelector() {
   }
 
   const toggleOpen = () => setOpen((value) => !value);
-  const label = `Language: ${t(`common.language.${currentOption.value}`)}. Change language`;
+  const label = t("common.selectors.language", { language: t(`common.language.${currentOption.value}`) });
   const menuOptions = supportedLocales.flatMap((locale) => {
     const option = languageOptions.find((candidate) => candidate.value === locale);
     if (!option) {

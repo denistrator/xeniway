@@ -4,13 +4,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
-### Localize preference-selector accessible labels
-
-- **Where:** `apps/web/src/features/preferences/language-selector.ts` and `theme-selector.ts`.
-- **Evidence:** The language selector translates the language name but hardcodes the English action text; the theme selector's accessible label and option names are English in every locale. This predates the frontend presentation refactor.
-- **Direction:** Add translated selector action/theme labels to the four dictionaries and use them when preparing accessible names.
-- **Guardrails:** Preserve selector keyboard behavior, explicit local-first preference changes, supported locale values, and Hebrew document direction. Update behavioral selector/browser assertions to use the active locale's names, without style assertions.
-
 ### Full offline synchronization
 
 - **Area:** Offline application writes beyond read-only downloads.
@@ -68,14 +61,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Why:** The production PWA build currently emits a nonfatal `inlineDynamicImports` deprecation warning from its bundler integration.
 - **Possible direction:** Reassess compatible `vite-plugin-pwa`/bundler versions when that integration supports the replacement option; avoid overriding its generated worker configuration speculatively.
 - **Guardrails:** Preserve consent-only preparation, lazy application chunks, generated asset revisions, API exclusion, and production offline browser coverage.
-
-### Keep authenticated header actions within narrow viewports
-
-- **Where:** `apps/web/src/components/site-header.tsx` and `site-header.styles.ts`, the authenticated action/language-control groups.
-- **Why:** A production-preview check at 390×844 measured a 411 px document width, with the trailing language control beyond the viewport. The overflow existed before opening the create dialog and remained identical afterward; the dialog itself stayed within the viewport.
-- **Additional evidence:** The workspace status-decoration browser check at 390×844 in Hebrew measured a 399 px document width with both the original heading classes and the decorated heading. The RTL overflow therefore also needs coverage independently of the workspace decoration.
-- **Possible direction:** Let action groups wrap or adapt their layout at narrow widths while keeping account, Add job, export, theme, and language controls discoverable. Do not conceal the issue with document-wide overflow clipping.
-- **Guardrails:** Preserve action order, accessible labels, keyboard focus, touch targets, theme/language behavior, and all four locales including Hebrew RTL. Add narrow-viewport browser assertions.
 
 ### Investigate measured frontend bundle costs
 

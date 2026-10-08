@@ -1,4 +1,5 @@
 import { type LucideIcon, Monitor, Moon, Sun } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { writeLocalUserPreferences } from "../../lib/user-preferences";
@@ -35,10 +36,11 @@ export function useThemePreference() {
 }
 
 export function useThemeSelector() {
+  const { t } = useTranslation();
   const { theme, changeTheme } = useThemePreference();
   const currentOption = themeOptions.find((option) => option.value === theme) ?? themeOptions[1];
   const CurrentIcon = currentOption.icon;
   const handleChange = () => changeTheme(nextThemePreference(theme));
-  const label = `Theme: ${currentOption.label}. Change theme`;
+  const label = t("common.selectors.theme", { theme: t(`settings.theme.${currentOption.value}`) });
   return { CurrentIcon, handleChange, label };
 }

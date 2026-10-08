@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { beforeEach, expect, test, vi } from "vitest";
-import { i18n, initializeI18n } from "../../i18n/i18n";
+import { changeLocale, i18n, initializeI18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { store } from "../../store";
@@ -39,6 +39,20 @@ test("uses a compact visual label with an unambiguous accessible name", () => {
   );
 
   expect(screen.getByRole("button", { name: "Language: English. Change language" })).toHaveTextContent("EN");
+});
+
+test.each([
+  ["ru", "Язык: Русский. Изменить язык"],
+  ["uk", "Мова: Українська. Змінити мову"],
+  ["he", "שפה: עברית. שינוי שפה"],
+] as const)("localizes the language control in %s", async (locale, label) => {
+  await changeLocale(locale);
+  render(
+    <Provider store={store}>
+      <LanguageSelector />
+    </Provider>,
+  );
+  expect(screen.getByRole("button")).toHaveAccessibleName(label);
 });
 
 test("selects a locale from the language menu", async () => {

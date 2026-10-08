@@ -166,7 +166,7 @@ test("opens settings from the header with keyboard access and localized reloads"
   await expect(page.getByRole("heading", { name: "הגדרות", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "הגדרות", exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "שפה", exact: true })).toContainText("עברית");
-  await page.getByRole("button", { name: "Language: עברית. Change language" }).click();
+  await page.getByRole("button", { name: "שפה: עברית. שינוי שפה" }).click();
   await page.getByRole("menuitem", { name: "אנגלית" }).click();
   await expect(page.getByRole("combobox", { name: "Language", exact: true })).toContainText("English");
 });
@@ -230,9 +230,9 @@ test("switches and persists the selected browser language", async ({ page }) => 
   await page.goto("/about");
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
   await page.getByRole("menuitem", { name: "Russian" }).click();
-  await page.getByRole("button", { name: "Language: Русский. Change language" }).click();
+  await page.getByRole("button", { name: "Язык: Русский. Изменить язык" }).click();
   await page.getByRole("menuitem", { name: "Украинский" }).click();
-  await page.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await page.getByRole("button", { name: "Мова: Українська. Змінити мову" }).click();
   await page.getByRole("menuitem", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
@@ -241,7 +241,7 @@ test("switches and persists the selected browser language", async ({ page }) => 
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("button", { name: "Language: עברית. Change language" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "שפה: עברית. שינוי שפה" })).toBeVisible();
 });
 
 test("shows a public not found page for unknown routes", async ({ page }) => {
@@ -345,14 +345,14 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
   await expect(welcome).toHaveAccessibleName("Добро пожаловать в Xenia Way");
   await expect(welcome.getByRole("heading", { name: "Добро пожаловать в Xenia Way" })).toBeVisible();
-  await welcome.getByRole("button", { name: "Language: Русский. Change language" }).click();
+  await welcome.getByRole("button", { name: "Язык: Русский. Изменить язык" }).click();
   await page.getByRole("menuitem", { name: "Украинский" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
-  await welcome.getByRole("button", { name: "Language: Українська. Change language" }).click();
+  await welcome.getByRole("button", { name: "Мова: Українська. Змінити мову" }).click();
   await page.getByRole("menuitem", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(welcome).toHaveAccessibleName("ברוכים הבאים ל־Xenia Way");
-  await welcome.getByRole("button", { name: "Language: עברית. Change language" }).click();
+  await welcome.getByRole("button", { name: "שפה: עברית. שינוי שפה" }).click();
   await page.getByRole("menuitem", { name: "אנגלית" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
@@ -548,9 +548,9 @@ test("syncs browser preferences with each authenticated account", async ({ page 
   await welcome.getByRole("button", { name: "Перейти до дошки" }).click();
   await expect(page.getByRole("heading", { name: "Вакансії" })).toBeVisible();
 
-  const accountATheme = page.getByRole("button", { name: "Theme: Dark. Change theme" });
+  const accountATheme = page.getByRole("button", { name: "Тема: Темна. Змінити тему" });
   const accountALanguage = page.getByRole("banner").getByRole("button", {
-    name: "Language: Українська. Change language",
+    name: "Мова: Українська. Змінити мову",
   });
   await expect(accountATheme).toBeEnabled();
   await expect(accountALanguage).toBeEnabled();
@@ -617,10 +617,10 @@ test("syncs browser preferences with each authenticated account", async ({ page 
   await accountBLanguageOption.click();
   await accountBLanguageUpdate;
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
-  await expect(page.getByRole("button", { name: "Theme: System. Change theme" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Тема: Системная. Изменить тему" })).toBeVisible();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
-  await expect(page.getByRole("button", { name: "Theme: System. Change theme" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Тема: Системная. Изменить тему" })).toBeVisible();
 
   await page.getByRole("button", { name: "Выйти" }).click();
   await page.goto("/login");

@@ -43,6 +43,10 @@ export const en = {
     update: "A new version is available. Finish any edits, then close all app tabs and reopen online to update.",
   },
   common: {
+    selectors: {
+      theme: "Theme: {{theme}}. Change theme",
+      language: "Language: {{language}}. Change language",
+    },
     language: {
       label: "Language",
       en: "English",
