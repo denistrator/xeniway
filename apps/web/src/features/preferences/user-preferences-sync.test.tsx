@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import type { UserPreferences } from "@xeniway/shared";
+import type { ReactNode } from "react";
 import { Provider } from "react-redux";
 import { beforeEach, expect, test, vi } from "vitest";
 import { i18n, initializeI18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences, useUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { setTheme, store } from "../../store";
-import { UserPreferencesSync } from "./user-preferences-sync.view";
+import { useUserPreferencesSync } from "./user-preferences-sync.model";
 
 vi.mock("../../lib/queries", () => ({
   useCurrentUser: vi.fn(),
@@ -28,13 +29,14 @@ const preferences = (overrides: Partial<UserPreferences> = {}): UserPreferences 
 
 function renderSync() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <UserPreferencesSync />
-      </QueryClientProvider>
-    </Provider>,
-  );
+  function wrapper({ children }: { children: ReactNode }) {
+    return (
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </Provider>
+    );
+  }
+  return renderHook(useUserPreferencesSync, { wrapper });
 }
 
 beforeEach(async () => {

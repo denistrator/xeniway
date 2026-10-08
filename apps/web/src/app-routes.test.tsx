@@ -24,7 +24,7 @@ vi.mock("./pages/about-page.view", () => ({
 }));
 vi.mock("./components/site-header.view", () => ({ SiteHeader: () => null }));
 vi.mock("./features/offline/offline-controls.view", () => ({ OfflineControls: () => null }));
-vi.mock("./features/preferences/user-preferences-sync.view", () => ({ UserPreferencesSync: () => null }));
+vi.mock("./features/preferences/user-preferences-sync.model", () => ({ useUserPreferencesSync: () => undefined }));
 vi.mock("./lib/queries", () => ({
   useCurrentUser: () => ({ data: null }),
   useUserPreferences: () => ({ isPending: false }),

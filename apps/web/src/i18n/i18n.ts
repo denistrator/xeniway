@@ -35,6 +35,11 @@ async function ensureLocaleResources(locale: SupportedLocale) {
   i18n.addResourceBundle(locale, "translation", resources.default, true, true);
 }
 
+function applyDocumentLocale(locale: SupportedLocale) {
+  document.documentElement.lang = locale;
+  document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
+}
+
 export async function initializeI18n() {
   const locale = resolveLocale(readLocalUserPreferences().language, window.navigator.language);
 
@@ -51,13 +56,13 @@ export async function initializeI18n() {
 
   await ensureLocaleResources(locale);
   await i18n.changeLanguage(locale);
-  document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
+  applyDocumentLocale(locale);
 }
 
 export async function changeLocale(locale: SupportedLocale) {
   await ensureLocaleResources(locale);
   await i18n.changeLanguage(locale);
-  document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
+  applyDocumentLocale(locale);
   writeLocalUserPreferences({ language: locale });
 }
 

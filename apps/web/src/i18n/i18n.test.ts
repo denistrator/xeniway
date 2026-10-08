@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { readLocalUserPreferences } from "../lib/user-preferences";
+import { readLocalUserPreferences, writeLocalUserPreferences } from "../lib/user-preferences";
 import { changeLocale, i18n, initializeI18n, languageStorageKey, resolveLocale } from "./i18n";
 
 beforeEach(async () => {
@@ -30,6 +30,24 @@ test("loads and stores an explicitly selected locale", async () => {
   expect(window.localStorage.getItem(languageStorageKey)).toContain('"language":"uk"');
   expect(readLocalUserPreferences().language).toBe("uk");
 });
+
+test.each(["en", "ru", "uk", "he"] as const)("initializes document language and direction for %s", async (locale) => {
+  writeLocalUserPreferences({ language: locale });
+  await initializeI18n();
+
+  expect(document.documentElement.lang).toBe(locale);
+  expect(document.documentElement.dir).toBe(locale === "he" ? "rtl" : "ltr");
+});
+
+test.each(["en", "ru", "uk", "he"] as const)(
+  "updates document language and direction when selecting %s",
+  async (locale) => {
+    await changeLocale(locale);
+
+    expect(document.documentElement.lang).toBe(locale);
+    expect(document.documentElement.dir).toBe(locale === "he" ? "rtl" : "ltr");
+  },
+);
 
 test("loads the Hebrew dictionary and applies right-to-left direction", async () => {
   await changeLocale("he");
