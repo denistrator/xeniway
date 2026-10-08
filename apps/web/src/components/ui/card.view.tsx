@@ -1,31 +1,24 @@
-import * as React from "react";
+import type { ComponentPropsWithRef } from "react";
 import { cardStyles } from "./card.styles";
 
 const { root, header, title, description, content } = cardStyles();
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={root({ className })} {...props} />
-));
-Card.displayName = "Card";
+export function Card({ className, ...props }: ComponentPropsWithRef<"div">) {
+  return <div {...props} className={root({ className })} />;
+}
 
-const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={header({ className })} {...props} />,
-);
-CardHeader.displayName = "CardHeader";
+export function CardHeader({ className, ...props }: ComponentPropsWithRef<"div">) {
+  return <div {...props} className={header({ className })} />;
+}
 
-const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => <h2 ref={ref} className={title({ className })} {...props} />,
-);
-CardTitle.displayName = "CardTitle";
+export function CardTitle({ className, ...props }: ComponentPropsWithRef<"h2">) {
+  return <h2 {...props} className={title({ className })} />;
+}
 
-const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => <p ref={ref} className={description({ className })} {...props} />,
-);
-CardDescription.displayName = "CardDescription";
+export function CardDescription({ className, ...props }: ComponentPropsWithRef<"p">) {
+  return <p {...props} className={description({ className })} />;
+}
 
-const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={content({ className })} {...props} />,
-);
-CardContent.displayName = "CardContent";
-
-export { Card, CardContent, CardDescription, CardHeader, CardTitle };
+export function CardContent({ className, ...props }: ComponentPropsWithRef<"div">) {
+  return <div {...props} className={content({ className })} />;
+}
