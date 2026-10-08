@@ -11,7 +11,7 @@ function navigationLinkClassName({ isActive }: { isActive: boolean }) {
   return siteHeaderStyles({ active: isActive }).navigationLink();
 }
 
-const navigationLinks = [
+const navigationLinksPlain = [
   { to: "/", labelKey: "navigation.applications", authOnly: true, end: true },
   { to: "/blacklist", labelKey: "navigation.blacklist", authOnly: true, end: false },
   { to: "/archive", labelKey: "navigation.archive", authOnly: true, end: false },
@@ -28,6 +28,9 @@ export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
   const access = useOfflineAccess();
   const readAccountId = access.readAccountId ?? (access.canReadRemote ? user.data?.id : null);
   const { logout } = useAuthMutations();
+  const navigationLinks = navigationLinksPlain
+      .filter(({ authOnly }) => !authOnly || Boolean(readAccountId))
+      .map(({ labelKey, ...link }) => ({ ...link, label: t(labelKey) }));
 
   async function handleLogout() {
     await logout.mutateAsync();
@@ -47,9 +50,7 @@ export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
     handleLogout,
     handleCreate,
     navigationLinkClassName,
-    navigationLinks: navigationLinks
-      .filter(({ authOnly }) => !authOnly || Boolean(readAccountId))
-      .map(({ labelKey, ...link }) => ({ ...link, label: t(labelKey) })),
+    navigationLinks,
     navigationLabel: t("accessibility.workspaceNavigation"),
     logoutLabel: logout.isPending ? t("common.actions.signingOut") : t("common.actions.logout"),
     addJobLabel: t("common.actions.addJob"),
