@@ -4,13 +4,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
-### Investigate frontend full-suite timing failures
-
-- **Where:** `apps/web/src/components/layout.test.tsx` and `features/applications/application-workspace/page/application-workspace-page.test.tsx`.
-- **Evidence:** During the view/model naming migration, the full web suite timed out waiting for the first lazy create dialog and during workspace navigation. Both files passed together in isolation (10 tests), and the unchanged full suite passed on a sequential rerun (568 tests). The lazy-dialog timeout also appeared before the naming migration.
-- **Possible direction:** Measure cold lazy-module loading and worker contention before changing test scheduling or synchronization. Confirm that imported resources and async editor transitions are settled deliberately; do not mask an unresolved race with blanket timeout increases.
-- **Guardrails:** Preserve click-only form loading, account-keyed retained host state, dialog focus return, workspace navigation, and all existing behavioral assertions. This entry does not authorize changing production behavior.
-
 ### Full offline synchronization
 
 - **Area:** Offline application writes beyond read-only downloads.

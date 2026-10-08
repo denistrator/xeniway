@@ -9,14 +9,31 @@ import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
 import { Layout } from "./layout.view";
 
-const mocks = vi.hoisted(() => ({
-  currentUser: vi.fn(),
-  mutationHook: vi.fn(),
-  create: vi.fn(),
-  createMutation: null as UseMutationResult<unknown, Error, CreateApplicationInput> | null,
-}));
+const mocks = vi.hoisted(() => {
+  let resolveHostLoaded: () => void = () => undefined;
+  const hostLoaded = new Promise<void>((resolve) => {
+    resolveHostLoaded = resolve;
+  });
+  return {
+    currentUser: vi.fn(),
+    mutationHook: vi.fn(),
+    create: vi.fn(),
+    createMutation: null as UseMutationResult<unknown, Error, CreateApplicationInput> | null,
+    hostLoaded,
+    resolveHostLoaded,
+    hostReady: Promise.resolve(),
+    hostImport: vi.fn(),
+  };
+});
 
 vi.mock("./site-header.view", () => ({ SiteHeader: () => null }));
+vi.mock("../features/applications/form/job-manager-host.view", async (importOriginal) => {
+  mocks.hostImport();
+  await mocks.hostReady;
+  const module = await importOriginal<typeof import("../features/applications/form/job-manager-host.view")>();
+  mocks.resolveHostLoaded();
+  return module;
+});
 vi.mock("../lib/queries", async () => {
   const { useMutation } = await import("@tanstack/react-query");
   return {
@@ -43,14 +60,28 @@ beforeEach(async () => {
 });
 
 test("does not mount the form host before the first authenticated open", async () => {
+  let releaseHostImport: () => void = () => undefined;
+  mocks.hostReady = new Promise<void>((resolve) => {
+    releaseHostImport = resolve;
+  });
   renderLayout();
   await settleImports();
 
+  expect(mocks.hostImport).not.toHaveBeenCalled();
   expect(mocks.mutationHook).not.toHaveBeenCalled();
   expect(screen.queryByRole("dialog")).toBeNull();
 
-  act(() => store.dispatch(openCreateDrawer()));
-  expect(await screen.findByRole("dialog")).toBeVisible();
+  try {
+    act(() => store.dispatch(openCreateDrawer()));
+    await vi.waitFor(() => expect(mocks.hostImport).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("status")).toHaveTextContent("Loading…");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(mocks.mutationHook).not.toHaveBeenCalled();
+  } finally {
+    releaseHostImport();
+  }
+  await settleHost();
+  expect(screen.getByRole("dialog")).toBeVisible();
 });
 
 test("keeps pending and failed creation state when the dialog closes and reopens", async () => {
@@ -63,7 +94,8 @@ test("keeps pending and failed creation state when the dialog closes and reopens
   );
   renderLayout();
   act(() => store.dispatch(openCreateDrawer()));
-  await screen.findByRole("dialog");
+  await settleHost();
+  expect(screen.getByRole("dialog")).toBeVisible();
   let creation: Promise<unknown> | undefined;
   act(() => {
     creation = mocks.createMutation?.mutateAsync({ company: "Example", position: "Engineer", status: "saved" });
@@ -89,7 +121,8 @@ test("keeps pending and failed creation state when the dialog closes and reopens
 test("resets retained host state on account changes and logout", async () => {
   const view = renderLayout();
   act(() => store.dispatch(openCreateDrawer()));
-  await screen.findByRole("dialog");
+  await settleHost();
+  expect(screen.getByRole("dialog")).toBeVisible();
   act(() => store.dispatch(closeDrawer()));
 
   mocks.mutationHook.mockClear();
@@ -142,5 +175,11 @@ function renderLayout() {
 async function settleImports() {
   await act(async () => {
     await vi.dynamicImportSettled();
+  });
+}
+
+async function settleHost() {
+  await act(async () => {
+    await mocks.hostLoaded;
   });
 }

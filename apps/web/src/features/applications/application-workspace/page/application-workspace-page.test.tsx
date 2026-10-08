@@ -117,7 +117,10 @@ test("navigates through columns and wraps with fresh editor state and destinatio
 
   expect(await screen.findByRole("heading", { name: "Northwind" })).toHaveFocus();
   await user.click(screen.getByRole("button", { name: "About, Edit" }));
-  await user.type(screen.getByRole("textbox", { name: "About" }), "First application draft");
+  const about = screen.getByRole("textbox", { name: "About" });
+  await user.click(about);
+  await user.paste("First application draft");
+  expect(about).toHaveValue("First application draft");
   await user.click(screen.getByRole("button", { name: "Next application" }));
   expect(await screen.findByRole("heading", { name: "Contoso" })).toHaveFocus();
   expect(screen.queryByRole("textbox", { name: "About" })).toBeNull();
