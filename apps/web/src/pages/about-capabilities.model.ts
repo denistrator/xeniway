@@ -5,6 +5,7 @@ export function useAboutCapabilities() {
   const { t } = useTranslation();
   return {
     title: t("about.capabilitiesTitle"),
+    description: t("about.capabilitiesDescription"),
     capabilities: capabilities.map((id, index) => ({
       id,
       title: t(`about.capability${index + 1}Title`),

@@ -9,6 +9,7 @@ export const aboutSecurityStyles = tv({
     titleGroup: "",
     ownership: "",
     credentials: "",
+    device: "",
     accessibility: "",
   },
 });

@@ -33,18 +33,14 @@ function StackBlock({ title, description, items }: StackBlockProps) {
 export function AboutStack() {
   const view = useAboutStack();
   return (
-    <section aria-labelledby="stack-title" className={styles.root()}>
-      <div className={styles.intro()}>
-        <h2 id="stack-title" className={styles.heading()}>
-          {view.title}
-        </h2>
-        <p className={styles.description()}>{view.description}</p>
-      </div>
+    <details className={styles.root()}>
+      <summary className={styles.summary()}>{view.title}</summary>
+      <p className={styles.description()}>{view.description}</p>
       <div className={styles.blocks()}>
         {view.blocks.map((block) => (
           <StackBlock key={block.id} title={block.title} description={block.description} items={block.items} />
         ))}
       </div>
-    </section>
+    </details>
   );
 }

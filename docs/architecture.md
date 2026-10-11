@@ -104,6 +104,8 @@ The UI language is owned by i18next/react-i18next, not Redux. English initialize
 
 ## Request lifecycle
 
+The public, lazy-loaded About page is a candidate-focused guide in all four locales. It explains flexible status choices, the application workspace, distinct archive/blacklist semantics, offline and export limits, and device privacy. Product content precedes an initially closed native technology disclosure, which supports keyboard activation without custom state.
+
 `App.model.ts` owns theme synchronization and auth-expiry handling as private `useThemeSync` and `useAuthFailureHandler` hooks, without separate modules or renderless wrappers. The auth hook listens for `xeniway:auth-expired`, removes session, CSRF, application, and account-preference query caches without clearing browser preferences, and unregisters the listener on unmount.
 
 1. The browser acquires a CSRF token from `GET /api/auth/csrf`; the server creates an anonymous session when needed.

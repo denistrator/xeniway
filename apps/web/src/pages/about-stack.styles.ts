@@ -10,9 +10,9 @@ export const aboutStackStyles = tv({
     icon: "shrink-0 text-accent",
     link: "underline decoration-accent/60 underline-offset-4 hover:decoration-accent",
     detail: "break-words text-sm leading-6 text-muted",
-    root: "space-y-5",
-    intro: "max-w-2xl",
-    heading: "font-display text-3xl font-bold tracking-tight text-ink",
+    root: "space-y-5 border-t border-line pt-6",
+    summary:
+      "cursor-pointer rounded-lg font-display text-2xl font-bold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
     description: "mt-3 leading-7 text-muted",
     blocks: "grid gap-5 lg:grid-cols-2",
   },

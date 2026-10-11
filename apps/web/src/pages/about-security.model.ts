@@ -6,6 +6,7 @@ export function useAboutSecurity() {
     securityTitle: t("about.securityTitle"),
     securityOwnership: t("about.securityOwnership"),
     securityCredentials: t("about.securityCredentials"),
+    securityDevice: t("about.securityDevice"),
     securityAccessibility: t("about.securityAccessibility"),
   };
 }

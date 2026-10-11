@@ -373,41 +373,87 @@ export const en = {
     about: "About Xenia Way",
   },
   about: {
-    heroTitle: "A clear workspace for a complicated job search.",
+    heroTitle: "Your job search, with the details intact.",
     heroDescription:
-      "Xenia Way helps candidates keep track of every conversation with a potential employer, from the first saved opportunity to the final outcome. It gives each application a place, a status, useful context, and a next step.",
-    capabilitiesTitle: "Everything needed to keep momentum.",
-    stackTitle: "A modern frontend and a focused API working together.",
+      "Keep applications, employer conversations, and next steps in one place. From a saved opportunity to a final outcome, each application has a workspace for the details you need.",
+    capabilitiesTitle: "One workspace for each opportunity",
+    capabilitiesDescription:
+      "Open an application to find its details, prepare for conversations, and keep a record of what happened.",
+    stackTitle: "Built with",
     stackDescription:
-      "The browser and server share their contracts, so validation and response shapes stay consistent from the form to the database.",
-    frontend: "Frontend",
-    frontendDescription: "The candidate-facing React workspace.",
-    backend: "Backend",
-    backendDescription: "The authenticated API and persistence layer.",
-    securityTitle: "Your search stays yours.",
+      "A React workspace and a Bun API share validation rules and data contracts. Here are the tools behind the application.",
+    frontend: "Browser",
+    frontendDescription: "Interface, local preferences, and server-data queries.",
+    backend: "Server",
+    backendDescription: "Account access, validation, email, and data storage.",
+    securityTitle: "Privacy includes your device",
     securityOwnership:
-      "Every application belongs to an authenticated user. Repository operations are scoped by that owner, so one candidate cannot read or change another candidate’s records.",
+      "Your application records belong to your signed-in account. The API checks ownership when it reads or changes them.",
     securityCredentials:
-      "Passwords are hashed with Argon2id. Sessions use HttpOnly cookies, mutations require a server-issued CSRF token, and Redis protects authentication and password-reset requests from repeated attempts without storing application data.",
+      "Passwords are hashed with Argon2id. Sessions use HttpOnly cookies, changes require CSRF protection, and authentication requests have rate limits.",
+    securityDevice:
+      "Offline downloads store private records in this browser profile. Prepare them only on a device you trust, and remove them in Settings when you no longer need them. Exported files are also your responsibility to keep private.",
     securityAccessibility:
-      "The interface is designed for keyboard access, responsive layouts, visible focus, managed dialogs, live async states, and reduced motion preferences.",
-    capability1Title: "Track every opportunity",
+      "Use keyboard controls, visible focus, and accessible dialogs across desktop and mobile. Choose light, dark, or system appearance and English, Russian, Ukrainian, or Hebrew. Hebrew uses a right-to-left layout.",
+    workflow: {
+      title: "A next step, not a fixed path",
+      description: "Start wherever you are. These are ways to use the workspace, not steps you must complete in order.",
+      saveTitle: "Save an opportunity",
+      saveText: "Record a role you want to consider, with its job link and the details that matter.",
+      applyTitle: "Track the application",
+      applyText:
+        "Update its status as the conversation changes. Search, filter, and reorder the board to keep relevant applications in view.",
+      prepareTitle: "Prepare and follow up",
+      prepareText: "Keep research, contacts, activity notes, and follow-ups in the same workspace.",
+      decideTitle: "Record the outcome",
+      decideText:
+        "Record an offer, rejection, or withdrawal. Keep the history even when an application leaves your active board.",
+      statuses: "Six statuses, chosen by you",
+      note: "Statuses describe the current situation. They are not a required sequence, and archive and blacklist are separate choices.",
+    },
+    records: {
+      title: "Keep, set aside, or exclude",
+      description: "Status tells you where an application stands. Board membership tells you where to keep it.",
+      activeTitle: "Active board",
+      activeText:
+        "Keep the opportunities you are working on. Search them, filter status columns, and change their order with drag-and-drop or keyboard controls.",
+      archiveTitle: "Archive",
+      archiveText:
+        "Set an application aside without losing its status or workspace. Restore it later, or permanently delete it from the archive.",
+      blacklistTitle: "Blacklist",
+      blacklistText:
+        "Exclude an application you do not want to pursue and optionally record a reason. Blacklist is not an application status or an automatic employer-wide block.",
+      accessTitle: "Your records, beyond the current session",
+      accessDescription:
+        "Offline downloads, installation, and export do different jobs. Choose what you need in Settings.",
+      offlineTitle: "Read offline",
+      offlineText:
+        "Prepare all three boards and their workspaces in Settings for seven days of access in this browser profile. Refresh before going offline. Offline access is read-only: edits and automatic synchronization are not supported.",
+      installTitle: "Install the app",
+      installText:
+        "Use a supported browser's installation or Add to Home Screen action. Installation does not download your private records; prepare offline data separately.",
+      exportTitle: "Download your data",
+      exportText:
+        "With a verified online session, export a ZIP containing application/preparation, contact, and follow-up CSV files from all three boards. Activity history and salary are not included.",
+    },
+    capability1Title: "Application details",
     capability1Text:
-      "Capture the company, position, location, salary, job link, notes, and important dates for each application.",
-    capability2Title: "See your progress",
-    capability2Text: "Move applications through six stages: Saved, Applied, Interview, Offer, Rejected, and Withdrawn.",
-    capability3Title: "Stay focused",
+      "Keep the company, role, location, salary, job link, description, dates, and notes together. Edit fields directly in the workspace.",
+    capability2Title: "Research and preparation",
+    capability2Text:
+      "Save company research and interview preparation beside the application, so you can return to your notes before a conversation.",
+    capability3Title: "People and conversations",
     capability3Text:
-      "Search your opportunities, filter visible status columns, and reorder work with drag-and-drop or keyboard controls.",
-    capability4Title: "Keep a clean history",
+      "Keep contact details with the relevant application. Record who you spoke to without searching through unrelated notes.",
+    capability4Title: "Follow-ups",
     capability4Text:
-      "Archive finished opportunities, restore them later, or permanently delete archived records when they are no longer useful.",
-    capability5Title: "Avoid dead ends",
+      "Record follow-ups with due dates and mark them complete. Keep the next action beside the application it belongs to.",
+    capability5Title: "Activity history",
     capability5Text:
-      "Blacklist employers you do not want to pursue and leave a reason so the decision remains clear later.",
-    capability6Title: "Work comfortably",
+      "Review automatically recorded changes and add your own dated notes, calls, emails, and interview events. Edit or delete your own events; system history stays read-only.",
+    capability6Title: "Move between applications",
     capability6Text:
-      "Use the responsive workspace in light, dark, or system theme with the same workflows across desktop and mobile.",
+      "Use previous and next controls to browse applications across status columns. Your preparation, contacts, and follow-ups stay with each record.",
     stack: {
       react: "Component-based interface and shared application workflows.",
       typescript: "Typed UI, state, API boundaries, and shared data models.",

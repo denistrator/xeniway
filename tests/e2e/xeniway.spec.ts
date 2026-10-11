@@ -175,7 +175,33 @@ test("shows the about page without authentication", async ({ page }) => {
   await page.goto("/about");
 
   await expect(page).toHaveURL(/\/about$/);
-  await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your job search, with the details intact." })).toBeVisible();
+  await expect(page.getByRole("region", { name: "A next step, not a fixed path" })).toBeVisible();
+  await expect(page.getByText(/Offline access is read-only/)).toBeVisible();
+  const technology = page.getByText("Built with", { exact: true });
+  await technology.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("link", { name: "React", exact: true })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("link", { name: "React", exact: true })).not.toBeVisible();
+});
+
+test("keeps the public About guide localized after a Hebrew reload", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem("userPreferences", JSON.stringify({ language: "he", theme: "light" }));
+  });
+  await page.goto("/about");
+  const heading = page.getByRole("heading", { level: 1, name: "חיפוש העבודה שלכם, עם כל הפרטים החשובים." });
+  await expect(heading).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "he");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await page.reload();
+  await expect(heading).toBeVisible();
+  const technology = page.getByText("הטכנולוגיות שמאחורי האפליקציה", { exact: true });
+  await technology.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("link", { name: "React", exact: true })).toBeVisible();
 });
 
 for (const authenticated of [false, true]) {
@@ -207,11 +233,11 @@ for (const authenticated of [false, true]) {
     expect(sessionRequests).toBe(1);
 
     await page.getByRole("link", { name: "About", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your job search, with the details intact." })).toBeVisible();
     expect(sessionRequests).toBe(1);
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your job search, with the details intact." })).toBeVisible();
     await expect(
       page.getByRole(authenticated ? "button" : "link", { name: authenticated ? "Logout" : "Log in", exact: true }),
     ).toBeVisible();
@@ -236,7 +262,7 @@ test("switches and persists the selected browser language", async ({ page }) => 
   await page.getByRole("menuitem", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  await expect(page.getByRole("heading", { name: "מרחב עבודה ברור לחיפוש עבודה מורכב." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "חיפוש העבודה שלכם, עם כל הפרטים החשובים." })).toBeVisible();
 
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
@@ -645,7 +671,7 @@ test("syncs browser preferences with each authenticated account", async ({ page 
 
 test("has no automated accessibility violations across key workflows", async ({ page }) => {
   await page.goto("/about");
-  await expect(page.getByRole("heading", { name: "A clear workspace for a complicated job search." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your job search, with the details intact." })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   await page.goto("/login");

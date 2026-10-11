@@ -11,6 +11,7 @@ export function AboutCapabilities() {
         <h2 id="capabilities-title" className={styles.heading()}>
           {view.title}
         </h2>
+        <p className={styles.description()}>{view.description}</p>
       </div>
       <div className={styles.items()}>
         {view.capabilities.map((capability) => (

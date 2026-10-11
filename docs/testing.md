@@ -41,6 +41,8 @@ CI pins Bun 1.4.0 and matches Compose's PostgreSQL 16.15 and Redis 7.4.9. Servic
 
 ## Test layers and coverage
 
+`apps/web/src/pages/about-page.test.tsx` covers the public product guide, six canonical status labels, data-access limits, localized headings, and aligned About dictionaries. Browser coverage checks anonymous access, keyboard opening/closing of the technology disclosure, and Hebrew language/direction after reload at a mobile viewport. Do not add layout or class assertions; inspect the page visually in both directions.
+
 | Layer | Location | Main coverage |
 | --- | --- | --- |
 | Repository scripts | `scripts/*.test.ts` | Public-content checks, CI sanitization, preview supervision, SEO/favicon and PWA metadata/assets |
