@@ -34,6 +34,8 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
           event={activity.editedEvent}
           onSubmit={activity.save}
           onCancel={activity.closeForm}
+          onDirtyChange={activity.setHasUnsavedChanges}
+          onSaveRequest={activity.setSaveRequest}
         />
       )}
       <div className={styles.timeline()} aria-live="polite">
@@ -54,6 +56,18 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
           onNo={activity.cancelDelete}
           yesDisabled={activity.deleteDisabled}
           returnFocusRef={activity.addButton}
+        />
+      )}
+      {activity.hasWarning && (
+        <ConfirmationModal
+          title={activity.unsavedChangesTitle}
+          text={activity.unsavedChangesText}
+          yesLabel={activity.saveChangesLabel}
+          noLabel={activity.discardChangesLabel}
+          onYes={activity.requestSave}
+          onNo={activity.discardWarning}
+          dismissAction={activity.dismissWarning}
+          returnFocusRef={activity.warningReturnFocus}
         />
       )}
     </section>

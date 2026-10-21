@@ -108,14 +108,16 @@ test("contacts edit, cancel, confirm removal, and announce server errors", async
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not remove contact.");
 });
 
-test("closing a contact removal confirmation while editing restores focus to its trigger", async () => {
+test("closing a contact removal confirmation preserves the active editor", async () => {
   const user = userEvent.setup();
   renderApplicationWorkspace({ contacts: [workspaceContact] });
   await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  const name = screen.getByRole("textbox", { name: "Name" });
+  await user.type(name, " draft");
   await user.click(screen.getByRole("button", { name: "Remove Ari Cole" }));
-  expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
+  expect(name).toHaveValue("Ari Cole draft");
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "No" }));
-  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove Ari Cole" })));
+  expect(name).toHaveValue("Ari Cole draft");
 });
 
 test("contacts save edits through the owned contact endpoint", async () => {
@@ -135,4 +137,50 @@ test("contacts save edits through the owned contact endpoint", async () => {
   expect(fetcher.mock.calls[0][0]).toContain("/applications/3/contacts/7");
   expect(fetcher.mock.calls[0][1].method).toBe("PATCH");
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({ role: "Hiring manager" });
+});
+
+test("locks a contact editor while its save is pending", async () => {
+  const user = userEvent.setup();
+  let resolveSave: ((response: Response) => void) | undefined;
+  const fetcher = vi.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        resolveSave = resolve;
+      }),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace({ contacts: [workspaceContact] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  const role = screen.getByRole("textbox", { name: "Role" });
+  await user.clear(role);
+  await user.type(role, "Hiring manager");
+  await user.click(screen.getByRole("button", { name: "Save contact" }));
+
+  await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+  expect(role).toHaveAttribute("readonly");
+  resolveSave?.(new Response(JSON.stringify({ data: { contact: workspaceContact } }), { status: 200 }));
+});
+
+test("asks before replacing a dirty contact editor", async () => {
+  const user = userEvent.setup();
+  const secondContact = { ...workspaceContact, id: 8, name: "Morgan Lee", role: "Coordinator" };
+  renderApplicationWorkspace({ contacts: [workspaceContact, secondContact] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  const role = screen.getByRole("textbox", { name: "Role" });
+  await user.clear(role);
+  await user.type(role, "Draft recruiter");
+  await user.click(screen.getByRole("button", { name: "Edit Morgan Lee" }));
+
+  const warning = screen.getByRole("alertdialog", { name: "Save changes before leaving?" });
+  expect(warning).toBeVisible();
+  expect(role).toHaveValue("Draft recruiter");
+  await user.click(within(warning).getByRole("button", { name: "Keep editing" }));
+  expect(role).toHaveValue("Draft recruiter");
+  expect(role).toHaveFocus();
+
+  await user.click(screen.getByRole("button", { name: "Edit Morgan Lee" }));
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+  expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Morgan Lee");
 });

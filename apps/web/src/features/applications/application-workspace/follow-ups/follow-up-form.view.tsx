@@ -22,7 +22,7 @@ export function FollowUpForm(props: FollowUpFormProps) {
             id={`${view.formId}-title`}
             ref={view.editor.titleRef}
             name="title"
-            readOnly={!view.canMutate}
+            readOnly={!view.canMutate || view.controller.pending}
             required
             maxLength={255}
             value={view.editor.draft.title}
@@ -41,7 +41,7 @@ export function FollowUpForm(props: FollowUpFormProps) {
             id={`${view.formId}-dueDate`}
             ref={view.editor.dateRef}
             name="dueDate"
-            readOnly={!view.canMutate}
+            readOnly={!view.canMutate || view.controller.pending}
             type="date"
             required
             value={view.editor.draft.dueDate}
@@ -60,7 +60,7 @@ export function FollowUpForm(props: FollowUpFormProps) {
         <textarea
           id={`${view.formId}-notes`}
           name="notes"
-          readOnly={!view.canMutate}
+          readOnly={!view.canMutate || view.controller.pending}
           rows={3}
           maxLength={10000}
           value={view.editor.draft.notes}

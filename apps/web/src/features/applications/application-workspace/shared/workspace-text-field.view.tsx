@@ -53,7 +53,7 @@ export function WorkspaceTextField(props: WorkspaceTextFieldProps) {
                 id={view.id}
                 ref={view.bindInputRef(ref)}
                 value={fieldProps.value ?? ""}
-                readOnly={!view.canMutate}
+                readOnly={!view.canMutate || view.controller.pending}
                 rows={5}
                 maxLength={10000}
                 onChange={view.bindChange(fieldProps)}

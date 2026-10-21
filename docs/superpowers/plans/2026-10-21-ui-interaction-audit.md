@@ -59,7 +59,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-01 · P1 · Dismissing the dirty-field warning discards the draft
 
-**Status:** D1 approved; compact-field repair implemented and awaiting user testing. Escape/backdrop/Keep editing preserve the draft and return to the current input without saving. Explicit discard alone clears the draft and completes a requested field switch; save retains the one-field mutation contract. Failed save and offline dismissal are covered. This does not resolve related-record switching (UI-02), pending-save races (UI-03), or route departure (UI-04).
+**Status:** D1 approved; compact-field repair implemented and accepted by the user. Escape/backdrop/Keep editing preserve the draft and return to the current input without saving. Explicit discard alone clears the draft and completes a requested field switch; save retains the one-field mutation contract. Failed save and offline dismissal are covered. Related-record switching is handled by UI-02 below; pending-save races (UI-03) and route departure (UI-04) remain pending.
 
 **Baseline evidence — Source, before repair:** `apps/web/src/features/applications/application-workspace/overview/application-unsaved-warning.view.tsx`, `overview/use-application-fields.ts`, and `apps/web/src/components/ui/confirmation-modal.model.ts`. The warning's negative action called `cancelWarning`, which reset the draft. Escape and backdrop used that same action. The regression reproduced the missing Location editor after Escape before implementation.
 
@@ -75,7 +75,7 @@ The audit combines source review of all route families and shared controls, revi
 
 **Impact:** Editing A, requesting deletion of B, and answering No can still lose A's draft. Switching activity/contact/follow-up targets has similar risks.
 
-**Plan:** Track dirty state before target replacement. Retain the existing editor while an unrelated deletion is only being considered.
+**Status:** Implemented; awaiting user testing. Contact, follow-up, and activity editors retain their draft while a switch warning is open. Escape/backdrop/Keep editing restore the focused draft input, Discard changes opens the requested editor, and Save changes submits before continuing. Deletion confirmation no longer closes an active contact/follow-up editor before confirmation; confirming deletion closes only an editor for the record that was deleted.
 
 **Acceptance:** Canceling deletion preserves the previous target and draft. Selecting another target offers an explicit keep/discard decision. Confirmed switches still isolate records correctly.
 

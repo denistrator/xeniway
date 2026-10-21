@@ -131,14 +131,49 @@ test("reports a failed deletion and returns focus without changing supplied even
 
 test("retains the draft after a failed save", async () => {
   const user = userEvent.setup();
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+  let rejectSave: ((error: Error) => void) | undefined;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      () =>
+        new Promise<Response>((_resolve, reject) => {
+          rejectSave = reject;
+        }),
+    ),
+  );
   renderActivity([manualEvent]);
   await user.click(screen.getByRole("button", { name: "Edit Recruiter context" }));
   await user.type(screen.getByRole("textbox", { name: "Title" }), " draft");
   await user.click(screen.getByRole("button", { name: "Save activity" }));
+  expect(screen.getByRole("textbox", { name: "Title" })).toHaveAttribute("readonly");
+  rejectSave?.(new Error("offline"));
   expect(await screen.findByRole("alert")).toHaveTextContent("Unable to save activity.");
   expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Recruiter context draft");
+  expect(screen.getByRole("textbox", { name: "Title" })).not.toHaveAttribute("readonly");
   expect(screen.getByRole("button", { name: "Save activity" })).toBeEnabled();
+});
+
+test("asks before replacing a dirty activity editor", async () => {
+  const user = userEvent.setup();
+  const secondEvent = { ...manualEvent, id: 2, title: "Interview notes" };
+  renderActivity([manualEvent, secondEvent]);
+
+  await user.click(screen.getByRole("button", { name: "Edit Recruiter context" }));
+  const title = screen.getByRole("textbox", { name: "Title" });
+  await user.clear(title);
+  await user.type(title, "Draft activity");
+  await user.click(screen.getByRole("button", { name: "Edit Interview notes" }));
+
+  const warning = screen.getByRole("alertdialog", { name: "Save changes before leaving?" });
+  expect(warning).toBeVisible();
+  expect(title).toHaveValue("Draft activity");
+  await user.click(within(warning).getByRole("button", { name: "Keep editing" }));
+  expect(title).toHaveValue("Draft activity");
+  expect(title).toHaveFocus();
+
+  await user.click(screen.getByRole("button", { name: "Edit Interview notes" }));
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+  expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Interview notes");
 });
 
 function renderActivity(events: ApplicationEvent[]) {

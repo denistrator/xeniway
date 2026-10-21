@@ -26,4 +26,6 @@ export interface ApplicationActivityFormProps {
   event?: ApplicationEvent;
   onSubmit: (input: ApplicationEventInput) => Promise<void>;
   onCancel: () => void;
+  onDirtyChange?(isDirty: boolean, focusedField: HTMLElement): void;
+  onSaveRequest?(save: () => void): void;
 }

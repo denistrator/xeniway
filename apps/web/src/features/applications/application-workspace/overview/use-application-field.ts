@@ -1,5 +1,5 @@
 import { type UpdateApplicationInput, updateApplicationInputSchema } from "@xeniway/shared";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getApiErrorKey } from "../../../../i18n/format";
 import { ApiRequestError } from "../../../../lib/api";
 import { useUpdateApplicationMutation } from "../../../../lib/queries";
@@ -48,6 +48,7 @@ export function useApplicationField(
   const [editing, setEditing] = useState(false);
   const [state, setState] = useState<"error" | "invalid" | null>(null);
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     setSavedValue(value);
@@ -71,6 +72,9 @@ export function useApplicationField(
   }
 
   async function save(valueToSave = draft) {
+    if (savingRef.current) {
+      return false;
+    }
     const trimmed = valueToSave.trim();
     const nextValue = nullableFields.has(field) ? trimmed || null : trimmed;
     const parsed = updateApplicationInputSchema.safeParse({ [field]: nextValue });
@@ -82,6 +86,7 @@ export function useApplicationField(
 
     setState(null);
     setErrorKey(null);
+    savingRef.current = true;
     try {
       const input = { [field]: parsed.data[field] } as UpdateApplicationInput;
       await mutation.mutateAsync({ id: applicationId, input });
@@ -94,6 +99,8 @@ export function useApplicationField(
       setState("error");
       setErrorKey(getApiErrorKey(error instanceof ApiRequestError ? error.code : "REQUEST_FAILED"));
       return false;
+    } finally {
+      savingRef.current = false;
     }
   }
 

@@ -51,6 +51,11 @@ export function useContactsSection({ applicationId, contacts }: ContactsSectionP
   const removeTitleLabel = t("applications.workspace.contacts.removeTitle");
   const yesLabel = t("common.actions.yes");
   const noLabel = t("common.actions.no");
+  const unsavedChangesTitle = t("applications.workspace.unsavedChangesTitle");
+  const unsavedChangesText = t("applications.workspace.unsavedRecordChangesText");
+  const saveChangesLabel = t("applications.workspace.actions.saveChanges");
+  const discardChangesLabel = t("applications.workspace.actions.discardChanges");
+  const keepEditingLabel = t("applications.workspace.actions.keepEditing");
   return {
     headingId,
     headingLabel,
@@ -71,6 +76,11 @@ export function useContactsSection({ applicationId, contacts }: ContactsSectionP
     confirmationText,
     yesLabel,
     noLabel,
+    unsavedChangesTitle,
+    unsavedChangesText,
+    saveChangesLabel,
+    discardChangesLabel,
+    dismissWarning: { label: keepEditingLabel, onDismiss: controller.warning.keepEditing },
     confirmDelete,
   };
 }

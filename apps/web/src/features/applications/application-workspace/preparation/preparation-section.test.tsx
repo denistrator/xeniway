@@ -79,7 +79,9 @@ test("preparation announces pending and failed saves without losing the draft", 
   await user.type(screen.getByRole("textbox", { name: "Company research" }), " update");
   await user.click(screen.getByRole("button", { name: "Save company research" }));
   expect(screen.getByText("Saving…")).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Company research" })).toHaveAttribute("readonly");
   reject(new Error("offline"));
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not save company research.");
   expect(screen.getByRole("textbox", { name: "Company research" })).toHaveValue("Existing research update");
+  expect(screen.getByRole("textbox", { name: "Company research" })).not.toHaveAttribute("readonly");
 });

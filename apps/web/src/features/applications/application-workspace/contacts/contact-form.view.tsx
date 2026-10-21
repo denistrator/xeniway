@@ -36,7 +36,7 @@ export function ContactForm(props: ContactFormProps) {
                 id={id}
                 ref={field === "name" ? view.editor.firstFieldRef : undefined}
                 name={field}
-                readOnly={!view.canMutate}
+                readOnly={!view.canMutate || view.controller.pending}
                 {...attributes}
                 required={required}
                 value={view.editor.draft[field]}
@@ -57,7 +57,7 @@ export function ContactForm(props: ContactFormProps) {
         <textarea
           id={`${view.formId}-notes`}
           name="notes"
-          readOnly={!view.canMutate}
+          readOnly={!view.canMutate || view.controller.pending}
           rows={3}
           maxLength={10000}
           value={view.editor.draft.notes}

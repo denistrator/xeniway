@@ -20,6 +20,8 @@ export type FollowUpMutationStatus =
   | "completeFailed"
   | "deleteFailed"
   | null;
+type FollowUpEditorTarget = ApplicationFollowUpTask | "new";
+type PendingFollowUpEditor = { target: FollowUpEditorTarget; trigger: HTMLElement };
 
 export type FollowUpsController = {
   editor: {
@@ -32,9 +34,16 @@ export type FollowUpsController = {
     setDueDate(value: string): void;
     setNotes(value: string): void;
     submit(event: FormEvent<HTMLFormElement>): Promise<void>;
+    savePending(): Promise<void>;
     openNew(trigger: HTMLElement): void;
     openExisting(task: ApplicationFollowUpTask, trigger: HTMLElement): void;
     close(): void;
+  };
+  warning: {
+    isOpen: boolean;
+    returnFocusRef: RefObject<HTMLElement | null>;
+    discard(): void;
+    keepEditing(): void;
   };
   deletion: {
     target: ApplicationFollowUpTask | null;
@@ -66,6 +75,15 @@ export function validateFollowUpDraft(draft: FollowUpDraft) {
   return { input: null, errors, firstField: result.error.issues[0]?.path[0] as "title" | "dueDate" | undefined };
 }
 
+function isDirtyDraft(draft: FollowUpDraft, target: FollowUpEditorTarget) {
+  const task = target === "new" ? undefined : target;
+  return (
+    draft.title !== (task?.title ?? "") ||
+    draft.dueDate !== (task?.dueDate ?? "") ||
+    draft.notes !== (task?.notes ?? "")
+  );
+}
+
 export function useFollowUpsController(applicationId: number): FollowUpsController {
   const mutations = useApplicationFollowUpMutations(applicationId);
   const [editorTarget, setEditorTarget] = useState<ApplicationFollowUpTask | "new" | null>(null);
@@ -73,9 +91,14 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
   const [draft, setDraft] = useState<FollowUpDraft>({ title: "", dueDate: "", notes: "" });
   const [errors, setErrors] = useState<FollowUpErrors>({});
   const [status, setStatus] = useState<FollowUpMutationStatus>(null);
+  const [hasWarning, setHasWarning] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
+  const pendingEditor = useRef<PendingFollowUpEditor | null>(null);
+  const warningReturnFocusRef = useRef<HTMLElement | null>(null);
+  const editedField = useRef<"title" | "dueDate" | "notes">("title");
+  const savingRef = useRef(false);
   const rememberEditorFocus = useReturnFocus(editorTarget !== null, addButtonRef);
   const rememberDeletionFocus = useReturnFocus(deletionTarget !== null, addButtonRef);
   const pending =
@@ -95,22 +118,44 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
   }, [editorTarget]);
 
   function setTitle(value: string) {
+    editedField.current = "title";
     setDraft((current) => ({ ...current, title: value }));
     setErrors((current) => ({ ...current, title: undefined }));
   }
 
   function setDueDate(value: string) {
+    editedField.current = "dueDate";
     setDraft((current) => ({ ...current, dueDate: value }));
     setErrors((current) => ({ ...current, dueDate: undefined }));
   }
 
+  function activateEditor(target: FollowUpEditorTarget, trigger: HTMLElement) {
+    rememberEditorFocus(trigger);
+    setEditorTarget(target);
+  }
+
+  function finishEditor() {
+    const nextEditor = pendingEditor.current;
+    pendingEditor.current = null;
+    setHasWarning(false);
+    if (nextEditor) {
+      activateEditor(nextEditor.target, nextEditor.trigger);
+      return;
+    }
+    setEditorTarget(null);
+  }
+
   async function save(input: CreateApplicationFollowUpTaskInput) {
+    if (savingRef.current) {
+      return false;
+    }
     const parsed = (
       editorTarget === "new" ? createApplicationFollowUpTaskInputSchema : updateApplicationFollowUpTaskInputSchema
     ).safeParse(input);
     if (!parsed.success) {
-      return;
+      return false;
     }
+    savingRef.current = true;
     const saved = await runWorkspaceMutation(
       async () => {
         if (editorTarget === "new") {
@@ -123,13 +168,14 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
       "saved",
       "saveFailed",
     );
+    savingRef.current = false;
     if (saved) {
-      setEditorTarget(null);
+      finishEditor();
     }
+    return saved;
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitDraft() {
     const result = validateFollowUpDraft(draft);
     if (!result.input) {
       setErrors(result.errors);
@@ -141,25 +187,38 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
           dateRef.current?.focus();
           break;
       }
-      return;
+      return false;
     }
     setErrors({});
-    await save(result.input);
+    return save(result.input);
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitDraft();
   }
 
   function openNew(trigger: HTMLElement) {
-    rememberEditorFocus(trigger);
-    setEditorTarget("new");
+    requestEditor("new", trigger);
   }
 
   function openExisting(task: ApplicationFollowUpTask, trigger: HTMLElement) {
-    rememberEditorFocus(trigger);
-    setEditorTarget(task);
+    requestEditor(task, trigger);
+  }
+
+  function requestEditor(target: FollowUpEditorTarget, trigger: HTMLElement) {
+    if (!editorTarget || !isDirtyDraft(draft, editorTarget)) {
+      activateEditor(target, trigger);
+      return;
+    }
+    pendingEditor.current = { target, trigger };
+    const field = editedField.current;
+    warningReturnFocusRef.current = document.querySelector<HTMLElement>(`[name="${field}"]`);
+    setHasWarning(true);
   }
 
   function requestDeletion(task: ApplicationFollowUpTask, trigger: HTMLElement) {
     rememberDeletionFocus(trigger);
-    setEditorTarget(null);
     setDeletionTarget(task);
   }
 
@@ -171,12 +230,15 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     if (!deletionTarget) {
       return;
     }
-    await runWorkspaceMutation(
+    const deleted = await runWorkspaceMutation(
       () => mutations.remove.mutateAsync(deletionTarget.id),
       setStatus,
       "deleted",
       "deleteFailed",
     );
+    if (deleted && editorTarget && editorTarget !== "new" && editorTarget.id === deletionTarget.id) {
+      setEditorTarget(null);
+    }
     setDeletionTarget(null);
   }
 
@@ -189,11 +251,26 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
       dateRef,
       setTitle,
       setDueDate,
-      setNotes: (notes) => setDraft((current) => ({ ...current, notes })),
+      setNotes(notes) {
+        editedField.current = "notes";
+        setDraft((current) => ({ ...current, notes }));
+      },
       submit,
+      async savePending() {
+        await submitDraft();
+      },
       openNew,
       openExisting,
       close: () => setEditorTarget(null),
+    },
+    warning: {
+      isOpen: hasWarning,
+      returnFocusRef: warningReturnFocusRef,
+      discard: finishEditor,
+      keepEditing: () => {
+        pendingEditor.current = null;
+        setHasWarning(false);
+      },
     },
     deletion: {
       target: deletionTarget,

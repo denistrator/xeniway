@@ -4,12 +4,24 @@ import {
   applicationEventInputSchema,
   manualApplicationEventTypeSchema,
 } from "@xeniway/shared";
-import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCanMutate } from "../../offline/offline-access.model";
 import { applicationActivityFormStyles } from "./application-activity-form.styles";
 
 const styles = applicationActivityFormStyles();
+type ActivityDraft = {
+  type: (typeof manualApplicationEventTypeSchema.options)[number];
+  title: string;
+  description: string;
+  occurredAt: string;
+};
+const activityDraftFields = [
+  "type",
+  "title",
+  "description",
+  "occurredAt",
+] as const satisfies readonly (keyof ActivityDraft)[];
 
 function toLocalDateTime(value: string) {
   const date = new Date(value);
@@ -17,38 +29,49 @@ function toLocalDateTime(value: string) {
   return local.toISOString().slice(0, 16);
 }
 
+function createActivityDraft(event: ApplicationEvent | undefined): ActivityDraft {
+  return {
+    type: event?.isSystem ? "note" : ((event?.type as ActivityDraft["type"]) ?? "note"),
+    title: event?.title ?? "",
+    description: event?.description ?? "",
+    occurredAt: toLocalDateTime(event?.occurredAt ?? new Date().toISOString()),
+  };
+}
+
 export function useApplicationActivityForm(
   event: ApplicationEvent | undefined,
   onSubmit: (input: ApplicationEventInput) => Promise<void>,
+  onDirtyChange: (isDirty: boolean, focusedField: HTMLElement) => void,
+  onSaveRequest: (save: () => void) => void,
   editorKey: string | null = "mounted",
 ) {
   const { t } = useTranslation();
   const canMutate = useCanMutate();
   const initialFocus = useRef<HTMLSelectElement>(null);
-  const [type, setType] = useState<(typeof manualApplicationEventTypeSchema.options)[number]>(
-    event?.isSystem ? "note" : ((event?.type as (typeof manualApplicationEventTypeSchema.options)[number]) ?? "note"),
-  );
-  const [title, setTitle] = useState(event?.title ?? "");
-  const [description, setDescription] = useState(event?.description ?? "");
-  const [occurredAt, setOccurredAt] = useState(toLocalDateTime(event?.occurredAt ?? new Date().toISOString()));
+  const initialDraft = createActivityDraft(event);
+  const [type, setType] = useState<ActivityDraft["type"]>(initialDraft.type);
+  const [title, setTitle] = useState(initialDraft.title);
+  const [description, setDescription] = useState(initialDraft.description);
+  const [occurredAt, setOccurredAt] = useState(initialDraft.occurredAt);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<"invalid" | "saveFailed" | null>(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (!editorKey) {
       return;
     }
-    setType(event?.isSystem ? "note" : ((event?.type as typeof type) ?? "note"));
-    setTitle(event?.title ?? "");
-    setDescription(event?.description ?? "");
-    setOccurredAt(toLocalDateTime(event?.occurredAt ?? new Date().toISOString()));
+    const nextDraft = createActivityDraft(event);
+    setType(nextDraft.type);
+    setTitle(nextDraft.title);
+    setDescription(nextDraft.description);
+    setOccurredAt(nextDraft.occurredAt);
     setError(null);
     initialFocus.current?.focus();
   }, [editorKey, event]);
 
-  const submit = async (formEvent: FormEvent<HTMLFormElement>) => {
-    formEvent.preventDefault();
-    if (!canMutate) {
+  const submit = useCallback(async () => {
+    if (!canMutate || savingRef.current) {
       return;
     }
     const parsed = applicationEventInputSchema.safeParse({
@@ -61,6 +84,7 @@ export function useApplicationActivityForm(
       setError("invalid");
       return;
     }
+    savingRef.current = true;
     setPending(true);
     setError(null);
     try {
@@ -68,29 +92,51 @@ export function useApplicationActivityForm(
     } catch {
       setError("saveFailed");
     } finally {
+      savingRef.current = false;
       setPending(false);
     }
-  };
+  }, [canMutate, description, occurredAt, onSubmit, title, type]);
+
+  useEffect(() => onSaveRequest(() => void submit()), [onSaveRequest, submit]);
+
+  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
+    void submit();
+  }
 
   function changeType(change: ChangeEvent<HTMLSelectElement>) {
-    setType(change.target.value as typeof type);
+    const nextType = change.target.value as typeof type;
+    setType(nextType);
+    reportDirty({ type: nextType, title, description, occurredAt }, change.currentTarget);
   }
 
   function changeTitle(change: ChangeEvent<HTMLInputElement>) {
-    setTitle(change.target.value);
+    const nextTitle = change.target.value;
+    setTitle(nextTitle);
+    reportDirty({ type, title: nextTitle, description, occurredAt }, change.currentTarget);
   }
 
   function changeDescription(change: ChangeEvent<HTMLTextAreaElement>) {
-    setDescription(change.target.value);
+    const nextDescription = change.target.value;
+    setDescription(nextDescription);
+    reportDirty({ type, title, description: nextDescription, occurredAt }, change.currentTarget);
   }
 
   function changeOccurredAt(change: ChangeEvent<HTMLInputElement>) {
-    setOccurredAt(change.target.value);
+    const nextOccurredAt = change.target.value;
+    setOccurredAt(nextOccurredAt);
+    reportDirty({ type, title, description, occurredAt: nextOccurredAt }, change.currentTarget);
+  }
+
+  function reportDirty(nextDraft: ActivityDraft, focusedField: HTMLElement) {
+    const initial = createActivityDraft(event);
+    const isDirty = activityDraftFields.some((field) => nextDraft[field] !== initial[field]);
+    onDirtyChange(isDirty, focusedField);
   }
 
   return {
     styles,
-    fieldsReadOnly: !canMutate,
+    fieldsReadOnly: !canMutate || pending,
     saveDisabled: !canMutate || pending,
     typeOptions: manualApplicationEventTypeSchema.options.map((value) => ({
       value,
@@ -118,6 +164,7 @@ export function useApplicationActivityForm(
     setOccurredAt,
     pending,
     error,
+    handleSubmit,
     submit,
   };
 }

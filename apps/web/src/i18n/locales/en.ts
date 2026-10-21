@@ -111,6 +111,7 @@ export const en = {
       saveFailedNamed: "Could not save {{name}}.",
       unsavedChangesTitle: "Save changes before leaving?",
       unsavedChangesText: "Save your changes to {{name}}, discard them, or keep editing.",
+      unsavedRecordChangesText: "Save your changes, discard them, or keep editing.",
       confirm: {
         archive: "Archive this application? You can restore it later.",
         blacklist: "Add this application to your blacklist? You can restore it later.",

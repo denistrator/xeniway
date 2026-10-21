@@ -8,7 +8,7 @@
 
 **Tech stack:** React 19, TypeScript, React Router, Redux Toolkit, TanStack Query, i18next, Tailwind Variants, Radix Select, Atlaskit InlineEdit, Vitest, and Playwright. No new dependency is planned.
 
-**Status:** Execution authorized one fix at a time, with a manual user checkpoint after each. T02's modal repair/refactor is accepted and committed. D1 is approved; T03's compact-warning substep (UI-01) is implemented and awaiting user testing. The related-record substep (UI-02), other tasks and other policy gates remain pending. No automatic commit or merge. The audit remains the evidence register; this document owns task order and execution tracking.
+**Status:** Execution authorized one fix at a time, with a manual user checkpoint after each. T02's modal repair/refactor is accepted and committed. D1 is approved; T03's compact-warning substep (UI-01) is accepted and its related-record substep (UI-02) is awaiting user testing. Other tasks and policy gates remain pending. No automatic commit or merge. The audit remains the evidence register; this document owns task order and execution tracking.
 
 ## Global constraints
 
@@ -107,7 +107,7 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 
 **Covers:** UI-01, UI-02. **Dependencies:** T02, D1.
 
-**Checkpoint split:** UI-01 compact warnings are the current independently tested fix. UI-02 related-record row switching remains pending until the user tests this checkpoint.
+**Checkpoint split:** UI-01 compact warnings are accepted. UI-02 related-record row switching is the current independently tested fix and awaits user testing.
 
 **Modify:** `W/overview/use-application-fields.ts`, `application-unsaved-warning.model.ts`, `.view.tsx`; `W/contacts/use-contacts-controller.ts`; `W/follow-ups/use-follow-ups-controller.ts`; `apps/web/src/features/applications/activity/application-activity-section.model.ts`, `.view.tsx`; matching dictionaries.
 

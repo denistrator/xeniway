@@ -27,6 +27,8 @@ type ContactError =
   | "notesTooLong";
 export type ContactErrors = Partial<Record<ContactField, ContactError>>;
 export type ContactMutationStatus = "saved" | "removed" | "saveFailed" | "removeFailed" | null;
+type ContactEditorTarget = ApplicationContact | "new";
+type PendingContactEditor = { target: ContactEditorTarget; trigger: HTMLElement };
 
 export type ContactsController = {
   editor: {
@@ -37,9 +39,16 @@ export type ContactsController = {
     firstFieldRef: RefObject<HTMLInputElement | null>;
     setField(field: ContactField, value: string): void;
     submit(event: FormEvent<HTMLFormElement>): Promise<void>;
+    savePending(): Promise<void>;
     openNew(trigger: HTMLElement): void;
     openExisting(contact: ApplicationContact, trigger: HTMLElement): void;
     close(): void;
+  };
+  warning: {
+    isOpen: boolean;
+    returnFocusRef: RefObject<HTMLElement | null>;
+    discard(): void;
+    keepEditing(): void;
   };
   deletion: {
     target: ApplicationContact | null;
@@ -75,6 +84,11 @@ function createDraft(contact?: ApplicationContact): ContactDraft {
     : { ...emptyDraft };
 }
 
+function isDirtyDraft(draft: ContactDraft, target: ContactEditorTarget) {
+  const initial = createDraft(target === "new" ? undefined : target);
+  return Object.keys(initial).some((field) => draft[field as ContactField] !== initial[field as ContactField]);
+}
+
 function validateDraft(draft: ContactDraft) {
   const result = createApplicationContactInputSchema.safeParse({
     ...draft,
@@ -102,9 +116,14 @@ export function useContactsController(applicationId: number): ContactsController
   const [draft, setDraft] = useState<ContactDraft>(emptyDraft);
   const [errors, setErrors] = useState<ContactErrors>({});
   const [status, setStatus] = useState<ContactMutationStatus>(null);
+  const [hasWarning, setHasWarning] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
+  const pendingEditor = useRef<PendingContactEditor | null>(null);
+  const warningReturnFocusRef = useRef<HTMLElement | null>(null);
+  const editedField = useRef<ContactField>("name");
+  const savingRef = useRef(false);
   const rememberEditorFocus = useReturnFocus(editorTarget !== null, addButtonRef);
   const rememberDeletionFocus = useReturnFocus(deletionTarget !== null, addButtonRef);
   const pending = mutations.create.isPending || mutations.update.isPending || mutations.remove.isPending;
@@ -119,6 +138,7 @@ export function useContactsController(applicationId: number): ContactsController
   }, [editorTarget]);
 
   function setField(field: ContactField, value: string) {
+    editedField.current = field;
     setDraft((current) => ({ ...current, [field]: value }));
     setErrors((current) => {
       const next = { ...current };
@@ -127,13 +147,33 @@ export function useContactsController(applicationId: number): ContactsController
     });
   }
 
+  function activateEditor(target: ContactEditorTarget, trigger: HTMLElement) {
+    rememberEditorFocus(trigger);
+    setEditorTarget(target);
+  }
+
+  function finishEditor() {
+    const nextEditor = pendingEditor.current;
+    pendingEditor.current = null;
+    setHasWarning(false);
+    if (nextEditor) {
+      activateEditor(nextEditor.target, nextEditor.trigger);
+      return;
+    }
+    setEditorTarget(null);
+  }
+
   async function save(input: CreateApplicationContactInput) {
+    if (savingRef.current) {
+      return false;
+    }
     const parsed = (
       editorTarget === "new" ? createApplicationContactInputSchema : updateApplicationContactInputSchema
     ).safeParse(input);
     if (!parsed.success) {
-      return;
+      return false;
     }
+    savingRef.current = true;
     const saved = await runWorkspaceMutation(
       async () => {
         if (editorTarget === "new") {
@@ -146,37 +186,50 @@ export function useContactsController(applicationId: number): ContactsController
       "saved",
       "saveFailed",
     );
+    savingRef.current = false;
     if (saved) {
-      setEditorTarget(null);
+      finishEditor();
     }
+    return saved;
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitDraft() {
     const result = validateDraft(draft);
     if (!result.input) {
       setErrors(result.errors);
       const field = result.firstField ?? "name";
       formRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${field}"]`)?.focus();
-      return;
+      return false;
     }
     setErrors({});
-    await save(result.input);
+    return save(result.input);
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitDraft();
   }
 
   function openNew(trigger: HTMLElement) {
-    rememberEditorFocus(trigger);
-    setEditorTarget("new");
+    requestEditor("new", trigger);
   }
 
   function openExisting(contact: ApplicationContact, trigger: HTMLElement) {
-    rememberEditorFocus(trigger);
-    setEditorTarget(contact);
+    requestEditor(contact, trigger);
+  }
+
+  function requestEditor(target: ContactEditorTarget, trigger: HTMLElement) {
+    if (!editorTarget || !isDirtyDraft(draft, editorTarget)) {
+      activateEditor(target, trigger);
+      return;
+    }
+    pendingEditor.current = { target, trigger };
+    warningReturnFocusRef.current = formRef.current?.elements.namedItem(editedField.current) as HTMLElement | null;
+    setHasWarning(true);
   }
 
   function requestDeletion(contact: ApplicationContact, trigger: HTMLElement) {
     rememberDeletionFocus(trigger);
-    setEditorTarget(null);
     setDeletionTarget(contact);
   }
 
@@ -184,12 +237,15 @@ export function useContactsController(applicationId: number): ContactsController
     if (!deletionTarget) {
       return;
     }
-    await runWorkspaceMutation(
+    const removed = await runWorkspaceMutation(
       () => mutations.remove.mutateAsync(deletionTarget.id),
       setStatus,
       "removed",
       "removeFailed",
     );
+    if (removed && editorTarget && editorTarget !== "new" && editorTarget.id === deletionTarget.id) {
+      setEditorTarget(null);
+    }
     setDeletionTarget(null);
   }
 
@@ -202,9 +258,21 @@ export function useContactsController(applicationId: number): ContactsController
       firstFieldRef,
       setField,
       submit,
+      async savePending() {
+        await submitDraft();
+      },
       openNew,
       openExisting,
       close: () => setEditorTarget(null),
+    },
+    warning: {
+      isOpen: hasWarning,
+      returnFocusRef: warningReturnFocusRef,
+      discard: finishEditor,
+      keepEditing: () => {
+        pendingEditor.current = null;
+        setHasWarning(false);
+      },
     },
     deletion: {
       target: deletionTarget,

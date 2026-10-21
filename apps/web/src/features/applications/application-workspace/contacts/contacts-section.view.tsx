@@ -117,6 +117,19 @@ export const ContactsSection = memo(function ContactsSection(props: ContactsSect
           yesDisabled={!view.canMutate || view.controller.pending}
         />
       )}
+      {view.controller.warning.isOpen && (
+        <ConfirmationModal
+          title={view.unsavedChangesTitle}
+          text={view.unsavedChangesText}
+          yesLabel={view.saveChangesLabel}
+          noLabel={view.discardChangesLabel}
+          onYes={view.controller.editor.savePending}
+          onNo={view.controller.warning.discard}
+          dismissAction={view.dismissWarning}
+          returnFocusRef={view.controller.warning.returnFocusRef}
+          yesDisabled={!view.canMutate || view.controller.pending}
+        />
+      )}
     </section>
   );
 });

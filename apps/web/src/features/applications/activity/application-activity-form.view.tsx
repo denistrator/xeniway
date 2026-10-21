@@ -1,11 +1,17 @@
 import type { ApplicationActivityFormProps } from "./application-activity.types";
 import { useApplicationActivityForm } from "./application-activity-form.model";
 
-export function ApplicationActivityForm({ event, onSubmit, onCancel }: ApplicationActivityFormProps) {
-  const form = useApplicationActivityForm(event, onSubmit);
+export function ApplicationActivityForm({
+  event,
+  onSubmit,
+  onCancel,
+  onDirtyChange = () => undefined,
+  onSaveRequest = () => undefined,
+}: ApplicationActivityFormProps) {
+  const form = useApplicationActivityForm(event, onSubmit, onDirtyChange, onSaveRequest);
   const styles = form.styles;
   return (
-    <form className={styles.root()} onSubmit={form.submit}>
+    <form className={styles.root()} onSubmit={form.handleSubmit}>
       <label className={styles.typeLabel()} htmlFor="activity-type">
         {form.typeLabel}
       </label>

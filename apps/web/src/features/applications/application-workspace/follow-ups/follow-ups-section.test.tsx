@@ -123,7 +123,7 @@ test("follow-ups confirm deletion and report failures", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not delete follow-up.");
 });
 
-test("successful follow-up deletion while editing closes the editor and restores focus", async () => {
+test("follow-up deletion preserves its editor until deletion is confirmed", async () => {
   const user = userEvent.setup();
   vi.stubGlobal(
     "fetch",
@@ -131,11 +131,37 @@ test("successful follow-up deletion while editing closes the editor and restores
   );
   renderApplicationWorkspace({ followUpTasks: [workspaceFollowUpTask] });
   await user.click(screen.getByRole("button", { name: "Edit Write to Ari" }));
+  const task = screen.getByRole("textbox", { name: "Task" });
+  await user.type(task, " draft");
   await user.click(screen.getByRole("button", { name: "Delete Write to Ari" }));
-  expect(screen.queryByRole("textbox", { name: "Task" })).toBeNull();
+  expect(task).toHaveValue("Write to Ari draft");
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Yes" }));
   await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Delete Write to Ari" })));
+  expect(screen.queryByRole("textbox", { name: "Task" })).toBeNull();
   expect(await screen.findByText("Follow-up deleted.")).toBeVisible();
+});
+
+test("asks before replacing a dirty follow-up editor", async () => {
+  const user = userEvent.setup();
+  const secondTask = { ...workspaceFollowUpTask, id: 9, title: "Call Morgan" };
+  renderApplicationWorkspace({ followUpTasks: [workspaceFollowUpTask, secondTask] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Write to Ari" }));
+  const task = screen.getByRole("textbox", { name: "Task" });
+  await user.clear(task);
+  await user.type(task, "Draft follow-up");
+  await user.click(screen.getByRole("button", { name: "Edit Call Morgan" }));
+
+  const warning = screen.getByRole("alertdialog", { name: "Save changes before leaving?" });
+  expect(warning).toBeVisible();
+  expect(task).toHaveValue("Draft follow-up");
+  await user.click(within(warning).getByRole("button", { name: "Keep editing" }));
+  expect(task).toHaveValue("Draft follow-up");
+  expect(task).toHaveFocus();
+
+  await user.click(screen.getByRole("button", { name: "Edit Call Morgan" }));
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+  expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Call Morgan");
 });
 
 test("workspace section labels render in Hebrew with right-to-left document direction", async () => {

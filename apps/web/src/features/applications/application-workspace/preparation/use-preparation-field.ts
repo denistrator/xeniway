@@ -1,5 +1,5 @@
 import { type ApplicationPreparation, updateApplicationPreparationInputSchema } from "@xeniway/shared";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApplicationPreparationMutation } from "../../../../lib/queries";
 
 export type PreparationField = keyof Pick<
@@ -16,7 +16,7 @@ export type PreparationFieldController = {
   setDraft(value: string): void;
   beginEdit(): void;
   cancel(): void;
-  save(value?: string): Promise<void>;
+  save(value?: string): Promise<boolean>;
 };
 
 export function usePreparationField(
@@ -29,6 +29,7 @@ export function usePreparationField(
   const [draft, setDraft] = useState(value ?? "");
   const [editing, setEditing] = useState(false);
   const [state, setState] = useState<"error" | "invalid" | null>(null);
+  const savingRef = useRef(false);
 
   useEffect(() => setSavedValue(value), [value]);
 
@@ -45,19 +46,27 @@ export function usePreparationField(
   }
 
   async function save(valueToSave = draft) {
+    if (savingRef.current) {
+      return false;
+    }
     const parsed = updateApplicationPreparationInputSchema.safeParse({ [field]: valueToSave.trim() || null });
     if (!parsed.success) {
       setState("invalid");
-      return;
+      return false;
     }
     setState(null);
+    savingRef.current = true;
     try {
       await mutation.mutateAsync(parsed.data);
       setSavedValue(parsed.data[field] ?? null);
       setEditing(false);
       setState(null);
+      return true;
     } catch {
       setState("error");
+      return false;
+    } finally {
+      savingRef.current = false;
     }
   }
 

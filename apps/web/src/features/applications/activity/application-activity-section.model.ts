@@ -14,22 +14,53 @@ export function useApplicationActivitySection(applicationId: number, className?:
   const mutations = useApplicationEventMutations(applicationId);
   const [editing, setEditing] = useState<ApplicationEvent | "new" | null>(null);
   const [deleting, setDeleting] = useState<ApplicationEvent | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [hasWarning, setHasWarning] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
   const addButton = useRef<HTMLButtonElement>(null);
   const editingTrigger = useRef<HTMLElement | null>(null);
+  const pendingEditor = useRef<ApplicationEvent | "new" | null>(null);
+  const warningReturnFocus = useRef<HTMLElement | null>(null);
+  const saveRequest = useRef<() => void>(() => undefined);
 
   function beginAdd() {
-    editingTrigger.current = addButton.current;
-    setEditing("new");
+    requestEditor("new", addButton.current);
   }
 
   function beginEdit(event: ApplicationEvent) {
-    editingTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setEditing(event);
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    requestEditor(event, trigger);
+  }
+
+  function requestEditor(target: ApplicationEvent | "new", trigger: HTMLElement | null) {
+    if (!editing || !hasUnsavedChanges) {
+      activateEditor(target, trigger);
+      return;
+    }
+    pendingEditor.current = target;
+    setHasWarning(true);
+  }
+
+  function activateEditor(target: ApplicationEvent | "new", trigger: HTMLElement | null) {
+    editingTrigger.current = trigger;
+    setEditing(target);
+    setHasUnsavedChanges(false);
+  }
+
+  function finishEditor() {
+    const nextEditor = pendingEditor.current;
+    pendingEditor.current = null;
+    setHasWarning(false);
+    if (nextEditor) {
+      activateEditor(nextEditor, null);
+      return;
+    }
+    closeForm();
   }
 
   function closeForm() {
     setEditing(null);
+    setHasUnsavedChanges(false);
     returnFocus(editingTrigger.current);
     editingTrigger.current = null;
   }
@@ -52,7 +83,7 @@ export function useApplicationActivitySection(applicationId: number, className?:
     } else {
       await mutations.create.mutateAsync(input);
     }
-    closeForm();
+    finishEditor();
   }
 
   async function remove() {
@@ -90,6 +121,17 @@ export function useApplicationActivitySection(applicationId: number, className?:
     confirmationText: t("applications.activity.deleteConfirmation"),
     yesLabel: t("common.actions.yes"),
     noLabel: t("common.actions.no"),
+    unsavedChangesTitle: t("applications.workspace.unsavedChangesTitle"),
+    unsavedChangesText: t("applications.workspace.unsavedRecordChangesText"),
+    saveChangesLabel: t("applications.workspace.actions.saveChanges"),
+    discardChangesLabel: t("applications.workspace.actions.discardChanges"),
+    dismissWarning: {
+      label: t("applications.workspace.actions.keepEditing"),
+      onDismiss() {
+        pendingEditor.current = null;
+        setHasWarning(false);
+      },
+    },
     confirmDelete,
     mutations,
     editing,
@@ -100,6 +142,19 @@ export function useApplicationActivitySection(applicationId: number, className?:
     beginAdd,
     beginEdit,
     closeForm,
+    discardWarning: finishEditor,
+    warningReturnFocus,
+    hasWarning,
+    setHasUnsavedChanges(isDirty: boolean, focusedField: HTMLElement) {
+      warningReturnFocus.current = focusedField;
+      setHasUnsavedChanges(isDirty);
+    },
+    requestSave() {
+      saveRequest.current();
+    },
+    setSaveRequest(request: () => void) {
+      saveRequest.current = request;
+    },
     cancelDelete,
     save,
     remove,
