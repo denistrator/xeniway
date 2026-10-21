@@ -4,12 +4,28 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open tasks
 
+### UI interaction safety, hierarchy, and recovery
+
+- **Plan:** [2026-10-21 UI audit and remediation plan](superpowers/plans/2026-10-21-ui-interaction-audit.md).
+- **Implementation:** [UI fixes task plan](superpowers/plans/2026-10-21-ui-fixes-implementation-plan.md) maps every finding to a testable task and records policy decisions that require approval before execution.
+- **Current checkpoint:** UI-06 confirmation focus/background isolation and its simplification are accepted by the user on `codex/confirmation-dialog-focus`. Broader device/screen-reader review is not recorded. Other findings remain pending; execute one fix at a time and stop for user verification.
+- **Evidence:** Source review and targeted browser inspection identified draft-loss paths, incomplete confirmation focus behavior, errors outside active dialogs, weak bulk-action hierarchy, and inconsistent offline/account recovery feedback. The plan records evidence, priorities, acceptance checks, and unverified device/layout candidates separately.
+- **Direction:** Prioritize work preservation and truthful feedback, then navigation and responsive hierarchy. Borrow HIG interaction principles without copying Apple-native UI. The plan is not authorization to implement fixes.
+- **Guardrails:** Preserve owner scoping, CSRF, six statuses, archive/blacklist distinctions, InlineEdit, local-first preferences, and read-only offline behavior. Reuse the existing offline-disclosure, diagnostics, export-association, and measured-bundle entries referenced in the plan instead of duplicating them. Ask before addressing new blockers or broadening scope. No automated style/layout/snapshot tests.
+
 ### Make the logout browser workflow independently runnable
 
 - **Where:** `tests/e2e/xeniway.spec.ts`, "logs out and returns to login".
 - **Evidence:** Running this test alone after seeding times out before logout: the welcome introduction backdrop intercepts the theme-button click. The test does not complete or dismiss onboarding before interacting with header controls.
 - **Possible direction:** Establish the test's own onboarding state or explicitly complete the welcome dialog rather than relying on earlier workflows updating the shared account.
 - **Guardrails:** Preserve coverage for theme persistence, private-data cleanup, and real logout; do not bypass the dialog with forced clicks or weaken production onboarding.
+
+### Disambiguate the create-dialog loading announcement browser check
+
+- **Where:** `tests/e2e/xeniway.spec.ts`, "manages focus and escape behavior for the job form dialog", loading assertion after Add job.
+- **Evidence:** During the confirmation-focus checkpoint, the run alongside the welcome workflow failed because `getByRole("status")` matched both the board's "Loading applications…" and the lazy form host's "Loading…". The test stopped before exercising create-dialog focus; welcome and the dedicated confirmation workflow passed.
+- **Possible direction:** Identify the intended lazy-host announcement semantically while allowing concurrent board loading. Inspect the host's accessible structure before changing the selector.
+- **Guardrails:** Preserve the controlled import delay, no-import-before-click check, keyboard containment, Escape behavior and opener restoration. Do not add sleeps, suppress the board announcement, or weaken the loading assertion. Await approval before implementing.
 
 ### Full offline synchronization
 

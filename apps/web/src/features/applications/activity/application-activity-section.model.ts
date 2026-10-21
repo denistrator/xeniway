@@ -36,7 +36,6 @@ export function useApplicationActivitySection(applicationId: number, className?:
 
   function cancelDelete() {
     setDeleting(null);
-    returnFocus(addButton.current);
   }
 
   function returnFocus(target: HTMLElement | null) {

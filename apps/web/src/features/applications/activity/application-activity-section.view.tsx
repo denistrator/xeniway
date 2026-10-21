@@ -53,6 +53,7 @@ export const ApplicationActivitySection = memo(function ApplicationActivitySecti
           onYes={activity.confirmDelete}
           onNo={activity.cancelDelete}
           yesDisabled={activity.deleteDisabled}
+          returnFocusRef={activity.addButton}
         />
       )}
     </section>

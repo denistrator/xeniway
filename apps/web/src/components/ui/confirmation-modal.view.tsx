@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Button } from "./button.view";
 import { type ConfirmationModalProps, useConfirmationModal } from "./confirmation-modal.model";
 import { confirmationModalStyles } from "./confirmation-modal.styles";
@@ -12,23 +13,26 @@ export function ConfirmationModal({
   onYes,
   onNo,
   yesDisabled = false,
+  returnFocusRef,
 }: ConfirmationModalProps) {
-  const view = useConfirmationModal(onNo);
-  return (
-    <div className={styles.root()}>
+  const view = useConfirmationModal(onNo, returnFocusRef);
+  return createPortal(
+    <div ref={view.rootRef} className={styles.root()}>
       <button type="button" aria-label={noLabel} tabIndex={-1} className={styles.backdrop()} onClick={onNo} />
       <div
+        ref={view.dialogRef}
+        onKeyDownCapture={view.handleKeyDown}
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="confirmation-title"
-        aria-describedby={text ? "confirmation-text" : undefined}
+        aria-labelledby={view.titleId}
+        aria-describedby={text ? view.textId : undefined}
         className={styles.dialog()}
       >
-        <h2 id="confirmation-title" className={styles.heading()}>
+        <h2 id={view.titleId} className={styles.heading()}>
           {title}
         </h2>
         {text && (
-          <p id="confirmation-text" className={styles.text()}>
+          <p id={view.textId} className={styles.text()}>
             {text}
           </p>
         )}
@@ -41,6 +45,7 @@ export function ConfirmationModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

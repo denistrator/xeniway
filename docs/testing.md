@@ -49,7 +49,7 @@ CI pins Bun 1.4.0 and matches Compose's PostgreSQL 16.15 and Redis 7.4.9. Servic
 | Shared contracts | `packages/shared/src/index.test.ts` | Input schemas and public response assumptions |
 | API | `apps/api/src/**/*.test.ts` | Authentication/CSRF, rate limiting, reset tokens and mail delivery, owner isolation, validation, lifecycle history, repository mapping, seed invariants |
 | Web | `apps/web/src/**/*.test.ts(x)` | API error handling, queries, UI behavior, preferences/locales, workspace editing, dialogs, offline lifecycle/storage |
-| Browser | `tests/e2e/xeniway.spec.ts`, `tests/e2e/export.spec.ts` | Real server/database workflows, locale/RTL persistence, welcome/preferences, application lifecycle, activity, keyboard/drag ordering, accessibility, decoded export downloads and retry |
+| Browser | `tests/e2e/xeniway.spec.ts`, `tests/e2e/export.spec.ts`, `tests/e2e/confirmation.spec.ts` | Real server/database workflows, locale/RTL persistence, welcome/preferences, application lifecycle, activity, keyboard/drag ordering, confirmation focus, accessibility, decoded export downloads and retry |
 | Production offline | `tests/e2e/offline.spec.ts` | Built assets/worker, explicit consent, complete downloads, offline reload/navigation, lazy locales, reconnect, logout/account cleanup, storage failure/expiry |
 
 The ordinary config excludes `offline.spec.ts`. The offline config uses fresh Chromium contexts and real seeded services rather than Vite development assets. Coverage describes checked-in assertions, not a guarantee that every current workflow passes.
@@ -68,6 +68,7 @@ Settings/header regressions additionally cover the action's location, signed-out
 
 ### Focused frontend regressions
 
+- Shared confirmation tests cover Tab/Shift+Tab containment, disabled confirmation, Escape/backdrop/button dismissal, opener and page-fallback restoration, explicit caller focus destinations, StrictMode, callback updates, stacked/replacement dialogs, and inert-background restoration. Confirmations render through body-level portals; background isolation operates on body siblings, so updates inside the application remain isolated without observing document mutations. Keyboard handling is bound to the dialog rather than a document listener. Activity retains its Add activity/disabled-section focus destination through `returnFocusRef`; restoration runs after dialog removal. The focused browser workflow opens both bulk-deletion stages, cancels without sending a deletion request, and verifies real Chromium focus containment and return. Do not add class or layout assertions.
 - Board JobCards are links with application URLs. Cover normal in-app clicks, Enter activation, modified-click/new-tab behavior, pointer drag-and-drop, and keyboard reordering. Keep card locators semantic (`link` rather than `button`); do not assert decorative styling.
 
 - Settings contains the expanded Offline access section; other routes show only the disconnected header indicator. Cover browser-offline and API-unavailable states, Retry recovery, route changes during preparation, signed-out access, locale/RTL names, and production offline reloads. Preserve consent, refresh/removal, account isolation, and live status announcements; do not assert decorative icon styling.

@@ -29,8 +29,8 @@ export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
   const readAccountId = access.readAccountId ?? (access.canReadRemote ? user.data?.id : null);
   const { logout } = useAuthMutations();
   const navigationLinks = navigationLinksPlain
-      .filter(({ authOnly }) => !authOnly || Boolean(readAccountId))
-      .map(({ labelKey, ...link }) => ({ ...link, label: t(labelKey) }));
+    .filter(({ authOnly }) => !authOnly || Boolean(readAccountId))
+    .map(({ labelKey, ...link }) => ({ ...link, label: t(labelKey) }));
 
   async function handleLogout() {
     await logout.mutateAsync();

@@ -13,6 +13,8 @@ Start with the [project README](../README.md#install-and-run-locally) to install
 | How do configuration, service lifecycle, PWA/offline deployment, and troubleshooting work? | [Operations](operations.md) |
 | Which checks should I run, and what should tests cover? | [Testing](testing.md) |
 | What worthwhile work is still pending? | [Backlog](backlog.md) |
+| What did the UI interaction and hierarchy audit find? | [2026-10-21 audit and remediation plan](superpowers/plans/2026-10-21-ui-interaction-audit.md) |
+| How should the UI audit issues be fixed? | [UI fixes implementation plan](superpowers/plans/2026-10-21-ui-fixes-implementation-plan.md) |
 | How should I contribute or report a security issue? | [Contributing](../CONTRIBUTING.md), [Security](../SECURITY.md), and [Code of conduct](../CODE_OF_CONDUCT.md) |
 
 ## Where to change what
