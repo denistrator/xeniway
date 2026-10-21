@@ -94,6 +94,7 @@ export function useApplicationCompactField({
   const editLabel = t("applications.workspace.actions.edit");
   const cancelLabel = t("applications.workspace.actions.cancel");
   const saveLabel = t("applications.workspace.actions.save");
+  const savingLabel = t("applications.workspace.actions.saving");
 
   return {
     showLabel,
@@ -122,6 +123,7 @@ export function useApplicationCompactField({
     confirmEdit,
     cancelEdit,
     saveLabel,
+    savingLabel,
     cancelOnEscape,
     feedback,
   };

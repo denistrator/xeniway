@@ -76,6 +76,7 @@ test("locks a compact field while its save is pending", async () => {
 
   await waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
   expect(location).toHaveAttribute("readonly");
+  expect(screen.getByRole("status")).toHaveTextContent("Saving…");
 
   resolveSave?.(
     new Response(JSON.stringify({ data: { application: { id: 3, location: "Remote" } } }), { status: 200 }),

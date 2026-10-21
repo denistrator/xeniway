@@ -79,6 +79,11 @@ export function ApplicationCompactField(props: ApplicationCompactFieldProps) {
           </Button>
         </div>
       )}
+      {view.controller.pending && (
+        <p role="status" aria-live="polite" className={view.slotClasses.feedback}>
+          {view.savingLabel}
+        </p>
+      )}
       {view.feedback && (
         <p
           id={`${view.id}-message`}

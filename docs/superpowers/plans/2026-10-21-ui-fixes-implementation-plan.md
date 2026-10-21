@@ -132,8 +132,8 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 
 - [x] Add a deferred write test: invoke Save, attempt a second save before rerender, attempt further editing, resolve the first request, and verify no typed revision silently disappears. Record the one-field patch and exact call count.
 - [x] Observe failure, then apply a synchronous in-flight guard in the relevant save controller. Release it in `finally`. Lock only that submitted editor's inputs while its request is pending; allow unrelated work. Guard cancellation and row replacement that could misapply a late response.
-- [ ] Distinguish successful save from invalid/failed save in controller results. Preserve existing public types unless a coordinated change is necessary; `ApplicationFieldController.save` already returns `Promise<boolean>`, while preparation currently returns `Promise<void>` and needs an explicit coordinated decision if its caller must consume success.
-- [ ] Add accessible pending feedback in the active editor. Failure unlocks the retained draft and allows retry. No auto retry of an ambiguous create request.
+- [x] Distinguish successful save from invalid/failed save in controller results. Preserve existing public types unless a coordinated change is necessary; application, preparation, contact, and follow-up controllers return `Promise<boolean>`. Activity keeps its local failure state because no caller must advance from its result.
+- [x] Add accessible pending feedback in the active editor. Failure unlocks the retained draft and allows retry. No auto retry of an ambiguous create request.
 - [ ] Before completion of a follow-up removes its button or reorders the row, choose a stable target in that task or the next task. Restore after the actual query-backed update; announce success once.
 - [ ] Verify timeout/failure, late response after application/account change, unmount, two independent fields, and completed-task sorting. Run the focused files and the workspace browser flow.
 
