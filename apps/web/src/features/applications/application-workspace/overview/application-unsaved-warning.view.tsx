@@ -13,10 +13,12 @@ export function ApplicationUnsavedWarning(props: ApplicationUnsavedWarningProps)
       title={view.confirmationTitle}
       text={view.warningText}
       yesLabel={view.saveLabel}
-      noLabel={view.cancelLabel}
+      noLabel={view.discardLabel}
       yesDisabled={!view.canMutate || view.fields.fields[view.warningField].pending}
       onYes={view.saveWarning}
-      onNo={view.fields.cancelWarning}
+      onNo={view.fields.discardWarning}
+      dismissAction={view.dismissAction}
+      returnFocusRef={view.returnFocusRef}
     />
   );
 }

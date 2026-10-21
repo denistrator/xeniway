@@ -8,7 +8,7 @@
 
 **Tech stack:** React 19, TypeScript, React Router, Redux Toolkit, TanStack Query, i18next, Tailwind Variants, Radix Select, Atlaskit InlineEdit, Vitest, and Playwright. No new dependency is planned.
 
-**Status:** Execution authorized one fix at a time, with a manual user checkpoint after each. T02's modal-interaction repair is the first checkpoint; the remaining tasks and policy gates are pending. No automatic commit or merge. The audit remains the evidence register; this document owns task order and execution tracking.
+**Status:** Execution authorized one fix at a time, with a manual user checkpoint after each. T02's modal repair/refactor is accepted and committed. D1 is approved; T03's compact-warning substep (UI-01) is implemented and awaiting user testing. The related-record substep (UI-02), other tasks and other policy gates remain pending. No automatic commit or merge. The audit remains the evidence register; this document owns task order and execution tracking.
 
 ## Global constraints
 
@@ -31,7 +31,7 @@ The recommendations below make the plan concrete; they are not existing product 
 
 | Gate | Recommended policy | Dependent tasks |
 | --- | --- | --- |
-| D1 · Dirty dismissal | Escape/backdrop means **Keep editing**, never discard. Offer explicit **Discard changes** and **Save changes** when departure is requested. Switching an unrelated row never discards silently. | T03, T06 |
+| D1 · Dirty dismissal · approved | Escape/backdrop means **Keep editing**, never discard. Offer explicit **Discard changes** and **Save changes** when departure is requested. Switching an unrelated row never discards silently. Approved by the user after checkpoint 1; implement one issue/checkpoint at a time. | T03, T06 |
 | D2 · Save pending | Lock only the submitted editor's fields while saving, plus a synchronous duplicate-submit guard. Do not allow edits that a pending response can silently overwrite. Do not freeze unrelated editors. | T04 |
 | D3 · Navigation guard | Protect in-app links, previous/next, and Back/Forward with a shared dirty-departure policy. React Router's current `BrowserRouter` setup must first be checked for supported blocking; a migration to its data router requires explicit approval. Never patch `history` or register competing ad-hoc navigation interceptors. Use the browser's own unload prompt for full reload/tab close when dirty. | T06 |
 | D4 · Bulk deletion | Keep board-wide deletion semantics and current two-stage/countdown protection initially. Fix scope, labels, pending/error state, and placement first. Removing the countdown or combining dialogs is a separate decision after reviewing the safer flow. | T08 |
@@ -83,7 +83,7 @@ Each task ends with its own reviewable, independently tested patch. Where a task
 
 **Create test:** `apps/web/src/components/ui/confirmation-modal.test.tsx`.
 
-**Interface:** Preserve `title`, `text`, `yesLabel`, `noLabel`, `onYes`, `onNo`, and `yesDisabled`. T02 adds optional `returnFocusRef` for an existing caller-specific focus destination. Defer `onDismiss?: () => void` to T03 and `pending?: boolean`/`error?: string` to T07, together with their behavioral changes and tests. Dismissal remains `onNo` until T03 changes dirty-warning semantics.
+**Interface:** Preserve `title`, `text`, `yesLabel`, `noLabel`, `onYes`, `onNo`, and `yesDisabled`. T02 adds optional `returnFocusRef` for an existing caller-specific focus destination. T03 adds optional `dismissAction: { label, onDismiss }`, pairing the safe-dismiss label and callback; callers without it still dismiss through `onNo`. Defer `pending?: boolean`/`error?: string` to T07, together with their behavioral changes and tests.
 
 - [x] Add a regression using the existing component API, before implementing containment:
 
@@ -107,13 +107,15 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 
 **Covers:** UI-01, UI-02. **Dependencies:** T02, D1.
 
+**Checkpoint split:** UI-01 compact warnings are the current independently tested fix. UI-02 related-record row switching remains pending until the user tests this checkpoint.
+
 **Modify:** `W/overview/use-application-fields.ts`, `application-unsaved-warning.model.ts`, `.view.tsx`; `W/contacts/use-contacts-controller.ts`; `W/follow-ups/use-follow-ups-controller.ts`; `apps/web/src/features/applications/activity/application-activity-section.model.ts`, `.view.tsx`; matching dictionaries.
 
 **Tests:** `W/overview/application-overview.test.tsx`, `W/contacts/contacts-section.test.tsx`, `W/follow-ups/follow-ups-section.test.tsx`, `apps/web/src/features/applications/activity/application-activity-section.test.tsx`.
 
 - [ ] Reproduce dirty-field warning Escape/backdrop. Reproduce edit A → request delete B → cancel, and edit A → edit B, for contacts, follow-ups and activity.
 - [ ] Add regressions that assert exact draft text and the absence of writes after cancel/dismiss. Run each affected test file and observe failure before fixing that variant.
-- [ ] Add a distinct `dismissWarning(): void` to the field-group controller that closes the warning without calling `cancel(field)`. Keep explicit `discardWarning(): void` separate. Use T02's `onDismiss` for keep-editing; use specific Save/Discard/Keep editing labels rather than ambiguous Cancel-as-discard.
+- [x] Add a distinct `dismissWarning(): void` to the field-group controller that closes the warning without calling `cancel(field)`. Keep explicit `discardWarning(): void` separate. The shared modal uses a paired optional `dismissAction: { label, onDismiss }` rather than independent callback/label props; keep Save changes / Discard changes / Keep editing explicit. Existing two-action callers are unchanged.
 - [ ] Compare normalized draft and baseline before replacing a row target. Hold a pending target intent instead of immediately reinitializing the form. For unrelated deletion, keep the existing editor mounted until an explicit decision requires closing it.
 - [ ] Apply the resolved intent only after save/discard is confirmed. On a rejected save, keep the original editor and pending intent available without losing data. Clear intents on owner/application change.
 - [ ] Rerun focused tests, including clean switches, cancel after a failed save, offline transitions and changed account. Record the approved D1 behavior in architecture/testing docs.
@@ -487,3 +489,12 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 - **Limitations:** Full ordinary/offline browser suites and device/screen-reader review remain pending; only focused browser workflows are in scope for this checkpoint. Pending/error props belong to T07; dirty-dismissal policy belongs to T03/D1. Do not start another fix until the user tests this one.
 - **Browser outcomes:** The dedicated confirmation workflow passed (one test, bundled Chromium); the welcome workflow passed. The separate create-form browser test failed at its existing unscoped `getByRole("status")` loading assertion because the board and lazy host both announced loading. It did not reach create-dialog focus checks. This is recorded in the backlog, not worked around or changed; further repair requires approval. T02's create/welcome verification checkbox remains incomplete.
 - **Final static/unit outcomes:** Public repository check, formatting, lint, complete workspace/E2E typecheck, root test command and production build passed. Root tests: 76 script tests, 24 shared tests, 144 API tests (nine existing skips), and 602 frontend tests, including 16 shared-confirmation cases. The existing PWA bundler deprecation remains nonfatal and already tracked in the backlog. Full browser suites were not run; manual approval remains pending.
+
+### Checkpoint 2 · Compact unsaved-warning dismissal (UI-01 / T03 substep)
+
+- **Authority and scope:** User approved D1. Implement UI-01 only, preserving the one-fix-at-a-time checkpoint. Related-record row switching (UI-02), pending-write races/locking (UI-03/T04), and route departure (UI-04/T06) are not included. No commit requested.
+- **Reproduction:** The Escape regression failed because the Location editor disappeared; new action regressions failed because only ambiguous Save/Cancel existed. Tests ran before the implementation. Lint and the initial 49 component tests passed before edits.
+- **Implementation:** Separate dismissal from discard in the compact-field controller. Safe dismissal clears the pending field intent but leaves the existing editor/draft intact. Save/discard share the existing field-transition completion path. The warning focuses the current input after safe dismissal, including offline/read-only display. Add paired `dismissAction` to the shared modal so the safe option has initial focus; legacy confirmations retain their defaults. Translate all three choices and explanatory copy into en/ru/uk/he. Allow actions to stack on narrow screens.
+- **Review correction:** Review reproduced an offline-discard regression for pending Company/Status switches: opening a disabled editor/menu lost the intended focus destination. Two new failing regressions reproduced it. Field-transition completion now checks current mutation permission before starting another editor, so offline discard returns to the departing field's container without a write.
+- **Final verification:** All 616 frontend tests passed, including 19 confirmation cases, 40 overview cases, and four new dictionary cases; the two offline-discard regressions also passed in isolation after the final assertion edit. Formatting, lint, complete workspace/E2E typecheck and production build passed. The root unit command also passed before the final frontend-only offline correction. Both bundled-Chromium confirmation workflows passed again after that correction, including real compact-warning draft/focus/no-write, discard and one-field-save behavior, Hebrew language switching, document direction and reload persistence at a mobile viewport. Full ordinary/offline browser suites were not rerun. The known unrelated create-form loading-locator failure remains unchanged. Manual styling/device/screen-reader review is not claimed.
+- **Manual checkpoint:** Edit Location, enter a draft, then select Company. Escape, backdrop and Keep editing must preserve the draft and focus Location. Discard changes must switch to Company without a write. Save changes must save Location and then switch. Repeat after disconnecting (Save disabled) and in Hebrew/narrow layouts. Await user feedback before starting UI-02 or committing.

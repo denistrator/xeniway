@@ -114,7 +114,7 @@ const uk = {
       saveNamed: "Зберегти: {{name}}",
       saveFailedNamed: "Не вдалося зберегти поле «{{name}}».",
       unsavedChangesTitle: "Зберегти зміни перед виходом?",
-      unsavedChangesText: "Збережіть зміни поля «{{name}}» або скасуйте їх.",
+      unsavedChangesText: "Збережіть зміни поля «{{name}}», відхиліть їх або продовжте редагування.",
       confirm: {
         archive: "Перемістити відгук до архіву? Його можна буде відновити.",
         blacklist: "Додати відгук до чорного списку? Його можна буде відновити.",
@@ -128,6 +128,9 @@ const uk = {
         remove: "Прибрати",
         delete: "Видалити",
         saving: "Збереження…",
+        saveChanges: "Зберегти зміни",
+        discardChanges: "Відхилити зміни",
+        keepEditing: "Продовжити редагування",
       },
       validation: {
         nameRequired: "Вкажіть ім’я.",

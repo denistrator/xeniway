@@ -114,7 +114,7 @@ const ru = {
       saveNamed: "Сохранить: {{name}}",
       saveFailedNamed: "Не удалось сохранить поле «{{name}}».",
       unsavedChangesTitle: "Сохранить изменения перед выходом?",
-      unsavedChangesText: "Сохраните изменения поля «{{name}}» или отмените их.",
+      unsavedChangesText: "Сохраните изменения поля «{{name}}», отмените их или продолжите редактирование.",
       confirm: {
         archive: "Переместить отклик в архив? Его можно будет восстановить.",
         blacklist: "Добавить отклик в чёрный список? Его можно будет восстановить.",
@@ -128,6 +128,9 @@ const ru = {
         remove: "Убрать",
         delete: "Удалить",
         saving: "Сохранение…",
+        saveChanges: "Сохранить изменения",
+        discardChanges: "Отменить изменения",
+        keepEditing: "Продолжить редактирование",
       },
       validation: {
         nameRequired: "Укажите имя.",

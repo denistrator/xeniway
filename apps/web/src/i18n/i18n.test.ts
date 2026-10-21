@@ -59,3 +59,16 @@ test("loads the Hebrew dictionary and applies right-to-left direction", async ()
   await changeLocale("en");
   expect(document.documentElement.dir).toBe("ltr");
 });
+
+test.each([
+  { locale: "en", save: "Save changes", discard: "Discard changes", keep: "Keep editing" },
+  { locale: "ru", save: "Сохранить изменения", discard: "Отменить изменения", keep: "Продолжить редактирование" },
+  { locale: "uk", save: "Зберегти зміни", discard: "Відхилити зміни", keep: "Продовжити редагування" },
+  { locale: "he", save: "שמירת השינויים", discard: "ביטול השינויים", keep: "המשך עריכה" },
+] as const)("localizes distinct unsaved-edit choices for $locale", async ({ locale, save, discard, keep }) => {
+  await changeLocale(locale);
+
+  expect(i18n.t("applications.workspace.actions.saveChanges")).toBe(save);
+  expect(i18n.t("applications.workspace.actions.discardChanges")).toBe(discard);
+  expect(i18n.t("applications.workspace.actions.keepEditing")).toBe(keep);
+});

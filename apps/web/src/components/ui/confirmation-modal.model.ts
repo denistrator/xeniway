@@ -10,6 +10,7 @@ export type ConfirmationModalProps = {
   onNo: () => void;
   yesDisabled?: boolean;
   returnFocusRef?: RefObject<HTMLElement | null>;
+  dismissAction?: { label: string; onDismiss(): void };
 };
 
 type ConfirmationLayer = {
@@ -57,12 +58,14 @@ function restoreFocus(root: HTMLElement, opener: HTMLElement | null) {
   });
 }
 
-export function useConfirmationModal(onNo: () => void, returnFocusRef?: RefObject<HTMLElement | null>) {
+export function useConfirmationModal({ onNo, noLabel, returnFocusRef, dismissAction }: ConfirmationModalProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const noButtonRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const id = useId();
+  const dismiss = dismissAction?.onDismiss ?? onNo;
+  const dismissLabel = dismissAction?.label ?? noLabel;
   const getReturnTarget = useEffectEvent(() => returnFocusRef?.current ?? openerRef.current);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -73,7 +76,7 @@ export function useConfirmationModal(onNo: () => void, returnFocusRef?: RefObjec
       case "Escape": {
         event.preventDefault();
         event.stopPropagation();
-        onNo();
+        dismiss();
         break;
       }
       case "Tab": {
@@ -119,5 +122,14 @@ export function useConfirmationModal(onNo: () => void, returnFocusRef?: RefObjec
     };
   }, []);
 
-  return { rootRef, dialogRef, noButtonRef, handleKeyDown, titleId: `${id}-title`, textId: `${id}-text` };
+  return {
+    rootRef,
+    dialogRef,
+    noButtonRef,
+    handleKeyDown,
+    dismiss,
+    dismissLabel,
+    titleId: `${id}-title`,
+    textId: `${id}-text`,
+  };
 }

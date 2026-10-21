@@ -51,10 +51,83 @@ test("confirms dirty compact changes and saves only the selected field", async (
   await user.click(screen.getByRole("button", { name: "Company, Edit" }));
 
   const warning = screen.getByRole("alertdialog", { name: "Save changes before leaving?" });
-  await user.click(within(warning).getByRole("button", { name: "Save" }));
+  await user.click(within(warning).getByRole("button", { name: "Save changes" }));
 
   await waitFor(() => expect(screen.getByRole("textbox", { name: /Company/ })).toBeVisible());
   expect(readUpdateBodies(fetcher)[0]).toEqual({ location: "Remote" });
+});
+
+test.each(["Escape", "backdrop", "Keep editing"])("preserves the compact draft after %s", async (dismiss) => {
+  const user = userEvent.setup();
+  const fetcher = stubApplicationUpdates();
+  renderApplicationWorkspace();
+  await user.click(screen.getByRole("button", { name: "Location, Edit" }));
+  const input = screen.getByRole("textbox", { name: "Location" });
+  await user.type(input, "  Remote draft  ");
+  await user.click(screen.getByRole("button", { name: "Company, Edit" }));
+  const dialog = within(screen.getByRole("alertdialog"));
+
+  switch (dismiss) {
+    case "Escape": {
+      await user.keyboard("{Escape}");
+      break;
+    }
+    case "backdrop": {
+      await user.click(screen.getAllByRole("button", { name: "Keep editing" })[0]);
+      break;
+    }
+    default: {
+      await user.click(dialog.getByRole("button", { name: "Keep editing" }));
+    }
+  }
+
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(screen.getByRole("textbox", { name: "Location" })).toBe(input);
+  expect(input).toHaveValue("  Remote draft  ");
+  expect(input).toHaveFocus();
+  expect(screen.queryByRole("textbox", { name: /^Company/ })).toBeNull();
+  expect(fetcher).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Save location" }));
+  await waitFor(() => expect(screen.queryByRole("textbox", { name: "Location" })).toBeNull());
+  expect(screen.queryByRole("textbox", { name: /^Company/ })).toBeNull();
+  expect(readUpdateBodies(fetcher)).toEqual([{ location: "Remote draft" }]);
+});
+
+test("switches fields only after explicitly discarding the compact draft", async () => {
+  const user = userEvent.setup();
+  const fetcher = stubApplicationUpdates();
+  renderApplicationWorkspace();
+  await user.click(screen.getByRole("button", { name: "Location, Edit" }));
+  await user.type(screen.getByRole("textbox", { name: "Location" }), "Do not save");
+  await user.click(screen.getByRole("button", { name: "Company, Edit" }));
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(screen.getByRole("textbox", { name: /^Company/ })).toHaveFocus();
+  expect(screen.queryByRole("textbox", { name: "Location" })).toBeNull();
+  expect(screen.queryByText("Do not save")).toBeNull();
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test("keeps the compact draft after a failed warning save and dismissal", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi.fn(() => Promise.resolve(new Response(null, { status: 500 })));
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace();
+  await user.click(screen.getByRole("button", { name: "Location, Edit" }));
+  const input = screen.getByRole("textbox", { name: "Location" });
+  await user.type(input, "Remote draft");
+  await user.click(screen.getByRole("button", { name: "Company, Edit" }));
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Save changes" }));
+  await waitFor(() => {
+    expect(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Save changes" })).toBeEnabled();
+  });
+  await user.keyboard("{Escape}");
+
+  expect(input).toHaveValue("Remote draft");
+  expect(input).toHaveFocus();
+  expect(screen.queryByRole("textbox", { name: /^Company/ })).toBeNull();
+  expect(fetcher).toHaveBeenCalledOnce();
 });
 
 test("keeps localized dates, saved metadata, and empty-value fallbacks readable", () => {
@@ -257,7 +330,7 @@ test.each(["Remove Ari Cole", "Delete Write to Ari"])(
   },
 );
 
-test("blocks unsaved-warning confirmation after disconnection while allowing cancellation", async () => {
+test("blocks unsaved-warning saving after disconnection while preserving the draft on dismissal", async () => {
   const user = userEvent.setup();
   renderApplicationWorkspace({}, true);
   await user.click(screen.getByRole("button", { name: "Location, Edit" }));
@@ -265,12 +338,35 @@ test("blocks unsaved-warning confirmation after disconnection while allowing can
   await user.click(screen.getByRole("button", { name: "Company, Edit" }));
   act(() => window.dispatchEvent(new Event("offline")));
   const dialog = screen.getByRole("alertdialog");
-  expect(within(dialog).getByRole("button", { name: "Save" })).toBeDisabled();
-  expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeEnabled();
-  await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(within(dialog).getByRole("button", { name: "Save changes" })).toBeDisabled();
+  expect(within(dialog).getByRole("button", { name: "Keep editing" })).toBeEnabled();
+  await user.click(within(dialog).getByRole("button", { name: "Keep editing" }));
   expect(screen.queryByRole("alertdialog")).toBeNull();
-  expect(screen.queryByRole("textbox", { name: "Company" })).toBeNull();
+  expect(screen.queryByRole("textbox", { name: /^Company/ })).toBeNull();
+  expect(screen.getByRole("textbox", { name: "Location" })).toHaveValue("Remote");
+  expect(screen.getByRole("textbox", { name: "Location" })).toHaveFocus();
 });
+
+test.each(["Company, Edit", "Status, Change status"])(
+  "discards a compact draft offline without starting the pending %s edit",
+  async (action) => {
+    const user = userEvent.setup();
+    const fetcher = stubApplicationUpdates();
+    renderApplicationWorkspace({}, true);
+    await user.click(screen.getByRole("button", { name: "Location, Edit" }));
+    await user.type(screen.getByRole("textbox", { name: "Location" }), "Do not save");
+    await user.click(screen.getByRole("button", { name: action }));
+    act(() => window.dispatchEvent(new Event("offline")));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Location" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: /^Company/ })).toBeNull();
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(document.querySelector('[data-compact-edit-field="location"]')).toHaveFocus();
+    expect(fetcher).not.toHaveBeenCalled();
+  },
+);
 
 test("disables an open status menu after disconnection and keeps Escape with focus return", async () => {
   const user = userEvent.setup();

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useCanMutate } from "../../../offline/offline-access.view";
@@ -9,6 +10,7 @@ export function useApplicationUnsavedWarning({ fields }: ApplicationUnsavedWarni
   const { t } = useTranslation();
   const canMutate = useCanMutate();
   const warningField = fields.compact.warningField;
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const warningText = warningField
     ? t("applications.workspace.unsavedChangesText", { name: getApplicationFieldLabel(warningField, t) })
     : "";
@@ -17,15 +19,24 @@ export function useApplicationUnsavedWarning({ fields }: ApplicationUnsavedWarni
       void fields.saveWarning();
     }
   }
+
+  function keepEditing() {
+    returnFocusRef.current = document.querySelector<HTMLElement>(`[data-compact-edit-field="${warningField}"] input`);
+    fields.dismissWarning();
+  }
+
   const confirmationTitle = t("applications.workspace.unsavedChangesTitle");
-  const saveLabel = t("applications.workspace.actions.save");
-  const cancelLabel = t("applications.workspace.actions.cancel");
+  const saveLabel = t("applications.workspace.actions.saveChanges");
+  const discardLabel = t("applications.workspace.actions.discardChanges");
+  const dismissAction = { label: t("applications.workspace.actions.keepEditing"), onDismiss: keepEditing };
   return {
     warningField,
     confirmationTitle,
     warningText,
     saveLabel,
-    cancelLabel,
+    discardLabel,
+    dismissAction,
+    returnFocusRef,
     canMutate,
     fields,
     saveWarning,

@@ -125,6 +125,43 @@ test("does not reset focus when a caller supplies a new dismissal callback", asy
   expect(onNo).toHaveBeenCalledOnce();
 });
 
+test.each(["Escape", "backdrop", "Keep editing"])(
+  "keeps optional dismissal separate from discard (%s)",
+  async (action) => {
+    const user = userEvent.setup();
+    const discard = vi.fn();
+    const dismiss = vi.fn();
+    render(
+      <ConfirmationModal
+        {...labels}
+        noLabel="Discard changes"
+        onNo={discard}
+        onYes={vi.fn()}
+        dismissAction={{ label: "Keep editing", onDismiss: dismiss }}
+      />,
+    );
+    const dialog = within(screen.getByRole("alertdialog"));
+    expect(dialog.getByRole("button", { name: "Keep editing" })).toHaveFocus();
+    switch (action) {
+      case "Escape": {
+        await user.keyboard("{Escape}");
+        break;
+      }
+      case "backdrop": {
+        await user.click(screen.getAllByRole("button", { name: "Keep editing" })[0]);
+        break;
+      }
+      default: {
+        await user.click(dialog.getByRole("button", { name: "Keep editing" }));
+      }
+    }
+    expect(dismiss).toHaveBeenCalledOnce();
+    expect(discard).not.toHaveBeenCalled();
+    await user.click(dialog.getByRole("button", { name: "Discard changes" }));
+    expect(discard).toHaveBeenCalledOnce();
+  },
+);
+
 test.each([false, true])("honors the caller's focus destination after closing (disabled: %s)", async (disabled) => {
   const user = userEvent.setup();
   const returnFocusRef = createRef<HTMLButtonElement>();

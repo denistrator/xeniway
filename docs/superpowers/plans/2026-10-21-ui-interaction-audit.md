@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** Audit complete within the coverage below. One-at-a-time remediation is authorized; UI-06's repair and simplification are accepted by the user. All other findings remain pending.
+**Status:** Audit complete within the coverage below. One-at-a-time remediation is authorized; UI-06's repair and simplification are accepted by the user. UI-01 is implemented and awaiting user testing. All other findings remain pending.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
@@ -59,7 +59,9 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-01 · P1 · Dismissing the dirty-field warning discards the draft
 
-**Evidence — Source:** `apps/web/src/features/applications/application-workspace/overview/application-unsaved-warning.view.tsx:19`, `overview/use-application-fields.ts:110`, and `apps/web/src/components/ui/confirmation-modal.model.ts:13`. The warning's negative action calls `cancelWarning`, which resets the draft. Escape and backdrop use that same action.
+**Status:** D1 approved; compact-field repair implemented and awaiting user testing. Escape/backdrop/Keep editing preserve the draft and return to the current input without saving. Explicit discard alone clears the draft and completes a requested field switch; save retains the one-field mutation contract. Failed save and offline dismissal are covered. This does not resolve related-record switching (UI-02), pending-save races (UI-03), or route departure (UI-04).
+
+**Baseline evidence — Source, before repair:** `apps/web/src/features/applications/application-workspace/overview/application-unsaved-warning.view.tsx`, `overview/use-application-fields.ts`, and `apps/web/src/components/ui/confirmation-modal.model.ts`. The warning's negative action called `cancelWarning`, which reset the draft. Escape and backdrop used that same action. The regression reproduced the missing Location editor after Escape before implementation.
 
 **Impact:** A familiar “dismiss this warning” gesture destroys the work the warning is supposed to protect. The explicit button copy can describe discard; Escape is still an ambiguous destructive choice.
 

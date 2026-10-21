@@ -5,20 +5,18 @@ import { confirmationModalStyles } from "./confirmation-modal.styles";
 
 const styles = confirmationModalStyles();
 
-export function ConfirmationModal({
-  title,
-  text,
-  yesLabel,
-  noLabel,
-  onYes,
-  onNo,
-  yesDisabled = false,
-  returnFocusRef,
-}: ConfirmationModalProps) {
-  const view = useConfirmationModal(onNo, returnFocusRef);
+export function ConfirmationModal(props: ConfirmationModalProps) {
+  const { title, text, yesLabel, noLabel, onYes, onNo, yesDisabled = false, dismissAction } = props;
+  const view = useConfirmationModal(props);
   return createPortal(
     <div ref={view.rootRef} className={styles.root()}>
-      <button type="button" aria-label={noLabel} tabIndex={-1} className={styles.backdrop()} onClick={onNo} />
+      <button
+        type="button"
+        aria-label={view.dismissLabel}
+        tabIndex={-1}
+        className={styles.backdrop()}
+        onClick={view.dismiss}
+      />
       <div
         ref={view.dialogRef}
         onKeyDownCapture={view.handleKeyDown}
@@ -37,9 +35,14 @@ export function ConfirmationModal({
           </p>
         )}
         <div className={styles.actions()}>
-          <Button ref={view.noButtonRef} variant="outline" onClick={onNo}>
-            {noLabel}
+          <Button ref={view.noButtonRef} variant="outline" onClick={view.dismiss}>
+            {view.dismissLabel}
           </Button>
+          {dismissAction && (
+            <Button variant="outline" onClick={onNo}>
+              {noLabel}
+            </Button>
+          )}
           <Button onClick={onYes} disabled={yesDisabled}>
             {yesLabel}
           </Button>

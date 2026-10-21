@@ -1,5 +1,6 @@
 import type { JobApplication, JobStatus } from "@xeniway/shared";
 import { useRef, useState } from "react";
+import { useCanMutate } from "../../../offline/offline-access.view";
 import {
   type ApplicationFieldController,
   type EditableApplicationField,
@@ -20,10 +21,12 @@ export type ApplicationFieldsController = {
   fields: Record<EditableApplicationField, ApplicationFieldController>;
   compact: CompactFieldController;
   saveWarning(): Promise<void>;
-  cancelWarning(): void;
+  dismissWarning(): void;
+  discardWarning(): void;
 };
 
 export function useApplicationFields(application: JobApplication): ApplicationFieldsController {
+  const canMutate = useCanMutate();
   const company = useApplicationField(application.id, "company", application.company);
   const position = useApplicationField(application.id, "position", application.position);
   const location = useApplicationField(application.id, "location", application.location);
@@ -85,19 +88,23 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
     nextField.current = null;
   }
 
+  function completeEdit() {
+    setActiveField(null);
+    setWarningField(null);
+    const requestedField = nextField.current;
+    nextField.current = null;
+    if (requestedField && canMutate) {
+      fields[requestedField].beginEdit();
+      setActiveField(requestedField);
+    }
+  }
+
   async function save(field: EditableApplicationField, value?: string) {
     const saved = await fields[field].save(value);
     if (!saved) {
       return false;
     }
-    setActiveField(null);
-    setWarningField(null);
-    const requestedField = nextField.current;
-    nextField.current = null;
-    if (requestedField) {
-      fields[requestedField].beginEdit();
-      setActiveField(requestedField);
-    }
+    completeEdit();
     return true;
   }
 
@@ -107,9 +114,15 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
     }
   }
 
-  function cancelWarning() {
+  function dismissWarning() {
+    setWarningField(null);
+    nextField.current = null;
+  }
+
+  function discardWarning() {
     if (warningField) {
-      cancel(warningField);
+      fields[warningField].cancel();
+      completeEdit();
     }
   }
 
@@ -132,6 +145,7 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
       selectStatus,
     },
     saveWarning,
-    cancelWarning,
+    dismissWarning,
+    discardWarning,
   };
 }
