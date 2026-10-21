@@ -184,3 +184,16 @@ test("asks before replacing a dirty contact editor", async () => {
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
   expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Morgan Lee");
 });
+
+test("switches contact editors without a warning for whitespace-only changes", async () => {
+  const user = userEvent.setup();
+  const secondContact = { ...workspaceContact, id: 8, name: "Morgan Lee", role: "Coordinator" };
+  renderApplicationWorkspace({ contacts: [workspaceContact, secondContact] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  await user.type(screen.getByRole("textbox", { name: "Role" }), " ");
+  await user.click(screen.getByRole("button", { name: "Edit Morgan Lee" }));
+
+  expect(screen.queryByRole("alertdialog", { name: "Save changes before leaving?" })).toBeNull();
+  expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Morgan Lee");
+});

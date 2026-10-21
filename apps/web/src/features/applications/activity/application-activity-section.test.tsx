@@ -176,6 +176,19 @@ test("asks before replacing a dirty activity editor", async () => {
   expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Interview notes");
 });
 
+test("switches activity editors without a warning for whitespace-only changes", async () => {
+  const user = userEvent.setup();
+  const secondEvent = { ...manualEvent, id: 2, title: "Interview notes" };
+  renderActivity([manualEvent, secondEvent]);
+
+  await user.click(screen.getByRole("button", { name: "Edit Recruiter context" }));
+  await user.type(screen.getByRole("textbox", { name: "Title" }), " ");
+  await user.click(screen.getByRole("button", { name: "Edit Interview notes" }));
+
+  expect(screen.queryByRole("alertdialog", { name: "Save changes before leaving?" })).toBeNull();
+  expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Interview notes");
+});
+
 function renderActivity(events: ApplicationEvent[]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });

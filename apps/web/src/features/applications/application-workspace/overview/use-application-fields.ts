@@ -42,8 +42,7 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
   const fields = { company, position, location, salary, jobUrl, description, notes, status, appliedAt };
 
   function isDirty(field: EditableApplicationField) {
-    const controller = fields[field];
-    return controller.draft !== (controller.savedValue ?? "");
+    return fields[field].isDraftDirty();
   }
 
   function requestEdit(field: EditableApplicationField) {

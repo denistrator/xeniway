@@ -71,7 +71,7 @@ Each task ends with its own reviewable, independently tested patch. Where a task
 - [x] Run `bun run format:check`, `bun run lint`, `bun run typecheck`, `bun run test`, and `bun run build`. Record each outcome. The audit previously found unrelated header indentation; ask before fixing a remaining unrelated failure.
 - [ ] After confirming service prerequisites and permission to refresh disposable fixtures, run `bun run test:e2e:offline` then `bun run test:e2e`. Classify existing failures, including the known offline-logout disclosure and isolated logout onboarding dependency. Do not change assertions merely to obtain green output.
 - [x] Extend `W/test-support/render-application-workspace.tsx` only where needed to support a query-backed page using `createMemoryRouter` after the routing decision, and real detail-query invalidation. Keep its existing fixed-content helper for tests that do not need query updates.
-- [ ] Use manually controlled promises for pending/failure tests, not hard sleeps. Capture request counts and submitted payloads; never log cookies, CSRF tokens, reset links, or private records.
+- [x] Use manually controlled promises for pending/failure tests, not hard sleeps. Capture request counts and submitted payloads; never log cookies, CSRF tokens, reset links, or private records.
 
 **Deliverable:** Baseline outcomes in the execution log, and only the smallest reusable test-support change required by the next task. Existing failures are not an automatic authorization to expand scope.
 

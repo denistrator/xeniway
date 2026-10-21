@@ -29,3 +29,23 @@ test("application field save validates and sends only the edited field", async (
   expect(result.current.editing).toBe(false);
   vi.unstubAllGlobals();
 });
+
+test.each([
+  { field: "location", value: "Remote" },
+  { field: "salary", value: "120000" },
+  { field: "appliedAt", value: "2026-10-21" },
+  { field: "jobUrl", value: "https://example.com/job" },
+  { field: "company", value: "Northwind" },
+  { field: "position", value: "Product designer" },
+] as const)("does not mark whitespace-only $field edits as dirty", ({ field, value }) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  const { result } = renderHook(() => useApplicationField(7, field, value), { wrapper });
+
+  act(() => result.current.beginEdit());
+  act(() => result.current.setDraft(`${value} `));
+
+  expect(result.current.isDraftDirty()).toBe(false);
+});

@@ -57,8 +57,13 @@ export type FollowUpsController = {
   complete(taskId: number): Promise<void>;
 };
 
+function toFollowUpInput(draft: FollowUpDraft) {
+  const notes = draft.notes.trim();
+  return { ...draft, notes: notes || null };
+}
+
 export function validateFollowUpDraft(draft: FollowUpDraft) {
-  const result = createApplicationFollowUpTaskInputSchema.safeParse({ ...draft, notes: draft.notes || null });
+  const result = createApplicationFollowUpTaskInputSchema.safeParse(toFollowUpInput(draft));
   if (result.success) {
     return { input: result.data, errors: {} as FollowUpErrors, firstField: null };
   }
@@ -77,10 +82,17 @@ export function validateFollowUpDraft(draft: FollowUpDraft) {
 
 function isDirtyDraft(draft: FollowUpDraft, target: FollowUpEditorTarget) {
   const task = target === "new" ? undefined : target;
+  const normalizedDraft = createApplicationFollowUpTaskInputSchema.safeParse(toFollowUpInput(draft));
+  const normalizedInitial = createApplicationFollowUpTaskInputSchema.safeParse(
+    toFollowUpInput({ title: task?.title ?? "", dueDate: task?.dueDate ?? "", notes: task?.notes ?? "" }),
+  );
+  if (!normalizedDraft.success || !normalizedInitial.success) {
+    return true;
+  }
   return (
-    draft.title !== (task?.title ?? "") ||
-    draft.dueDate !== (task?.dueDate ?? "") ||
-    draft.notes !== (task?.notes ?? "")
+    normalizedDraft.data.title !== normalizedInitial.data.title ||
+    normalizedDraft.data.dueDate !== normalizedInitial.data.dueDate ||
+    normalizedDraft.data.notes !== normalizedInitial.data.notes
   );
 }
 

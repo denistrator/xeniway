@@ -164,6 +164,19 @@ test("asks before replacing a dirty follow-up editor", async () => {
   expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Call Morgan");
 });
 
+test("switches follow-up editors without a warning for whitespace-only changes", async () => {
+  const user = userEvent.setup();
+  const secondTask = { ...workspaceFollowUpTask, id: 9, title: "Call Morgan" };
+  renderApplicationWorkspace({ followUpTasks: [workspaceFollowUpTask, secondTask] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Write to Ari" }));
+  await user.type(screen.getByRole("textbox", { name: "Task" }), " ");
+  await user.click(screen.getByRole("button", { name: "Edit Call Morgan" }));
+
+  expect(screen.queryByRole("alertdialog", { name: "Save changes before leaving?" })).toBeNull();
+  expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Call Morgan");
+});
+
 test("workspace section labels render in Hebrew with right-to-left document direction", async () => {
   await changeLocale("he");
   renderApplicationWorkspace({ followUpTasks: [workspaceFollowUpTask] });

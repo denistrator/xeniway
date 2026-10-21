@@ -23,6 +23,7 @@ export type ApplicationFieldController = {
   state: "error" | "invalid" | null;
   errorKey: string | null;
   setDraft(value: string): void;
+  isDraftDirty(): boolean;
   beginEdit(): void;
   cancel(): void;
   save(value?: string): Promise<boolean>;
@@ -71,12 +72,28 @@ export function useApplicationField(
     setErrorKey(null);
   }
 
+  function normalizeValue(valueToNormalize: string | null) {
+    const trimmed = (valueToNormalize ?? "").trim();
+    if (nullableFields.has(field)) {
+      return trimmed || null;
+    }
+    return trimmed;
+  }
+
+  function isDraftDirty() {
+    const normalizedDraft = updateApplicationInputSchema.safeParse({ [field]: normalizeValue(draft) });
+    const normalizedSaved = updateApplicationInputSchema.safeParse({ [field]: normalizeValue(savedValue) });
+    if (!normalizedDraft.success || !normalizedSaved.success) {
+      return true;
+    }
+    return normalizedDraft.data[field] !== normalizedSaved.data[field];
+  }
+
   async function save(valueToSave = draft) {
     if (savingRef.current) {
       return false;
     }
-    const trimmed = valueToSave.trim();
-    const nextValue = nullableFields.has(field) ? trimmed || null : trimmed;
+    const nextValue = normalizeValue(valueToSave);
     const parsed = updateApplicationInputSchema.safeParse({ [field]: nextValue });
     if (!parsed.success) {
       setState("invalid");
@@ -112,6 +129,7 @@ export function useApplicationField(
     state,
     errorKey,
     setDraft,
+    isDraftDirty,
     beginEdit,
     cancel,
     save,

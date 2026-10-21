@@ -84,19 +84,47 @@ function createDraft(contact?: ApplicationContact): ContactDraft {
     : { ...emptyDraft };
 }
 
+function toContactInput(draft: ContactDraft) {
+  return {
+    ...draft,
+    email: toOptionalValue(draft.email),
+    phone: toOptionalValue(draft.phone),
+    profileUrl: toOptionalValue(draft.profileUrl),
+    notes: toOptionalValue(draft.notes),
+  };
+}
+
+function toOptionalValue(value: string) {
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function normalizeDraft(draft: ContactDraft) {
+  const result = createApplicationContactInputSchema.safeParse(toContactInput(draft));
+  if (!result.success) {
+    return null;
+  }
+  return result.data;
+}
+
 function isDirtyDraft(draft: ContactDraft, target: ContactEditorTarget) {
-  const initial = createDraft(target === "new" ? undefined : target);
-  return Object.keys(initial).some((field) => draft[field as ContactField] !== initial[field as ContactField]);
+  const normalizedDraft = normalizeDraft(draft);
+  const normalizedInitial = normalizeDraft(createDraft(target === "new" ? undefined : target));
+  if (!normalizedDraft || !normalizedInitial) {
+    return true;
+  }
+  return (
+    normalizedDraft.name !== normalizedInitial.name ||
+    normalizedDraft.role !== normalizedInitial.role ||
+    normalizedDraft.email !== normalizedInitial.email ||
+    normalizedDraft.phone !== normalizedInitial.phone ||
+    normalizedDraft.profileUrl !== normalizedInitial.profileUrl ||
+    normalizedDraft.notes !== normalizedInitial.notes
+  );
 }
 
 function validateDraft(draft: ContactDraft) {
-  const result = createApplicationContactInputSchema.safeParse({
-    ...draft,
-    email: draft.email || null,
-    phone: draft.phone || null,
-    profileUrl: draft.profileUrl || null,
-    notes: draft.notes || null,
-  });
+  const result = createApplicationContactInputSchema.safeParse(toContactInput(draft));
   if (result.success) {
     return { input: result.data, errors: {} as ContactErrors, firstField: null };
   }

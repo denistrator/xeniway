@@ -38,6 +38,24 @@ function createActivityDraft(event: ApplicationEvent | undefined): ActivityDraft
   };
 }
 
+function normalizeActivityDraft(draft: ActivityDraft) {
+  const occurredAt = new Date(draft.occurredAt);
+  if (Number.isNaN(occurredAt.getTime())) {
+    return null;
+  }
+  const description = draft.description.trim();
+  const result = applicationEventInputSchema.safeParse({
+    type: draft.type,
+    title: draft.title,
+    description: description || null,
+    occurredAt: occurredAt.toISOString(),
+  });
+  if (!result.success) {
+    return null;
+  }
+  return result.data;
+}
+
 export function useApplicationActivityForm(
   event: ApplicationEvent | undefined,
   onSubmit: (input: ApplicationEventInput) => Promise<void>,
@@ -74,13 +92,13 @@ export function useApplicationActivityForm(
     if (!canMutate || savingRef.current) {
       return;
     }
-    const parsed = applicationEventInputSchema.safeParse({
+    const input = normalizeActivityDraft({
       type,
       title,
-      description: description || null,
-      occurredAt: new Date(occurredAt).toISOString(),
+      description,
+      occurredAt,
     });
-    if (!parsed.success) {
+    if (!input) {
       setError("invalid");
       return;
     }
@@ -88,7 +106,7 @@ export function useApplicationActivityForm(
     setPending(true);
     setError(null);
     try {
-      await onSubmit(parsed.data);
+      await onSubmit(input);
     } catch {
       setError("saveFailed");
     } finally {
@@ -129,8 +147,12 @@ export function useApplicationActivityForm(
   }
 
   function reportDirty(nextDraft: ActivityDraft, focusedField: HTMLElement) {
-    const initial = createActivityDraft(event);
-    const isDirty = activityDraftFields.some((field) => nextDraft[field] !== initial[field]);
+    const normalizedDraft = normalizeActivityDraft(nextDraft);
+    const normalizedInitial = normalizeActivityDraft(createActivityDraft(event));
+    const isDirty =
+      !normalizedDraft ||
+      !normalizedInitial ||
+      activityDraftFields.some((field) => normalizedDraft[field] !== normalizedInitial[field]);
     onDirtyChange(isDirty, focusedField);
   }
 
