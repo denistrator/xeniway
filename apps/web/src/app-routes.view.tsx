@@ -1,40 +1,8 @@
-import { Route, Routes } from "react-router-dom";
-import {
-  AboutPage,
-  ApplicationWorkspacePage,
-  ArchivePage,
-  BlacklistPage,
-  ForgotPasswordPage,
-  HomePage,
-  LoginPage,
-  NotFoundPage,
-  PasswordResetPage,
-  RegisterPage,
-  SettingsPage,
-} from "./app-routes.model";
-import { Layout } from "./components/layout.view";
-import { GuestOnly, RequireAuth } from "./route-guards.view";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createAppRoutes } from "./app-routes.model";
+
+const router = createBrowserRouter(createAppRoutes());
 
 export function AppRoutes() {
-  return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route element={<RequireAuth />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/archive" element={<ArchivePage />} />
-          <Route path="/blacklist" element={<BlacklistPage />} />
-          <Route path="/applications/:id" element={<ApplicationWorkspacePage />} />
-        </Route>
-        <Route element={<GuestOnly />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-        </Route>
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<PasswordResetPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
-  );
+  return <RouterProvider router={router} />;
 }

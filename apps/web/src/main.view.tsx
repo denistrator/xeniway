@@ -1,7 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { Provider } from "react-redux";
-import { BrowserRouter } from "react-router-dom";
 import { App } from "./App.view";
 import { OfflineAccessProvider } from "./features/offline/offline-access.view";
 import { store } from "./store";
@@ -13,9 +12,7 @@ void bootstrap((queryClient, restoration) => (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <OfflineAccessProvider restoration={restoration}>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <App />
         </OfflineAccessProvider>
       </QueryClientProvider>
     </Provider>

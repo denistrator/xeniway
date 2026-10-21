@@ -1,16 +1,10 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { JobApplication } from "@xeniway/shared";
-import { Provider } from "react-redux";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { applicationKeys } from "../../../../lib/api";
-import { authKeys } from "../../../../lib/queries";
 import { setAllStatuses, setSearch, store } from "../../../../store";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
 import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
-import { ApplicationWorkspacePage } from "./application-workspace-page.view";
+import { renderApplicationWorkspacePage } from "../test-support/render-application-workspace";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
@@ -27,7 +21,7 @@ test("invalid IDs render not found without issuing a request", async () => {
   const fetcher = vi.fn();
   vi.stubGlobal("fetch", fetcher);
 
-  renderPage("/applications/0");
+  renderApplicationWorkspacePage("/applications/0");
 
   expect(await screen.findByRole("heading", { name: "Page not found" })).toBeVisible();
   expect(fetcher).not.toHaveBeenCalled();
@@ -43,7 +37,7 @@ test("API not-found responses render the not-found page", async () => {
       ),
   );
 
-  renderPage("/applications/999");
+  renderApplicationWorkspacePage("/applications/999");
 
   expect(await screen.findByRole("heading", { name: "Page not found" })).toBeVisible();
 });
@@ -54,7 +48,7 @@ test("renders a loading state while the application request is pending", () => {
     vi.fn(() => new Promise<Response>(() => undefined)),
   );
 
-  renderPage("/applications/3");
+  renderApplicationWorkspacePage("/applications/3");
 
   expect(screen.getByText("Loading…")).toBeVisible();
 });
@@ -68,7 +62,7 @@ test("retries a failed request and renders the workspace", async () => {
     )
     .mockResolvedValueOnce(workspaceResponse());
   vi.stubGlobal("fetch", fetcher);
-  renderPage("/applications/3");
+  renderApplicationWorkspacePage("/applications/3");
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   await user.click(screen.getByRole("button", { name: "Retry" }));
@@ -80,7 +74,7 @@ test("retries a failed request and renders the workspace", async () => {
 test("composes every workspace domain from one application-detail request", async () => {
   const fetcher = vi.fn().mockResolvedValue(workspaceResponse());
   vi.stubGlobal("fetch", fetcher);
-  const { container } = renderPage("/applications/3");
+  const { container } = renderApplicationWorkspacePage("/applications/3");
 
   expect(await screen.findByRole("heading", { name: "Northwind" })).toHaveFocus();
   expect(screen.getByRole("region", { name: "About" })).toBeVisible();
@@ -110,7 +104,7 @@ test("navigates through columns and wraps with fresh editor state and destinatio
     return Promise.resolve(new Response(JSON.stringify({ data: record })));
   });
   vi.stubGlobal("fetch", fetcher);
-  renderPage(
+  renderApplicationWorkspacePage(
     "/applications/3",
     records.map(({ application }) => application),
   );
@@ -135,24 +129,4 @@ test("navigates through columns and wraps with fresh editor state and destinatio
 
 function workspaceResponse() {
   return new Response(JSON.stringify({ data: createApplicationWorkspaceData() }), { status: 200 });
-}
-
-function renderPage(path: string, applications: JobApplication[] = []) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  queryClient.setQueryData(authKeys.me, { data: { user: { id: 1, email: "test@example.com" } } });
-  queryClient.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
-  for (const collection of ["active", "archive", "blacklist"] as const) {
-    queryClient.setQueryData(applicationKeys.list(1, collection), { data: { applications } });
-  }
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <Provider store={store}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/applications/:id" element={<ApplicationWorkspacePage />} />
-          </Routes>
-        </MemoryRouter>
-      </Provider>
-    </QueryClientProvider>,
-  );
 }

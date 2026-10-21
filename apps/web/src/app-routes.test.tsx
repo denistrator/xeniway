@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
-import { MemoryRouter } from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { expect, test, vi } from "vitest";
-import { AppRoutes } from "./app-routes.view";
+import { createAppRoutes } from "./app-routes.model";
 import { store } from "./store";
 import { initializeTestI18n } from "./test/initialize-test-i18n";
 
@@ -34,12 +34,11 @@ vi.mock("./lib/queries", () => ({
 test("keeps the main focus target mounted while a lazy route loads", async () => {
   await initializeTestI18n();
   const client = new QueryClient();
+  const router = createMemoryRouter(createAppRoutes(), { initialEntries: ["/about"] });
   const view = render(
     <Provider store={store}>
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={["/about"]}>
-          <AppRoutes />
-        </MemoryRouter>
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </Provider>,
   );

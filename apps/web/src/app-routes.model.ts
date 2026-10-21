@@ -1,4 +1,7 @@
-import { lazy } from "react";
+import { createElement, lazy } from "react";
+import type { RouteObject } from "react-router-dom";
+import { Layout } from "./components/layout.view";
+import { GuestOnly, RequireAuth } from "./route-guards.view";
 export const SettingsPage = lazy(() =>
   import("./pages/settings-page.view").then(({ SettingsPage }) => ({ default: SettingsPage })),
 );
@@ -38,3 +41,34 @@ export const PasswordResetPage = lazy(() =>
 export const RegisterPage = lazy(() =>
   import("./features/auth/register/register-page.view").then(({ RegisterPage }) => ({ default: RegisterPage })),
 );
+
+export function createAppRoutes(): RouteObject[] {
+  return [
+    {
+      element: createElement(Layout),
+      children: [
+        { path: "/about", element: createElement(AboutPage) },
+        { path: "/settings", element: createElement(SettingsPage) },
+        {
+          element: createElement(RequireAuth),
+          children: [
+            { path: "/", element: createElement(HomePage) },
+            { path: "/archive", element: createElement(ArchivePage) },
+            { path: "/blacklist", element: createElement(BlacklistPage) },
+            { path: "/applications/:id", element: createElement(ApplicationWorkspacePage) },
+          ],
+        },
+        {
+          element: createElement(GuestOnly),
+          children: [
+            { path: "/login", element: createElement(LoginPage) },
+            { path: "/register", element: createElement(RegisterPage) },
+          ],
+        },
+        { path: "/forgot-password", element: createElement(ForgotPasswordPage) },
+        { path: "/reset-password", element: createElement(PasswordResetPage) },
+        { path: "*", element: createElement(NotFoundPage) },
+      ],
+    },
+  ];
+}
