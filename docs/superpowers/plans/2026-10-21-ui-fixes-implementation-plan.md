@@ -116,7 +116,7 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 - [ ] Reproduce dirty-field warning Escape/backdrop. Reproduce edit A → request delete B → cancel, and edit A → edit B, for contacts, follow-ups and activity.
 - [ ] Add regressions that assert exact draft text and the absence of writes after cancel/dismiss. Run each affected test file and observe failure before fixing that variant.
 - [x] Add a distinct `dismissWarning(): void` to the field-group controller that closes the warning without calling `cancel(field)`. Keep explicit `discardWarning(): void` separate. The shared modal uses a paired optional `dismissAction: { label, onDismiss }` rather than independent callback/label props; keep Save changes / Discard changes / Keep editing explicit. Existing two-action callers are unchanged.
-- [ ] Compare normalized draft and baseline before replacing a row target. Hold a pending target intent instead of immediately reinitializing the form. For unrelated deletion, keep the existing editor mounted until an explicit decision requires closing it.
+- [x] Compare normalized draft and baseline before replacing a row target. Hold a pending target intent instead of immediately reinitializing the form. For unrelated deletion, keep the existing editor mounted until an explicit decision requires closing it.
 - [ ] Apply the resolved intent only after save/discard is confirmed. On a rejected save, keep the original editor and pending intent available without losing data. Clear intents on owner/application change.
 - [ ] Rerun focused tests, including clean switches, cancel after a failed save, offline transitions and changed account. Record the approved D1 behavior in architecture/testing docs.
 

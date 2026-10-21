@@ -177,6 +177,32 @@ test("switches follow-up editors without a warning for whitespace-only changes",
   expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Call Morgan");
 });
 
+test("retains a pending follow-up switch after a failed warning save", async () => {
+  const user = userEvent.setup();
+  const secondTask = { ...workspaceFollowUpTask, id: 9, title: "Call Morgan" };
+  const fetcher = vi.fn(() => Promise.resolve(new Response(null, { status: 500 })));
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace({ followUpTasks: [workspaceFollowUpTask, secondTask] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Write to Ari" }));
+  const task = screen.getByRole("textbox", { name: "Task" });
+  await user.clear(task);
+  await user.type(task, "Draft follow-up");
+  await user.click(screen.getByRole("button", { name: "Edit Call Morgan" }));
+  const warning = screen.getByRole("alertdialog", { name: "Save changes before leaving?" });
+
+  await user.click(within(warning).getByRole("button", { name: "Save changes" }));
+
+  expect(await screen.findByText("Could not save follow-up.")).toBeVisible();
+  expect(task).toHaveValue("Draft follow-up");
+  expect(screen.getByRole("alertdialog", { name: "Save changes before leaving?" })).toBeVisible();
+  expect(fetcher).toHaveBeenCalledOnce();
+
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+
+  expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Call Morgan");
+});
+
 test("workspace section labels render in Hebrew with right-to-left document direction", async () => {
   await changeLocale("he");
   renderApplicationWorkspace({ followUpTasks: [workspaceFollowUpTask] });

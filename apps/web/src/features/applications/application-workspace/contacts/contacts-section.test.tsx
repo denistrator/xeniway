@@ -197,3 +197,29 @@ test("switches contact editors without a warning for whitespace-only changes", a
   expect(screen.queryByRole("alertdialog", { name: "Save changes before leaving?" })).toBeNull();
   expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Morgan Lee");
 });
+
+test("retains a pending contact switch after a failed warning save", async () => {
+  const user = userEvent.setup();
+  const secondContact = { ...workspaceContact, id: 8, name: "Morgan Lee", role: "Coordinator" };
+  const fetcher = vi.fn(() => Promise.resolve(new Response(null, { status: 500 })));
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace({ contacts: [workspaceContact, secondContact] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  const role = screen.getByRole("textbox", { name: "Role" });
+  await user.clear(role);
+  await user.type(role, "Draft recruiter");
+  await user.click(screen.getByRole("button", { name: "Edit Morgan Lee" }));
+  const warning = screen.getByRole("alertdialog", { name: "Save changes before leaving?" });
+
+  await user.click(within(warning).getByRole("button", { name: "Save changes" }));
+
+  expect(await screen.findByText("Could not save contact.")).toBeVisible();
+  expect(role).toHaveValue("Draft recruiter");
+  expect(screen.getByRole("alertdialog", { name: "Save changes before leaving?" })).toBeVisible();
+  expect(fetcher).toHaveBeenCalledOnce();
+
+  await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+
+  expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Morgan Lee");
+});
