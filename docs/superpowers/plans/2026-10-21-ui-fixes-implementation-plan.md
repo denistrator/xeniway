@@ -107,18 +107,18 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 
 **Covers:** UI-01, UI-02. **Dependencies:** T02, D1.
 
-**Checkpoint split:** UI-01 compact warnings are accepted. UI-02 related-record row switching is the current independently tested fix and awaits user testing.
+**Checkpoint split:** UI-01 compact warnings and UI-02 related-record row switching are accepted. Application/owner-transition intent clearing is excluded: navigation cannot proceed while the warning modal is open.
 
 **Modify:** `W/overview/use-application-fields.ts`, `application-unsaved-warning.model.ts`, `.view.tsx`; `W/contacts/use-contacts-controller.ts`; `W/follow-ups/use-follow-ups-controller.ts`; `apps/web/src/features/applications/activity/application-activity-section.model.ts`, `.view.tsx`; matching dictionaries.
 
 **Tests:** `W/overview/application-overview.test.tsx`, `W/contacts/contacts-section.test.tsx`, `W/follow-ups/follow-ups-section.test.tsx`, `apps/web/src/features/applications/activity/application-activity-section.test.tsx`.
 
-- [ ] Reproduce dirty-field warning Escape/backdrop. Reproduce edit A → request delete B → cancel, and edit A → edit B, for contacts, follow-ups and activity.
-- [ ] Add regressions that assert exact draft text and the absence of writes after cancel/dismiss. Run each affected test file and observe failure before fixing that variant.
+- [x] Reproduce dirty-field warning Escape/backdrop. Reproduce edit A → request delete B → cancel, and edit A → edit B, for contacts, follow-ups and activity.
+- [x] Add regressions that assert exact draft text and the absence of writes after cancel/dismiss. Run each affected test file and observe failure before fixing that variant.
 - [x] Add a distinct `dismissWarning(): void` to the field-group controller that closes the warning without calling `cancel(field)`. Keep explicit `discardWarning(): void` separate. The shared modal uses a paired optional `dismissAction: { label, onDismiss }` rather than independent callback/label props; keep Save changes / Discard changes / Keep editing explicit. Existing two-action callers are unchanged.
 - [x] Compare normalized draft and baseline before replacing a row target. Hold a pending target intent instead of immediately reinitializing the form. For unrelated deletion, keep the existing editor mounted until an explicit decision requires closing it.
-- [ ] Apply the resolved intent only after save/discard is confirmed. On a rejected save, keep the original editor and pending intent available without losing data. Clear intents on owner/application change.
-- [ ] Rerun focused tests, including clean switches, cancel after a failed save, offline transitions and changed account. Record the approved D1 behavior in architecture/testing docs.
+- [x] Apply the resolved intent only after save/discard is confirmed. On a rejected save, keep the original editor and pending intent available without losing data. Do not add owner/application-transition intent clearing: navigation cannot proceed while the warning modal is open.
+- [x] Rerun focused tests, including clean switches, cancel after a failed save, offline transitions and changed account. Record the approved D1 behavior in architecture/testing docs.
 
 **Exit:** No implicit discard through Escape, backdrop, another row's action, or a canceled deletion.
 
@@ -130,8 +130,8 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 
 **Tests:** `W/overview/use-application-field.test.tsx`, `W/preparation/preparation-section.test.tsx`, `W/contacts/contacts-section.test.tsx`, `W/follow-ups/follow-ups-section.test.tsx` with real query-backed completion.
 
-- [ ] Add a deferred write test: invoke Save, attempt a second save before rerender, attempt further editing, resolve the first request, and verify no typed revision silently disappears. Record the one-field patch and exact call count.
-- [ ] Observe failure, then apply a synchronous in-flight guard in the relevant save controller. Release it in `finally`. Lock only that submitted editor's inputs while its request is pending; allow unrelated work. Guard cancellation and row replacement that could misapply a late response.
+- [x] Add a deferred write test: invoke Save, attempt a second save before rerender, attempt further editing, resolve the first request, and verify no typed revision silently disappears. Record the one-field patch and exact call count.
+- [x] Observe failure, then apply a synchronous in-flight guard in the relevant save controller. Release it in `finally`. Lock only that submitted editor's inputs while its request is pending; allow unrelated work. Guard cancellation and row replacement that could misapply a late response.
 - [ ] Distinguish successful save from invalid/failed save in controller results. Preserve existing public types unless a coordinated change is necessary; `ApplicationFieldController.save` already returns `Promise<boolean>`, while preparation currently returns `Promise<void>` and needs an explicit coordinated decision if its caller must consume success.
 - [ ] Add accessible pending feedback in the active editor. Failure unlocks the retained draft and allows retry. No auto retry of an ambiguous create request.
 - [ ] Before completion of a follow-up removes its button or reorders the row, choose a stable target in that task or the next task. Restore after the actual query-backed update; announce success once.

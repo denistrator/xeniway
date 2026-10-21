@@ -57,6 +57,31 @@ test("confirms dirty compact changes and saves only the selected field", async (
   expect(readUpdateBodies(fetcher)[0]).toEqual({ location: "Remote" });
 });
 
+test("locks a compact field while its save is pending", async () => {
+  const user = userEvent.setup();
+  let resolveSave: ((response: Response) => void) | undefined;
+  const fetcher = vi.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        resolveSave = resolve;
+      }),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace();
+
+  await user.click(screen.getByRole("button", { name: "Location, Edit" }));
+  const location = screen.getByRole("textbox", { name: "Location" });
+  await user.type(location, "Remote");
+  await user.click(screen.getByRole("button", { name: "Save location" }));
+
+  await waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+  expect(location).toHaveAttribute("readonly");
+
+  resolveSave?.(
+    new Response(JSON.stringify({ data: { application: { id: 3, location: "Remote" } } }), { status: 200 }),
+  );
+});
+
 test.each(["Escape", "backdrop", "Keep editing"])("preserves the compact draft after %s", async (dismiss) => {
   const user = userEvent.setup();
   const fetcher = stubApplicationUpdates();

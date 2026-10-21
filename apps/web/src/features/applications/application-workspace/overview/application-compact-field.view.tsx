@@ -50,7 +50,7 @@ export function ApplicationCompactField(props: ApplicationCompactFieldProps) {
                 maxLength={view.maxLength}
                 required={view.required}
                 value={fieldProps.value ?? ""}
-                readOnly={!view.canMutate}
+                readOnly={!view.canMutate || view.controller.pending}
                 onChange={view.bindChange(fieldProps)}
                 onBlur={view.handleBlur}
                 aria-invalid={view.hasError}

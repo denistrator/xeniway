@@ -162,6 +162,43 @@ test("locks a contact editor while its save is pending", async () => {
   resolveSave?.(new Response(JSON.stringify({ data: { contact: workspaceContact } }), { status: 200 }));
 });
 
+test("submits a contact edit once while its save is pending", async () => {
+  const user = userEvent.setup();
+  let resolveSave: ((response: Response) => void) | undefined;
+  let submittedBody = "";
+  const fetcher = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+    submittedBody = String(init?.body);
+    return new Promise<Response>((resolve) => {
+      resolveSave = resolve;
+    });
+  });
+  vi.stubGlobal("fetch", fetcher);
+  renderApplicationWorkspace({ contacts: [workspaceContact] });
+
+  await user.click(screen.getByRole("button", { name: "Edit Ari Cole" }));
+  const role = screen.getByRole("textbox", { name: "Role" });
+  await user.clear(role);
+  await user.type(role, "Hiring manager");
+  const save = screen.getByRole("button", { name: "Save contact" });
+  await user.click(save);
+  await user.click(save);
+  await user.type(role, " changed");
+
+  await waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+  expect(role).toHaveAttribute("readonly");
+  expect(role).toHaveValue("Hiring manager");
+  expect(JSON.parse(submittedBody)).toEqual({
+    name: "Ari Cole",
+    role: "Hiring manager",
+    email: "ari@example.com",
+    phone: "+1 212 555 0123",
+    profileUrl: "https://example.com/ari",
+    notes: "Hiring team",
+  });
+
+  resolveSave?.(new Response(JSON.stringify({ data: { contact: workspaceContact } }), { status: 200 }));
+});
+
 test("asks before replacing a dirty contact editor", async () => {
   const user = userEvent.setup();
   const secondContact = { ...workspaceContact, id: 8, name: "Morgan Lee", role: "Coordinator" };
