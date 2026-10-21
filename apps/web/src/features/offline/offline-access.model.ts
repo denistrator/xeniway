@@ -21,7 +21,13 @@ type Runtime = ReturnType<typeof createOfflineAccessRuntime>;
 type Access = ReturnType<Runtime["getSnapshot"]> &
   Pick<
     Runtime,
-    "retryConnection" | "removeDownload" | "signOutLocally" | "prepareDownload" | "reportLocalLogout" | "confirmSignIn"
+    | "retryConnection"
+    | "removeDownload"
+    | "signOutLocally"
+    | "prepareDownload"
+    | "reportLocalLogout"
+    | "clearLocalLogout"
+    | "confirmSignIn"
   >;
 export const OfflineContext = createContext<Access | null>(null);
 
@@ -51,6 +57,7 @@ export function useOfflineAccess(): Access {
       signOutLocally: async () => {},
       prepareDownload: async () => {},
       reportLocalLogout: () => {},
+      clearLocalLogout: () => {},
       confirmSignIn: () => {},
     }
   );
@@ -77,6 +84,7 @@ export function useOfflineAccessProvider(options: OfflineRuntimeOptions) {
       signOutLocally: runtime.signOutLocally,
       prepareDownload: runtime.prepareDownload,
       reportLocalLogout: runtime.reportLocalLogout,
+      clearLocalLogout: runtime.clearLocalLogout,
       confirmSignIn: runtime.confirmSignIn,
     }),
     [snapshot, runtime],

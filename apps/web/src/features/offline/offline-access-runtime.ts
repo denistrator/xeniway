@@ -15,6 +15,7 @@ import {
   userPreferencesKeys,
 } from "../../lib/api";
 import { type AccessEvent, createAccessState, selectAccess, transitionAccess } from "./offline-access-machine";
+import { clearOfflineLogoutNotice, hasOfflineLogoutNotice, saveOfflineLogoutNotice } from "./offline-logout-notice";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineAccount,
@@ -59,6 +60,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     userId: authUser()?.id,
     account: options.initialAccount,
     restoring: Boolean(options.restoration),
+    localLogout: hasOfflineLogoutNotice(),
   });
   if (client.getQueryState(offlineAuthKey)?.error) {
     state = transitionAccess(state, { type: "SESSION_UNAVAILABLE" });
@@ -189,8 +191,18 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     broadcast({ type: "logout" });
     await clearDeviceRecords();
     if (input.discloseRemoteLimit) {
-      dispatch({ type: "LOCAL_LOGOUT_REPORTED" });
+      reportLocalLogout();
     }
+  }
+
+  function reportLocalLogout() {
+    saveOfflineLogoutNotice();
+    dispatch({ type: "LOCAL_LOGOUT_REPORTED", localLogout: true });
+  }
+
+  function clearLocalLogout() {
+    clearOfflineLogoutNotice();
+    dispatch({ type: "LOCAL_LOGOUT_REPORTED", localLogout: false });
   }
 
   async function prepareDownload(input: { consent: boolean; refresh?: boolean }) {
@@ -524,6 +536,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         dispatch({ type: "SIGN_IN_SUCCEEDED", userId, online: navigator.onLine });
       }
     },
-    reportLocalLogout: () => dispatch({ type: "LOCAL_LOGOUT_REPORTED" }),
+    reportLocalLogout,
+    clearLocalLogout,
   };
 }

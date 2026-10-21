@@ -113,6 +113,7 @@ export function useAuthMutations() {
     }
     queryClient.setQueryData(authKeys.me, { data: { user: response.data.user } });
     queryClient.setQueryData(authKeys.csrf, { data: { csrfToken: response.data.csrfToken } });
+    access.clearLocalLogout();
     access.confirmSignIn(response.data.user.id);
     queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
     const channel = typeof BroadcastChannel === "function" ? new BroadcastChannel("xeniway-offline") : null;
@@ -154,7 +155,9 @@ export function useAuthMutations() {
           queryClient.removeQueries({ queryKey: applicationKeys.all });
           queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
         }
-        if (!(await remote)) {
+        if (await remote) {
+          access.clearLocalLogout();
+        } else {
           access.reportLocalLogout();
         }
       },

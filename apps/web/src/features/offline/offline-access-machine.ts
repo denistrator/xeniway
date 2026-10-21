@@ -36,9 +36,9 @@ export type AccessEvent =
         | "DOWNLOAD_REMOVED"
         | "DOWNLOAD_REPLACED"
         | "STORAGE_FAILED"
-        | "LOCAL_LOGOUT_REPORTED"
         | "WORKER_UPDATE_AVAILABLE";
     }
+  | { type: "LOCAL_LOGOUT_REPORTED"; localLogout: boolean }
   | { type: "SESSION_VERIFIED"; userId: number }
   | { type: "SIGN_IN_SUCCEEDED"; userId: number; online: boolean }
   | { type: "VERIFY_STARTED"; operation: number }
@@ -56,6 +56,7 @@ export function createAccessState(input: {
   userId?: number;
   account?: OfflineAccountMetadata | null;
   restoring?: boolean;
+  localLogout?: boolean;
 }): AccessState {
   return {
     connection: { status: input.online ? "online" : "offline" },
@@ -66,7 +67,7 @@ export function createAccessState(input: {
     memoryOwner: input.userId ?? null,
     epoch: 0,
     storageError: false,
-    localLogout: false,
+    localLogout: input.localLogout ?? false,
     updateAvailable: false,
   };
 }
@@ -156,6 +157,13 @@ function expireDownload(state: AccessState, account: OfflineAccountMetadata): Ac
   return { ...state, download: { status: "absent" }, epoch: state.epoch + 1 };
 }
 
+function updateLocalLogout(state: AccessState, localLogout: boolean): AccessState {
+  if (state.localLogout === localLogout) {
+    return state;
+  }
+  return { ...state, localLogout };
+}
+
 /** The sole policy entry point. Asynchronous operations stay in the runtime. */
 export function transitionAccess(state: AccessState, event: AccessEvent): AccessState {
   switch (event.type) {
@@ -215,7 +223,7 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
     case "STORAGE_FAILED":
       return state.storageError ? state : { ...state, storageError: true };
     case "LOCAL_LOGOUT_REPORTED":
-      return state.localLogout ? state : { ...state, localLogout: true };
+      return updateLocalLogout(state, event.localLogout);
     case "WORKER_UPDATE_AVAILABLE":
       return state.updateAvailable ? state : { ...state, updateAvailable: true };
   }

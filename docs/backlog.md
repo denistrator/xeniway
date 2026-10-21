@@ -135,13 +135,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Possible direction:** First map existing logging and deployment behavior, then consider structured server-side diagnostics if a genuine gap remains.
 - **Guardrails:** This is an investigation, not a request to change error behavior. Never return stack traces, secrets, or internal details to clients; do not weaken security controls.
 
-### Preserve or relocate the offline logout disclosure
-
-- **Where:** `apps/web/src/features/offline/offline-access-machine.ts`, `offline-access-runtime.ts`, and `tests/e2e/offline.spec.ts` (offline logout workflow).
-- **Evidence:** The remote-session warning is represented by the in-memory `localLogout` flag, initialized to `false`. After offline logout the Settings header link disappears; a full-page navigation to `/settings` resets the runtime and loses the disclosure. The production browser regression fails consistently at the warning assertion after that navigation.
-- **Possible direction:** Agree whether to show this disclosure on the destination login page or retain a non-private, tab-scoped notice across full navigation. Align the browser test with the intended lifetime rather than simply removing the assertion.
-- **Guardrails:** Preserve immediate private-data cleanup, account isolation, and the distinction between local logout and successful remote-session revocation. Never imply the remote session was revoked when the API could not be reached.
-
 ## Explicitly not planned
 
 - A generic CRUD router factory: route-specific behavior is clearer for this API, and repository guidance says not to introduce this abstraction.

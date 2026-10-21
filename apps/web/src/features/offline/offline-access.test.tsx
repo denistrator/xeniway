@@ -263,6 +263,7 @@ test("removing a download online revokes memory fallback on later disconnect unt
 afterEach(async () => {
   vi.useRealTimers();
   await clearOfflineDevice();
+  sessionStorage.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -574,6 +575,36 @@ test.each(["transport", "server"])(
     client.clear();
   },
 );
+
+test("offline logout notice survives a runtime restart until it is cleared", async () => {
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.reject(new TypeError("Network unavailable"))),
+  );
+  const initialClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const initialView = renderHook(() => useOfflineAccess(), { wrapper: runtime(initialClient) });
+  try {
+    await act(async () => {
+      await initialView.result.current.signOutLocally({ discloseRemoteLimit: true });
+    });
+    await waitFor(() => expect(initialView.result.current.localLogout).toBe(true));
+  } finally {
+    initialView.unmount();
+    initialClient.clear();
+  }
+
+  const reloadedClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const reloadedView = renderHook(() => useOfflineAccess(), { wrapper: runtime(reloadedClient) });
+  try {
+    await waitFor(() => expect(reloadedView.result.current.localLogout).toBe(true));
+    act(() => reloadedView.result.current.clearLocalLogout());
+    await waitFor(() => expect(reloadedView.result.current.localLogout).toBe(false));
+  } finally {
+    reloadedView.unmount();
+    reloadedClient.clear();
+  }
+});
 
 test("cached device access never impersonates a server session", async () => {
   vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
