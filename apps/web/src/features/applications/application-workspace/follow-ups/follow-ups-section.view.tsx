@@ -59,6 +59,7 @@ export const FollowUpsSection = memo(function FollowUpsSection(props: FollowUpsS
                         </div>
                         <div className={styles.actions()}>
                           <Button
+                            data-follow-up-edit-action
                             type="button"
                             size="sm"
                             variant="outline"

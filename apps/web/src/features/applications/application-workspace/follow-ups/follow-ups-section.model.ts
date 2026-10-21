@@ -61,9 +61,11 @@ export function useFollowUpsSection({ applicationId, tasks }: FollowUpsSectionPr
       remove(event: MouseEvent<HTMLButtonElement>) {
         controller.deletion.request(task, event.currentTarget);
       },
-      complete() {
+      complete(event: MouseEvent<HTMLButtonElement>) {
         if (canMutate) {
-          void controller.complete(task.id);
+          const row = event.currentTarget.closest("li");
+          const editButton = row?.querySelector<HTMLButtonElement>("[data-follow-up-edit-action]") ?? null;
+          void controller.complete(task.id, editButton);
         }
       },
     };

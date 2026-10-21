@@ -110,6 +110,7 @@ test("follow-ups keep incomplete tasks first and make completion terminal", asyn
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
   expect(fetcher.mock.calls[0][0]).toContain("/follow-ups/8/complete");
   expect(await screen.findByText("Follow-up completed.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Edit Write to Ari" })).toHaveFocus();
 });
 
 test("follow-ups confirm deletion and report failures", async () => {

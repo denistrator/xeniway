@@ -54,7 +54,7 @@ export type FollowUpsController = {
   addButtonRef: RefObject<HTMLButtonElement | null>;
   pending: boolean;
   status: FollowUpMutationStatus;
-  complete(taskId: number): Promise<void>;
+  complete(taskId: number, focusTarget: HTMLElement | null): Promise<void>;
 };
 
 function toFollowUpInput(draft: FollowUpDraft) {
@@ -234,8 +234,16 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     setDeletionTarget(task);
   }
 
-  async function complete(taskId: number) {
-    await runWorkspaceMutation(() => mutations.complete.mutateAsync(taskId), setStatus, "completed", "completeFailed");
+  async function complete(taskId: number, focusTarget: HTMLElement | null) {
+    const completed = await runWorkspaceMutation(
+      () => mutations.complete.mutateAsync(taskId),
+      setStatus,
+      "completed",
+      "completeFailed",
+    );
+    if (completed) {
+      focusTarget?.focus();
+    }
   }
 
   async function confirmDeletion() {
