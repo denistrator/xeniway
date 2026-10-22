@@ -1,9 +1,9 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { setAllStatuses, setSearch, store } from "../../../../store";
 import { initializeTestI18n } from "../../../../test/initialize-test-i18n";
-import { createApplicationWorkspaceData } from "../test-support/application-workspace-fixtures";
+import { createApplicationWorkspaceData, workspaceFollowUpTask } from "../test-support/application-workspace-fixtures";
 import { renderApplicationWorkspacePage } from "../test-support/render-application-workspace";
 
 beforeEach(async () => {
@@ -87,6 +87,59 @@ test("composes every workspace domain from one application-detail request", asyn
   expect(screen.getByRole("button", { name: "Next application" })).toBeDisabled();
   await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
   expect(fetcher).toHaveBeenCalledWith("/api/applications/3", expect.anything());
+});
+
+test("completion reorders follow-ups from the detail cache and preserves edit focus", async () => {
+  const user = userEvent.setup();
+  const previouslyCompletedTask = {
+    ...workspaceFollowUpTask,
+    id: 9,
+    title: "Earlier call",
+    dueDate: "2026-09-20",
+    completedAt: "2026-09-20T00:00:00.000Z",
+  };
+  const openTask = workspaceFollowUpTask;
+  const completedTask = { ...openTask, completedAt: "2026-09-23T00:00:00.000Z" };
+  const initialWorkspace = createApplicationWorkspaceData({ followUpTasks: [previouslyCompletedTask, openTask] });
+  const refetchedWorkspace = createApplicationWorkspaceData({
+    followUpTasks: [previouslyCompletedTask, completedTask],
+  });
+  let resolveRefetch!: (response: Response) => void;
+  const refetch = new Promise<Response>((resolve) => {
+    resolveRefetch = resolve;
+  });
+  let detailRequestCount = 0;
+  const fetcher = vi.fn((path: string) => {
+    if (path === "/api/applications/3") {
+      detailRequestCount += 1;
+      if (detailRequestCount === 1) {
+        return Promise.resolve(new Response(JSON.stringify({ data: initialWorkspace }), { status: 200 }));
+      }
+      return refetch;
+    }
+    if (path === "/api/applications/3/follow-ups/8/complete") {
+      return Promise.resolve(new Response(JSON.stringify({ data: { followUpTask: completedTask } }), { status: 200 }));
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  });
+  vi.stubGlobal("fetch", fetcher);
+
+  renderApplicationWorkspacePage("/applications/3");
+
+  expect(await screen.findByRole("button", { name: "Complete Write to Ari" })).toBeVisible();
+  const initialItems = screen.getAllByRole("listitem");
+  expect(within(initialItems[0]).getByRole("heading", { name: "Write to Ari" })).toBeVisible();
+
+  await user.click(screen.getByRole("button", { name: "Complete Write to Ari" }));
+
+  await waitFor(() => {
+    const completedItems = screen.getAllByRole("listitem");
+    expect(within(completedItems[0]).getByRole("heading", { name: "Earlier call" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Edit Write to Ari" })).toHaveFocus();
+  });
+  expect(fetcher).toHaveBeenCalledWith("/api/applications/3/follow-ups/8/complete", expect.anything());
+
+  resolveRefetch(new Response(JSON.stringify({ data: refetchedWorkspace }), { status: 200 }));
 });
 
 test("navigates through columns and wraps with fresh editor state and destination heading focus", async () => {

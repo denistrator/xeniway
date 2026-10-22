@@ -135,7 +135,7 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 - [x] Distinguish successful save from invalid/failed save in controller results. Preserve existing public types unless a coordinated change is necessary; application, preparation, contact, and follow-up controllers return `Promise<boolean>`. Activity keeps its local failure state because no caller must advance from its result.
 - [x] Add accessible pending feedback in the active editor. Failure unlocks the retained draft and allows retry. No auto retry of an ambiguous create request.
 - [x] Before completion of a follow-up removes its button or reorders the row, choose a stable target in that task or the next task. Restore after the actual query-backed update; announce success once.
-- [ ] Verify timeout/failure, late response after application/account change, unmount, two independent fields, and completed-task sorting. Run the focused files and the workspace browser flow.
+- [x] Verify timeout/failure, late response after application/account change, unmount, two independent fields, and completed-task sorting. Run the focused files and the workspace browser flow.
 
 **Exit:** One intended save produces one write; pending responses do not overwrite new input or steal focus from another record.
 

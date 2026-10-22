@@ -348,7 +348,7 @@ export function useApplicationFollowUpMutations(applicationId: number) {
             };
           },
         );
-        return invalidate();
+        void invalidate();
       },
     }),
     remove: useOwnerMutation({
