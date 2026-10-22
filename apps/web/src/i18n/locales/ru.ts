@@ -322,8 +322,11 @@ const ru = {
     },
     board: {
       openDetails: "Откройте рабочее пространство отклика",
+      cardLabel: "{{company}}, {{position}}, {{status}}",
       dropHere: "Переместите вакансии сюда",
       noMatch: "Нет вакансий по текущему поиску и фильтрам статусов.",
+      noStatuses: "Не выбрано ни одного статуса.",
+      showAllStatuses: "Показать все статусы",
       updated: "Отклик обновлён.",
       applied: "Отклик {{date}}",
       keyboardInstructions:

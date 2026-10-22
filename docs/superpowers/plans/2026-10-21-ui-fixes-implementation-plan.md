@@ -280,10 +280,10 @@ export function resolveAuthReturnTo(value: string | null): string;
 
 **Tests:** Existing `board/job-board-column.test.tsx`; create `board/use-job-board.test.tsx` and `filters/status-filter.test.tsx` if absent; extend browser keyboard/filter workflows.
 
-- [ ] Add a regression that hides then re-enables Saved, then moves toward its adjacent displayed status. Test sparse visible sets and boundaries. Use `jobStatuses.filter(status => visibleStatuses.includes(status))` for both column display and adjacency.
-- [ ] Define left/right from document direction consistently with visual movement. Test English/Hebrew and preserve native link modifier/middle-click behavior. Do not change the separately approved all-applications previous/next strategy.
-- [ ] Move “Position … of …” into translated interpolation keys. Put shared keyboard help in associated descriptive content and omit mutation help while read-only; keep a concise company/role/status link name.
-- [ ] Retain the status filter as a nonmodal checkbox disclosure. Remove misleading dialog semantics, give the controlled group a stable accessible name, and define focus entry/Tab/Escape without trapping users inside a nonmodal popover.
+- [x] Add a regression that hides then re-enables Saved, then moves toward its adjacent displayed status. Test sparse visible sets and boundaries. Use `jobStatuses.filter(status => visibleStatuses.includes(status))` for both column display and adjacency.
+- [x] Define left/right from document direction consistently with visual movement. Test English/Hebrew and preserve native link modifier/middle-click behavior. Do not change the separately approved all-applications previous/next strategy.
+- [x] Move “Position … of …” into translated interpolation keys. Put shared keyboard help in associated descriptive content and omit mutation help while read-only; keep a concise company/role/status link name.
+- [x] Retain the status filter as a nonmodal checkbox disclosure. Remove misleading dialog semantics, give the controlled group a stable accessible name, and define focus entry/Tab/Escape without trapping users inside a nonmodal popover.
 - [ ] Distinguish zero selected statuses from a no-match text search; offer Show all statuses and Clear search for their respective states. Keep labels and indeterminate Select all correct.
 - [ ] Run board/filter tests and browser keyboard navigation in both directions. No automated styling assertions.
 

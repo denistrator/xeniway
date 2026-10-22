@@ -15,5 +15,6 @@ export const jobCardStyles = tv({
     metadata: "mt-3 flex flex-wrap gap-3 text-sm leading-6 text-muted",
     location: "break-words",
     appliedDate: "",
+    keyboardHelp: "sr-only",
   },
 });

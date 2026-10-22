@@ -317,8 +317,11 @@ export const en = {
     },
     board: {
       openDetails: "Activate to open application workspace",
+      cardLabel: "{{company}}, {{position}}, {{status}}",
       dropHere: "Drop applications here",
       noMatch: "No applications match the current search and status filters.",
+      noStatuses: "No statuses are selected.",
+      showAllStatuses: "Show all statuses",
       updated: "Application updated.",
       applied: "Applied {{date}}",
       keyboardInstructions:

@@ -12,7 +12,13 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError, oper
     columns,
     moveJob,
     openJob,
-    noMatchLabel,
+    emptyLabel,
+    canShowAllStatuses,
+    canClearSearch,
+    showAllStatuses,
+    clearSearch,
+    showAllStatusesLabel,
+    clearSearchLabel,
     operationError: error,
     operationSuccess: success,
   } = useJobBoardPresentation({
@@ -52,9 +58,23 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError, oper
         ))}
       </div>
       {!board.filteredJobs.length && (
-        <p role="status" aria-live="polite" className={styles.emptyMessage()}>
-          {noMatchLabel}
-        </p>
+        <div role="status" aria-live="polite" className={styles.emptyMessage()}>
+          <p>{emptyLabel}</p>
+          {(canShowAllStatuses || canClearSearch) && (
+            <div className={styles.emptyActions()}>
+              {canShowAllStatuses && (
+                <button type="button" className={styles.emptyAction()} onClick={showAllStatuses}>
+                  {showAllStatusesLabel}
+                </button>
+              )}
+              {canClearSearch && (
+                <button type="button" className={styles.emptyAction()} onClick={clearSearch}>
+                  {clearSearchLabel}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

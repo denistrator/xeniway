@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { matchesApplicationSearch } from "../../../lib/application-filters";
 import type { RootState } from "../../../store";
 import { insertApplication, type MoveDirection, moveApplication } from "./application-order";
+import { getDisplayedStatuses } from "./job-status";
 
 type StatusDirection = "previousStatus" | "nextStatus";
 
@@ -17,6 +18,7 @@ export function useJobBoard({
   onReorder: (status: JobStatus, applicationIds: number[]) => void;
 }) {
   const { search, visibleStatuses } = useSelector((state: RootState) => state.ui);
+  const displayedStatuses = getDisplayedStatuses(visibleStatuses);
   const draggedIdRef = useRef<number | null>(null);
   const [dropTarget, setDropTarget] = useState<{ status: JobStatus; index: number } | null>(null);
   const filteredJobs = useMemo(
@@ -37,8 +39,8 @@ export function useJobBoard({
   }
 
   function moveToAdjacentStatus(id: number, status: JobStatus, direction: StatusDirection) {
-    const index = visibleStatuses.indexOf(status);
-    const targetStatus = visibleStatuses[direction === "previousStatus" ? index - 1 : index + 1];
+    const index = displayedStatuses.indexOf(status);
+    const targetStatus = displayedStatuses[direction === "previousStatus" ? index - 1 : index + 1];
     if (targetStatus) {
       onStatusChange(id, targetStatus);
     }
@@ -83,7 +85,7 @@ export function useJobBoard({
   }
 
   return {
-    visibleStatuses,
+    displayedStatuses,
     filteredJobs,
     draggedIdRef,
     reorderWithinStatus,

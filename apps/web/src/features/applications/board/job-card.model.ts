@@ -15,7 +15,45 @@ export type JobCardProps = {
   total: number;
 };
 
-export function useJobCardPresentation({ job, onOpen, onDragStart, onKeyboardMove, position, total }: JobCardProps) {
+export function getKeyboardMove(
+  key: string,
+  withShift: boolean,
+  direction: "ltr" | "rtl",
+): Parameters<JobCardProps["onKeyboardMove"]>[0] | null {
+  if (withShift) {
+    switch (key) {
+      case "ArrowLeft": {
+        return direction === "rtl" ? "nextStatus" : "previousStatus";
+      }
+      case "ArrowRight": {
+        return direction === "rtl" ? "previousStatus" : "nextStatus";
+      }
+      default: {
+        return null;
+      }
+    }
+  }
+
+  switch (key) {
+    case "ArrowUp": {
+      return "up";
+    }
+    case "ArrowDown": {
+      return "down";
+    }
+    case "Home": {
+      return "first";
+    }
+    case "End": {
+      return "last";
+    }
+    default: {
+      return null;
+    }
+  }
+}
+
+export function useJobCardPresentation({ job, onOpen, onDragStart, onKeyboardMove }: JobCardProps) {
   const { i18n, t } = useTranslation();
   const canMutate = useCanMutate();
   const cardRef = useRef<HTMLAnchorElement>(null);
@@ -44,42 +82,33 @@ export function useJobCardPresentation({ job, onOpen, onDragStart, onKeyboardMov
     if (!canMutate) {
       return;
     }
-    let direction: Parameters<typeof onKeyboardMove>[0] | null = null;
-    if (event.shiftKey) {
-      switch (event.key) {
-        case "ArrowLeft":
-          direction = "previousStatus";
-          break;
-        case "ArrowRight":
-          direction = "nextStatus";
-          break;
-      }
-    } else {
-      switch (event.key) {
-        case "ArrowUp":
-          direction = "up";
-          break;
-        case "ArrowDown":
-          direction = "down";
-          break;
-        case "Home":
-          direction = "first";
-          break;
-        case "End":
-          direction = "last";
-          break;
-      }
-    }
-    if (!direction) {
+    const move = getKeyboardMove(event.key, event.shiftKey, i18n.dir() === "rtl" ? "rtl" : "ltr");
+    if (!move) {
       return;
     }
     event.preventDefault();
-    onKeyboardMove(direction);
+    onKeyboardMove(move);
   }
-  const accessibleName = `${job.company}, ${job.position}, ${getStatusLabel(t, job.status)}. ${t("applications.board.openDetails")}. Position ${position} of ${total}. ${t("applications.board.keyboardInstructions")}`;
+  const accessibleName = t("applications.board.cardLabel", {
+    company: job.company,
+    position: job.position,
+    status: getStatusLabel(t, job.status),
+  });
+  const keyboardHelp = canMutate ? t("applications.board.keyboardInstructions") : null;
+  const descriptionId = keyboardHelp ? `job-card-${job.id}-help` : undefined;
   const appliedLabel = job.appliedAt
     ? t("applications.board.applied", { date: formatDate(job.appliedAt, i18n.resolvedLanguage ?? "en") })
     : null;
   const href = `/applications/${job.id}`;
-  return { canMutate, cardRef, handleClick, handleKeyDown, accessibleName, appliedLabel, href };
+  return {
+    canMutate,
+    cardRef,
+    handleClick,
+    handleKeyDown,
+    accessibleName,
+    keyboardHelp,
+    descriptionId,
+    appliedLabel,
+    href,
+  };
 }

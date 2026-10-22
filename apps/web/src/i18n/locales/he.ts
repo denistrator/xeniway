@@ -307,8 +307,11 @@ const he = {
     },
     board: {
       openDetails: "פתיחת סביבת העבודה של המועמדות",
+      cardLabel: "{{company}}, {{position}}, {{status}}",
       dropHere: "שחררו מועמדויות כאן",
       noMatch: "אין מועמדויות שתואמות לחיפוש ולמסנני הסטטוס הנוכחיים.",
+      noStatuses: "לא נבחרו סטטוסים.",
+      showAllStatuses: "הצגת כל הסטטוסים",
       updated: "המועמדות עודכנה.",
       applied: "הוגשה ב־{{date}}",
       keyboardInstructions:

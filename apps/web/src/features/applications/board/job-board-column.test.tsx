@@ -3,6 +3,7 @@ import type { JobApplication } from "@xeniway/shared";
 import { beforeEach, expect, test, vi } from "vitest";
 import { initializeI18n } from "../../../i18n/i18n";
 import { JobBoardColumn } from "./job-board-column.view";
+import { getKeyboardMove } from "./job-card.model";
 
 const dropTargets: Array<{ element: HTMLElement; onDrop: (args: never) => void }> = [];
 
@@ -103,7 +104,7 @@ test.each([
     />,
   );
 
-  const card = screen.getByRole("link", { name: /Activate to open application workspace/ });
+  const card = screen.getByRole("link", { name: "Example, Engineer, Saved" });
   expect(card).toHaveAttribute("href", `/applications/${job.id}`);
   expect(fireEvent.click(card)).toBe(false);
   const defaultAllowed = fireEvent.keyDown(card, { key, shiftKey });
@@ -135,7 +136,7 @@ test.each([{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: t
         onOpen={onOpen}
       />,
     );
-    const card = screen.getByRole("link", { name: /Activate to open application workspace/ });
+    const card = screen.getByRole("link", { name: "Example, Engineer, Saved" });
     let defaultPrevented = true;
     document.addEventListener(
       "click",
@@ -151,6 +152,13 @@ test.each([{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: t
     expect(onOpen).not.toHaveBeenCalled();
   },
 );
+
+test("maps horizontal status movement to the visual direction", () => {
+  expect(getKeyboardMove("ArrowLeft", true, "ltr")).toBe("previousStatus");
+  expect(getKeyboardMove("ArrowRight", true, "ltr")).toBe("nextStatus");
+  expect(getKeyboardMove("ArrowLeft", true, "rtl")).toBe("nextStatus");
+  expect(getKeyboardMove("ArrowRight", true, "rtl")).toBe("previousStatus");
+});
 
 test("preserves the hovered insertion point when dropping on the placeholder", () => {
   const onJobDrop = vi.fn();

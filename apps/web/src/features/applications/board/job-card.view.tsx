@@ -3,16 +3,24 @@ import { jobCardStyles } from "./job-card.styles";
 
 export function JobCard({ job, onOpen, onDragStart, onKeyboardMove, position, total }: JobCardProps) {
   const styles = jobCardStyles({ status: job.status });
-  const { canMutate, cardRef, handleClick, handleKeyDown, accessibleName, appliedLabel, href } = useJobCardPresentation(
-    {
-      job,
-      onOpen,
-      onDragStart,
-      onKeyboardMove,
-      position,
-      total,
-    },
-  );
+  const {
+    canMutate,
+    cardRef,
+    handleClick,
+    handleKeyDown,
+    accessibleName,
+    keyboardHelp,
+    descriptionId,
+    appliedLabel,
+    href,
+  } = useJobCardPresentation({
+    job,
+    onOpen,
+    onDragStart,
+    onKeyboardMove,
+    position,
+    total,
+  });
 
   return (
     <a
@@ -22,6 +30,7 @@ export function JobCard({ job, onOpen, onDragStart, onKeyboardMove, position, to
       onKeyDown={handleKeyDown}
       aria-keyshortcuts={canMutate ? "ArrowUp ArrowDown Home End Shift+ArrowLeft Shift+ArrowRight" : undefined}
       aria-label={accessibleName}
+      aria-describedby={descriptionId}
       className={styles.root()}
     >
       <div className={styles.header()}>
@@ -38,6 +47,11 @@ export function JobCard({ job, onOpen, onDragStart, onKeyboardMove, position, to
         {job.location && <span className={styles.location()}>{job.location}</span>}
         {job.appliedAt && <span className={styles.appliedDate()}>{appliedLabel}</span>}
       </div>
+      {keyboardHelp && (
+        <span id={descriptionId} className={styles.keyboardHelp()}>
+          {keyboardHelp}
+        </span>
+      )}
     </a>
   );
 }

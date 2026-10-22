@@ -1,7 +1,8 @@
 import type { JobApplication, JobStatus } from "@xeniway/shared";
 import { useTranslation } from "react-i18next";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { jobStatuses } from "./job-status";
+import { type RootState, setAllStatuses, setSearch } from "../../../store";
 import { useJobBoard } from "./use-job-board";
 
 export type JobBoardProps = {
@@ -21,10 +22,13 @@ export function useJobBoardPresentation({
 }: JobBoardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const search = useSelector((state: RootState) => state.ui.search);
   const board = useJobBoard({ jobs, onStatusChange, onReorder });
-  const columns = jobStatuses
-    .filter((status) => board.visibleStatuses.includes(status))
-    .map((status) => ({ status, jobs: board.filteredJobs.filter((job) => job.status === status) }));
+  const columns = board.displayedStatuses.map((status) => ({
+    status,
+    jobs: board.filteredJobs.filter((job) => job.status === status),
+  }));
   const moveJob = (
     id: number,
     currentStatus: JobStatus,
@@ -37,6 +41,27 @@ export function useJobBoardPresentation({
     }
   };
   const openJob = (id: number) => navigate(`/applications/${id}`);
+  const hasSearch = Boolean(search.trim());
+  const hasVisibleStatuses = board.displayedStatuses.length > 0;
+  const canShowAllStatuses = !hasVisibleStatuses;
+  const canClearSearch = hasSearch;
   const noMatchLabel = t("applications.board.noMatch");
-  return { board, columns, moveJob, openJob, noMatchLabel, operationError, operationSuccess };
+  const emptyLabel = canShowAllStatuses ? t("applications.board.noStatuses") : noMatchLabel;
+  const showAllStatuses = () => dispatch(setAllStatuses(true));
+  const clearSearch = () => dispatch(setSearch(""));
+  return {
+    board,
+    columns,
+    moveJob,
+    openJob,
+    emptyLabel,
+    canShowAllStatuses,
+    canClearSearch,
+    showAllStatuses,
+    clearSearch,
+    showAllStatusesLabel: t("applications.board.showAllStatuses"),
+    clearSearchLabel: t("applications.clearSearch"),
+    operationError,
+    operationSuccess,
+  };
 }

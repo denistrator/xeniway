@@ -14,7 +14,6 @@ export function StatusFilter() {
         ref={filter.triggerRef}
         variant="outline"
         className={styles.trigger()}
-        aria-haspopup="dialog"
         aria-expanded={filter.open}
         aria-controls="status-filter-options"
         onClick={toggleOpen}

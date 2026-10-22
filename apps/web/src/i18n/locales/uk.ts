@@ -321,8 +321,11 @@ const uk = {
     },
     board: {
       openDetails: "Відкрийте робочий простір відгуку",
+      cardLabel: "{{company}}, {{position}}, {{status}}",
       dropHere: "Перемістіть вакансії сюди",
       noMatch: "Немає вакансій за поточним пошуком і фільтрами статусів.",
+      noStatuses: "Не вибрано жодного статусу.",
+      showAllStatuses: "Показати всі статуси",
       updated: "Відгук оновлено.",
       applied: "Відгук {{date}}",
       keyboardInstructions:

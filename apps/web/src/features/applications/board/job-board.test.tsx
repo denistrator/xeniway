@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { JobApplication } from "@xeniway/shared";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, expect, test } from "vitest";
-import { store } from "../../../store";
+import { setAllStatuses, store } from "../../../store";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { JobBoard } from "./job-board.view";
 
@@ -28,6 +29,7 @@ const job: JobApplication = {
 
 beforeEach(async () => {
   await initializeTestI18n();
+  store.dispatch(setAllStatuses(true));
 });
 
 test("keeps the board usable while reporting a failed board operation", () => {
@@ -58,4 +60,21 @@ test("announces a confirmed board update once", () => {
   );
 
   expect(screen.getByRole("status")).toHaveTextContent("Application updated.");
+});
+
+test("explains an empty board when no statuses are selected and can restore them", async () => {
+  const user = userEvent.setup();
+  store.dispatch(setAllStatuses(false));
+
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <JobBoard jobs={[job]} onStatusChange={() => {}} onReorder={() => {}} />
+      </MemoryRouter>
+    </Provider>,
+  );
+
+  expect(screen.getByRole("status")).toHaveTextContent("No statuses are selected.");
+  await user.click(screen.getByRole("button", { name: "Show all statuses" }));
+  expect(screen.getByRole("link", { name: "Example, Engineer, Saved" })).toBeVisible();
 });
