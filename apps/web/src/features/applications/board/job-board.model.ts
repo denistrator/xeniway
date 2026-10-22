@@ -8,9 +8,10 @@ export type JobBoardProps = {
   jobs: JobApplication[];
   onStatusChange: (id: number, status: JobStatus) => void;
   onReorder: (status: JobStatus, applicationIds: number[]) => void;
+  operationError?: string;
 };
 
-export function useJobBoardPresentation({ jobs, onStatusChange, onReorder }: JobBoardProps) {
+export function useJobBoardPresentation({ jobs, onStatusChange, onReorder, operationError }: JobBoardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const board = useJobBoard({ jobs, onStatusChange, onReorder });
@@ -30,5 +31,5 @@ export function useJobBoardPresentation({ jobs, onStatusChange, onReorder }: Job
   };
   const openJob = (id: number) => navigate(`/applications/${id}`);
   const noMatchLabel = t("applications.board.noMatch");
-  return { board, columns, moveJob, openJob, noMatchLabel };
+  return { board, columns, moveJob, openJob, noMatchLabel, operationError };
 }

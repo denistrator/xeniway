@@ -11,5 +11,6 @@ export const homePageStyles = tv({
       "h-10 rounded-xl border border-line px-4 text-sm font-semibold text-ink hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
     loading: "py-8 text-center text-sm leading-6 text-muted",
     error: "rounded-xl bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300",
+    errorActions: "mt-3 flex items-center gap-2",
   },
 });

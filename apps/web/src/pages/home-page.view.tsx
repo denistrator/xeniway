@@ -1,5 +1,6 @@
 import { ApplicationSearch } from "../components/application-search.view";
 import { PageIntro } from "../components/page-intro.view";
+import { Button } from "../components/ui/button.view";
 import { ConfirmationModal } from "../components/ui/confirmation-modal.view";
 import { JobBoard } from "../features/applications/board/job-board.view";
 import { StatusFilter } from "../features/applications/filters/status-filter.view";
@@ -33,7 +34,16 @@ export function HomePage() {
             {view.loading}
           </p>
         )}
-        {view.applications.error && <p className={styles.error()}>{view.errorMessage}</p>}
+        {view.applications.error && (
+          <div role="alert" className={styles.error()}>
+            <p>{view.errorMessage}</p>
+            <div className={styles.errorActions()}>
+              <Button variant="outline" size="sm" onClick={view.retryApplications}>
+                {view.retry}
+              </Button>
+            </div>
+          </div>
+        )}
         {view.applications.data && !view.applications.data.length && <p className={styles.empty()}>{view.empty}</p>}
       </div>
       {view.applications.data && view.applications.data.length > 0 && (
@@ -41,6 +51,7 @@ export function HomePage() {
           jobs={view.applications.data}
           onStatusChange={view.handleStatusChange}
           onReorder={view.handleReorder}
+          operationError={view.boardOperationError ?? undefined}
         />
       )}
       {view.removeAllOpen && (

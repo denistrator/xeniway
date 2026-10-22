@@ -14,6 +14,7 @@ export function useHomePage() {
   const [removeAllOpen, setRemoveAllOpen] = useState(false);
   const [dangerOpen, setDangerOpen] = useState(false);
   const [countdown, setCountdown] = useState(5);
+  const [boardOperationError, setBoardOperationError] = useState<string | null>(null);
   useEffect(() => {
     if (!dangerOpen) {
       return;
@@ -23,11 +24,23 @@ export function useHomePage() {
     return () => window.clearInterval(timer);
   }, [dangerOpen]);
   async function handleStatusChange(id: number, status: JobStatus) {
-    await mutations.update.mutateAsync({ id, input: { status } });
+    setBoardOperationError(null);
+    try {
+      await mutations.update.mutateAsync({ id, input: { status } });
+    } catch (error) {
+      const errorCode = error instanceof ApiRequestError ? error.code : "REQUEST_FAILED";
+      setBoardOperationError(t(getApiErrorKey(errorCode)));
+    }
   }
 
   async function handleReorder(status: JobStatus, applicationIds: number[]) {
-    await mutations.reorder.mutateAsync({ status, applicationIds });
+    setBoardOperationError(null);
+    try {
+      await mutations.reorder.mutateAsync({ status, applicationIds });
+    } catch (error) {
+      const errorCode = error instanceof ApiRequestError ? error.code : "REQUEST_FAILED";
+      setBoardOperationError(t(getApiErrorKey(errorCode)));
+    }
   }
 
   const errorCode = applications.error instanceof ApiRequestError ? applications.error.code : "REQUEST_FAILED";
@@ -45,6 +58,9 @@ export function useHomePage() {
   function closeDanger() {
     setDangerOpen(false);
   }
+  function retryApplications() {
+    void applications.refetch();
+  }
   async function handleRemoveAll() {
     await mutations.removeAll.mutateAsync("active");
     setDangerOpen(false);
@@ -52,6 +68,7 @@ export function useHomePage() {
   return {
     canMutate,
     applications,
+    boardOperationError,
     handleStatusChange,
     handleReorder,
     removeAllOpen,
@@ -62,12 +79,14 @@ export function useHomePage() {
     confirmRemoveAll,
     closeDanger,
     handleRemoveAll,
+    retryApplications,
     dangerYesLabel: countdown ? `${t("common.actions.yes")} (${countdown})` : t("common.actions.yes"),
     applicationsTitle: t("navigation.applications"),
     homeDescription: t("applications.homeDescription"),
     removeAll: t("common.actions.removeAll"),
     loading: t("applications.loading"),
     errorMessage: t(getApiErrorKey(errorCode)),
+    retry: t("common.actions.retry"),
     empty: t("applications.empty"),
     title: t("applications.confirmation.title"),
     deleteAllConfirmation: t("common.actions.deleteAllConfirmation"),
