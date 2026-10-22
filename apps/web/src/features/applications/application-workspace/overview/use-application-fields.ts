@@ -26,6 +26,7 @@ export type ApplicationFieldsController = {
   departure: {
     dirty: boolean;
     pending: boolean;
+    onDepartureBlocked(): void;
     discard(): void;
     save(): Promise<boolean>;
   };
@@ -144,6 +145,7 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
   const departure = {
     dirty: activeField ? isDirty(activeField) : false,
     pending: departureField ? fields[departureField].pending : false,
+    onDepartureBlocked: dismissWarning,
     discard() {
       if (departureField) {
         cancel(departureField);

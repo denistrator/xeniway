@@ -4,6 +4,7 @@ export type DirtyEditor = {
   id: string;
   dirty: boolean;
   pending: boolean;
+  onDepartureBlocked?(): void;
   discard(): void;
   save?(): Promise<boolean>;
 };

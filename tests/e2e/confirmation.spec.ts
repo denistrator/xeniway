@@ -192,3 +192,38 @@ test("blocks dirty workspace departure until the draft is explicitly discarded",
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 });
+
+test("uses the departure dialog instead of stacking a compact-field warning on browser Back", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `compact-departure-${crypto.randomUUID()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company: "Compact departure", position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Compact departure, Engineer,/ }).click();
+  await page.getByRole("button", { name: "Location, Edit", exact: true }).click();
+  const location = page.getByRole("textbox", { name: "Location", exact: true });
+  await location.fill("Remote");
+  await page.goBack();
+
+  const departureDialog = page.getByRole("alertdialog", {
+    description: "Save your changes, discard them, or keep editing.",
+  });
+  await expect(departureDialog).toBeVisible();
+  await expect(page.getByRole("alertdialog")).toHaveCount(1);
+  await departureDialog.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(location).toHaveValue("Remote");
+
+  await page.goBack();
+  await departureDialog.getByRole("button", { name: "Discard changes", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+});

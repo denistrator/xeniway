@@ -25,6 +25,12 @@ export function useDirtyDeparture() {
   const blocker = useBlocker(shouldBlock);
 
   useEffect(() => {
+    if (blocker.state === "blocked") {
+      editor?.onDepartureBlocked?.();
+    }
+  }, [blocker.state, editor]);
+
+  useEffect(() => {
     if (!editor) {
       return;
     }
