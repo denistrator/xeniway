@@ -172,14 +172,49 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   async function removeDownload() {
-    const ownerId = snapshot.account?.userId;
-    dispatch({ type: "DOWNLOAD_REMOVED" });
-    broadcast({ type: "removed", userId: ownerId });
+    const account = snapshot.account;
+    if (state.cleanup.status !== "idle") {
+      return;
+    }
+    if (!account) {
+      dispatch({ type: "DOWNLOAD_REMOVED" });
+      return;
+    }
+    dispatch({
+      type: "DOWNLOAD_REMOVAL_STARTED",
+      ownerId: account.userId,
+      preparationId: account.preparationId ?? null,
+    });
+    broadcast({ type: "removed", userId: account.userId });
     try {
-      if (ownerId) {
-        await clearOfflineAccount(ownerId);
-      }
+      await clearOfflineAccount(account.userId, account.preparationId ?? null);
+      dispatch({
+        type: "DOWNLOAD_CLEANUP_SUCCEEDED",
+        ownerId: account.userId,
+        preparationId: account.preparationId ?? null,
+      });
     } catch (error) {
+      dispatch({
+        type: "DOWNLOAD_CLEANUP_FAILED",
+        ownerId: account.userId,
+        preparationId: account.preparationId ?? null,
+      });
+      dispatch({ type: "STORAGE_FAILED" });
+      throw error;
+    }
+  }
+
+  async function retryDownloadCleanup() {
+    if (state.cleanup.status !== "failed") {
+      return;
+    }
+    const { ownerId, preparationId } = state.cleanup;
+    dispatch({ type: "DOWNLOAD_REMOVAL_STARTED", ownerId, preparationId });
+    try {
+      await clearOfflineAccount(ownerId, preparationId);
+      dispatch({ type: "DOWNLOAD_CLEANUP_SUCCEEDED", ownerId, preparationId });
+    } catch (error) {
+      dispatch({ type: "DOWNLOAD_CLEANUP_FAILED", ownerId, preparationId });
       dispatch({ type: "STORAGE_FAILED" });
       throw error;
     }
@@ -212,6 +247,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       import.meta.env.DEV ||
       !active ||
       !user ||
+      state.cleanup.status !== "idle" ||
       state.download.status === "preparing" ||
       !snapshot.canMutate ||
       !(refresh ? snapshot.account?.userId === user.id : input.consent)
@@ -529,6 +565,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     start,
     retryConnection,
     removeDownload,
+    retryDownloadCleanup,
     signOutLocally,
     prepareDownload,
     confirmSignIn: (userId: number) => {

@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -566,6 +566,39 @@ test("the existing remove action still clears offline data", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Remove offline data" }));
   await waitFor(() => expect(access.account).toBeNull());
   expect(await loadOfflineSnapshot(1)).toBeNull();
+});
+
+test("a failed removal exposes retry cleanup without restoring offline access", async () => {
+  const originalIndexedDb = indexedDB;
+  renderControls();
+  try {
+    vi.stubGlobal("indexedDB", {
+      open() {
+        throw new DOMException("Denied", "SecurityError");
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove offline data" }));
+
+    expect(
+      await screen.findByText("Offline data could not be removed. Access remains revoked until cleanup succeeds."),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Retry cleanup" })).toBeVisible();
+    act(() => window.dispatchEvent(new Event("offline")));
+    await waitFor(() => expect(access.readAccountId).toBeNull());
+
+    vi.stubGlobal("indexedDB", originalIndexedDb);
+    fireEvent.click(screen.getByRole("button", { name: "Retry cleanup" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Offline data could not be removed. Access remains revoked until cleanup succeeds."),
+      ).toBeNull(),
+    );
+  } finally {
+    vi.stubGlobal("indexedDB", originalIndexedDb);
+    onlineManager.setOnline(true);
+  }
 });
 
 test.each(["offline", "auth error", "owner mismatch"])(

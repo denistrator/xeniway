@@ -13,10 +13,15 @@ export type DeviceDownload =
       progress: OfflinePreparationProgress | null;
     };
 
+export type DownloadCleanup =
+  | { status: "idle" }
+  | { status: "removing" | "failed"; ownerId: number; preparationId: string | null };
+
 export type AccessState = {
   connection: Connection;
   session: Session;
   download: DeviceDownload;
+  cleanup: DownloadCleanup;
   memoryOwner: number | null;
   epoch: number;
   storageError: boolean;
@@ -46,6 +51,8 @@ export type AccessEvent =
   | { type: "VERIFY_FAILED"; operation: number; online: boolean }
   | { type: "RESTORED"; epoch: number; account: OfflineAccountMetadata | null }
   | { type: "DOWNLOAD_EXPIRED"; account: OfflineAccountMetadata }
+  | { type: "DOWNLOAD_REMOVAL_STARTED"; ownerId: number; preparationId: string | null }
+  | { type: "DOWNLOAD_CLEANUP_SUCCEEDED" | "DOWNLOAD_CLEANUP_FAILED"; ownerId: number; preparationId: string | null }
   | { type: "PREPARATION_STARTED"; operation: number; userId: number; refresh: boolean }
   | { type: "PREPARATION_PROGRESS"; operation: number; progress: OfflinePreparationProgress }
   | { type: "PREPARATION_SUCCEEDED"; operation: number; account: OfflineAccountMetadata }
@@ -64,6 +71,7 @@ export function createAccessState(input: {
     download: input.account
       ? { status: "ready", account: input.account }
       : { status: input.restoring ? "restoring" : "absent" },
+    cleanup: { status: "idle" },
     memoryOwner: input.userId ?? null,
     epoch: 0,
     storageError: false,
@@ -164,6 +172,37 @@ function updateLocalLogout(state: AccessState, localLogout: boolean): AccessStat
   return { ...state, localLogout };
 }
 
+function startDownloadCleanup(state: AccessState, ownerId: number, preparationId: string | null): AccessState {
+  return {
+    ...state,
+    download: { status: "absent" },
+    cleanup: {
+      status: "removing",
+      ownerId,
+      preparationId,
+    },
+    memoryOwner: null,
+    epoch: state.epoch + 1,
+  };
+}
+
+function finishDownloadCleanup(
+  state: AccessState,
+  event: Extract<AccessEvent, { type: "DOWNLOAD_CLEANUP_SUCCEEDED" | "DOWNLOAD_CLEANUP_FAILED" }>,
+): AccessState {
+  if (
+    state.cleanup.status !== "removing" ||
+    state.cleanup.ownerId !== event.ownerId ||
+    state.cleanup.preparationId !== event.preparationId
+  ) {
+    return state;
+  }
+  if (event.type === "DOWNLOAD_CLEANUP_SUCCEEDED") {
+    return { ...state, cleanup: { status: "idle" } };
+  }
+  return { ...state, cleanup: { ...state.cleanup, status: "failed" } };
+}
+
 /** The sole policy entry point. Asynchronous operations stay in the runtime. */
 export function transitionAccess(state: AccessState, event: AccessEvent): AccessState {
   switch (event.type) {
@@ -195,6 +234,11 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
     case "SIGNED_OUT":
     case "SESSION_REJECTED":
       return signedOut(state);
+    case "DOWNLOAD_REMOVAL_STARTED":
+      return startDownloadCleanup(state, event.ownerId, event.preparationId);
+    case "DOWNLOAD_CLEANUP_SUCCEEDED":
+    case "DOWNLOAD_CLEANUP_FAILED":
+      return finishDownloadCleanup(state, event);
     case "DOWNLOAD_REMOVED":
       return { ...state, download: { status: "absent" }, memoryOwner: null, epoch: state.epoch + 1 };
     case "DOWNLOAD_REPLACED":
@@ -246,6 +290,7 @@ export function selectAccess(state: AccessState, now: number) {
     canReadRemote: canMutate,
     checking: !account && awaitingAccess,
     download: state.download,
+    cleanup: state.cleanup,
     storageError: state.storageError,
     localLogout: state.localLogout,
     updateAvailable: state.updateAvailable,

@@ -45,7 +45,8 @@ export function useOfflineControls() {
   const failed = access.download.status === "failed";
   const readOnly = Boolean(access.readAccountId && !access.canMutate);
   const hasDownloadNotice = Boolean(access.account || failed || access.download.status === "preparing");
-  const hasDeviceNotice = access.localLogout || access.storageError || access.updateAvailable;
+  const hasDeviceNotice =
+    access.localLogout || access.storageError || access.cleanup.status !== "idle" || access.updateAvailable;
   const notice = hasDownloadNotice || hasDeviceNotice || readOnly || access.isDisconnected;
   const canRetry = Boolean(access.readAccountId || failed || access.isDisconnected) && !access.canMutate;
   const retry = () => void access.retryConnection().catch(() => {});
@@ -92,6 +93,7 @@ export function useOfflineNotices({ access, downloadedAt }: OfflineNoticesProps)
 }
 
 export type OfflineDownloadSettingsProps = { access: OfflineAccess };
+type OfflineDownloadSettingsContent = "cleanupPending" | "cleanupFailed" | "download" | "enable" | "none";
 
 export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsProps) {
   const { t } = useTranslation();
@@ -108,9 +110,21 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
   const sameOwnerDownload = Boolean(access.account && access.account.userId === user?.id);
   const canPrepare = Boolean(user && access.readAccountId === user.id && access.canMutate);
   const hasDownload = Boolean(access.account || refreshing);
+  const cleanupPending = access.cleanup.status === "removing";
+  const cleanupFailed = access.cleanup.status === "failed";
   const canRefreshDownload = sameOwnerDownload || refreshing;
   const showRefresh = canRefreshDownload && !import.meta.env.DEV;
-  const showEnable = access.canMutate && !import.meta.env.DEV;
+  const showEnable = access.canMutate && !cleanupPending && !cleanupFailed && !import.meta.env.DEV;
+  let content: OfflineDownloadSettingsContent = "none";
+  if (cleanupPending) {
+    content = "cleanupPending";
+  } else if (cleanupFailed) {
+    content = "cleanupFailed";
+  } else if (hasDownload) {
+    content = "download";
+  } else if (showEnable) {
+    content = "enable";
+  }
 
   function prepare(refresh = false) {
     if (import.meta.env.DEV || busy || !canPrepare || !(refresh ? sameOwnerDownload : consent)) {
@@ -125,6 +139,7 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
   const refresh = () => prepare(true);
   const enable = () => prepare();
   const remove = () => void access.removeDownload().catch(() => {});
+  const retryCleanup = () => void access.retryDownloadCleanup().catch(() => {});
   const changeConsent = (event: ChangeEvent<HTMLInputElement>) =>
     setConsent({ userId: user?.id, checked: event.target.checked });
   return {
@@ -132,11 +147,15 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
     busy,
     canPrepare,
     hasDownload,
+    cleanupPending,
+    cleanupFailed,
+    content,
     showRefresh,
     showEnable,
     refresh,
     enable,
     remove,
+    retryCleanup,
     changeConsent,
     productionOnly: import.meta.env.DEV,
     productionOnlyLabel: t("offline.productionOnly"),
@@ -145,6 +164,9 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
     refreshReplacement: t("offline.refreshReplacement"),
     refreshLabel: t("offline.refresh"),
     removeLabel: t("offline.remove"),
+    cleanupFailedLabel: t("offline.cleanupFailed"),
+    removingLabel: t("offline.removing"),
+    retryCleanupLabel: t("offline.retryCleanup"),
     consentLabel: t("offline.consent"),
     enableLabel: t("offline.enable"),
   };

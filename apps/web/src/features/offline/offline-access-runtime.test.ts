@@ -80,6 +80,43 @@ test("connection loss revokes the request guard before subscribers render", () =
     cleanup();
   }
 });
+
+test("failed download cleanup remains retryable without restoring device access", async () => {
+  const client = new QueryClient();
+  client.setQueryData(offlineAuthKey, { data: { user } });
+  const account = {
+    version: 1 as const,
+    userId: user.id,
+    email: user.email,
+    verifiedAt: Date.now(),
+    expiresAt: Date.now() + OFFLINE_RETENTION_MS,
+    ready: true,
+    buildId: "runtime-test",
+  };
+  const runtime = createOfflineAccessRuntime(client, { initialAccount: account });
+  const stop = runtime.start();
+  const originalIndexedDb = indexedDB;
+  try {
+    vi.stubGlobal("indexedDB", {
+      open() {
+        throw new DOMException("Denied", "SecurityError");
+      },
+    });
+
+    await expect(runtime.removeDownload()).rejects.toThrow("Denied");
+    window.dispatchEvent(new Event("offline"));
+    expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "failed" } });
+
+    vi.stubGlobal("indexedDB", originalIndexedDb);
+    await runtime.retryDownloadCleanup();
+
+    expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "idle" } });
+  } finally {
+    vi.stubGlobal("indexedDB", originalIndexedDb);
+    stop();
+    client.clear();
+  }
+});
 test("disposed subscriptions cannot react and the same runtime can restart", () => {
   const { runtime, cleanup } = setup();
   cleanup();

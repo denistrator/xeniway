@@ -36,6 +36,9 @@ export const en = {
     consent: "I understand and want to store my application data on this device.",
     enable: "Make available offline on this device",
     remove: "Remove offline data",
+    removing: "Removing offline data…",
+    cleanupFailed: "Offline data could not be removed. Access remains revoked until cleanup succeeds.",
+    retryCleanup: "Retry cleanup",
     preparing: "Downloading applications and public assets…",
     failed: "Offline data could not be saved or read. Check storage permissions and space, then try again online.",
     localLogout:

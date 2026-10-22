@@ -33,7 +33,9 @@ export function OfflineControls() {
           </Link>
         )}
       </div>
-      {controls.access.readAccountId && <OfflineDownloadSettings access={controls.access} />}
+      {(controls.access.readAccountId || controls.access.cleanup.status !== "idle") && (
+        <OfflineDownloadSettings access={controls.access} />
+      )}
     </section>
   );
 }
@@ -52,7 +54,9 @@ function OfflineNotices(props: OfflineNoticesProps) {
           {notices.ready} {notices.downloaded}
         </p>
       )}
-      {(notices.failed || props.access.storageError) && <p className={styles.failureNotice()}>{notices.failure}</p>}
+      {(notices.failed || (props.access.storageError && props.access.cleanup.status !== "failed")) && (
+        <p className={styles.failureNotice()}>{notices.failure}</p>
+      )}
       {notices.busy && <p className={styles.progressNotice()}>{notices.preparing}</p>}
     </div>
   );
@@ -65,7 +69,16 @@ function OfflineDownloadSettings(props: OfflineDownloadSettingsProps) {
       {settings.productionOnly && <p className={styles.productionNotice()}>{settings.productionOnlyLabel}</p>}
       <p className={styles.privacyNotice()}>{settings.privacy}</p>
       <p className={styles.coverageNotice()}>{settings.coverage}</p>
-      {settings.hasDownload ? (
+      {settings.content === "cleanupPending" && <p className={styles.cleanupNotice()}>{settings.removingLabel}</p>}
+      {settings.content === "cleanupFailed" && (
+        <div className={styles.cleanupActions()}>
+          <p className={styles.cleanupNotice()}>{settings.cleanupFailedLabel}</p>
+          <Button variant="outline" size="sm" className={styles.retryCleanupButton()} onClick={settings.retryCleanup}>
+            {settings.retryCleanupLabel}
+          </Button>
+        </div>
+      )}
+      {settings.content === "download" && (
         <>
           {settings.showRefresh && <p className={styles.refreshNotice()}>{settings.refreshReplacement}</p>}
           <div className={styles.downloadActions()}>
@@ -86,30 +99,29 @@ function OfflineDownloadSettings(props: OfflineDownloadSettingsProps) {
             </Button>
           </div>
         </>
-      ) : (
-        settings.showEnable && (
-          <>
-            <label className={styles.consentLabel()}>
-              <input
-                type="checkbox"
-                name="offlineConsent"
-                className={styles.consentInput()}
-                checked={settings.consent}
-                onChange={settings.changeConsent}
-              />
-              {settings.consentLabel}
-            </label>
-            <Button
-              variant="outline"
-              size="sm"
-              className={styles.enableButton()}
-              disabled={!settings.consent || settings.busy || !settings.canPrepare}
-              onClick={settings.enable}
-            >
-              {settings.enableLabel}
-            </Button>
-          </>
-        )
+      )}
+      {settings.content === "enable" && (
+        <>
+          <label className={styles.consentLabel()}>
+            <input
+              type="checkbox"
+              name="offlineConsent"
+              className={styles.consentInput()}
+              checked={settings.consent}
+              onChange={settings.changeConsent}
+            />
+            {settings.consentLabel}
+          </label>
+          <Button
+            variant="outline"
+            size="sm"
+            className={styles.enableButton()}
+            disabled={!settings.consent || settings.busy || !settings.canPrepare}
+            onClick={settings.enable}
+          >
+            {settings.enableLabel}
+          </Button>
+        </>
       )}
     </div>
   );
