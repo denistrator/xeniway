@@ -254,7 +254,7 @@ type DownloadCleanup =
 - [x] On successful password reset, deliberately announce “Password updated” and move focus to its result without duplicate speech. Keep a clear sign-in link and no raw token in UI/logs.
 - [x] Add localized route document titles and a page h1 for auth screens. Keep CardTitle's existing default h2 API; provide an explicit auth-page heading rather than changing every CardTitle globally.
 - [x] Use one route-orientation owner. Avoid competing focus with the workspace's company heading, dialog opening or Back/Forward restoration. Language changes can update title without stealing editor focus.
-- [ ] Run return-target unit tests, router/component tests and existing public recovery/session browser workflows.
+- [x] Run return-target unit tests, router/component tests and existing public recovery/session browser workflows.
 
 **Proposed pure helper contract:**
 
