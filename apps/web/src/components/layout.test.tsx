@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { CreateApplicationInput } from "@xeniway/shared";
 import { StrictMode } from "react";
 import { Provider } from "react-redux";
-import { MemoryRouter } from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
@@ -141,17 +141,18 @@ test("does not mount a form for unresolved or signed-out authentication even wit
 
 function renderLayout() {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  const element = () => (
-    <StrictMode>
-      <QueryClientProvider client={client}>
-        <Provider store={store}>
-          <MemoryRouter>
-            <Layout />
-          </MemoryRouter>
-        </Provider>
-      </QueryClientProvider>
-    </StrictMode>
-  );
+  function element() {
+    const router = createMemoryRouter([{ path: "*", element: <Layout /> }]);
+    return (
+      <StrictMode>
+        <QueryClientProvider client={client}>
+          <Provider store={store}>
+            <RouterProvider router={router} />
+          </Provider>
+        </QueryClientProvider>
+      </StrictMode>
+    );
+  }
   const view = render(element());
   return { ...view, rerenderLayout: () => view.rerender(element()) };
 }

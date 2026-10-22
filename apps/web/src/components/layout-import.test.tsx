@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render } from "@testing-library/react";
 import { StrictMode } from "react";
 import { Provider } from "react-redux";
-import { MemoryRouter } from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { expect, test, vi } from "vitest";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
@@ -29,17 +29,18 @@ test("does not evaluate the host module until the first authenticated create act
   store.dispatch(closeWelcome());
   mocks.currentUser.mockReturnValue({ data: undefined, isPending: true });
   const client = new QueryClient();
-  const element = () => (
-    <StrictMode>
-      <Provider store={store}>
-        <QueryClientProvider client={client}>
-          <MemoryRouter>
-            <Layout />
-          </MemoryRouter>
-        </QueryClientProvider>
-      </Provider>
-    </StrictMode>
-  );
+  function element() {
+    const router = createMemoryRouter([{ path: "*", element: <Layout /> }]);
+    return (
+      <StrictMode>
+        <Provider store={store}>
+          <QueryClientProvider client={client}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </Provider>
+      </StrictMode>
+    );
+  }
   const view = render(element());
   await settleImports();
   expect(mocks.hostImported).not.toHaveBeenCalled();
