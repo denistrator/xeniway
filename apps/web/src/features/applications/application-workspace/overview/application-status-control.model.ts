@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useCanMutate } from "../../../offline/offline-access.view";
 import { getStatusLabel, jobStatuses } from "../../board/job-status";
 import { jobStatusStyles } from "../../board/job-status-styles";
+import { getApplicationFieldFeedback } from "./application-field-feedback";
 import { applicationStatusControlStyles, optionMarkerStyles } from "./application-status-control.styles";
 import type { ApplicationFieldsController } from "./use-application-fields";
 
@@ -90,6 +91,7 @@ export function useApplicationStatusControl({ application, fields }: Application
     }
   }
   const legendLabel = t("applications.form.status");
+  const feedback = getApplicationFieldFeedback(fields.fields.status, legendLabel, t);
   return {
     menuRef,
     triggerRef,
@@ -103,5 +105,6 @@ export function useApplicationStatusControl({ application, fields }: Application
     legendLabel,
     options,
     selectedOptionRef,
+    feedback,
   };
 }

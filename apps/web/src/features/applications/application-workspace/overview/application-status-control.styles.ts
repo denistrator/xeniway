@@ -16,5 +16,6 @@ export const applicationStatusControlStyles = tv({
       "relative flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent-hover has-[:focus-visible]:outline-2",
     input: "absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed",
     optionMarker: "",
+    feedback: "mt-2 text-sm text-rose-600 dark:text-rose-400",
   },
 });

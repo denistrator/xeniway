@@ -199,6 +199,23 @@ test("saves status selection immediately and rejects unsafe job links", async ()
   await waitFor(() => expect(readUpdateBodies(fetcher)).toContainEqual({ status: "applied" }));
 });
 
+test("announces a failed status selection beside the status picker", async () => {
+  const user = userEvent.setup();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.resolve(new Response(null, { status: 500 }))),
+  );
+  renderApplicationWorkspace();
+
+  await user.click(screen.getByRole("button", { name: "Status, Change status" }));
+  await user.click(screen.getByRole("radio", { name: "Applied" }));
+
+  await waitFor(() => {
+    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  });
+  expect(screen.getByRole("button", { name: "Status, Change status" })).toBeEnabled();
+});
+
 test.each([
   { label: "Company", text: "Northwind" },
   { label: "About", text: "Read this description" },

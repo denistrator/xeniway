@@ -42,6 +42,11 @@ export function ApplicationStatusControl(props: ApplicationStatusControlProps) {
           ))}
         </fieldset>
       )}
+      {view.feedback?.kind === "error" && (
+        <p role="alert" className={styles.feedback()}>
+          {view.feedback.text}
+        </p>
+      )}
     </div>
   );
 }
