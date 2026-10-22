@@ -8,6 +8,7 @@ const styles = jobDrawerStyles();
 export function JobDrawer({
   presentation,
   submitting,
+  form,
   onSave,
   onClose,
   onSwitchPresentation,
@@ -16,6 +17,7 @@ export function JobDrawer({
   const { closeLabel, setDialogRef } = useJobDrawerPresentation({
     presentation,
     submitting,
+    form,
     onSave,
     onClose,
     onSwitchPresentation,
@@ -35,7 +37,7 @@ export function JobDrawer({
         <JobFormContent
           presentation={presentation}
           submitting={submitting}
-          onSave={onSave}
+          form={form}
           onClose={onClose}
           onSwitchPresentation={onSwitchPresentation}
         />

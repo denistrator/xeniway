@@ -8,6 +8,7 @@ const styles = jobModalStyles();
 export function JobModal({
   presentation,
   submitting,
+  form,
   onSave,
   onClose,
   onSwitchPresentation,
@@ -16,6 +17,7 @@ export function JobModal({
   const { closeLabel, setDialogRef } = useJobModalPresentation({
     presentation,
     submitting,
+    form,
     onSave,
     onClose,
     onSwitchPresentation,
@@ -35,7 +37,7 @@ export function JobModal({
         <JobFormContent
           presentation={presentation}
           submitting={submitting}
-          onSave={onSave}
+          form={form}
           onClose={onClose}
           onSwitchPresentation={onSwitchPresentation}
         />

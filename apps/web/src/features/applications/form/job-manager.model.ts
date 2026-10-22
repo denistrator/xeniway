@@ -6,6 +6,7 @@ import { writeLocalUserPreferences } from "../../../lib/user-preferences";
 import { type RootState, setJobFormPresentation } from "../../../store";
 import { useCanMutate } from "../../offline/offline-access.view";
 import { useJobDialog } from "./use-job-dialog";
+import { useJobForm } from "./use-job-form";
 
 export type JobManagerProps = {
   open: boolean;
@@ -22,6 +23,7 @@ export function useJobManagerPresentation({ open, submitting, onSave, onClose, o
   const user = useCurrentUser();
   const canMutate = useCanMutate();
   const updatePreferences = useUpdateUserPreferences();
+  const form = useJobForm({ onSubmit: onSave });
 
   const switchPresentation = () => {
     const nextPresentation = presentation === "drawer" ? "modal" : "drawer";
@@ -35,6 +37,7 @@ export function useJobManagerPresentation({ open, submitting, onSave, onClose, o
     presentation,
     dialogRef,
     submitting,
+    form,
     onSave,
     onClose,
     onSwitchPresentation: switchPresentation,

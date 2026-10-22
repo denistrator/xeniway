@@ -6,8 +6,8 @@ import { JobFormDetailsFields } from "./job-form-details-fields.view";
 
 const styles = jobFormStyles();
 
-export function JobForm({ submitting, onSubmit }: JobFormProps) {
-  const { form } = useJobFormPresentation({ submitting, onSubmit });
+export function JobForm({ submitting, form: controller }: JobFormProps) {
+  const { form } = useJobFormPresentation({ submitting, form: controller });
 
   return (
     <form

@@ -1,13 +1,10 @@
-import type { CreateApplicationInput } from "@xeniway/shared";
-import { useJobForm } from "./use-job-form";
+import type { JobFormController } from "./use-job-form";
 
 export type JobFormProps = {
   submitting: boolean;
-  onSubmit: (input: CreateApplicationInput) => void;
+  form: JobFormController;
 };
 
-export function useJobFormPresentation({ onSubmit }: JobFormProps) {
-  const form = useJobForm({ onSubmit });
-
+export function useJobFormPresentation({ form }: JobFormProps) {
   return { form };
 }

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { type ApplicationFormState, emptyApplicationForm, normalizeApplicationForm } from "./application-form";
 
 export type FormState = ApplicationFormState;
+export type JobFormController = ReturnType<typeof useJobForm>;
 
 export function useJobForm({ onSubmit }: { onSubmit: (input: CreateApplicationInput) => void }) {
   const { t } = useTranslation();
