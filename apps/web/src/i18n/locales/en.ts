@@ -316,6 +316,7 @@ export const en = {
       openDetails: "Activate to open application workspace",
       dropHere: "Drop applications here",
       noMatch: "No applications match the current search and status filters.",
+      updated: "Application updated.",
       applied: "Applied {{date}}",
       keyboardInstructions:
         "Use Arrow Up or Arrow Down to reorder, Home or End to move to an edge, and Shift plus Arrow Left or Right to change status.",

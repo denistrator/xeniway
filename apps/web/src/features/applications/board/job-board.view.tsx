@@ -6,7 +6,7 @@ export { jobStatuses } from "./job-status";
 
 const styles = jobBoardStyles();
 
-export function JobBoard({ jobs, onStatusChange, onReorder, operationError }: JobBoardProps) {
+export function JobBoard({ jobs, onStatusChange, onReorder, operationError, operationSuccess }: JobBoardProps) {
   const {
     board,
     columns,
@@ -14,11 +14,13 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError }: Jo
     openJob,
     noMatchLabel,
     operationError: error,
+    operationSuccess: success,
   } = useJobBoardPresentation({
     jobs,
     onStatusChange,
     onReorder,
     operationError,
+    operationSuccess,
   });
 
   return (
@@ -26,6 +28,11 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError }: Jo
       {error && (
         <p role="alert" className={styles.operationError()}>
           {error}
+        </p>
+      )}
+      {success && (
+        <p role="status" className={styles.operationSuccess()}>
+          {success}
         </p>
       )}
       <div className={styles.columns()}>

@@ -15,6 +15,7 @@ export function useHomePage() {
   const [dangerOpen, setDangerOpen] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [boardOperationError, setBoardOperationError] = useState<string | null>(null);
+  const [boardOperationSuccess, setBoardOperationSuccess] = useState<string | null>(null);
   useEffect(() => {
     if (!dangerOpen) {
       return;
@@ -25,8 +26,10 @@ export function useHomePage() {
   }, [dangerOpen]);
   async function handleStatusChange(id: number, status: JobStatus) {
     setBoardOperationError(null);
+    setBoardOperationSuccess(null);
     try {
       await mutations.update.mutateAsync({ id, input: { status } });
+      setBoardOperationSuccess(t("applications.board.updated"));
     } catch (error) {
       const errorCode = error instanceof ApiRequestError ? error.code : "REQUEST_FAILED";
       setBoardOperationError(t(getApiErrorKey(errorCode)));
@@ -35,8 +38,10 @@ export function useHomePage() {
 
   async function handleReorder(status: JobStatus, applicationIds: number[]) {
     setBoardOperationError(null);
+    setBoardOperationSuccess(null);
     try {
       await mutations.reorder.mutateAsync({ status, applicationIds });
+      setBoardOperationSuccess(t("applications.board.updated"));
     } catch (error) {
       const errorCode = error instanceof ApiRequestError ? error.code : "REQUEST_FAILED";
       setBoardOperationError(t(getApiErrorKey(errorCode)));
@@ -69,6 +74,7 @@ export function useHomePage() {
     canMutate,
     applications,
     boardOperationError,
+    boardOperationSuccess,
     handleStatusChange,
     handleReorder,
     removeAllOpen,

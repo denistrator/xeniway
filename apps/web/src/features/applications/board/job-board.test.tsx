@@ -47,3 +47,15 @@ test("keeps the board usable while reporting a failed board operation", () => {
   expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   expect(screen.getByRole("link", { name: /Example/ })).toBeVisible();
 });
+
+test("announces a confirmed board update once", () => {
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <JobBoard jobs={[job]} operationSuccess="Application updated." onStatusChange={() => {}} onReorder={() => {}} />
+      </MemoryRouter>
+    </Provider>,
+  );
+
+  expect(screen.getByRole("status")).toHaveTextContent("Application updated.");
+});

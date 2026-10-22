@@ -52,6 +52,7 @@ export function HomePage() {
           onStatusChange={view.handleStatusChange}
           onReorder={view.handleReorder}
           operationError={view.boardOperationError ?? undefined}
+          operationSuccess={view.boardOperationSuccess ?? undefined}
         />
       )}
       {view.removeAllOpen && (
