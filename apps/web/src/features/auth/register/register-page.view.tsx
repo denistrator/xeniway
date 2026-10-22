@@ -21,7 +21,7 @@ export function RegisterPage() {
       />
       <p className={styles.signInPrompt()}>
         {labels.alreadyRegistered}{" "}
-        <Link className={styles.signInLink()} to="/login">
+        <Link className={styles.signInLink()} to={labels.signInLink}>
           {labels.signIn}
         </Link>
       </p>

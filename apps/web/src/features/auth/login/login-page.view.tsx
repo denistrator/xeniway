@@ -22,7 +22,7 @@ export function LoginPage() {
       />
       <p className={styles.registerPrompt()}>
         {labels.newHere}{" "}
-        <Link className={styles.registerLink()} to="/register">
+        <Link className={styles.registerLink()} to={labels.registerLink}>
           {labels.createAccount}
         </Link>
       </p>

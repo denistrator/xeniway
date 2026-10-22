@@ -2,7 +2,8 @@ import { registerInputSchema } from "@xeniway/shared";
 import type { TFunction } from "i18next";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getAuthLink, resolveAuthReturnTo } from "../../../lib/auth-return-to";
 import { useAuthMutations, useCsrfToken } from "../../../lib/queries";
 import { type RegisterFieldErrors, type RegisterFormState, registerError } from "./register-form.model";
 
@@ -78,6 +79,7 @@ function getFieldErrors(
 export function useRegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const csrf = useCsrfToken();
   const { register } = useAuthMutations();
   const [form, setForm] = useState<RegisterFormState>({
@@ -134,7 +136,8 @@ export function useRegisterPage() {
     setValidationError(null);
     try {
       await register.mutateAsync(parsed.data);
-      navigate("/", { replace: true });
+      const returnTo = new URLSearchParams(location.search).get("returnTo");
+      navigate(resolveAuthReturnTo(returnTo), { replace: true });
     } catch {
       // The mutation error is rendered in the active registration form.
     }
@@ -146,6 +149,7 @@ export function useRegisterPage() {
     description: t("auth.register.description"),
     alreadyRegistered: t("auth.register.alreadyRegistered"),
     signIn: t("auth.login.submit"),
+    signInLink: getAuthLink("/login", location),
   };
 
   const pending = csrf.isPending || register.isPending;
