@@ -264,11 +264,11 @@ export function resolveAuthReturnTo(value: string | null): string;
 
 **Tests:** `language-selector.test.tsx`, `welcome/welcome-modal.test.tsx`, browser language switching and nested welcome cases.
 
-- [ ] Add keyboard open, first/current-item focus, arrow/Home/End movement, selection, Escape and focus return cases using existing menu semantics. Include the nested welcome menu; first Escape must not complete onboarding.
-- [ ] Implement the complete declared menu pattern, including a current-language state. Prefer the existing controls with correct behavior; adopting a different primitive requires checking bundle/lazy boundaries and approval if a dependency is needed.
-- [ ] Let the innermost active layer consume Escape, and make the welcome listener respect handled events. Do not merely add a second global key listener whose order is accidental.
-- [ ] Preserve outside click and pointer selection. Test RTL without reversing vertical movement or mislabeling the current language. Language selection failures are handled in T13, not silently swallowed here.
-- [ ] Verify onboarding completion counts: menu dismissal triggers zero completion writes; actual approved dialog completion triggers one.
+- [x] Add keyboard open, first/current-item focus, arrow/Home/End movement, selection, Escape and focus return cases using existing menu semantics. Include the nested welcome menu; first Escape must not complete onboarding.
+- [x] Implement the complete declared menu pattern, including a current-language state. Prefer the existing controls with correct behavior; adopting a different primitive requires checking bundle/lazy boundaries and approval if a dependency is needed.
+- [x] Let the innermost active layer consume Escape, and make the welcome listener respect handled events. Do not merely add a second global key listener whose order is accidental.
+- [x] Preserve outside click and pointer selection. Test RTL without reversing vertical movement or mislabeling the current language. Language selection failures are handled in T13, not silently swallowed here.
+- [x] Verify onboarding completion counts: menu dismissal triggers zero completion writes; actual approved dialog completion triggers one.
 
 **Exit:** Advertised menu semantics match its keyboard behavior, and nested dismissal never completes another interaction accidentally.
 

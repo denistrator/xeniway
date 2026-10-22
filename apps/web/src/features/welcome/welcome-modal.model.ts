@@ -21,6 +21,9 @@ export function useWelcomeModal({ onComplete }: WelcomeModalProps) {
   useEffect(() => {
     closeRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) {
+        return;
+      }
       if (event.key === "Escape") {
         event.preventDefault();
         complete("stay");

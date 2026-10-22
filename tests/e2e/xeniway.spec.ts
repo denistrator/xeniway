@@ -84,7 +84,7 @@ test("browses all workspace applications with keyboard controls and circular col
   expect(accessibility.violations).toEqual([]);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
-  await page.getByRole("menuitem", { name: "Hebrew" }).click();
+  await page.getByRole("menuitemradio", { name: "Hebrew" }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   const rtlNext = page.getByRole("button", { name: "המועמדות הבאה" });
   await expect(rtlNext).toBeVisible();
@@ -167,7 +167,7 @@ test("opens settings from the header with keyboard access and localized reloads"
   await expect(page.getByRole("link", { name: "הגדרות", exact: true })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "שפה", exact: true })).toContainText("עברית");
   await page.getByRole("button", { name: "שפה: עברית. שינוי שפה" }).click();
-  await page.getByRole("menuitem", { name: "אנגלית" }).click();
+  await page.getByRole("menuitemradio", { name: "אנגלית" }).click();
   await expect(page.getByRole("combobox", { name: "Language", exact: true })).toContainText("English");
 });
 
@@ -255,11 +255,11 @@ test("switches and persists the selected browser language", async ({ page }) => 
   });
   await page.goto("/about");
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
-  await page.getByRole("menuitem", { name: "Russian" }).click();
+  await page.getByRole("menuitemradio", { name: "Russian" }).click();
   await page.getByRole("button", { name: "Язык: Русский. Изменить язык" }).click();
-  await page.getByRole("menuitem", { name: "Украинский" }).click();
+  await page.getByRole("menuitemradio", { name: "Украинский" }).click();
   await page.getByRole("button", { name: "Мова: Українська. Змінити мову" }).click();
-  await page.getByRole("menuitem", { name: "Іврит" }).click();
+  await page.getByRole("menuitemradio", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: "חיפוש העבודה שלכם, עם כל הפרטים החשובים." })).toBeVisible();
@@ -337,7 +337,7 @@ test("preserves workspace status changes, keyboard focus, and Hebrew accessibili
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Language: English. Change language" }).click();
-  await page.getByRole("menuitem", { name: "Hebrew" }).click();
+  await page.getByRole("menuitemradio", { name: "Hebrew" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await page.locator('[data-compact-edit-field="status"] > button').click();
@@ -367,19 +367,19 @@ test("shows the welcome popup after login and registration", async ({ page }) =>
   await expect(welcome).toHaveAccessibleName("Welcome to Xenia Way");
   await expect(welcome.getByText("Xenia Way gives you one clear place")).toBeVisible();
   await welcome.getByRole("button", { name: "Language: English. Change language" }).click();
-  await page.getByRole("menuitem", { name: "Russian" }).click();
+  await page.getByRole("menuitemradio", { name: "Russian" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");
   await expect(welcome).toHaveAccessibleName("Добро пожаловать в Xenia Way");
   await expect(welcome.getByRole("heading", { name: "Добро пожаловать в Xenia Way" })).toBeVisible();
   await welcome.getByRole("button", { name: "Язык: Русский. Изменить язык" }).click();
-  await page.getByRole("menuitem", { name: "Украинский" }).click();
+  await page.getByRole("menuitemradio", { name: "Украинский" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
   await welcome.getByRole("button", { name: "Мова: Українська. Змінити мову" }).click();
-  await page.getByRole("menuitem", { name: "Іврит" }).click();
+  await page.getByRole("menuitemradio", { name: "Іврит" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(welcome).toHaveAccessibleName("ברוכים הבאים ל־Xenia Way");
   await welcome.getByRole("button", { name: "שפה: עברית. שינוי שפה" }).click();
-  await page.getByRole("menuitem", { name: "אנגלית" }).click();
+  await page.getByRole("menuitemradio", { name: "אנגלית" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
   await expect(welcome).toHaveCount(0);
@@ -595,7 +595,7 @@ test("syncs browser preferences with each authenticated account", async ({ page 
       response.status() === 200,
   );
   await accountALanguage.click();
-  const accountALanguageOption = page.getByRole("menuitem", { name: "Англійська" });
+  const accountALanguageOption = page.getByRole("menuitemradio", { name: "Англійська" });
   await accountALanguageOption.click();
   await accountALanguageUpdate;
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -639,7 +639,7 @@ test("syncs browser preferences with each authenticated account", async ({ page 
       response.status() === 200,
   );
   await accountBLanguage.click();
-  const accountBLanguageOption = page.getByRole("menuitem", { name: "Russian" });
+  const accountBLanguageOption = page.getByRole("menuitemradio", { name: "Russian" });
   await accountBLanguageOption.click();
   await accountBLanguageUpdate;
   await expect(page.locator("html")).toHaveAttribute("lang", "ru");

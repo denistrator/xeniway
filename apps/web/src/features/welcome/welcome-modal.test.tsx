@@ -52,6 +52,23 @@ test("completes on close, backdrop, or Escape", async () => {
   expect(onComplete).toHaveBeenLastCalledWith("stay");
 });
 
+test("closes a nested language menu before completing the welcome dialog", async () => {
+  const user = userEvent.setup();
+  const onComplete = vi.fn();
+  renderWelcome(<WelcomeModal onComplete={onComplete} />);
+
+  const trigger = screen.getByRole("button", { name: "Language: English. Change language" });
+  await user.click(trigger);
+  expect(screen.getByRole("menu")).toBeVisible();
+
+  await user.keyboard("{Escape}");
+
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "Welcome to Xenia Way" })).toBeVisible();
+  expect(onComplete).not.toHaveBeenCalled();
+  expect(trigger).toHaveFocus();
+});
+
 test("routes the board and About actions through the completion callback", async () => {
   const user = userEvent.setup();
   const onComplete = vi.fn().mockResolvedValue(undefined);
@@ -59,8 +76,10 @@ test("routes the board and About actions through the completion callback", async
 
   await user.click(screen.getByRole("button", { name: "Go to board" }));
   expect(onComplete).toHaveBeenCalledWith("board");
+  expect(onComplete).toHaveBeenCalledTimes(1);
   await user.click(screen.getByRole("button", { name: "About Xenia Way" }));
   expect(onComplete).toHaveBeenCalledWith("about");
+  expect(onComplete).toHaveBeenCalledTimes(2);
 });
 
 test("focuses the close action and keeps keyboard focus inside the dialog", async () => {

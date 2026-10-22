@@ -137,7 +137,7 @@ test("preserves compact drafts on dismissal and requires explicit discard in Eng
   const languageSaved = page.waitForResponse(
     (response) => response.url().endsWith("/api/user/preferences") && response.request().method() === "PATCH",
   );
-  await page.getByRole("menuitem", { name: "Hebrew", exact: true }).click();
+  await page.getByRole("menuitemradio", { name: "Hebrew", exact: true }).click();
   expect((await languageSaved).ok()).toBe(true);
   await expect(page.locator("html")).toHaveAttribute("lang", "he");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");

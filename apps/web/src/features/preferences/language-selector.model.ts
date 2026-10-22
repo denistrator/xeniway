@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { changeLocale, type SupportedLocale, supportedLocales } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
@@ -38,6 +38,8 @@ export function useLanguageSelector() {
   const { currentOption, selectLanguage, t } = useLanguagePreference();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const optionRefs = useRef(new Map<SupportedLocale, HTMLButtonElement>());
 
   useEffect(() => {
     if (!open) {
@@ -52,20 +54,108 @@ export function useLanguageSelector() {
     return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, [open]);
 
-  async function handleChange(locale: SupportedLocale) {
-    if (await selectLanguage(locale)) {
-      setOpen(false);
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    optionRefs.current.get(currentOption.value)?.focus();
+  }, [currentOption.value, open]);
+
+  function closeMenu(restoreFocus: boolean) {
+    setOpen(false);
+    if (restoreFocus) {
+      queueMicrotask(() => triggerRef.current?.focus());
     }
   }
 
-  const toggleOpen = () => setOpen((value) => !value);
+  async function handleChange(locale: SupportedLocale) {
+    if (await selectLanguage(locale)) {
+      closeMenu(true);
+    }
+  }
+
+  function toggleOpen() {
+    if (open) {
+      closeMenu(false);
+      return;
+    }
+    setOpen(true);
+  }
+
+  function setOptionRef(locale: SupportedLocale, element: HTMLButtonElement | null) {
+    if (element) {
+      optionRefs.current.set(locale, element);
+      return;
+    }
+    optionRefs.current.delete(locale);
+  }
+
+  function handleMenuKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const currentIndex = supportedLocales.indexOf(currentOption.value);
+    const target = event.target;
+    const focusedLocale =
+      target instanceof HTMLButtonElement
+        ? supportedLocales.find((locale) => optionRefs.current.get(locale) === target)
+        : undefined;
+    const focusedIndex = focusedLocale ? supportedLocales.indexOf(focusedLocale) : currentIndex;
+
+    let nextIndex = focusedIndex;
+    switch (event.key) {
+      case "ArrowDown": {
+        nextIndex = (focusedIndex + 1) % supportedLocales.length;
+        break;
+      }
+      case "ArrowUp": {
+        nextIndex = (focusedIndex - 1 + supportedLocales.length) % supportedLocales.length;
+        break;
+      }
+      case "Home": {
+        nextIndex = 0;
+        break;
+      }
+      case "End": {
+        nextIndex = supportedLocales.length - 1;
+        break;
+      }
+      case "Escape": {
+        event.preventDefault();
+        event.stopPropagation();
+        closeMenu(true);
+        return;
+      }
+      default: {
+        return;
+      }
+    }
+
+    event.preventDefault();
+    optionRefs.current.get(supportedLocales[nextIndex])?.focus();
+  }
+
   const label = t("common.selectors.language", { language: t(`common.language.${currentOption.value}`) });
   const menuOptions = supportedLocales.flatMap((locale) => {
     const option = languageOptions.find((candidate) => candidate.value === locale);
     if (!option) {
       return [];
     }
-    return [{ ...option, translatedLabel: t(`common.language.${locale}`), onSelect: () => void handleChange(locale) }];
+    return [
+      {
+        ...option,
+        current: locale === currentOption.value,
+        translatedLabel: t(`common.language.${locale}`),
+        onSelect: () => void handleChange(locale),
+        setRef: (element: HTMLButtonElement | null) => setOptionRef(locale, element),
+      },
+    ];
   });
-  return { open, containerRef, currentOption, label, toggleOpen, menuOptions };
+  return {
+    open,
+    containerRef,
+    triggerRef,
+    currentOption,
+    label,
+    toggleOpen,
+    handleMenuKeyDown,
+    menuOptions,
+  };
 }

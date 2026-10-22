@@ -28,7 +28,7 @@ test("keeps the authenticated language control interactive before preferences lo
   await user.click(screen.getByRole("button", { name: "Language: English. Change language" }));
 
   expect(screen.getByRole("menu")).toBeVisible();
-  expect(screen.getByRole("menuitem", { name: "Russian" })).toBeVisible();
+  expect(screen.getByRole("menuitemradio", { name: "Russian" })).toBeVisible();
 });
 
 test("uses a compact visual label with an unambiguous accessible name", () => {
@@ -66,10 +66,65 @@ test("selects a locale from the language menu", async () => {
   const mobileControl = screen.getByRole("button", { name: "Language: English. Change language" });
 
   await user.click(mobileControl);
-  await user.click(screen.getByRole("menuitem", { name: "Ukrainian" }));
+  await user.click(screen.getByRole("menuitemradio", { name: "Ukrainian" }));
 
   await waitFor(() => expect(i18n.resolvedLanguage).toBe("uk"));
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+});
+
+test("supports menu keyboard navigation and returns focus to the trigger", async () => {
+  const user = userEvent.setup();
+  render(
+    <Provider store={store}>
+      <LanguageSelector />
+    </Provider>,
+  );
+
+  const trigger = screen.getByRole("button", { name: "Language: English. Change language" });
+  trigger.focus();
+  await user.keyboard("{Enter}");
+
+  const english = screen.getByRole("menuitemradio", { name: "English" });
+  expect(english).toHaveAttribute("aria-checked", "true");
+  expect(english).toHaveFocus();
+
+  await user.keyboard("{ArrowDown}");
+  expect(screen.getByRole("menuitemradio", { name: "Russian" })).toHaveFocus();
+  await user.keyboard("{End}");
+  expect(screen.getByRole("menuitemradio", { name: "Hebrew" })).toHaveFocus();
+  await user.keyboard("{Home}");
+  expect(english).toHaveFocus();
+
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+
+  await user.keyboard("{Enter}");
+  await user.keyboard("{ArrowDown}{Enter}");
+  await waitFor(() => expect(i18n.resolvedLanguage).toBe("ru"));
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Язык: Русский. Изменить язык" })).toHaveFocus();
+});
+
+test("keeps vertical menu movement and current-language state in RTL", async () => {
+  const user = userEvent.setup();
+  await changeLocale("he");
+  render(
+    <Provider store={store}>
+      <LanguageSelector />
+    </Provider>,
+  );
+
+  const trigger = screen.getByRole("button", { name: "שפה: עברית. שינוי שפה" });
+  await user.click(trigger);
+
+  const options = screen.getAllByRole("menuitemradio");
+  expect(options[3]).toHaveAttribute("aria-checked", "true");
+  expect(options[3]).toHaveFocus();
+  await user.keyboard("{ArrowDown}");
+  expect(options[0]).toHaveFocus();
+
+  await changeLocale("en");
 });
 
 test("persists a language change for an authenticated user", async () => {
@@ -84,7 +139,7 @@ test("persists a language change for an authenticated user", async () => {
   );
 
   await user.click(screen.getByRole("button", { name: "Language: English. Change language" }));
-  await user.click(screen.getByRole("menuitem", { name: "Russian" }));
+  await user.click(screen.getByRole("menuitemradio", { name: "Russian" }));
 
   await waitFor(() => expect(mutate).toHaveBeenCalledWith({ selectedLanguage: "ru" }));
   expect(readLocalUserPreferences()).toMatchObject({ language: "ru" });

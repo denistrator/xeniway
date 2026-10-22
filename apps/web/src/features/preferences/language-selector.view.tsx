@@ -3,10 +3,12 @@ import { languageSelectorStyles } from "./language-selector.styles";
 
 const styles = languageSelectorStyles();
 export function LanguageSelector() {
-  const { open, containerRef, currentOption, label, toggleOpen, menuOptions } = useLanguageSelector();
+  const { open, containerRef, triggerRef, currentOption, label, toggleOpen, handleMenuKeyDown, menuOptions } =
+    useLanguageSelector();
   return (
     <div ref={containerRef} className={styles.root()}>
       <button
+        ref={triggerRef}
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -17,11 +19,13 @@ export function LanguageSelector() {
         {currentOption.label}
       </button>
       {open && (
-        <div role="menu" className={styles.menu()}>
+        <div role="menu" className={styles.menu()} onKeyDown={handleMenuKeyDown}>
           {menuOptions.map((option) => (
             <button
               key={option.value}
-              role="menuitem"
+              ref={option.setRef}
+              role="menuitemradio"
+              aria-checked={option.current}
               type="button"
               className={styles.option()}
               onClick={option.onSelect}
