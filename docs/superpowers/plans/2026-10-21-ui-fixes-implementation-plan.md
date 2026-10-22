@@ -8,7 +8,7 @@
 
 **Tech stack:** React 19, TypeScript, React Router, Redux Toolkit, TanStack Query, i18next, Tailwind Variants, Radix Select, Atlaskit InlineEdit, Vitest, and Playwright. No new dependency is planned.
 
-**Status:** Execution authorized one fix at a time, with a manual user checkpoint after each. T02's modal repair/refactor is accepted and committed. D1 is approved; T03's compact-warning substep (UI-01) is accepted and its related-record substep (UI-02) is awaiting user testing. Other tasks and policy gates remain pending. No automatic commit or merge. The audit remains the evidence register; this document owns task order and execution tracking.
+**Status:** All currently authorized automated tasks are implemented, committed, and verified. D1 and D3 are approved and complete; T05, T08, T13–T16, and T18 remain blocked by their stated policy decisions, while T09/T19 retain manual/device validation. The audit remains the evidence register; this document owns task order and execution tracking.
 
 ## Global constraints
 

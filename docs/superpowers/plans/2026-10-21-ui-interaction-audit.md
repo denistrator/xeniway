@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** Audit complete within the coverage below. One-at-a-time remediation is authorized; UI-06's repair and simplification are accepted by the user. UI-01 is implemented and awaiting user testing. All other findings remain pending.
+**Status:** The approved automated remediation checkpoints are complete and verified by the full Chromium suites. UI-05, UI-11, UI-18–24, UI-26–27, UI-31, UI-33, and UI-34 remain pending their documented policy decisions; V-01–V-05 remain validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
@@ -59,7 +59,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-01 · P1 · Dismissing the dirty-field warning discards the draft
 
-**Status:** D1 approved; compact-field repair implemented and accepted by the user. Escape/backdrop/Keep editing preserve the draft and return to the current input without saving. Explicit discard alone clears the draft and completes a requested field switch; save retains the one-field mutation contract. Failed save and offline dismissal are covered. Related-record switching is handled by UI-02 below; pending-save races (UI-03) and route departure (UI-04) remain pending.
+**Status:** Complete. Escape/backdrop/Keep editing preserve the draft and return to the current input without saving. Explicit discard alone clears the draft and completes a requested field switch; save retains the one-field mutation contract. Failed save and offline dismissal are covered.
 
 **Baseline evidence — Source, before repair:** `apps/web/src/features/applications/application-workspace/overview/application-unsaved-warning.view.tsx`, `overview/use-application-fields.ts`, and `apps/web/src/components/ui/confirmation-modal.model.ts`. The warning's negative action called `cancelWarning`, which reset the draft. Escape and backdrop used that same action. The regression reproduced the missing Location editor after Escape before implementation.
 
@@ -75,11 +75,13 @@ The audit combines source review of all route families and shared controls, revi
 
 **Impact:** Editing A, requesting deletion of B, and answering No can still lose A's draft. Switching activity/contact/follow-up targets has similar risks.
 
-**Status:** Implemented; awaiting user testing. Contact, follow-up, and activity editors retain their draft while a switch warning is open. Escape/backdrop/Keep editing restore the focused draft input, Discard changes opens the requested editor, and Save changes submits before continuing. Deletion confirmation no longer closes an active contact/follow-up editor before confirmation; confirming deletion closes only an editor for the record that was deleted.
+**Status:** Complete. Contact, follow-up, and activity editors retain their draft while a switch warning is open. Escape/backdrop/Keep editing restore the focused draft input, Discard changes opens the requested editor, and Save changes submits before continuing. Deletion confirmation no longer closes an active contact/follow-up editor before confirmation; confirming deletion closes only an editor for the record that was deleted.
 
 **Acceptance:** Canceling deletion preserves the previous target and draft. Selecting another target offers an explicit keep/discard decision. Confirmed switches still isolate records correctly.
 
 ### UI-03 · P1 · Pending saves can close over newer edits
+
+**Status:** Complete. Submitted editors lock synchronously until their request settles, prevent duplicate saves, retain a failed draft for retry, and keep unrelated editors available. Query-backed focused tests cover late responses, independent fields, and completed follow-up ordering.
 
 **Evidence — Source; delayed-response reproduction required:** `application-workspace/shared/workspace-text-field.view.tsx:52`, `workspace-text-field.model.ts:67`, `preparation/use-preparation-field.ts:54`, and `contacts/use-contacts-controller.ts:130–150`. Editors remain writable while asynchronous saves run, and success closes editing without checking draft revision. Audit the analogous follow-up flow together.
 
@@ -91,6 +93,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-04 · P1 · Leaving or changing an editor silently abandons work
 
+**Status:** Complete. Create and workspace editors register with the supported React Router departure coordinator; dirty links, previous/next, browser Back/Forward, and close actions require Keep editing, Save changes, or Discard changes. Focused browser coverage verifies drawer/modal preservation, failed and successful save, Back/Forward, and logout bypass for security cleanup.
+
 **Evidence — Runtime + Source + Decision:** Typed create-company text was empty after Escape/reopen. `form/job-manager.view.tsx:7–10` unmounts the form on close and switches component type between modal and drawer. `form/use-job-form.ts:8–11` owns the draft inside that form. Workspace previous/next navigates directly in `application-workspace/overview/application-workspace-navigation.model.ts:26`; `page/application-workspace-page.view.tsx:34` keys destination content. `page/application-workspace-page.test.tsx:119` deliberately expects editor reset.
 
 **Impact:** Escape, closing a create form, switching its presentation, following navigation, or using previous/next can discard work without a recovery choice.
@@ -100,6 +104,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Dirty close, presentation switch, header navigation, previous/next, and browser Back have explicit outcomes. Cancel departure preserves values and focus. Confirm departure resets only the departing editor. Define reload/unload behavior separately.
 
 ### UI-05 · P1 · A failed device-data removal loses its cleanup retry
+
+**Status:** Blocked pending the durable cleanup-recovery decision documented as T05. No new removal metadata or cross-account cleanup policy has been introduced.
 
 **Evidence — Source:** `apps/web/src/features/offline/offline-access-runtime.ts:172–183` removes the account from runtime state before storage deletion succeeds; failure only sets storage error. `offline-controls.view.tsx:68` gates Remove on a download, and `offline-controls.model.ts:127` suppresses the rejection.
 
@@ -123,6 +129,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-07 · P2 · Create failures are outside the open form
 
+**Status:** Complete. Create failures now render and announce inside the open form dialog, retain entered values, and allow deliberate retry without duplicate submission.
+
 **Evidence — Runtime + Source:** `form/job-manager-host.view.tsx:23–24` renders the mutation error as a sibling of the manager. An intercepted HTTP 500 left the drawer open with no error inside its dialog; the message was behind/outside the interaction layer.
 
 **Impact:** Save appears ineffective and the actionable explanation is not in the place the user can inspect.
@@ -133,6 +141,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-08 · P2 · Immediate status saves do not expose failure
 
+**Status:** Complete. Status controls expose their active pending/error outcome and retain a truthful saved value until server confirmation.
+
 **Evidence — Source:** `application-workspace/overview/use-application-field.ts:93`, `use-application-fields.ts:116`, and `application-status-control.view.tsx:9`. The save hook records an error, but the status control does not render it or announce pending state.
 
 **Plan:** Expose the existing save state beside the status control, without adding an extra Save step.
@@ -140,6 +150,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Reject selection: saved status remains truthful, translated feedback is visible/announced, retry is possible, and focus remains predictable. Success returns focus to the trigger.
 
 ### UI-09 · P2 · Warning/lifecycle failure feedback sits outside the active confirmation
+
+**Status:** Complete. Active warnings and lifecycle confirmations expose their own pending and translated error feedback while retaining the underlying draft or record.
 
 **Evidence — Source:** `overview/use-application-fields.ts:88`, `application-compact-field.view.tsx:82`, and `lifecycle/application-lifecycle-actions.view.tsx:41`. Failed warning-save leaves the warning open while field feedback is underneath; lifecycle errors are also outside the modal subtree.
 
@@ -149,6 +161,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-10 · P2 · Board mutations lack contextual pending/error feedback
 
+**Status:** Complete. Board mutation outcomes are contextual and announced; board read failures retain valid cached content where possible and offer an explicit retry.
+
 **Evidence — Source:** `pages/home-page.model.ts:25–30` awaits status/reorder mutations, but `home-page.view.tsx:31–37` renders only list-query loading/error state. `board/use-job-board.ts` calls reorder/status callbacks without an announcement or failure channel. Read-query errors also lack an alert role or explicit retry on Home.
 
 **Plan:** Expose the outcome of board changes near the affected board/card and announce it accessibly. Offer recovery without requiring a page reload. Preserve owner-bound request handling.
@@ -156,6 +170,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Fail a reorder and a status move. Show the saved state and a useful error; allow retry and continued navigation. Successful keyboard movement has an understandable result, without repeating verbose announcements per card.
 
 ### UI-11 · P2 · Bulk deletion has weak hierarchy and incomplete safety feedback
+
+**Status:** Blocked pending D4. The approved scope, labels, countdown, and placement must be decided together; no destructive-flow behavior has been changed.
 
 **Evidence — Runtime + Source + Decision:** `pages/home-page.view.tsx:19–29` places Remove all between Search and Filter statuses; `collection/application-collection.view.tsx:27–31` repeats it. `home-page.model.ts:17–23,48–50` adds two confirmations and a five-second wait, but does not gate the final action on deletion pending state or expose deletion errors. Archive/blacklist models likewise omit `removeAll` errors and pending state from `busy`. `i18n/locales/en.ts:67–69` uses generic Yes/No and inconsistent board-wide/every-application wording.
 
@@ -167,6 +183,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-12 · P2 · Validation identifies the form, not the correction
 
+**Status:** Complete in automated coverage. Registration and create-form schema issues are mapped to associated translated field errors, invalid controls are announced/focused, and entered values are retained. Native password-manager and paste checks remain manual validation work.
+
 **Evidence — Source:** `features/auth/register/register-page.model.ts:38` and `register-fields.view.tsx:58` do not explain the shared 8–128 character password limit. `form/use-job-form.ts:24–29` replaces schema issues with one “Check the application details” message. Shared rules live in `packages/shared/src/index.ts:163` and the application schemas.
 
 **Plan:** Explain existing constraints before they matter and map schema issues to specific controls. Preserve native required/email/URL validation and never duplicate or relax the shared rules.
@@ -174,6 +192,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Matching seven-character passwords, over-limit names/passwords, and invalid application values identify the field and correction. Use associated errors/invalid state, preserve values, and make repeated invalid submissions discoverable.
 
 ### UI-13 · P2 · Authentication loses a requested protected destination
+
+**Status:** Complete. Approved internal return targets preserve path, search, and hash through login/registration; external and malformed values fall back safely.
 
 **Evidence — Source:** `route-guards.view.tsx:13` redirects to plain `/login`; `features/auth/login/login-page.model.ts:24` supports a redirect parameter but receives none from that guard.
 
@@ -183,6 +203,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-14 · P2 · Invalid reset links have no direct replacement-link action
 
+**Status:** Complete. Invalid, expired, or used reset tokens provide the existing request-a-new-password path, while temporary failures preserve retry.
+
 **Evidence — Source:** `features/auth/password-reset/password-reset-page.model.ts:44` switches to its unavailable state only for an absent token, not `PASSWORD_RESET_INVALID`; replacement-link navigation exists only in `password-reset-state.view.tsx:17`.
 
 **Plan:** Offer the existing `/forgot-password` recovery route when a nonempty token is rejected. Keep temporary network/server errors retryable without falsely declaring expiration.
@@ -190,6 +212,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Used/expired/invalid links expose a keyboard-accessible replacement action. Transient failures retain the form and retry. Preserve the generic recovery-request response contract.
 
 ### UI-15 · P2 · Password-reset completion lacks explicit accessible orientation
+
+**Status:** Complete. Successful reset announces its result, receives deliberate focus, and provides a clear sign-in exit without exposing tokens.
 
 **Evidence — Source:** `password-reset-page.model.ts:40`, `password-reset-page.view.tsx:22`, and `password-reset-state.view.tsx:10` replace the form on success without a status region or deliberate focus transfer. Recovery-request success does have a status region.
 
@@ -199,6 +223,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-16 · P3 · Route changes provide inconsistent page orientation
 
+**Status:** Complete. Auth routes have localized document titles and page h1s, with one route-orientation owner that does not steal focus from active workspace or dialog interactions.
+
 **Evidence — Source:** `components/layout.view.tsx:18–21` keeps a stable main but does not orient focus on general route changes. `apps/web/index.html:29` sets a generic document title with no route-specific updater found. `components/auth-card.view.tsx:12` uses CardTitle, whose `components/ui/card.view.tsx:14` is an h2 rather than a page h1. Workspace entry already has a more deliberate focus policy.
 
 **Plan:** Define localized document titles and one route-entry focus policy, accounting for Back/Forward and workspace-specific handling. Give auth pages page-level headings without forcing a visual redesign.
@@ -206,6 +232,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Each route has an intelligible page name and keyboard entry point. Navigation, language changes and ordinary field edits do not cause unrelated focus jumps. Avoid duplicate announcements.
 
 ### UI-17 · P2 · Language-menu semantics and nested Escape behavior disagree
+
+**Status:** Complete. The language menu follows its declared keyboard pattern, tracks the current item, and lets the innermost interaction layer consume Escape before welcome onboarding reacts.
 
 **Evidence — Source:** `features/preferences/language-selector.view.tsx:9–19` advertises menu/menuitem semantics; `language-selector.model.ts:37–52` provides only click/outside-click behavior. `features/welcome/welcome-modal.model.ts:24` completes onboarding for Escape; the nested menu does not consume it.
 
@@ -217,6 +245,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-18 · P2 · Preference changes conceal account-save failures
 
+**Status:** Blocked pending D5. Local-only feedback and retry semantics would change account-preference persistence behavior.
+
 **Evidence — Source:** `preferences/theme-selector.model.ts:27`, `language-selector.model.ts:22`, and `lib/queries.ts:176` apply local choices and discard persistence feedback.
 
 **Plan:** Preserve immediate local application. Distinguish a locally applied preference from a failed account save and offer explicit retry. Never upload browser defaults or offline changes automatically.
@@ -224,6 +254,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Reject account persistence: the chosen theme/language remains usable, a concise accessible notice explains its scope, and explicit retry works. Offline choices remain local until an explicit action requests saving.
 
 ### UI-19 · P2 · Dictionary-load failures can be silent or prevent startup
+
+**Status:** Blocked with UI-18 pending D5, because truthful selection and startup recovery require the same preference/error ownership policy.
 
 **Evidence — Source; network-failure reproduction required:** `language-selector.model.ts:22` catches load failure without user feedback; `settings-preferences.model.ts:17` ignores its false result. `i18n/i18n.ts:57` awaits a lazy dictionary before `main.model.ts:24` can render.
 
@@ -233,6 +265,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-20 · P2 · Offline logout hides the remote-session limitation
 
+**Status:** Blocked pending D6. The proposed tab-scoped non-private notice needs an approved lifetime and new-session clearing rule.
+
 **Evidence — Source, already tracked:** `components/site-header.model.ts:35–38` navigates to login. `offline/offline-controls.view.tsx:48` contains the disclosure only in Settings; the Settings link disappears after logout. `offline-access-machine.ts:69` resets the flag on reload.
 
 **Plan:** Extend the existing [offline-logout disclosure backlog entry](../../backlog.md#preserve-or-relocate-the-offline-logout-disclosure), rather than create a parallel implementation. Show non-private recovery guidance on the logout destination and define its reload lifetime.
@@ -240,6 +274,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Private local data is cleared, login explains that remote revocation could not be confirmed, and reconnect offers an approved way to finish logout. Never imply server revocation succeeded offline.
 
 ### UI-21 · P2 · Offline preparation errors recommend the wrong kind of repair
+
+**Status:** Blocked pending T05, T14, and T15 because remediation depends on the approved cleanup/restoration/logout state model.
 
 **Evidence — Source, already tracked:** `offline/prepare-offline.ts:150` covers resources, API, and persistence; `offline-access-runtime.ts:239` discards failure detail; `i18n/locales/en.ts:40` always recommends storage permissions/space.
 
@@ -249,6 +285,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-22 · P2 · “Data last downloaded” overstates its timestamp
 
+**Status:** Blocked with UI-21 pending the offline state-model work; no unsupported download-wide timestamp has been introduced.
+
 **Evidence — Source:** `offline-controls.model.ts:19–21,41–43,77` uses the active-board query's `dataUpdatedAt` on Settings. This is not a complete all-workspaces persistence timestamp; persistence can fail later in `offline-access-runtime.ts:246`. Operations documentation already describes the limited measurement.
 
 **Plan:** Name what is actually measured, or introduce an explicitly defined successful-download timestamp after separate design approval. Do not infer complete freshness from one query.
@@ -256,6 +294,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Fetching only the active list does not claim that all workspaces were downloaded. A persistence failure cannot appear as a freshly saved complete device copy.
 
 ### UI-23 · P2 · Retry does not explain checking or another failure
+
+**Status:** Blocked with UI-21 pending the offline state-model work.
 
 **Evidence — Source:** `offline-access-runtime.ts:148–168` distinguishes verification states; `offline-controls.model.ts:50–61` exposes one unchanged Retry label; `offline-controls.view.tsx:25` does not show a verification-specific pending/result state.
 
@@ -265,6 +305,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-24 · P2 · Startup cannot distinguish absent downloads from failed restoration
 
+**Status:** Blocked pending T05’s cleanup-recovery decision. The startup/retry model must not introduce unsafe owner or stale-result behavior.
+
 **Evidence — Source; slow-storage reproduction required:** `main.model.ts:29` races restoration against two seconds and maps exceptions to null. `offline-access-runtime.ts:372` treats null as no download. Connection Retry does not restart storage restoration.
 
 **Plan:** Keep bounded startup, but distinguish absence from a failed/timed-out restore and offer a safe restore retry.
@@ -273,6 +315,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-25 · P2 · Export omits a known association limitation from its description
 
+**Status:** Complete. Settings now states that related CSV rows cannot reliably be matched to application rows with the current package; the joinable-export backlog item remains open.
+
 **Evidence — Source, already tracked:** `i18n/locales/en.ts:5` describes related-record files but not their join limitation. `apps/api/src/routes/applications/export-csv.ts:10,65,80` exports Application ID for related rows without a corresponding application identifier.
 
 **Plan:** Link or explain the current limitation beside export. Use the existing [related-record association backlog entry](../../backlog.md#make-exported-related-records-joinable) for a future contract decision. Do not silently add identifiers or expand fields.
@@ -280,6 +324,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** People can understand exclusions and association limits before downloading. A separately approved association-key change must handle duplicate company/role names and preserve ownership and spreadsheet safety.
 
 ### UI-26 · P2 · The mobile header gives low-priority controls too much space
+
+**Status:** Blocked pending D7’s approved mobile hierarchy.
 
 **Evidence — Runtime + Source + Decision:** At 360 px, the signed-in header occupied about 280 px, with Logout alone on a mostly empty row before Add job/Settings/theme/language. `components/site-header.styles.ts:8–16` and `site-header.view.tsx:26–43` explain the account/action grouping. The email is hidden while its separate group remains.
 
@@ -291,6 +337,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-27 · P2 · Mobile board structure makes later statuses expensive to reach
 
+**Status:** Blocked pending D7’s approved status-navigation design.
+
 **Evidence — Runtime + Source + Decision:** `board/job-board.styles.ts:6` stacks whole columns below the desktop breakpoint. In the populated mobile view, several Saved cards precede Applied; every additional card increases the distance to later statuses. Existing status filtering is available but not a visible jump mechanism.
 
 **Plan:** Agree a lightweight mobile way to reach a status without traversing every preceding card: e.g. status jump links or an explicit column selector using the existing status model. Evaluate against the current stacked view before replacing it. Keep desktop horizontal browsing and semantic card links.
@@ -298,6 +346,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** On a board with many Saved records, reaching Interview or Offer does not require scanning all earlier records. Keyboard, touch, empty columns and RTL work; the six-status workflow stays unchanged. This is a design improvement, not a claim that vertical stacking is universally wrong.
 
 ### UI-28 · P2 · Keyboard status movement can disagree with the displayed order
+
+**Status:** Complete. Displayed columns and keyboard adjacency now derive from the same canonical visible-status sequence, including RTL direction behavior.
 
 **Evidence — Source:** `store.ts:42–45` appends a re-enabled status to `visibleStatuses`; `board/job-board.model.ts:22–24` displays columns in canonical order; `board/use-job-board.ts:39–45` chooses neighboring statuses from the array's toggle order. `job-card.model.ts:49–55` maps physical left/right without document direction.
 
@@ -307,6 +357,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-29 · P2 · Card accessible names contain English and advertise unavailable actions
 
+**Status:** Complete. Positional information is localized, shared help is associated once, and read-only cards omit unavailable mutation instructions while preserving native links.
+
 **Evidence — Source:** `board/job-card.model.ts:79` hardcodes “Position … of …” and always appends keyboard mutation instructions; `job-card.view.tsx:32` removes `aria-keyshortcuts` when read-only, but not those spoken instructions.
 
 **Plan:** Translate positional information and include only available actions. Prefer a concise name plus associated shared instructions over repeating long help on every link.
@@ -315,6 +367,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-30 · P2 · Status-filter popup semantics do not match its structure
 
+**Status:** Complete. The filter is a named nonmodal checkbox disclosure with predictable focus entry/exit and distinct recovery for zero visible statuses versus no search matches.
+
 **Evidence — Source:** `filters/status-filter.view.tsx:18` advertises a dialog, while `status-filter-options.view.tsx:26` renders a fieldset. `use-status-filter.ts:27–47` handles outside click/Escape but has no focus-entry policy. Zero visible statuses are allowed and lead to the same generic no-match outcome as text search.
 
 **Plan:** Choose consistent nonmodal disclosure/group semantics or a complete dialog pattern; retain native labeled checkboxes. Distinguish hidden-all columns from a no-match search and offer the relevant reset.
@@ -322,6 +376,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Opening communicates the actual control group and reaches it predictably; Escape returns to the trigger. Zero selected statuses produces an understandable way to show columns again. No forced modal focus trap for a deliberately nonmodal filter.
 
 ### UI-31 · P3 · Board search/filter context is hidden across routes and lost on reload
+
+**Status:** Blocked pending D8’s route-scoped URL-state policy.
 
 **Evidence — Source + Decision:** `components/application-search.model.ts:8–16` uses the single Redux search value on all three collections. `store.ts:18–28` initializes search/status visibility without URL state. Archive/blacklist filter the same search even after navigation.
 
@@ -333,6 +389,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-32 · P2 · Completing a follow-up removes the focused action without a destination
 
+**Status:** Complete. Completion restores focus to a stable connected target after the query-backed update and announces success once.
+
 **Evidence — Source; runtime focus result unverified:** `lib/queries.ts:330` updates the detail cache; `follow-ups/follow-ups-section.view.tsx:84` removes Complete for finished tasks, and `use-follow-ups-controller.ts:166` does not choose a focus target. Sorting also moves completed tasks.
 
 **Plan:** Preserve terminal completion semantics while orienting focus to the completed task or a sensible next action.
@@ -341,6 +399,8 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-33 · P3 · Global pointer styling weakens text-entry affordance
 
+**Status:** Blocked pending D7/D8’s mobile and input-affordance review; no speculative CSS change is authorized.
+
 **Evidence — Source:** `apps/web/src/index.css:109–111` applies `cursor: pointer` to inputs and textareas as well as buttons/selects. The effect is an action cursor on ordinary editable text.
 
 **Plan:** Narrow pointer styling to action controls and appropriate compound triggers; keep ordinary text-entry affordances and deliberate disabled states. Review focus and hover as a coherent primitive system, without treating every control as identical.
@@ -348,6 +408,8 @@ The audit combines source review of all route families and shared controls, revi
 **Acceptance:** Manually inspect mouse/text selection and keyboard focus in create/auth/workspace fields. Native selection, paste, autocomplete and disabled semantics remain unchanged. Do not add CSS-property tests.
 
 ### UI-34 · P2 · Read-only controls have limited in-context explanation
+
+**Status:** Blocked pending the offline state-model tasks T05, T14, and T15.
 
 **Evidence — Source + Decision:** `site-header.view.tsx:46–49`, `home-page.view.tsx:21–25`, and workspace/form controls disable mutation based on `canMutate`. Detailed recovery state is intentionally confined to Settings, while the header exposes only a small disconnected notice.
 
