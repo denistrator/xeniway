@@ -193,6 +193,43 @@ test("blocks dirty workspace departure until the draft is explicitly discarded",
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 });
 
+test("blocks dirty create-form browser Forward navigation until the draft is discarded", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `forward-departure-${crypto.randomUUID()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company: "Forward departure", position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+  const applicationId = ((await created.json()) as ApplicationResponse).data.application.id;
+
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Forward departure, Engineer,/ }).click();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Add job", exact: true }).click();
+  const company = page.getByRole("textbox", { name: "Company *", exact: true });
+  await company.fill("Forward draft");
+  await page.goForward();
+
+  const dialog = page.getByRole("alertdialog", { description: "Save your changes, discard them, or keep editing." });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(company).toHaveValue("Forward draft");
+
+  await page.goForward();
+  await dialog.getByRole("button", { name: "Discard changes", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/applications/${applicationId}$`));
+});
+
 test("uses the departure dialog instead of stacking a compact-field warning on browser Back", async ({ page }) => {
   const bootstrap = await page.request.get("/api/auth/csrf");
   const registration = await page.request.post("/api/auth/register", {
