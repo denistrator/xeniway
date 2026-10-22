@@ -333,6 +333,16 @@ test("preserves workspace status changes, keyboard focus, and Hebrew accessibili
   await page.getByRole("radio", { name: "Offer", exact: true }).click();
   await expect(statusTrigger).toBeFocused();
   await expect(statusTrigger).toHaveText("Offer");
+
+  await page.getByRole("button", { name: "Location, Edit", exact: true }).click();
+  await page.getByRole("textbox", { name: "Location", exact: true }).fill("Remote");
+  const locationSaved = page.waitForResponse(
+    (response) => response.url().endsWith(detailUrl) && response.request().method() === "PUT",
+  );
+  await page.getByRole("button", { name: "Save location", exact: true }).click();
+  expect((await locationSaved).ok()).toBe(true);
+  await expect(statusTrigger).toHaveText("Offer");
+
   await page.reload();
   await expect(statusTrigger).toHaveText("Offer");
 
@@ -723,7 +733,7 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   expect(formHostRequests).toHaveLength(0);
   await addJob.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("status")).toHaveText("Loading…");
+  await expect(page.getByText("Loading…", { exact: true })).toBeVisible();
   await page.keyboard.press("Tab");
   await expect(addJob).not.toBeFocused();
   releaseHost();
@@ -809,7 +819,11 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
     throw new Error("Unable to locate the second saved application");
   }
 
+  const reorderResponse = page.waitForResponse(
+    (response) => response.url().endsWith("/api/applications/reorder") && response.request().method() === "POST",
+  );
   await cards.nth(1).dragTo(cardTargets.nth(0));
+  expect((await reorderResponse).ok()).toBe(true);
   await expect(savedColumn.getByRole("link").first()).toContainText(secondCompany);
 
   await page.reload();
@@ -845,21 +859,28 @@ test("supports keyboard reordering within a status", async ({ page }) => {
   );
 });
 
-test("focuses and announces application form validation errors", async ({ page }) => {
+test("focuses the first invalid application field and announces its error", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("test_user@example.com");
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
 
+  const welcome = page.getByRole("dialog", { name: "Welcome to Xenia Way" });
+  if (await welcome.isVisible()) {
+    await welcome.getByRole("button", { name: "Close welcome introduction" }).last().click();
+  }
+
   await page.getByRole("button", { name: "Add job" }).click();
-  await page.getByLabel("Company *").fill(" ");
+  const company = page.getByLabel("Company *");
+  await company.fill(" ");
   await page.getByLabel("Position *").fill("Engineer");
   await page.getByRole("button", { name: "Save application" }).click();
 
-  const error = page.getByRole("alert");
-  await expect(error).toBeVisible();
-  await expect(error).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveText("Enter a value.");
+  await expect(company).toHaveAttribute("aria-invalid", "true");
+  await expect(company).toHaveAttribute("aria-describedby", "job-company-error");
+  await expect(company).toBeFocused();
 });
 
 test("provides accessible labels for search and application fields", async ({ page }) => {

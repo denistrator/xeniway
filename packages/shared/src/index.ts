@@ -155,7 +155,9 @@ export const createApplicationInputSchema = z.object({
   notes: z.string().trim().max(10_000).nullable().optional(),
 });
 
-export const updateApplicationInputSchema = createApplicationInputSchema.partial();
+export const updateApplicationInputSchema = createApplicationInputSchema
+  .partial()
+  .extend({ status: jobStatusSchema.optional() });
 export const blacklistInputSchema = z.object({
   reason: z.string().trim().max(1000).nullable().optional(),
 });

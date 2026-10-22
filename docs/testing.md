@@ -25,7 +25,7 @@ bun run test:e2e:offline
 bun run test:e2e
 ```
 
-Static checks need no running services. Migrations and seed need PostgreSQL; browser tests additionally need Redis and Chromium, start their own API/web servers, and seed disposable fixtures through global setup. Mailpit is not required. Run browser suites sequentially because they share fixtures and Redis database 15. Stop manual preview first: the offline suite uses ports 3101/4174 and rebuilds the output. See [Operations](operations.md#local-lifecycle) for prerequisites.
+Static checks need no running services. Migrations and seed need PostgreSQL; browser tests additionally need Redis and Chromium, start and own their API/web servers, and seed disposable fixtures through global setup. Mailpit is not required. Run browser suites sequentially because they share fixtures and Redis database 15. Ordinary browser tests use ports 3102/4175; the offline suite uses ports 3101/4174 and rebuilds the output. Neither uses or stops `bun run dev`. See [Operations](operations.md#local-lifecycle) for prerequisites.
 
 Root `test` runs Bun tests under `scripts` and the shared, API, and web Vitest suites. Root `typecheck` checks those workspaces plus `tests/tsconfig.json`; see [TypeScript configuration](architecture.md#typescript-configuration) for browser/Node/worker boundaries and automatic browser source discovery. Component behavior tests use `foo.test.tsx`; optional focused view-model tests use `foo.model.test.ts`. Avoid same-basename `.test.ts`/`.test.tsx` pairs so both files remain discoverable.
 

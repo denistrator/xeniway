@@ -274,6 +274,10 @@ describe("application contracts", () => {
       notes: null,
     });
   });
+
+  it("does not add the create-only default status to unrelated updates", () => {
+    expect(updateApplicationInputSchema.parse({ company: "  Acme  " })).toEqual({ company: "Acme" });
+  });
 });
 
 describe("authentication contracts", () => {

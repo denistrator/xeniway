@@ -21,13 +21,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Possible direction:** Establish the test's own onboarding state or explicitly complete the welcome dialog rather than relying on earlier workflows updating the shared account.
 - **Guardrails:** Preserve coverage for theme persistence, private-data cleanup, and real logout; do not bypass the dialog with forced clicks or weaken production onboarding.
 
-### Disambiguate the create-dialog loading announcement browser check
-
-- **Where:** `tests/e2e/xeniway.spec.ts`, "manages focus and escape behavior for the job form dialog", loading assertion after Add job.
-- **Evidence:** During the confirmation-focus checkpoint, the run alongside the welcome workflow failed because `getByRole("status")` matched both the board's "Loading applications…" and the lazy form host's "Loading…". The test stopped before exercising create-dialog focus; welcome and the dedicated confirmation workflow passed.
-- **Possible direction:** Identify the intended lazy-host announcement semantically while allowing concurrent board loading. Inspect the host's accessible structure before changing the selector.
-- **Guardrails:** Preserve the controlled import delay, no-import-before-click check, keyboard containment, Escape behavior and opener restoration. Do not add sleeps, suppress the board announcement, or weaken the loading assertion. Await approval before implementing.
-
 ### Full offline synchronization
 
 - **Area:** Offline application writes beyond read-only downloads.

@@ -184,7 +184,7 @@ Install Chromium once if it is not already available:
 bunx playwright install chromium
 ```
 
-After the local setup above, run `bun run test:e2e` and `bun run test:e2e:offline` sequentially. Both require PostgreSQL and Redis; they start their own API/web servers and seed disposable fixtures. Stop manual preview first because the offline suite uses the same ports. See [Testing](docs/testing.md) for coverage, known limitations, and the full verification sequence.
+After the local setup above, run `bun run test:e2e` and `bun run test:e2e:offline` sequentially. Both require PostgreSQL and Redis; they start and own separate API/web servers, then seed disposable fixtures. Ordinary browser tests use ports `3102`/`4175`; the offline suite uses `3101`/`4174`. They do not use or stop `bun run dev`. See [Testing](docs/testing.md) for coverage, known limitations, and the full verification sequence.
 
 ## Repository map
 
