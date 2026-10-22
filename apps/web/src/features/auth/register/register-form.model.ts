@@ -10,8 +10,11 @@ export type RegisterFormState = {
   confirmPassword: string;
 };
 
+export type RegisterFieldErrors = Partial<Record<keyof RegisterFormState, string>>;
+
 export type RegisterFormProps = {
   form: RegisterFormState;
+  fieldErrors: RegisterFieldErrors;
   error: string | null;
   pending: boolean;
   errorRef: RefObject<HTMLParagraphElement | null>;

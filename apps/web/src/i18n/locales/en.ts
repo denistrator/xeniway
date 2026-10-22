@@ -348,6 +348,11 @@ export const en = {
       alreadyRegistered: "Already registered?",
       checkDetails: "Check your details",
       passwordsMustMatch: "Passwords must match",
+      passwordHelp: "Use 8 to 128 characters.",
+      required: "Enter a value.",
+      emailInvalid: "Enter a valid email address.",
+      passwordTooShort: "Use at least 8 characters.",
+      tooLong: "Use {{max}} characters or fewer.",
     },
     forgotPassword: {
       title: "Forgot your password?",

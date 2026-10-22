@@ -353,6 +353,11 @@ const ru = {
       alreadyRegistered: "Уже зарегистрированы?",
       checkDetails: "Проверьте введённые данные",
       passwordsMustMatch: "Пароли должны совпадать",
+      passwordHelp: "Используйте от 8 до 128 символов.",
+      required: "Заполните поле.",
+      emailInvalid: "Укажите корректный адрес электронной почты.",
+      passwordTooShort: "Используйте не менее 8 символов.",
+      tooLong: "Используйте не более {{max}} символов.",
     },
     forgotPassword: {
       title: "Забыли пароль?",

@@ -352,6 +352,11 @@ const uk = {
       alreadyRegistered: "Вже зареєстровані?",
       checkDetails: "Перевірте введені дані",
       passwordsMustMatch: "Паролі мають збігатися",
+      passwordHelp: "Використовуйте від 8 до 128 символів.",
+      required: "Заповніть поле.",
+      emailInvalid: "Введіть коректну адресу електронної пошти.",
+      passwordTooShort: "Використовуйте щонайменше 8 символів.",
+      tooLong: "Використовуйте не більше {{max}} символів.",
     },
     forgotPassword: {
       title: "Забули пароль?",

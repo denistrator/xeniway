@@ -8,5 +8,7 @@ export const registerFieldsStyles = tv({
     emailInput: "peer",
     passwordInput: "peer",
     confirmationInput: "peer",
+    passwordHelp: "mt-1 text-sm leading-6 text-muted",
+    fieldError: "mt-1 text-sm leading-6 text-rose-600 dark:text-rose-400",
   },
 });

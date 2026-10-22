@@ -7,11 +7,12 @@ import { registerPageStyles } from "./register-page.styles";
 const styles = registerPageStyles();
 
 export function RegisterPage() {
-  const { labels, errorRef, error, form, update, handleSubmit, pending } = useRegisterPage();
+  const { labels, errorRef, error, fieldErrors, form, update, handleSubmit, pending } = useRegisterPage();
   return (
     <AuthCard title={labels.title} description={labels.description}>
       <RegisterForm
         form={form}
+        fieldErrors={fieldErrors}
         error={error}
         pending={pending}
         errorRef={errorRef}

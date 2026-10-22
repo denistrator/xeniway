@@ -338,6 +338,11 @@ const he = {
       alreadyRegistered: "כבר נרשמתם?",
       checkDetails: "בדקו את הפרטים שלכם",
       passwordsMustMatch: "הסיסמאות חייבות להיות זהות",
+      passwordHelp: "יש להשתמש ב־8 עד 128 תווים.",
+      required: "יש למלא ערך.",
+      emailInvalid: "יש להזין כתובת דוא״ל תקינה.",
+      passwordTooShort: "יש להשתמש ב־8 תווים לפחות.",
+      tooLong: "יש להשתמש ב־{{max}} תווים לכל היותר.",
     },
     forgotPassword: {
       title: "שכחתם את הסיסמה?",

@@ -6,7 +6,7 @@ import { registerFieldsStyles } from "./register-fields.styles";
 
 const styles = registerFieldsStyles();
 
-export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
+export function RegisterFields({ form, errors, onChange }: RegisterFieldsProps) {
   const {
     labels,
     handleFirstNameChange,
@@ -14,7 +14,8 @@ export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
     handleEmailChange,
     handlePasswordChange,
     handleConfirmationChange,
-  } = useRegisterFields(onChange);
+    errors: fieldErrors,
+  } = useRegisterFields({ errors, onChange });
   return (
     <>
       <div className={styles.nameFields()}>
@@ -26,8 +27,15 @@ export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
             autoComplete="given-name"
             placeholder=" "
             value={form.firstName}
+            aria-invalid={fieldErrors.firstName.error ? true : undefined}
+            aria-describedby={fieldErrors.firstName.describedBy}
             onChange={handleFirstNameChange}
           />
+          {fieldErrors.firstName.error && (
+            <p id={fieldErrors.firstName.errorId} role="alert" className={styles.fieldError()}>
+              {fieldErrors.firstName.error}
+            </p>
+          )}
         </FloatingLabel>
         <FloatingLabel htmlFor="register-last-name" label={labels.lastName} icon={User}>
           <Input
@@ -37,8 +45,15 @@ export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
             autoComplete="family-name"
             placeholder=" "
             value={form.lastName}
+            aria-invalid={fieldErrors.lastName.error ? true : undefined}
+            aria-describedby={fieldErrors.lastName.describedBy}
             onChange={handleLastNameChange}
           />
+          {fieldErrors.lastName.error && (
+            <p id={fieldErrors.lastName.errorId} role="alert" className={styles.fieldError()}>
+              {fieldErrors.lastName.error}
+            </p>
+          )}
         </FloatingLabel>
       </div>
       <FloatingLabel htmlFor="register-email" label={labels.email} icon={Mail}>
@@ -52,8 +67,15 @@ export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
           required
           type="email"
           value={form.email}
+          aria-invalid={fieldErrors.email.error ? true : undefined}
+          aria-describedby={fieldErrors.email.describedBy}
           onChange={handleEmailChange}
         />
+        {fieldErrors.email.error && (
+          <p id={fieldErrors.email.errorId} role="alert" className={styles.fieldError()}>
+            {fieldErrors.email.error}
+          </p>
+        )}
       </FloatingLabel>
       <FloatingLabel htmlFor="register-password" label={labels.password} icon={LockKeyhole}>
         <Input
@@ -65,8 +87,18 @@ export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
           required
           type="password"
           value={form.password}
+          aria-invalid={fieldErrors.password.error ? true : undefined}
+          aria-describedby={fieldErrors.password.describedBy}
           onChange={handlePasswordChange}
         />
+        <p id="register-password-help" className={styles.passwordHelp()}>
+          {labels.passwordHelp}
+        </p>
+        {fieldErrors.password.error && (
+          <p id={fieldErrors.password.errorId} role="alert" className={styles.fieldError()}>
+            {fieldErrors.password.error}
+          </p>
+        )}
       </FloatingLabel>
       <FloatingLabel htmlFor="register-confirm-password" label={labels.confirmPassword} icon={LockKeyhole}>
         <Input
@@ -78,8 +110,15 @@ export function RegisterFields({ form, onChange }: RegisterFieldsProps) {
           required
           type="password"
           value={form.confirmPassword}
+          aria-invalid={fieldErrors.confirmPassword.error ? true : undefined}
+          aria-describedby={fieldErrors.confirmPassword.describedBy}
           onChange={handleConfirmationChange}
         />
+        {fieldErrors.confirmPassword.error && (
+          <p id={fieldErrors.confirmPassword.errorId} role="alert" className={styles.fieldError()}>
+            {fieldErrors.confirmPassword.error}
+          </p>
+        )}
       </FloatingLabel>
     </>
   );
