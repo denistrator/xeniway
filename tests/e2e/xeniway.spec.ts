@@ -105,7 +105,8 @@ test("provides public password recovery pages", async ({ page }) => {
   await page.getByLabel("New password").fill("password123");
   await page.getByLabel("Confirm password").fill("password123");
   await page.getByRole("button", { name: "Update password" }).click();
-  await expect(page.getByRole("alert")).toContainText("invalid or expired");
+  await expect(page.getByRole("heading", { name: "Link unavailable" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Request a new link" })).toHaveAttribute("href", "/forgot-password");
 });
 
 test("opens settings from the header with keyboard access and localized reloads", async ({ page }) => {
