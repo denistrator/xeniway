@@ -40,6 +40,15 @@ The recommendations below make the plan concrete; they are not existing product 
 | D7 · Mobile hierarchy | Keep navigation and Add job visible. Consolidate the isolated account row; keep theme and language shortcuts in the header as previously requested. Prefer status jump links on the stacked mobile board over replacing the board with a new display mode. | T18 |
 | D8 · Search context | Make collection search route-scoped and shareable through `?q=`, with active-board visible statuses in `?statuses=saved,applied`. Keep Redux as the UI projection and avoid two competing authorities. Browser Back/Forward restores those values. Approve this behavior change before implementation; otherwise retain global search with explicit context/reset copy. | T18 |
 
+## Execution gate status
+
+- **T05 reload-resilient cleanup recovery:** partially implemented without new persistence. Its remaining reload-discovery behavior requires an explicit decision before adding durable cleanup metadata.
+- **T08:** blocked pending D4. Its destructive-operation wording, scope presentation, and placement are inseparable from the approved bulk-deletion policy.
+- **T13:** blocked pending D5. A local-only preference state and retry behavior would change account-persistence semantics.
+- **T15:** blocked pending D6. Persisting the remote-logout limitation across reloads requires the approved non-private notice lifetime.
+- **T18:** blocked pending D7 and D8. Mobile navigation hierarchy and route-scoped search/status URL state are product behavior changes.
+- **T19 V-03/V-04:** require physical devices and assistive-technology environments that are not available to this autonomous checkout.
+
 ## Sequence and dependencies
 
 | Phase | Tasks | Review gate |
