@@ -62,3 +62,32 @@ test("announces a failed create inside the active dialog", () => {
   expect(within(dialog).getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   client.clear();
 });
+
+test("contains focus and handles Escape once in the create dialog", async () => {
+  const user = userEvent.setup();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const onClose = vi.fn();
+  client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
+  client.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
+
+  render(
+    <Provider store={store}>
+      <QueryClientProvider client={client}>
+        <JobManager open submitting={false} onSave={() => {}} onClose={onClose} />
+      </QueryClientProvider>
+    </Provider>,
+  );
+
+  const dialog = screen.getByRole("dialog");
+  const close = within(dialog).getByRole("button", { name: "Close" });
+  expect(close).toHaveFocus();
+
+  for (let count = 0; count < 15; count += 1) {
+    await user.tab();
+  }
+  expect(dialog.contains(document.activeElement)).toBe(true);
+
+  await user.keyboard("{Escape}");
+  expect(onClose).toHaveBeenCalledTimes(1);
+  client.clear();
+});

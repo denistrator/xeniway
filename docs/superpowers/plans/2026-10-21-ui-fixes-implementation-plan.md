@@ -99,7 +99,7 @@ expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 - [x] Run `bun run --cwd apps/web test src/components/ui/confirmation-modal.test.tsx`; confirm the regression fails for the missing behavior.
 - [x] Add a dialog ref; wrap Tab/Shift+Tab using the existing helper; identify the top interaction layer for Escape. Isolate the background without making the modal's own ancestor inert. Store/restore the opener, with a connected fallback if its record was removed. Use stable effect lifetimes so rerenders do not overwrite the opener.
 - [x] Add cases for disabled confirmation, stacked instances, parent Escape handling, removed opener, Escape/backdrop, caller focus destinations and replacement dialogs. Avoid stale document listeners after unmount and avoid restoring focus over a newly opened modal. Pending/error behavior and dirty-warning dismissal are deferred to T07/T03.
-- [ ] Verify create dialogs and welcome still contain focus and do not double-handle Escape. Review the patch before converting other callers.
+- [x] Verify create dialogs and welcome still contain focus and do not double-handle Escape. Review the patch before converting other callers.
 
 **Exit:** Keyboard and pointer cannot activate the background; dismissal and success have intentional focus destinations. Error content inside the alertdialog is a T07 acceptance check, not part of this focus-only checkpoint.
 
