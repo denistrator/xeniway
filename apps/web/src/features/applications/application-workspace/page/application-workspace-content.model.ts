@@ -14,6 +14,7 @@ export function useApplicationWorkspaceContent({ data }: ApplicationWorkspaceCon
     id: `application-${application.id}`,
     dirty: applicationFields.departure.dirty,
     pending: applicationFields.departure.pending,
+    errorKey: applicationFields.departure.errorKey,
     onDepartureBlocked: applicationFields.departure.onDepartureBlocked,
     discard: applicationFields.departure.discard,
     save: applicationFields.departure.save,

@@ -258,3 +258,45 @@ test("saves a compact draft before completing browser Back navigation", async ({
   expect((await updated).ok()).toBe(true);
   await expect(page).toHaveURL(/\/$/);
 });
+
+test("keeps a failed compact save in the departure dialog", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `failed-departure-${crypto.randomUUID()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company: "Failed departure", position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+  const applicationId = ((await created.json()) as ApplicationResponse).data.application.id;
+
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Failed departure, Engineer,/ }).click();
+  await page.getByRole("button", { name: "Location, Edit", exact: true }).click();
+  const location = page.getByRole("textbox", { name: "Location", exact: true });
+  await location.fill("Remote");
+  await page.route(`**/api/applications/${applicationId}`, async (route) => {
+    if (route.request().method() === "PUT") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: '{"error":{"code":"REQUEST_FAILED"}}',
+      });
+      return;
+    }
+
+    await route.continue();
+  });
+  await page.goBack();
+
+  const dialog = page.getByRole("alertdialog", { description: "Save your changes, discard them, or keep editing." });
+  await dialog.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toHaveText("Something went wrong. Please try again.");
+  await expect(page).toHaveURL(new RegExp(`/applications/${applicationId}$`));
+  await expect(location).toHaveValue("Remote");
+});

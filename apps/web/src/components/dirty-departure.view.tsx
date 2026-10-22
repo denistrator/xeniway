@@ -13,6 +13,7 @@ export function DirtyDeparture() {
       <ConfirmationModal
         title={view.title}
         text={view.text}
+        error={view.error}
         yesLabel={view.discardLabel}
         noLabel={view.keepEditingLabel}
         pending={view.pending}
@@ -26,6 +27,7 @@ export function DirtyDeparture() {
     <ConfirmationModal
       title={view.title}
       text={view.text}
+      error={view.error}
       yesLabel={view.saveLabel}
       noLabel={view.discardLabel}
       pending={view.pending}

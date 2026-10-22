@@ -88,6 +88,7 @@ export function useDirtyDeparture() {
 
   const isBlocked = blocker.state === "blocked";
   const pending = editor?.pending ?? false;
+  const error = editor?.errorKey ? t(editor.errorKey) : undefined;
   const title = t("applications.workspace.unsavedChangesTitle");
   const text = t("applications.workspace.unsavedRecordChangesText");
   const saveLabel = t("applications.workspace.actions.saveChanges");
@@ -97,6 +98,7 @@ export function useDirtyDeparture() {
   return {
     isBlocked,
     pending,
+    error,
     canSave: Boolean(editor?.save),
     title,
     text,
