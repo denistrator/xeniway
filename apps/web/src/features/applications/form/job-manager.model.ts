@@ -2,6 +2,7 @@ import type { CreateApplicationInput } from "@xeniway/shared";
 import { type RefObject, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
+import { useDirtyEditor } from "../../../lib/dirty-editors";
 import { useCurrentUser, useUpdateUserPreferences } from "../../../lib/queries";
 import { writeLocalUserPreferences } from "../../../lib/user-preferences";
 import { type RootState, setJobFormPresentation } from "../../../store";
@@ -92,5 +93,12 @@ export function useJobManagerPresentation({
     discardAndClose,
     saveAndClose,
   };
+  useDirtyEditor({
+    id: "create-application",
+    dirty: open && form.dirty,
+    pending: open && submitting,
+    discard: form.reset,
+    save: form.submit,
+  });
   return { presentation, props, closeWarning };
 }

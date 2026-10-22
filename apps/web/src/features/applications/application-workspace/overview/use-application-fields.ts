@@ -23,6 +23,12 @@ export type ApplicationFieldsController = {
   saveWarning(): Promise<void>;
   dismissWarning(): void;
   discardWarning(): void;
+  departure: {
+    dirty: boolean;
+    pending: boolean;
+    discard(): void;
+    save(): Promise<boolean>;
+  };
 };
 
 export function useApplicationFields(application: JobApplication): ApplicationFieldsController {
@@ -132,6 +138,26 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
     }
   }
 
+  const fieldNames = Object.keys(fields) as EditableApplicationField[];
+  const pendingField = fieldNames.find((field) => fields[field].pending) ?? null;
+  const departureField = activeField ?? warningField ?? pendingField;
+  const departure = {
+    dirty: activeField ? isDirty(activeField) : false,
+    pending: departureField ? fields[departureField].pending : false,
+    discard() {
+      if (departureField) {
+        cancel(departureField);
+      }
+    },
+    save() {
+      if (!departureField) {
+        return Promise.resolve(true);
+      }
+
+      return save(departureField);
+    },
+  };
+
   return {
     fields,
     compact: {
@@ -146,5 +172,6 @@ export function useApplicationFields(application: JobApplication): ApplicationFi
     saveWarning,
     dismissWarning,
     discardWarning,
+    departure,
   };
 }

@@ -10,7 +10,7 @@ beforeEach(async () => {
 
 test("requires a title and submits a dated follow-up", async () => {
   const user = userEvent.setup();
-  const onSubmit = vi.fn().mockResolvedValue(undefined);
+  const onSubmit = vi.fn().mockResolvedValue(true);
   render(<ApplicationActivityForm onSubmit={onSubmit} onCancel={vi.fn()} />);
 
   expect(screen.getByRole("textbox", { name: "Title" })).toBeRequired();
@@ -23,7 +23,7 @@ test("requires a title and submits a dated follow-up", async () => {
 
 test("rejects whitespace-only titles", async () => {
   const user = userEvent.setup();
-  const onSubmit = vi.fn().mockResolvedValue(undefined);
+  const onSubmit = vi.fn().mockResolvedValue(true);
   render(<ApplicationActivityForm onSubmit={onSubmit} onCancel={vi.fn()} />);
   await user.type(screen.getByRole("textbox", { name: "Title" }), "   ");
   await user.click(screen.getByRole("button", { name: "Save activity" }));

@@ -5,6 +5,7 @@ import {
   updateApplicationContactInputSchema,
 } from "@xeniway/shared";
 import { type FormEvent, type RefObject, useEffect, useRef, useState } from "react";
+import { useDirtyEditor } from "../../../../lib/dirty-editors";
 import { useApplicationContactMutations } from "../../../../lib/queries";
 import { runWorkspaceMutation } from "../shared/run-workspace-mutation";
 import { useReturnFocus } from "../shared/use-return-focus";
@@ -261,6 +262,13 @@ export function useContactsController(applicationId: number): ContactsController
     setDeletionTarget(contact);
   }
 
+  function discardEditor() {
+    pendingEditor.current = null;
+    setHasWarning(false);
+    setEditorTarget(null);
+    setErrors({});
+  }
+
   async function confirmDeletion() {
     if (!deletionTarget) {
       return;
@@ -277,6 +285,15 @@ export function useContactsController(applicationId: number): ContactsController
     setDeletionTarget(null);
   }
 
+  const editorDirty = editorTarget ? isDirtyDraft(draft, editorTarget) : false;
+  useDirtyEditor({
+    id: `application-${applicationId}-contacts`,
+    dirty: editorDirty,
+    pending: editorTarget !== null && pending,
+    discard: discardEditor,
+    save: submitDraft,
+  });
+
   return {
     editor: {
       target: editorTarget,
@@ -291,7 +308,7 @@ export function useContactsController(applicationId: number): ContactsController
       },
       openNew,
       openExisting,
-      close: () => setEditorTarget(null),
+      close: discardEditor,
     },
     warning: {
       isOpen: hasWarning,

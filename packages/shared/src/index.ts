@@ -82,7 +82,7 @@ export const createApplicationContactInputSchema = z.strictObject({
     .trim()
     .url()
     .max(500)
-    .refine((value) => ["http:", "https:"].includes(new URL(value).protocol), {
+    .refine((value) => URL.canParse(value) && ["http:", "https:"].includes(new URL(value).protocol), {
       message: "Profile URL must use HTTP or HTTPS",
     })
     .nullable()

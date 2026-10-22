@@ -5,6 +5,7 @@ import {
   updateApplicationFollowUpTaskInputSchema,
 } from "@xeniway/shared";
 import { type FormEvent, type RefObject, useEffect, useRef, useState } from "react";
+import { useDirtyEditor } from "../../../../lib/dirty-editors";
 import { useApplicationFollowUpMutations } from "../../../../lib/queries";
 import { runWorkspaceMutation } from "../shared/run-workspace-mutation";
 import { useReturnFocus } from "../shared/use-return-focus";
@@ -234,6 +235,13 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     setDeletionTarget(task);
   }
 
+  function discardEditor() {
+    pendingEditor.current = null;
+    setHasWarning(false);
+    setEditorTarget(null);
+    setErrors({});
+  }
+
   async function complete(taskId: number, focusTarget: HTMLElement | null) {
     const completed = await runWorkspaceMutation(
       () => mutations.complete.mutateAsync(taskId),
@@ -262,6 +270,15 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
     setDeletionTarget(null);
   }
 
+  const editorDirty = editorTarget ? isDirtyDraft(draft, editorTarget) : false;
+  useDirtyEditor({
+    id: `application-${applicationId}-follow-ups`,
+    dirty: editorDirty,
+    pending: editorTarget !== null && pending,
+    discard: discardEditor,
+    save: submitDraft,
+  });
+
   return {
     editor: {
       target: editorTarget,
@@ -281,7 +298,7 @@ export function useFollowUpsController(applicationId: number): FollowUpsControll
       },
       openNew,
       openExisting,
-      close: () => setEditorTarget(null),
+      close: discardEditor,
     },
     warning: {
       isOpen: hasWarning,

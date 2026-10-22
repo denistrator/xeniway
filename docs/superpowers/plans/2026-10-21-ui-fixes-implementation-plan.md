@@ -186,8 +186,8 @@ type DownloadCleanup =
 - [x] Preserve the draft on a presentation switch without a warning. For a dirty close/departure, use the D1 confirmation; cancel retains exact values and focus, explicit discard clears them.
 - [x] Check the installed router's supported navigation blocker. The prior `BrowserRouter` root could not support it; approval was obtained for the data-router migration. No history monkey-patch or best-effort Link-only guard was added.
 - [x] After approval, migrate route composition while preserving provider order, public/protected/guest routes, lazy imports, redirect intent and offline runtime lifetime. Update test routers to a real memory data router for blocker tests.
-- [ ] Register dirty workspace/create editors with the coordinator. Route cancellation blocks links, previous/next and Back/Forward. Pending writes cannot be canceled into another record by accident. Successful create/save clears the correct dirty state before its intended navigation.
-- [ ] Attach `beforeunload` only while unsaved work exists; let the browser supply its own message. Do not claim to preserve drafts after force-close, crash, or ignored unload prompts.
+- [x] Register dirty workspace/create editors with the coordinator. Route cancellation blocks links, previous/next and Back/Forward. Pending writes cannot be canceled into another record by accident. Successful create/save clears the correct dirty state before its intended navigation.
+- [x] Attach `beforeunload` only while unsaved work exists; let the browser supply its own message. Do not claim to preserve drafts after force-close, crash, or ignored unload prompts.
 - [ ] Add browser tests for clean navigation, dirty cancel, explicit discard, failed save, modal/drawer switch, Back/Forward and logout. Logout/security cleanup must never be blocked by a stale editor guard. Preserve per-application remount isolation.
 
 **Exit:** Work is preserved until an explicit decision, with supported navigation behavior rather than a fragile interception workaround.

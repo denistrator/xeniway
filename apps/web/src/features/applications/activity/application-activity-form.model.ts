@@ -58,9 +58,9 @@ function normalizeActivityDraft(draft: ActivityDraft) {
 
 export function useApplicationActivityForm(
   event: ApplicationEvent | undefined,
-  onSubmit: (input: ApplicationEventInput) => Promise<void>,
+  onSubmit: (input: ApplicationEventInput) => Promise<boolean>,
   onDirtyChange: (isDirty: boolean, focusedField: HTMLElement) => void,
-  onSaveRequest: (save: () => void) => void,
+  onSaveRequest: (save: () => Promise<boolean>) => void,
   editorKey: string | null = "mounted",
 ) {
   const { t } = useTranslation();
@@ -90,7 +90,7 @@ export function useApplicationActivityForm(
 
   const submit = useCallback(async () => {
     if (!canMutate || savingRef.current) {
-      return;
+      return false;
     }
     const input = normalizeActivityDraft({
       type,
@@ -100,22 +100,23 @@ export function useApplicationActivityForm(
     });
     if (!input) {
       setError("invalid");
-      return;
+      return false;
     }
     savingRef.current = true;
     setPending(true);
     setError(null);
     try {
-      await onSubmit(input);
+      return await onSubmit(input);
     } catch {
       setError("saveFailed");
+      return false;
     } finally {
       savingRef.current = false;
       setPending(false);
     }
   }, [canMutate, description, occurredAt, onSubmit, title, type]);
 
-  useEffect(() => onSaveRequest(() => void submit()), [onSaveRequest, submit]);
+  useEffect(() => onSaveRequest(submit), [onSaveRequest, submit]);
 
   function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();

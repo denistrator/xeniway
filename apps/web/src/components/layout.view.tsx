@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { CreateApplicationLoader } from "../features/applications/form/create-application-loader.view";
 import { WelcomeModal } from "../features/welcome/welcome-modal.view";
+import { DirtyEditorsProvider } from "../lib/dirty-editors";
+import { DirtyDeparture } from "./dirty-departure.view";
 import { useLayout, useWelcomeHost } from "./layout.model";
 import { layoutStyles } from "./layout.styles";
 import { LoadingScreen } from "./loading-screen.view";
@@ -13,17 +15,20 @@ const styles = layoutStyles();
 export function Layout() {
   const view = useLayout();
   return (
-    <div className={styles.root()}>
-      <SiteHeader onCreateDialogOpen={view.handleCreateDialogOpen} />
-      <main id="main-content" tabIndex={-1} className={styles.main()}>
-        <Suspense fallback={<LoadingScreen />}>
-          <Outlet />
-        </Suspense>
-      </main>
-      <CreateApplicationLoader openerRef={view.createOpenerRef} />
-      <WelcomeHost />
-      <SiteFooter />
-    </div>
+    <DirtyEditorsProvider>
+      <div className={styles.root()}>
+        <SiteHeader onCreateDialogOpen={view.handleCreateDialogOpen} />
+        <main id="main-content" tabIndex={-1} className={styles.main()}>
+          <Suspense fallback={<LoadingScreen />}>
+            <Outlet />
+          </Suspense>
+        </main>
+        <CreateApplicationLoader openerRef={view.createOpenerRef} />
+        <DirtyDeparture />
+        <WelcomeHost />
+        <SiteFooter />
+      </div>
+    </DirtyEditorsProvider>
   );
 }
 

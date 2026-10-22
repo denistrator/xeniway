@@ -93,6 +93,10 @@ describe("application workspace contracts", () => {
     expect(
       createApplicationContactInputSchema.safeParse({ name: "Ada", role: "Recruiter", email: "bad" }).success,
     ).toBe(false);
+    expect(
+      createApplicationContactInputSchema.safeParse({ name: "Ada", role: "Recruiter", profileUrl: "not a URL" })
+        .success,
+    ).toBe(false);
   });
 
   it("rejects unsafe contact links and server-owned contact fields", () => {

@@ -1,6 +1,7 @@
 import type { ApplicationEvent, ApplicationEventInput } from "@xeniway/shared";
 import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useDirtyEditor } from "../../../lib/dirty-editors";
 import { useApplicationEventMutations } from "../../../lib/queries";
 import { useCanMutate } from "../../offline/offline-access.model";
 import { applicationActivitySectionStyles } from "./application-activity-section.styles";
@@ -21,7 +22,7 @@ export function useApplicationActivitySection(applicationId: number, className?:
   const editingTrigger = useRef<HTMLElement | null>(null);
   const pendingEditor = useRef<ApplicationEvent | "new" | null>(null);
   const warningReturnFocus = useRef<HTMLElement | null>(null);
-  const saveRequest = useRef<() => void>(() => undefined);
+  const saveRequest = useRef<() => Promise<boolean>>(() => Promise.resolve(false));
 
   function beginAdd() {
     requestEditor("new", addButton.current);
@@ -84,6 +85,7 @@ export function useApplicationActivitySection(applicationId: number, className?:
       await mutations.create.mutateAsync(input);
     }
     finishEditor();
+    return true;
   }
 
   async function remove() {
@@ -105,6 +107,15 @@ export function useApplicationActivitySection(applicationId: number, className?:
       void remove();
     }
   }
+
+  const editorPending = mutations.create.isPending || mutations.update.isPending;
+  useDirtyEditor({
+    id: `application-${applicationId}-activity`,
+    dirty: editing !== null && hasUnsavedChanges,
+    pending: editing !== null && editorPending,
+    discard: closeForm,
+    save: () => saveRequest.current(),
+  });
 
   return {
     styles,
@@ -150,9 +161,9 @@ export function useApplicationActivitySection(applicationId: number, className?:
       setHasUnsavedChanges(isDirty);
     },
     requestSave() {
-      saveRequest.current();
+      return saveRequest.current();
     },
-    setSaveRequest(request: () => void) {
+    setSaveRequest(request: () => Promise<boolean>) {
       saveRequest.current = request;
     },
     cancelDelete,
