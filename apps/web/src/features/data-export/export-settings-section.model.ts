@@ -12,6 +12,7 @@ export function useExportSettingsSection() {
     headingId,
     title: t("settings.export.title"),
     description: t("settings.export.description"),
+    limitation: t("settings.export.limitation"),
     unavailableNotice: t("settings.export.unavailable"),
   };
 }

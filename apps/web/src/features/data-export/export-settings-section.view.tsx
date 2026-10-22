@@ -15,6 +15,7 @@ export function ExportSettingsSection() {
         {view.title}
       </h2>
       <p className={styles.description()}>{view.description}</p>
+      <p className={styles.limitation()}>{view.limitation}</p>
       {view.unavailable && (
         <p role="status" className={styles.unavailableNotice()}>
           {view.unavailableNotice}

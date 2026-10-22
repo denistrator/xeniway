@@ -380,10 +380,10 @@ type RestoreOutcome<T> =
 
 **Tests:** `features/data-export/csv-export-button.test.tsx`, current API CSV/ZIP tests, and `tests/e2e/export.spec.ts`.
 
-- [ ] Add a semantic assertion that the pre-download description explains that related CSV rows cannot reliably be matched to application rows with the current package alone.
-- [ ] Retain the existing field-exclusion and online-session explanations; do not bury the relationship limitation in an unrelated developer document.
-- [ ] Run existing allowlist, ZIP/CSV, spreadsheet-safety, private-field and owner-isolation checks unchanged. No association key, internal identifier, extra salary/activity field, or new export format is authorized by this task.
-- [ ] Keep the existing joinable-export backlog entry open for a separately approved API contract change.
+- [x] Add a semantic assertion that the pre-download description explains that related CSV rows cannot reliably be matched to application rows with the current package alone.
+- [x] Retain the existing field-exclusion and online-session explanations; do not bury the relationship limitation in an unrelated developer document.
+- [x] Run existing allowlist, ZIP/CSV, spreadsheet-safety, private-field and owner-isolation checks unchanged. No association key, internal identifier, extra salary/activity field, or new export format is authorized by this task.
+- [x] Keep the existing joinable-export backlog entry open for a separately approved API contract change.
 
 **Exit:** People can judge the package's current limits before downloading, without an unapproved output-contract change.
 

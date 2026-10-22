@@ -4,6 +4,7 @@ export const en = {
       title: "Export data",
       description:
         "Download a ZIP package containing your applications, preparation, contacts, and follow-ups. Activity history and salary are not included.",
+      limitation: "Contacts and follow-ups cannot be reliably matched to an application row from this package alone.",
       unavailable: "Connect and verify your session to export your data.",
     },
     theme: {
