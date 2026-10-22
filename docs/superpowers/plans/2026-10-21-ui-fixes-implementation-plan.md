@@ -191,11 +191,11 @@ type DownloadCleanup =
 
 **Interfaces:** Extend the existing create prop chain with `submitError?: string`. T02 supplies the shared modal's pending/error slots. Status receives its existing controller error state, not a new mutation. Board presentation receives an explicit operation outcome rather than trying to infer a write failure from the list query.
 
-- [ ] Intercept a failed create POST and assert its translated alert is within `getByRole("dialog")`; preserve values and verify retry. Observe failure before plumbing the error down the existing props.
-- [ ] Repeat for status selection, warning-save and lifecycle changes. Each failure must be in the active control/dialog, not only in an obscured underlying field. Catch event-handler rejections deliberately; do not only suppress them.
-- [ ] Add delayed/failed status and reorder tests. Show saved state plus actionable failure and announce success without verbose repeated card help. Do not optimistically claim success before server confirmation unless a defined rollback is implemented and tested.
-- [ ] Give list-read errors an appropriate alert and explicit retry. Keep cached content visible where it remains valid, and distinguish fetch failure from mutation failure.
-- [ ] Run create/layout, overview, lifecycle, board tests and focused browser flows. Check all four locale keys and no duplicate announcements.
+- [x] Intercept a failed create POST and assert its translated alert is within `getByRole("dialog")`; preserve values and verify retry. Observe failure before plumbing the error down the existing props.
+- [x] Repeat for status selection, warning-save and lifecycle changes. Each failure must be in the active control/dialog, not only in an obscured underlying field. Catch event-handler rejections deliberately; do not only suppress them.
+- [x] Add delayed/failed status and reorder tests. Show saved state plus actionable failure and announce success without verbose repeated card help. Do not optimistically claim success before server confirmation unless a defined rollback is implemented and tested.
+- [x] Give list-read errors an appropriate alert and explicit retry. Keep cached content visible where it remains valid, and distinguish fetch failure from mutation failure.
+- [x] Run create/layout, overview, lifecycle, board tests and focused browser flows. Check all four locale keys and no duplicate announcements.
 
 **Exit:** A primary action never appears ignored; pending, failure and successful recovery are understandable in context.
 

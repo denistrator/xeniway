@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider, type UseMutationResult } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { CreateApplicationInput } from "@xeniway/shared";
 import { StrictMode } from "react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
-import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
