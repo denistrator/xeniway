@@ -35,7 +35,7 @@ export function useLoginPage() {
     description: t("auth.login.description"),
     newHere: t("auth.login.newHere"),
     createAccount: t("auth.login.createAccount"),
-    registerLink: getAuthLink("/register", location),
+    registerLink: getAuthLink("/register", location, new URLSearchParams(location.search).get("returnTo")),
   };
 
   const pending = csrf.isPending || login.isPending;

@@ -149,7 +149,7 @@ export function useRegisterPage() {
     description: t("auth.register.description"),
     alreadyRegistered: t("auth.register.alreadyRegistered"),
     signIn: t("auth.login.submit"),
-    signInLink: getAuthLink("/login", location),
+    signInLink: getAuthLink("/login", location, new URLSearchParams(location.search).get("returnTo")),
   };
 
   const pending = csrf.isPending || register.isPending;

@@ -32,8 +32,13 @@ export function resolveAuthReturnTo(value: string | null) {
   return `${target.pathname}${target.search}${target.hash}`;
 }
 
-export function getAuthLink(pathname: "/login" | "/register", location: AuthLocation) {
-  const returnTo = resolveAuthReturnTo(`${location.pathname}${location.search}${location.hash}`);
+export function getAuthLink(
+  pathname: "/login" | "/register",
+  location: AuthLocation,
+  inheritedReturnTo?: string | null,
+) {
+  const currentLocation = `${location.pathname}${location.search}${location.hash}`;
+  const returnTo = resolveAuthReturnTo(inheritedReturnTo ?? currentLocation);
   if (returnTo === "/") {
     return pathname;
   }

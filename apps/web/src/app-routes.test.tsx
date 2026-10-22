@@ -22,6 +22,7 @@ vi.mock("./pages/about-page.view", () => ({
     return <h1>About loaded</h1>;
   },
 }));
+vi.mock("./features/auth/login/login-page.view", () => ({ LoginPage: () => <h1>Sign in</h1> }));
 vi.mock("./components/site-header.view", () => ({ SiteHeader: () => null }));
 vi.mock("./features/offline/offline-controls.view", () => ({ OfflineControls: () => null }));
 vi.mock("./features/preferences/user-preferences-sync.model", () => ({ useUserPreferencesSync: () => undefined }));
@@ -54,5 +55,24 @@ test("keeps the main focus target mounted while a lazy route loads", async () =>
   await screen.findByRole("heading", { name: "About loaded" });
   expect(view.container.querySelector("#main-content")).toBe(main);
   expect(main).toHaveFocus();
+  client.clear();
+});
+
+test("preserves an approved protected destination when redirecting to sign in", async () => {
+  await initializeTestI18n();
+  const client = new QueryClient();
+  const router = createMemoryRouter(createAppRoutes(), { initialEntries: ["/applications/42?tab=activity#event-3"] });
+
+  render(
+    <Provider store={store}>
+      <QueryClientProvider client={client}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </Provider>,
+  );
+
+  await screen.findByRole("heading", { name: "Sign in" });
+  expect(router.state.location.pathname).toBe("/login");
+  expect(router.state.location.search).toBe("?returnTo=%2Fapplications%2F42%3Ftab%3Dactivity%23event-3");
   client.clear();
 });

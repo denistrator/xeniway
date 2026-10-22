@@ -248,12 +248,12 @@ type DownloadCleanup =
 
 **Create support/test:** `apps/web/src/lib/auth-return-to.ts`, `auth-return-to.test.ts`; create route-guard tests if absent. Extend `password-reset-page.test.tsx`, `app-routes.test.tsx`, and browser recovery tests.
 
-- [ ] Test a protected workspace/archive/blacklist URL → login → original destination. Add return-destination validation before using query parameters. Preserve path/search/hash only for approved internal route forms; reject external origins, protocol-relative URLs and malformed values.
-- [ ] Preserve return intent in login/register links. Ordinary login still goes to the board. A remembered target never bypasses server ownership or auth checks.
-- [ ] Test `PASSWORD_RESET_INVALID` separately from network/server failure. Invalid/expired/used token presents the existing Request a new link route; temporary errors preserve retry. Do not alter the API's generic recovery-request contract.
-- [ ] On successful password reset, deliberately announce “Password updated” and move focus to its result without duplicate speech. Keep a clear sign-in link and no raw token in UI/logs.
-- [ ] Add localized route document titles and a page h1 for auth screens. Keep CardTitle's existing default h2 API; provide an explicit auth-page heading rather than changing every CardTitle globally.
-- [ ] Use one route-orientation owner. Avoid competing focus with the workspace's company heading, dialog opening or Back/Forward restoration. Language changes can update title without stealing editor focus.
+- [x] Test a protected workspace/archive/blacklist URL → login → original destination. Add return-destination validation before using query parameters. Preserve path/search/hash only for approved internal route forms; reject external origins, protocol-relative URLs and malformed values.
+- [x] Preserve return intent in login/register links. Ordinary login still goes to the board. A remembered target never bypasses server ownership or auth checks.
+- [x] Test `PASSWORD_RESET_INVALID` separately from network/server failure. Invalid/expired/used token presents the existing Request a new link route; temporary errors preserve retry. Do not alter the API's generic recovery-request contract.
+- [x] On successful password reset, deliberately announce “Password updated” and move focus to its result without duplicate speech. Keep a clear sign-in link and no raw token in UI/logs.
+- [x] Add localized route document titles and a page h1 for auth screens. Keep CardTitle's existing default h2 API; provide an explicit auth-page heading rather than changing every CardTitle globally.
+- [x] Use one route-orientation owner. Avoid competing focus with the workspace's company heading, dialog opening or Back/Forward restoration. Language changes can update title without stealing editor focus.
 - [ ] Run return-target unit tests, router/component tests and existing public recovery/session browser workflows.
 
 **Proposed pure helper contract:**
