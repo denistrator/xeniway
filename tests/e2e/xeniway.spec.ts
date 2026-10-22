@@ -742,6 +742,9 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await addJob.click();
   await expect(closeButton).toBeFocused();
   expect(formHostRequests).toHaveLength(1);
+  const jobDialog = page.getByRole("dialog");
+  await jobDialog.getByLabel("Company *").fill("Draft company");
+  await jobDialog.getByLabel("Position *").fill("Draft position");
   const switchToModal = page.getByRole("button", { name: "Switch to modal" });
   const presentationUpdate = page.waitForResponse(
     (response) =>
@@ -754,6 +757,8 @@ test("manages focus and escape behavior for the job form dialog", async ({ page 
   await expect(page.locator(".job-modal")).toBeVisible();
   await expect(page.getByRole("button", { name: "Switch to drawer" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Close dialog", exact: true })).toBeVisible();
+  await expect(jobDialog.getByLabel("Company *")).toHaveValue("Draft company");
+  await expect(jobDialog.getByLabel("Position *")).toHaveValue("Draft position");
   await expect(
     page.evaluate(() => JSON.parse(localStorage.getItem("userPreferences") ?? "{}").formPresentation),
   ).resolves.toBe("modal");
