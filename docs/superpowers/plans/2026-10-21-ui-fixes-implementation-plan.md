@@ -47,6 +47,8 @@ The recommendations below make the plan concrete; they are not existing product 
 - **T13:** blocked pending D5. A local-only preference state and retry behavior would change account-persistence semantics.
 - **T15:** blocked pending D6. Persisting the remote-logout limitation across reloads requires the approved non-private notice lifetime.
 - **T18:** blocked pending D7 and D8. Mobile navigation hierarchy and route-scoped search/status URL state are product behavior changes.
+- **T09:** its automated behavior checks are complete, but native password-manager, paste, autocomplete, and four-locale visual validation require an interactive user/browser session; they are not inferred from the browser suite.
+- **T19 V-01/V-02/V-05:** require deliberate visual or performance inspection with representative content, viewport/zoom, and hardware. The automated suite is not a substitute for those observations.
 - **T19 V-03/V-04:** require physical devices and assistive-technology environments that are not available to this autonomous checkout.
 
 ## Sequence and dependencies

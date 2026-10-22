@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** The approved automated remediation checkpoints are complete and verified by the full Chromium suites. UI-05, UI-11, UI-18–24, UI-26–27, UI-31, UI-33, and UI-34 remain pending their documented policy decisions; V-01–V-05 remain validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
+**Status:** The approved automated remediation checkpoints are complete and verified by the full Chromium suites. UI-05, UI-11, UI-18–24, UI-26–27, UI-31, UI-33, and UI-34 remain pending their documented policy decisions; T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
