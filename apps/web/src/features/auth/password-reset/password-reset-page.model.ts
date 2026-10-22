@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
+import { ApiRequestError } from "../../../lib/api";
 import { useCsrfToken, usePasswordResetMutations } from "../../../lib/queries";
 
 export function getResetToken(search: string): string | null {
@@ -37,12 +38,17 @@ export function usePasswordResetPage() {
       return;
     }
     setValidationError(null);
-    await confirm.mutateAsync({ token, password, passwordConfirmation });
-    setSubmitted(true);
+    try {
+      await confirm.mutateAsync({ token, password, passwordConfirmation });
+      setSubmitted(true);
+    } catch {
+      // The mutation error is rendered in the active password-reset form.
+    }
   }
 
-  const error = validationError ?? (confirm.error instanceof Error ? confirm.error : null);
-  const showState = !token || submitted;
+  const invalidToken = confirm.error instanceof ApiRequestError && confirm.error.code === "PASSWORD_RESET_INVALID";
+  const error = invalidToken ? null : (validationError ?? (confirm.error instanceof Error ? confirm.error : null));
+  const showState = !token || submitted || invalidToken;
 
   const labels = {
     title: t("auth.resetPassword.title"),

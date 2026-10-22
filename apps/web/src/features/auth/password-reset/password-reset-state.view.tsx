@@ -6,9 +6,14 @@ import { passwordResetStateStyles } from "./password-reset-state.styles";
 const styles = passwordResetStateStyles();
 
 export function PasswordResetState({ submitted }: PasswordResetStateProps) {
-  const { labels } = usePasswordResetState();
+  const { labels, descriptionRef } = usePasswordResetState(submitted);
   return submitted ? (
-    <AuthCard title={labels.successTitle} description={labels.successDescription}>
+    <AuthCard
+      title={labels.successTitle}
+      description={labels.successDescription}
+      descriptionRef={descriptionRef}
+      announceDescription
+    >
       <Link className={styles.signInLink()} to="/login">
         {labels.returnToSignIn}
       </Link>

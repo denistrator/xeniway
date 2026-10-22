@@ -1,8 +1,16 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 export type PasswordResetStateProps = { submitted: boolean };
 
-export function usePasswordResetState() {
+export function usePasswordResetState(submitted: boolean) {
   const { t } = useTranslation();
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (submitted) {
+      descriptionRef.current?.focus();
+    }
+  }, [submitted]);
 
   const labels = {
     successTitle: t("auth.resetPassword.successTitle"),
@@ -13,5 +21,5 @@ export function usePasswordResetState() {
     requestNewLink: t("auth.resetPassword.requestNewLink"),
   };
 
-  return { labels };
+  return { labels, descriptionRef };
 }

@@ -4,13 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 
 const styles = authCardStyles();
 
-export function AuthCard({ title, description, children }: AuthCardProps) {
+export function AuthCard({ title, description, children, descriptionRef, announceDescription = false }: AuthCardProps) {
   return (
     <div className={styles.root()}>
       <Card className={styles.card()}>
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle as="h1">{title}</CardTitle>
+          <CardDescription
+            ref={descriptionRef}
+            role={announceDescription ? "status" : undefined}
+            tabIndex={announceDescription ? -1 : undefined}
+          >
+            {description}
+          </CardDescription>
         </CardHeader>
         <CardContent>{children}</CardContent>
       </Card>
