@@ -300,3 +300,29 @@ test("keeps a failed compact save in the departure dialog", async ({ page }) => 
   await expect(page).toHaveURL(new RegExp(`/applications/${applicationId}$`));
   await expect(location).toHaveValue("Remote");
 });
+
+test("does not block logout when a workspace editor is dirty", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `logout-departure-${crypto.randomUUID()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company: "Logout departure", position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+  const applicationId = ((await created.json()) as ApplicationResponse).data.application.id;
+
+  await page.goto(`/applications/${applicationId}`);
+  await page.getByRole("button", { name: "Add activity", exact: true }).click();
+  await page.getByRole("textbox", { name: "Title", exact: true }).fill("Draft before logout");
+  await page.getByRole("button", { name: "Logout", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+});
