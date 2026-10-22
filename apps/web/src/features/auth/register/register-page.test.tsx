@@ -49,9 +49,13 @@ describe("register page", () => {
     submitRegistration();
 
     const password = screen.getByLabelText("Password");
+    const email = screen.getByLabelText("Email");
     expect(await screen.findByRole("alert")).toHaveTextContent("Use at least 8 characters.");
     expect(password).toHaveAttribute("aria-invalid", "true");
     expect(password.getAttribute("aria-describedby")).toContain("register-password-error");
+    expect(email).toBeRequired();
+    expect(email).toHaveAttribute("type", "email");
+    expect(password).toHaveAttribute("autocomplete", "new-password");
     expect(password).toHaveFocus();
     expect(register).not.toHaveBeenCalled();
   });

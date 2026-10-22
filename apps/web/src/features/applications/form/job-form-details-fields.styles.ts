@@ -8,5 +8,6 @@ export const jobFormDetailsFieldsStyles = tv({
     appliedDateInput: "peer",
     descriptionInput: "peer min-h-24",
     notesInput: "peer min-h-24",
+    fieldError: "mt-1 text-sm leading-6 text-rose-600 dark:text-rose-400",
   },
 });

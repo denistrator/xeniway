@@ -305,6 +305,9 @@ export const en = {
       saving: "Saving…",
       save: "Save application",
       checkDetails: "Check the application details",
+      required: "Enter a value.",
+      urlInvalid: "Enter a valid URL.",
+      tooLong: "Use {{max}} characters or fewer.",
     },
     editor: {
       add: "Add application",

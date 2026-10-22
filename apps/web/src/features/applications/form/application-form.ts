@@ -12,6 +12,8 @@ export type ApplicationFormState = {
   notes: string;
 };
 
+export type ApplicationFormErrors = Partial<Record<keyof ApplicationFormState, string>>;
+
 export const emptyApplicationForm: ApplicationFormState = {
   company: "",
   position: "",

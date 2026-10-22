@@ -1,14 +1,22 @@
 import type { ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { getStatusLabel, jobStatuses } from "../board/job-status";
-import type { ApplicationFormState as FormState } from "./application-form";
+import type { ApplicationFormErrors, ApplicationFormState as FormState } from "./application-form";
 
 export type JobFormDetailsFieldsProps = {
   form: FormState;
+  errors: ApplicationFormErrors;
   update: (field: keyof FormState, value: string) => void;
 };
 
-export function useJobFormDetailsFieldsPresentation({ update }: JobFormDetailsFieldsProps) {
+function getFieldError(field: keyof FormState, errors: ApplicationFormErrors) {
+  const error = errors[field];
+  const errorId = error ? `job-${field}-error` : undefined;
+
+  return { error, errorId };
+}
+
+export function useJobFormDetailsFieldsPresentation({ errors, update }: JobFormDetailsFieldsProps) {
   const { t } = useTranslation();
   const statusLabel = t("applications.form.status");
   const changeStatus = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -33,5 +41,11 @@ export function useJobFormDetailsFieldsPresentation({ update }: JobFormDetailsFi
     changeDescription,
     notesLabel,
     changeNotes,
+    errors: {
+      status: getFieldError("status", errors),
+      appliedAt: getFieldError("appliedAt", errors),
+      description: getFieldError("description", errors),
+      notes: getFieldError("notes", errors),
+    },
   };
 }

@@ -9,5 +9,6 @@ export const jobFormBasicFieldsStyles = tv({
     locationInput: "peer",
     salaryInput: "peer",
     urlInput: "peer",
+    fieldError: "mt-1 text-sm leading-6 text-rose-600 dark:text-rose-400",
   },
 });

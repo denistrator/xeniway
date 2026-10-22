@@ -1,13 +1,21 @@
 import type { ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
-import type { ApplicationFormState as FormState } from "./application-form";
+import type { ApplicationFormErrors, ApplicationFormState as FormState } from "./application-form";
 
 export type JobFormBasicFieldsProps = {
   form: FormState;
+  errors: ApplicationFormErrors;
   update: (field: keyof FormState, value: string) => void;
 };
 
-export function useJobFormBasicFieldsPresentation({ update }: JobFormBasicFieldsProps) {
+function getFieldError(field: keyof FormState, errors: ApplicationFormErrors) {
+  const error = errors[field];
+  const errorId = error ? `job-${field}-error` : undefined;
+
+  return { error, errorId };
+}
+
+export function useJobFormBasicFieldsPresentation({ errors, update }: JobFormBasicFieldsProps) {
   const { t } = useTranslation();
   const companyLabel = t("applications.form.company");
   const changeCompany = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -35,5 +43,12 @@ export function useJobFormBasicFieldsPresentation({ update }: JobFormBasicFields
     changeSalary,
     jobUrlLabel,
     changeJobUrl,
+    errors: {
+      company: getFieldError("company", errors),
+      position: getFieldError("position", errors),
+      location: getFieldError("location", errors),
+      salary: getFieldError("salary", errors),
+      jobUrl: getFieldError("jobUrl", errors),
+    },
   };
 }

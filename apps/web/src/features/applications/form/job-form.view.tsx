@@ -16,8 +16,8 @@ export function JobForm({ submitting, submitError, form: controller }: JobFormPr
       aria-describedby={error ? "application-form-error" : undefined}
       autoComplete="off"
     >
-      <JobFormBasicFields form={form.form} update={form.update} />
-      <JobFormDetailsFields form={form.form} update={form.update} />
+      <JobFormBasicFields form={form.form} errors={form.fieldErrors} update={form.update} />
+      <JobFormDetailsFields form={form.form} errors={form.fieldErrors} update={form.update} />
       {error && (
         <p
           ref={form.errorRef}

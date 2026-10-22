@@ -223,10 +223,10 @@ type DownloadCleanup =
 
 **Tests:** Create `apps/web/src/features/auth/register/register-page.test.tsx` and `apps/web/src/features/applications/form/job-form.test.tsx` if absent; retain existing form normalization tests.
 
-- [ ] Add cases for matching seven-character registration passwords, over-limit names/passwords, whitespace-only company/position and over-limit application values. Confirm schema-valid native-required/email/URL behavior still works.
-- [ ] Map actual schema issue paths to field-specific translated errors. Explain the existing password requirements before submit; never invent a rule absent from the shared schema.
-- [ ] Associate errors with their inputs and set `aria-invalid` only when appropriate. Focus the first invalid control or a summary whose links reach each correction. Preserve all entered values.
-- [ ] Clear obsolete errors on correction/new validation. Verify repeated invalid submission is discoverable even when the error string is unchanged; do not rely solely on an effect keyed by that string.
+- [x] Add cases for matching seven-character registration passwords, over-limit names/passwords, whitespace-only company/position and over-limit application values. Confirm schema-valid native-required/email/URL behavior still works.
+- [x] Map actual schema issue paths to field-specific translated errors. Explain the existing password requirements before submit; never invent a rule absent from the shared schema.
+- [x] Associate errors with their inputs and set `aria-invalid` only when appropriate. Focus the first invalid control or a summary whose links reach each correction. Preserve all entered values.
+- [x] Clear obsolete errors on correction/new validation. Verify repeated invalid submission is discoverable even when the error string is unchanged; do not rely solely on an effect keyed by that string.
 - [ ] Run field/component and shared-contract tests. Check labels, native autocomplete, paste, password-manager generation and all four languages manually where needed.
 
 **Exit:** Users can identify and correct the rejected input without guessing or losing the rest of the form.

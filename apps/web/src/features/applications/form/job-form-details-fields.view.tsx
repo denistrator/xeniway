@@ -6,7 +6,7 @@ import { jobFormDetailsFieldsStyles } from "./job-form-details-fields.styles";
 
 const styles = jobFormDetailsFieldsStyles();
 
-export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps) {
+export function JobFormDetailsFields({ form, errors, update }: JobFormDetailsFieldsProps) {
   const {
     statusLabel,
     changeStatus,
@@ -17,7 +17,8 @@ export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps
     changeDescription,
     notesLabel,
     changeNotes,
-  } = useJobFormDetailsFieldsPresentation({ form, update });
+    errors: fieldErrors,
+  } = useJobFormDetailsFieldsPresentation({ form, errors, update });
 
   return (
     <>
@@ -28,6 +29,8 @@ export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps
             className={styles.statusInput()}
             name="status"
             value={form.status}
+            aria-invalid={fieldErrors.status.error ? true : undefined}
+            aria-describedby={fieldErrors.status.errorId}
             onChange={changeStatus}
           >
             {statusOptions.map((option) => (
@@ -36,6 +39,11 @@ export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps
               </option>
             ))}
           </select>
+          {fieldErrors.status.error && (
+            <p id={fieldErrors.status.errorId} role="alert" className={styles.fieldError()}>
+              {fieldErrors.status.error}
+            </p>
+          )}
         </FloatingLabel>
         <FloatingLabel htmlFor="job-applied-at" label={appliedDateLabel} icon={CalendarDays}>
           <Input
@@ -45,8 +53,15 @@ export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps
             placeholder=" "
             type="date"
             value={form.appliedAt}
+            aria-invalid={fieldErrors.appliedAt.error ? true : undefined}
+            aria-describedby={fieldErrors.appliedAt.errorId}
             onChange={changeAppliedDate}
           />
+          {fieldErrors.appliedAt.error && (
+            <p id={fieldErrors.appliedAt.errorId} role="alert" className={styles.fieldError()}>
+              {fieldErrors.appliedAt.error}
+            </p>
+          )}
         </FloatingLabel>
       </div>
       <FloatingLabel htmlFor="job-description" label={descriptionLabel} icon={FileText}>
@@ -56,8 +71,15 @@ export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps
           name="description"
           placeholder=" "
           value={form.description}
+          aria-invalid={fieldErrors.description.error ? true : undefined}
+          aria-describedby={fieldErrors.description.errorId}
           onChange={changeDescription}
         />
+        {fieldErrors.description.error && (
+          <p id={fieldErrors.description.errorId} role="alert" className={styles.fieldError()}>
+            {fieldErrors.description.error}
+          </p>
+        )}
       </FloatingLabel>
       <FloatingLabel htmlFor="job-notes" label={notesLabel} icon={StickyNote}>
         <textarea
@@ -66,8 +88,15 @@ export function JobFormDetailsFields({ form, update }: JobFormDetailsFieldsProps
           name="notes"
           placeholder=" "
           value={form.notes}
+          aria-invalid={fieldErrors.notes.error ? true : undefined}
+          aria-describedby={fieldErrors.notes.errorId}
           onChange={changeNotes}
         />
+        {fieldErrors.notes.error && (
+          <p id={fieldErrors.notes.errorId} role="alert" className={styles.fieldError()}>
+            {fieldErrors.notes.error}
+          </p>
+        )}
       </FloatingLabel>
     </>
   );
