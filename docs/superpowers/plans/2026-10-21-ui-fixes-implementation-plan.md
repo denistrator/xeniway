@@ -284,7 +284,7 @@ export function resolveAuthReturnTo(value: string | null): string;
 - [x] Define left/right from document direction consistently with visual movement. Test English/Hebrew and preserve native link modifier/middle-click behavior. Do not change the separately approved all-applications previous/next strategy.
 - [x] Move “Position … of …” into translated interpolation keys. Put shared keyboard help in associated descriptive content and omit mutation help while read-only; keep a concise company/role/status link name.
 - [x] Retain the status filter as a nonmodal checkbox disclosure. Remove misleading dialog semantics, give the controlled group a stable accessible name, and define focus entry/Tab/Escape without trapping users inside a nonmodal popover.
-- [ ] Distinguish zero selected statuses from a no-match text search; offer Show all statuses and Clear search for their respective states. Keep labels and indeterminate Select all correct.
+- [x] Distinguish zero selected statuses from a no-match text search; offer Show all statuses and Clear search for their respective states. Keep labels and indeterminate Select all correct.
 - [ ] Run board/filter tests and browser keyboard navigation in both directions. No automated styling assertions.
 
 **Exit:** Keyboard behavior follows what is displayed; labels describe only possible actions; filters cannot leave users in an unexplained blank board.
