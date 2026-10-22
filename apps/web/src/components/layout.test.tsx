@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider, type UseMutationResult } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { CreateApplicationInput } from "@xeniway/shared";
 import { StrictMode } from "react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
@@ -84,38 +85,21 @@ test("does not mount the form host before the first authenticated open", async (
   expect(screen.getByRole("dialog")).toBeVisible();
 });
 
-test("keeps pending and failed creation state when the dialog closes and reopens", async () => {
-  let rejectCreation: (error: Error) => void = () => undefined;
-  mocks.create.mockImplementation(
-    () =>
-      new Promise((_resolve, reject) => {
-        rejectCreation = reject;
-      }),
-  );
+test("keeps a rejected create inside its dialog with the entered draft", async () => {
+  const user = userEvent.setup();
+  mocks.create.mockRejectedValue(new Error("Creation failed"));
   renderLayout();
   act(() => store.dispatch(openCreateDrawer()));
   await settleHost();
-  expect(screen.getByRole("dialog")).toBeVisible();
-  let creation: Promise<unknown> | undefined;
-  act(() => {
-    creation = mocks.createMutation?.mutateAsync({ company: "Example", position: "Engineer", status: "saved" });
-    void creation?.catch(() => undefined);
-  });
-  await waitFor(() => expect(screen.getByRole("button", { name: "Saving…" })).toBeDisabled());
-  fireEvent.click(screen.getByRole("button", { name: "Close" }));
-  expect(screen.queryByRole("dialog")).toBeNull();
+  const dialog = screen.getByRole("dialog");
+  await user.type(within(dialog).getByLabelText(/Company/), "Example");
+  await user.type(within(dialog).getByLabelText(/Position/), "Engineer");
+  await user.click(within(dialog).getByRole("button", { name: "Save application" }));
 
-  act(() => store.dispatch(openCreateDrawer()));
-  expect(await screen.findByRole("button", { name: "Saving…" })).toBeDisabled();
-  await act(async () => {
-    rejectCreation(new Error("Creation failed"));
-    await creation?.catch(() => undefined);
-  });
-  await screen.findByText("Something went wrong. Please try again.");
-  act(() => store.dispatch(closeDrawer()));
-  expect(screen.getByText("Something went wrong. Please try again.")).toBeVisible();
-  act(() => store.dispatch(openCreateDrawer()));
-  expect(screen.getByText("Something went wrong. Please try again.")).toBeVisible();
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  expect(within(dialog).getByLabelText(/Company/)).toHaveValue("Example");
+  expect(within(dialog).getByLabelText(/Position/)).toHaveValue("Engineer");
+  expect(within(dialog).getByRole("button", { name: "Save application" })).toBeEnabled();
 });
 
 test("resets retained host state on account changes and logout", async () => {
