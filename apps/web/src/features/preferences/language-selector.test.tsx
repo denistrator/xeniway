@@ -2,18 +2,23 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { beforeEach, expect, test, vi } from "vitest";
-import { changeLocale, i18n, initializeI18n } from "../../i18n/i18n";
+import { changeLocale, i18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { store } from "../../store";
+import { initializeTestI18n } from "../../test/initialize-test-i18n";
 import { LanguageSelector } from "./language-selector.view";
 
 vi.mock("../../lib/queries", () => ({ useCurrentUser: vi.fn(), useUpdateUserPreferences: vi.fn() }));
 
 beforeEach(async () => {
-  await initializeI18n();
+  await initializeTestI18n();
   vi.mocked(useCurrentUser).mockReturnValue({ data: null } as never);
-  vi.mocked(useUpdateUserPreferences).mockReturnValue({ mutate: vi.fn() } as never);
+  vi.mocked(useUpdateUserPreferences).mockReturnValue({
+    mutate: vi.fn(),
+    keepLocal: vi.fn(),
+    captureOwner: () => () => true,
+  } as never);
 });
 
 test("keeps the authenticated language control interactive before preferences load", async () => {
@@ -131,7 +136,7 @@ test("persists a language change for an authenticated user", async () => {
   const user = userEvent.setup();
   const mutate = vi.fn();
   vi.mocked(useCurrentUser).mockReturnValue({ data: { id: 1 } } as never);
-  vi.mocked(useUpdateUserPreferences).mockReturnValue({ mutate } as never);
+  vi.mocked(useUpdateUserPreferences).mockReturnValue({ mutate, captureOwner: () => () => true } as never);
   render(
     <Provider store={store}>
       <LanguageSelector />

@@ -40,7 +40,7 @@ export default defineConfig({
       injectManifest: {
         globPatterns: [
           "index.html",
-          "assets/**/*.{js,css,png,svg,ico,woff,woff2}",
+          "assets/**/*.{js,css,json,png,svg,ico,woff,woff2}",
           "favicon.{ico,png}",
           "pwa-{192,512,maskable-512}.png",
           "apple-touch-icon.png",

@@ -1,3 +1,4 @@
+import { PreferenceFeedback } from "../../preferences/preference-feedback.view";
 import { JobForm } from "./job-form.view";
 import type { JobFormContentProps } from "./job-form-content.model";
 import { JobFormHeader } from "./job-form-header.view";
@@ -13,6 +14,7 @@ export function JobFormContent({
   return (
     <>
       <JobFormHeader presentation={presentation} onClose={onClose} onSwitchPresentation={onSwitchPresentation} />
+      <PreferenceFeedback kind="presentation" />
       <JobForm submitting={submitting} submitError={submitError} form={form} />
     </>
   );

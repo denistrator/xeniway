@@ -1,6 +1,7 @@
 import { LogOut, Plus, Settings, WifiOff } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { LanguageSelector } from "../features/preferences/language-selector.view";
+import { PreferenceFeedback } from "../features/preferences/preference-feedback.view";
 import { ThemeSelector } from "../features/preferences/theme-selector.view";
 import { type SiteHeaderProps, useSiteHeader } from "./site-header.model";
 import { siteHeaderStyles } from "./site-header.styles";
@@ -55,23 +56,35 @@ export function SiteHeader(props: SiteHeaderProps) {
                 <Link to="/login">{view.loginLabel}</Link>
               </Button>
             )}
-            {view.readAccountId && (
-              <Link
-                to="/settings"
-                aria-label={view.settingsLabel}
-                title={view.settingsLabel}
-                className={styles.settingsLink()}
-              >
-                <Settings aria-hidden="true" size={17} strokeWidth={2} />
-                {view.access.isDisconnected && (
-                  <span className={styles.settingsNotice()}>
-                    <WifiOff aria-hidden="true" size={11} strokeWidth={2} />
-                  </span>
-                )}
-              </Link>
-            )}
-            <ThemeSelector />
-            <LanguageSelector />
+            <fieldset
+              ref={view.preferenceControlsRef}
+              aria-label={view.preferenceControlsLabel}
+              tabIndex={-1}
+              className={styles.preferences()}
+            >
+              {view.readAccountId && (
+                <Link
+                  to="/settings"
+                  aria-label={view.settingsLabel}
+                  title={view.settingsLabel}
+                  className={styles.settingsLink()}
+                >
+                  <Settings aria-hidden="true" size={17} strokeWidth={2} />
+                  {view.access.isDisconnected && (
+                    <span className={styles.settingsNotice()}>
+                      <WifiOff aria-hidden="true" size={11} strokeWidth={2} />
+                    </span>
+                  )}
+                </Link>
+              )}
+              <ThemeSelector showFeedback={false} />
+              <LanguageSelector showFeedback={false} />
+              <PreferenceFeedback
+                compact
+                active={view.showPreferenceFeedback}
+                returnFocusRef={view.preferenceControlsRef}
+              />
+            </fieldset>
           </div>
         </div>
       </div>

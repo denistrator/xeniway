@@ -1,13 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { UserPreferences } from "@xeniway/shared";
-import type { ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { Provider } from "react-redux";
 import { beforeEach, expect, test, vi } from "vitest";
-import { i18n, initializeI18n } from "../../i18n/i18n";
+import { i18n } from "../../i18n/i18n";
 import { useCurrentUser, useUpdateUserPreferences, useUserPreferences } from "../../lib/queries";
 import { readLocalUserPreferences } from "../../lib/user-preferences";
 import { setTheme, store } from "../../store";
+import { initializeTestI18n } from "../../test/initialize-test-i18n";
+import { useThemePreference } from "./theme-selector.model";
 import { useUserPreferencesSync } from "./user-preferences-sync.model";
 
 vi.mock("../../lib/queries", () => ({
@@ -40,7 +42,7 @@ function renderSync() {
 }
 
 beforeEach(async () => {
-  await initializeI18n();
+  await initializeTestI18n();
   vi.mocked(useCurrentUser).mockReturnValue({ data: currentUser, isPending: false } as ReturnType<
     typeof useCurrentUser
   >);
@@ -100,4 +102,84 @@ test("does not reuse a previous account's welcome cache during an account transi
   renderSync();
 
   await waitFor(() => expect(readLocalUserPreferences().wasIntroduced).toBe(false));
+});
+
+test("a delayed account read cannot overwrite a choice made while preferences were loading", async () => {
+  vi.mocked(useUserPreferences).mockReturnValue({ data: undefined, isPending: true } as never);
+  const client = new QueryClient();
+  function wrapper({ children }: { children: ReactNode }) {
+    return (
+      <Provider store={store}>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </Provider>
+    );
+  }
+  const { result, rerender } = renderHook(
+    () => {
+      useUserPreferencesSync();
+      return useThemePreference();
+    },
+    { wrapper },
+  );
+  act(() => result.current.changeTheme("dark"));
+  vi.mocked(useUserPreferences).mockReturnValue({
+    data: preferences({ selectedTheme: "light", wasIntroduced: true }),
+    isPending: false,
+  } as never);
+  rerender();
+  await waitFor(() => expect(readLocalUserPreferences().wasIntroduced).toBe(true));
+  expect(store.getState().ui.theme).toBe("dark");
+  expect(readLocalUserPreferences().theme).toBe("dark");
+  client.clear();
+});
+
+test("StrictMode still applies the account language after the first effect is cancelled", async () => {
+  vi.mocked(useUserPreferences).mockReturnValue({
+    data: preferences({ selectedLanguage: "he", selectedTheme: "light" }),
+    isPending: false,
+  } as never);
+  const client = new QueryClient();
+  function wrapper({ children }: { children: ReactNode }) {
+    return (
+      <StrictMode>
+        <Provider store={store}>
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        </Provider>
+      </StrictMode>
+    );
+  }
+  renderHook(useUserPreferencesSync, { wrapper });
+  await waitFor(() => expect(i18n.resolvedLanguage).toBe("he"));
+  expect(document.documentElement.dir).toBe("rtl");
+  client.clear();
+});
+
+test("a fresh account session wins again even when returning to the same owner before React renders", async () => {
+  const client = new QueryClient();
+  client.setQueryData(["auth", "me"], { data: { user: currentUser } });
+  vi.mocked(useUserPreferences).mockReturnValue({
+    data: preferences({ selectedTheme: "light" }),
+    isPending: false,
+  } as never);
+  function wrapper({ children }: { children: ReactNode }) {
+    return (
+      <Provider store={store}>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </Provider>
+    );
+  }
+  const { result } = renderHook(
+    () => {
+      useUserPreferencesSync();
+      return useThemePreference();
+    },
+    { wrapper },
+  );
+  act(() => result.current.changeTheme("dark"));
+  await act(async () => {
+    client.setQueryData(["auth", "me"], { data: { user: { id: 2 } } });
+    client.setQueryData(["auth", "me"], { data: { user: currentUser } });
+  });
+  expect(store.getState().ui.theme).toBe("light");
+  client.clear();
 });

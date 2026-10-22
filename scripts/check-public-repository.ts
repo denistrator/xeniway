@@ -25,8 +25,46 @@ const contentRules: ContentRule[] = [
   { name: "stripe-live-secret", pattern: /\bsk_live_[0-9A-Za-z]{16,255}\b/ },
 ];
 
-const credentialAssignmentPattern =
-  /^\s*(?:export\s+)?["']?(?:(?:[A-Za-z][A-Za-z0-9_-]*)?(?:password|passwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key)|database[_-]?url|redis[_-]?url|smtp[_-]?url)["']?\s*[:=]\s*(.+?)\s*[,;]?\s*$/i;
+const credentialKeyPattern =
+  /^(?:(?:[A-Za-z][A-Za-z0-9_-]*)?(?:password|passwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key)|database[_-]?url|redis[_-]?url|smtp[_-]?url)$/i;
+
+const credentialAssignmentPattern = new RegExp(
+  `^\\s*(?:export\\s+)?["']?(${credentialKeyPattern.source.slice(1, -1)})["']?\\s*[:=]\\s*(.+?)\\s*[,;]?\\s*$`,
+  "i",
+);
+
+const reviewedLocaleLabels = new Map<string, ReadonlyMap<string, string>>([
+  [
+    "apps/web/src/i18n/locales/ru.json",
+    new Map([
+      ["auth.fields.password", "Пароль"],
+      ["auth.fields.newPassword", "Новый пароль"],
+      ["auth.fields.confirmPassword", "Подтвердите пароль"],
+      ["auth.login.forgotPassword", "Забыли пароль?"],
+      ["auth.forgotPassword.rememberedPassword", "Вспомнили пароль?"],
+    ]),
+  ],
+  [
+    "apps/web/src/i18n/locales/uk.json",
+    new Map([
+      ["auth.fields.password", "Пароль"],
+      ["auth.fields.newPassword", "Новий пароль"],
+      ["auth.fields.confirmPassword", "Підтвердьте пароль"],
+      ["auth.login.forgotPassword", "Забули пароль?"],
+      ["auth.forgotPassword.rememberedPassword", "Згадали пароль?"],
+    ]),
+  ],
+  [
+    "apps/web/src/i18n/locales/he.json",
+    new Map([
+      ["auth.fields.password", "סיסמה"],
+      ["auth.fields.newPassword", "סיסמה חדשה"],
+      ["auth.fields.confirmPassword", "אישור סיסמה"],
+      ["auth.login.forgotPassword", "שכחתם את הסיסמה?"],
+      ["auth.forgotPassword.rememberedPassword", "נזכרתם בסיסמה?"],
+    ]),
+  ],
+]);
 
 function hasPathComponent(path: string, names: readonly string[]): boolean {
   const components = path.split("/");
@@ -155,14 +193,51 @@ function isPlaceholderCredential(rawValue: string): boolean {
   }
 }
 
+function isReviewedLocaleLabel(path: string, keyPath: readonly string[], value: string): boolean {
+  const labels = reviewedLocaleLabels.get(path);
+  if (!labels) {
+    return false;
+  }
+
+  return labels.get(keyPath.join(".")) === value;
+}
+
+function containsJsonCredential(path: string, value: unknown, keyPath: readonly string[] = []): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => containsJsonCredential(path, item, keyPath));
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  return Object.entries(value).some(([key, child]) => {
+    const childPath = [...keyPath, key];
+    if (typeof child === "string" && credentialKeyPattern.test(key)) {
+      const isReviewedLabel = isReviewedLocaleLabel(path, childPath, child);
+      return !isReviewedLabel && !isPlaceholderCredential(child);
+    }
+
+    return containsJsonCredential(path, child, childPath);
+  });
+}
+
 function containsNonPlaceholderCredential(path: string, content: string): boolean {
   if (!isCredentialBearingText(path)) {
     return false;
   }
 
+  if (path.endsWith(".json")) {
+    try {
+      return containsJsonCredential(path, JSON.parse(content));
+    } catch {
+      // Keep the line-based fallback for malformed configuration JSON.
+    }
+  }
+
   return content.split(/\r?\n/).some((line) => {
     const match = credentialAssignmentPattern.exec(line);
-    return match?.[1] !== undefined && !isPlaceholderCredential(match[1]);
+    return match?.[2] !== undefined && !isPlaceholderCredential(match[2]);
   });
 }
 

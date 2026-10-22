@@ -24,7 +24,11 @@ beforeEach(async () => {
   store.dispatch(setTheme("system"));
   mutate.mockClear();
   vi.mocked(useCurrentUser).mockReturnValue({ data: { id: 1 } } as never);
-  vi.mocked(useUpdateUserPreferences).mockReturnValue({ mutate } as never);
+  vi.mocked(useUpdateUserPreferences).mockReturnValue({
+    mutate,
+    keepLocal: vi.fn(),
+    captureOwner: () => () => true,
+  } as never);
   vi.mocked(useCanMutate).mockReturnValue(true);
 });
 

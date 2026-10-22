@@ -2,22 +2,24 @@ import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { changeLocale } from "../../i18n/i18n";
 import { useCurrentUser, useUserPreferences } from "../../lib/queries";
-import { readLocalUserPreferences, writeLocalUserPreferences } from "../../lib/user-preferences";
+import { writeLocalUserPreferences } from "../../lib/user-preferences";
 import { setJobFormPresentation, setTheme } from "../../store";
-
-function resolvePreference<T>(current: T, initial: T, server: T | null): T {
-  if (current !== initial) {
-    return current;
-  }
-  return server ?? current;
-}
+import { preferenceFeedbackStore } from "./preference-feedback-state";
+import { usePreferenceSaveState } from "./preference-save-state";
 
 export function useUserPreferencesSync() {
   const dispatch = useDispatch();
   const user = useCurrentUser();
   const userId = user.data?.id ?? null;
   const preferences = useUserPreferences(userId);
-  const appliedPreferenceKey = useRef<string | null>(null);
+  const { runtime } = usePreferenceSaveState();
+  const ownerEpoch = runtime.getOwnerEpoch();
+  const baseline = useRef({ userId, ownerEpoch, choices: preferenceFeedbackStore.getState().choices });
+  const ownerChanged = baseline.current.userId !== userId || baseline.current.ownerEpoch !== ownerEpoch;
+  if (ownerChanged) {
+    baseline.current = { userId, ownerEpoch, choices: preferenceFeedbackStore.getState().choices };
+  }
+  const hydration = baseline.current;
 
   useEffect(() => {
     if (!userId || !preferences.data) {
@@ -25,58 +27,49 @@ export function useUserPreferencesSync() {
     }
 
     const serverPreferences = preferences.data;
-    const preferenceKey = JSON.stringify([userId, serverPreferences]);
-    if (appliedPreferenceKey.current === preferenceKey) {
-      return;
-    }
-    appliedPreferenceKey.current = preferenceKey;
-
     let cancelled = false;
-    const localPreferences = readLocalUserPreferences();
-    if (serverPreferences.selectedTheme) {
-      dispatch(setTheme(serverPreferences.selectedTheme));
+    const sameOwner = runtime.captureOwner();
+    const initialChoices = hydration.choices;
+    const currentChoices = preferenceFeedbackStore.getState().choices;
+    const themeUnchanged = initialChoices.theme === currentChoices.theme;
+    const formUnchanged = initialChoices.formPresentation === currentChoices.formPresentation;
+    const languageUnchanged = initialChoices.language === currentChoices.language;
+    const selectedTheme = themeUnchanged ? serverPreferences.selectedTheme : null;
+    const selectedForm = formUnchanged ? serverPreferences.selectedFormPresentation : null;
+    if (selectedTheme) {
+      dispatch(setTheme(selectedTheme));
     }
-    if (serverPreferences.selectedFormPresentation) {
-      dispatch(setJobFormPresentation(serverPreferences.selectedFormPresentation));
+    if (selectedForm) {
+      dispatch(setJobFormPresentation(selectedForm));
     }
+    writeLocalUserPreferences({
+      ...(selectedTheme ? { theme: selectedTheme } : {}),
+      ...(selectedForm ? { formPresentation: selectedForm } : {}),
+      wasIntroduced: serverPreferences.wasIntroduced,
+    });
 
     async function applyServerLanguage() {
-      if (serverPreferences.selectedLanguage) {
-        try {
-          await changeLocale(serverPreferences.selectedLanguage);
-        } catch {
-          return;
-        }
-      }
-      if (cancelled) {
+      const locale = serverPreferences.selectedLanguage;
+      if (!locale || !languageUnchanged) {
         return;
       }
-      const currentPreferences = readLocalUserPreferences();
-      writeLocalUserPreferences({
-        language: resolvePreference(
-          currentPreferences.language,
-          localPreferences.language,
-          serverPreferences.selectedLanguage,
-        ),
-        theme: resolvePreference(currentPreferences.theme, localPreferences.theme, serverPreferences.selectedTheme),
-        formPresentation: resolvePreference(
-          currentPreferences.formPresentation,
-          localPreferences.formPresentation,
-          serverPreferences.selectedFormPresentation,
-        ),
-        wasIntroduced: serverPreferences.wasIntroduced,
-      });
+      const shouldApply = () => {
+        const languageUnchanged = preferenceFeedbackStore.getState().choices.language === initialChoices.language;
+        return !cancelled && sameOwner() && languageUnchanged;
+      };
+      try {
+        const applied = await changeLocale(locale, { source: "account", shouldApply });
+        if (applied && shouldApply()) {
+          writeLocalUserPreferences({ language: locale });
+        }
+      } catch {
+        // Resource feedback is shared with selectors. Other preferences are already applied.
+      }
     }
 
     void applyServerLanguage();
     return () => {
       cancelled = true;
     };
-  }, [dispatch, preferences.data, userId]);
-
-  useEffect(() => {
-    if (!userId) {
-      appliedPreferenceKey.current = null;
-    }
-  }, [userId]);
+  }, [dispatch, hydration, preferences.data, runtime, userId]);
 }

@@ -68,6 +68,8 @@ export function useJobManagerPresentation({
     writeLocalUserPreferences({ formPresentation: nextPresentation });
     if (user.data && canMutate) {
       updatePreferences.mutate({ selectedFormPresentation: nextPresentation });
+    } else {
+      updatePreferences.keepLocal({ selectedFormPresentation: nextPresentation });
     }
   };
   const props = {

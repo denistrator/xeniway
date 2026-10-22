@@ -1,5 +1,17 @@
 export const en = {
   settings: {
+    preferences: {
+      accountSaving: "Applied on this device. Saving to your account…",
+      accountSaved: "Saved to your account.",
+      accountLocalOnly: "Applied on this device. Not saved to your account.",
+      accountFailed: "Applied on this device. Could not save to your account.",
+      retryAccount: "Retry account save",
+      storageFailed: "Applied for this visit. Could not save on this device.",
+      retryStorage: "Retry device save",
+      dictionaryFailed: "Could not load the selected language. Your current language is still in use.",
+      retryDictionary: "Retry language download",
+      dismiss: "Dismiss preference notice",
+    },
     export: {
       title: "Export data",
       description:

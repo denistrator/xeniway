@@ -20,11 +20,12 @@ import type {
   UpdateApplicationPreparationInput,
   UpdateUserPreferencesInput,
 } from "@xeniway/shared";
-import { useCallback, useEffect, useRef } from "react";
+import { useContext } from "react";
 import { useDispatch } from "react-redux";
-import { useOfflineAccess, useReadAccountId } from "../features/offline/offline-access.model";
+import { OfflineContext, useOfflineAccess, useReadAccountId } from "../features/offline/offline-access.model";
 import { OFFLINE_RETENTION_MS } from "../features/offline/offline-types";
 import { useOwnerMutation } from "../features/offline/use-owner-mutation";
+import { usePreferenceSaveState } from "../features/preferences/preference-save-state";
 import { closeWelcome, openWelcome } from "../store";
 import {
   type ApplicationList,
@@ -177,35 +178,44 @@ export function useUserPreferences(userId: number | null) {
 }
 
 export function useUpdateUserPreferences() {
-  const user = useCurrentUser();
-  const userId = user.data?.id;
+  const access = useContext(OfflineContext);
   const csrfToken = useCsrfToken().data ?? "";
-  const controllerRef = useRef<AbortController | null>(null);
+  const { runtime, state } = usePreferenceSaveState();
+  type Request = NonNullable<ReturnType<typeof runtime.begin>>;
   const mutation = useMutation({
     networkMode: "always",
     retry: false,
-    mutationFn: ({ input, signal }: { input: UpdateUserPreferencesInput; signal: AbortSignal }) =>
-      updateUserPreferences(input, csrfToken, signal),
+    mutationFn: ({ input, signal }: Request) => updateUserPreferences(input, csrfToken, signal),
+    onSuccess: (_response, request) => runtime.finish(request, "saved"),
+    onError: (_error, request) => runtime.finish(request, "failed"),
   });
 
-  useEffect(() => {
-    if (userId !== undefined) {
-      controllerRef.current?.abort();
+  function mutate(input: UpdateUserPreferencesInput) {
+    const request = runtime.begin(input, access?.canMutate ?? navigator.onLine);
+    if (!request) {
+      return;
     }
-    return () => controllerRef.current?.abort();
-  }, [userId]);
+    mutation.mutate(request);
+  }
 
-  const mutate = useCallback(
-    (input: UpdateUserPreferencesInput) => {
-      controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
-      mutation.mutate({ input, signal: controller.signal });
-    },
-    [mutation.mutate],
-  );
+  function retry() {
+    const outstanding = runtime.store.getState().outstanding;
+    if (Object.keys(outstanding).length > 0) {
+      mutate(outstanding);
+    }
+  }
 
-  return { ...mutation, mutate };
+  return {
+    ...mutation,
+    mutate,
+    retry,
+    keepLocal: (input: UpdateUserPreferencesInput) => runtime.begin(input, false),
+    canRetry: state.ownerId !== null,
+    saveStatus: state.status,
+    saveSnapshot: state,
+    fields: state.fields,
+    captureOwner: runtime.captureOwner,
+  };
 }
 
 export function useCompleteIntroduction() {

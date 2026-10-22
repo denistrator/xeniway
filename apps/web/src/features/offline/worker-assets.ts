@@ -22,7 +22,7 @@ function publicAsset(url: URL): boolean {
   const isPublicDocument = url.pathname === "/index.html" || url.pathname === "/manifest.webmanifest";
   const isInstallIcon = /^\/(pwa-(192|512|maskable-512)|apple-touch-icon)\.png$/.test(url.pathname);
   const isFavicon = /^\/favicon\.(ico|png)$/.test(url.pathname);
-  const isGeneratedAsset = /^\/assets\/[\w.-]+\.(js|css|png|svg|ico|woff2?)$/.test(url.pathname);
+  const isGeneratedAsset = /^\/assets\/[\w.-]+\.(js|css|json|png|svg|ico|woff2?)$/.test(url.pathname);
   return isPublicDocument || isInstallIcon || isFavicon || isGeneratedAsset;
 }
 function navigation(request: Request): boolean {
@@ -39,6 +39,9 @@ function validContent(url: string, response: Response): boolean {
   }
   if (url.endsWith(".webmanifest")) {
     return ["application/manifest+json", "application/json"].includes(type ?? "");
+  }
+  if (url.endsWith(".json")) {
+    return type === "application/json";
   }
   if (url.endsWith(".js")) {
     return ["application/javascript", "text/javascript"].includes(type ?? "");

@@ -6,6 +6,7 @@ import {
   type ThemePreference,
   themePreferenceSchema,
 } from "@xeniway/shared";
+import { localWriteFinished, preferenceFeedbackStore } from "../features/preferences/preference-feedback-state";
 
 export const userPreferencesStorageKey = "userPreferences";
 
@@ -91,15 +92,16 @@ function persistPreferences(storage: Storage, preferences: LocalUserPreferences)
 export function readLocalUserPreferences(): LocalUserPreferences {
   const defaults = getDefaults();
   const storage = getStorage();
-  return storage ? readStoredPreferences(storage, defaults) : defaults;
+  const stored = storage ? readStoredPreferences(storage, defaults) : defaults;
+  return parsePreferences({ ...stored, ...preferenceFeedbackStore.getState().unsavedLocal }, defaults);
 }
 
 export function writeLocalUserPreferences(partial: LocalUserPreferencesUpdate): LocalUserPreferences {
   const current = readLocalUserPreferences();
   const next = parsePreferences({ ...current, ...partial }, current);
   const storage = getStorage();
-  if (storage) {
-    persistPreferences(storage, next);
-  }
+  const persisted = storage ? persistPreferences(storage, next) : false;
+  const unsaved = { ...preferenceFeedbackStore.getState().unsavedLocal, ...partial };
+  preferenceFeedbackStore.dispatch(localWriteFinished(persisted ? null : unsaved));
   return next;
 }

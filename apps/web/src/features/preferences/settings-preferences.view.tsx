@@ -1,3 +1,4 @@
+import { PreferenceFeedback } from "./preference-feedback.view";
 import { PreferenceSection } from "./preference-section.view";
 import { useSettingsPreferences } from "./settings-preferences.model";
 
@@ -7,6 +8,7 @@ export function SettingsPreferences() {
     <>
       <PreferenceSection {...view.theme} name="theme" dir={view.dir} />
       <PreferenceSection {...view.language} name="language" dir={view.dir} />
+      <PreferenceFeedback />
     </>
   );
 }

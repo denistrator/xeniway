@@ -223,6 +223,91 @@ test("starts rapid preference updates independently", async () => {
   expect(queryClient.getQueryData(userPreferencesKeys.current(accountA.id))).toEqual(response("light"));
 });
 
+test("retains only outstanding explicit fields across observers and retries their latest values", async () => {
+  updateUserPreferences.mockRejectedValue(new Error("offline"));
+  const { wrapper } = setup();
+  const first = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  const second = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  act(() => first.result.current.mutate({ selectedTheme: "dark" }));
+  await waitFor(() => expect(first.result.current.saveStatus).toBe("failed"));
+  act(() => second.result.current.mutate({ selectedLanguage: "uk" }));
+  await waitFor(() => expect(second.result.current.saveStatus).toBe("failed"));
+  act(() => first.result.current.mutate({ selectedTheme: "light" }));
+  await waitFor(() => expect(first.result.current.saveStatus).toBe("failed"));
+  updateUserPreferences.mockResolvedValue(response("light"));
+  act(() => second.result.current.retry());
+  await waitFor(() => expect(second.result.current.saveStatus).toBe("saved"));
+  expect(updateUserPreferences.mock.calls.at(-1)?.[0]).toEqual({ selectedTheme: "light", selectedLanguage: "uk" });
+  expect(first.result.current.saveStatus).toBe("saved");
+});
+
+test("a superseded failure from another observer cannot replace a newer success", async () => {
+  let rejectFirst!: (error: Error) => void;
+  updateUserPreferences.mockReturnValueOnce(
+    new Promise((_resolve, reject) => {
+      rejectFirst = reject;
+    }),
+  );
+  const { wrapper } = setup();
+  const first = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  const second = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  act(() => first.result.current.mutate({ selectedTheme: "dark" }));
+  await waitFor(() => expect(updateUserPreferences).toHaveBeenCalledOnce());
+  const signal = updateUserPreferences.mock.calls[0][2] as AbortSignal;
+  updateUserPreferences.mockResolvedValue(response("light"));
+  act(() => second.result.current.mutate({ selectedTheme: "light" }));
+  await waitFor(() => expect(second.result.current.saveStatus).toBe("saved"));
+  expect(signal.aborted).toBe(true);
+  await act(async () => rejectFirst(new Error("late secret")));
+  expect(first.result.current.saveStatus).toBe("saved");
+});
+
+test("a preference retry is discarded even when leaving and returning to the same account between renders", async () => {
+  updateUserPreferences.mockRejectedValue(new Error("failed"));
+  const { queryClient, wrapper } = setup();
+  const { result } = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  act(() => result.current.mutate({ selectedTheme: "dark" }));
+  await waitFor(() => expect(result.current.saveStatus).toBe("failed"));
+  await act(async () => {
+    queryClient.setQueryData(authKeys.me, { data: { user: accountB } });
+    queryClient.setQueryData(authKeys.me, { data: { user: accountA } });
+  });
+  act(() => result.current.retry());
+  expect(updateUserPreferences).toHaveBeenCalledOnce();
+  expect(result.current.saveStatus).toBe("idle");
+});
+
+test("an account transition discards a cached retry while preference controls are unmounted", async () => {
+  updateUserPreferences.mockRejectedValue(new Error("failed"));
+  const { queryClient, wrapper } = setup();
+  const first = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  act(() => first.result.current.mutate({ selectedTheme: "dark" }));
+  await waitFor(() => expect(first.result.current.saveStatus).toBe("failed"));
+  first.unmount();
+  queryClient.setQueryData(authKeys.me, { data: { user: accountB } });
+  queryClient.setQueryData(authKeys.me, { data: { user: accountA } });
+  const second = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  act(() => second.result.current.retry());
+  expect(updateUserPreferences).toHaveBeenCalledOnce();
+  expect(second.result.current.saveStatus).toBe("idle");
+});
+
+test("saving another field does not replay a failure and Retry excludes fields already saved", async () => {
+  updateUserPreferences.mockRejectedValueOnce(new Error("theme failed"));
+  const { wrapper } = setup();
+  const { result } = renderHook(() => useUpdateUserPreferences(), { wrapper });
+  act(() => result.current.mutate({ selectedTheme: "dark" }));
+  await waitFor(() => expect(result.current.saveStatus).toBe("failed"));
+  updateUserPreferences.mockResolvedValue(response("dark"));
+  act(() => result.current.mutate({ selectedLanguage: "uk" }));
+  await waitFor(() => expect(updateUserPreferences).toHaveBeenCalledTimes(2));
+  expect(updateUserPreferences.mock.calls[1][0]).toEqual({ selectedLanguage: "uk" });
+  await waitFor(() => expect(result.current.saveStatus).toBe("local-only"));
+  act(() => result.current.retry());
+  await waitFor(() => expect(result.current.saveStatus).toBe("saved"));
+  expect(updateUserPreferences.mock.calls[2][0]).toEqual({ selectedTheme: "dark" });
+});
+
 test("aborts an in-flight preference update when the account changes", async () => {
   updateUserPreferences.mockReturnValue(new Promise(() => {}));
   const { queryClient, wrapper } = setup(accountA);

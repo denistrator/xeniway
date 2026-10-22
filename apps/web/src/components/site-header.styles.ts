@@ -15,6 +15,7 @@ export const siteHeaderStyles = tv({
     logoutText: "sr-only",
     actions: "flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-wrap",
     actionButton: "h-auto min-h-11 min-w-0 whitespace-normal sm:h-9 sm:min-h-0",
+    preferences: "relative flex items-center gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-accent",
     settingsLink: compactControlStyles({ className: "relative" }),
     settingsNotice: "absolute -end-1 -top-1 inline-flex rounded-full border border-line bg-surface p-0.5 text-muted",
   },

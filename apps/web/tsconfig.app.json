@@ -5,6 +5,7 @@
     "incremental": true,
     "composite": true,
     "jsx": "react-jsx",
+    "resolveJsonModule": true,
     "types": [
       "vite/client"
     ]

@@ -78,6 +78,38 @@ function navigation(path: string): Request {
 }
 
 describe("explicit public asset preparation", () => {
+  it("prepares all lazy JSON dictionaries and serves them without the network", async () => {
+    const dictionaries = ["ru", "uk", "he"].map((locale) => ({
+      url: `assets/${locale}-dictionary.json`,
+      revision: null,
+    }));
+    const assets = createWorkerAssets([...manifest, ...dictionaries], origin);
+    const fallback = normalNetwork();
+    network.mockImplementation(async (input, init) =>
+      String(input instanceof Request ? input.url : input).endsWith(".json")
+        ? new Response('{"dictionary":"public"}', { headers: { "content-type": "application/json" } })
+        : fallback(input, init),
+    );
+    expect(network).not.toHaveBeenCalled();
+    await assets.prepare();
+    network.mockRejectedValue(new TypeError("offline"));
+    for (const entry of dictionaries) {
+      const response = await assets.respond(new Request(`${origin}/${entry.url}`));
+      expect(await response?.json()).toEqual({ dictionary: "public" });
+    }
+  });
+
+  it("rejects HTML masquerading as a lazy JSON dictionary during preparation", async () => {
+    const assets = createWorkerAssets([...manifest, { url: "assets/he-dictionary.json", revision: null }], origin);
+    const fallback = normalNetwork();
+    network.mockImplementation(async (input, init) =>
+      String(input instanceof Request ? input.url : input).endsWith(".json")
+        ? new Response("<html></html>", { headers: { "content-type": "text/html" } })
+        : fallback(input, init),
+    );
+    await expect(assets.prepare()).rejects.toThrow("Offline asset unavailable: /assets/he-dictionary.json");
+  });
+
   it.each(["application/manifest+json", "application/json"])(
     "caches PWA metadata with %s and icons only after preparation",
     async (contentType) => {

@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** D4/UI-11 has focused component/browser evidence. T05/UI-05 has 322 passing offline unit checks, clear independent review and pending production verification; D5/T13 is approved and in progress. The latest full verification remains limited by frontend unit timing failures and stopped local project services; see checkpoints 12–13. Other recorded policy/manual gates remain open. T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
+**Status:** D4/UI-11, delegated T05/UI-05 and approved D5/T13 are implemented with regression evidence and independent review. Fresh verification passed all 762 frontend unit tests, 19 production offline browser cases and 41 ordinary browser cases. Historical unit timing failures remain an investigation item. See checkpoints 12–14 for earlier limits and the approved service/fixture refresh. Other recorded policy/manual gates remain open; T14 is next. T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
@@ -105,7 +105,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-05 · P1 · A failed device-data removal loses its cleanup retry
 
-**Status:** The user delegated the T05 policy decision. Reload-resilient cleanup is implemented with owner/generation recovery metadata, blocked conflicting preparation, scoped retry and no access restoration. All 322 offline unit tests pass, including explicit recovery after metadata becomes readable and retaining known targets during metadata failures. Independent review is clear; the production reload/removal case remains pending stopped local services.
+**Status:** Complete under the delegated T05 policy decision. Reload-resilient cleanup uses owner/generation recovery metadata, blocked conflicting preparation, scoped retry and no access restoration. All 322 focused offline unit tests passed, including recovery after metadata becomes readable and retaining known targets during metadata failures. Independent review is clear. The subsequent full 19-case production offline suite passed, including failed removal → offline reload → cleanup without a session. See checkpoints 13–14.
 
 **Evidence — Source:** `apps/web/src/features/offline/offline-access-runtime.ts:172–183` removes the account from runtime state before storage deletion succeeds; failure only sets storage error. `offline-controls.view.tsx:68` gates Remove on a download, and `offline-controls.model.ts:127` suppresses the rejection.
 
@@ -245,7 +245,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-18 · P2 · Preference changes conceal account-save failures
 
-**Status:** Blocked pending D5. Local-only feedback and retry semantics would change account-preference persistence behavior.
+**Status:** Complete under approved D5. Immediate local changes have distinct account-save feedback and explicit owner-scoped retry; hydration/reconnect never uploads browser values. Persistence, supersession, account-transition, announcement and dismissal regressions pass, independent review is clear, and the full unit/browser baseline passed. See checkpoint 14.
 
 **Evidence — Source:** `preferences/theme-selector.model.ts:27`, `language-selector.model.ts:22`, and `lib/queries.ts:176` apply local choices and discard persistence feedback.
 
@@ -255,7 +255,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-19 · P2 · Dictionary-load failures can be silent or prevent startup
 
-**Status:** Blocked with UI-18 pending D5, because truthful selection and startup recovery require the same preference/error ownership policy.
+**Status:** Complete under approved D5 and the subsequent JSON-packaging decision. Startup falls back truthfully to English while retaining the stored preference; failed selection preserves the current locale/direction. Real Chromium network-failure/retry regressions pass for development and production, and prepared assets reload offline in all four locales. Callback-turn activation keeps document attributes synchronized. The full unit/browser baseline passed; see checkpoint 14 for verification boundaries.
 
 **Evidence — Source; network-failure reproduction required:** `language-selector.model.ts:22` catches load failure without user feedback; `settings-preferences.model.ts:17` ignores its false result. `i18n/i18n.ts:57` awaits a lazy dictionary before `main.model.ts:24` can render.
 

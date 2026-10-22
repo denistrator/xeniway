@@ -49,6 +49,22 @@ describe("local user preferences", () => {
     });
   });
 
+  it("retains the latest unsaved fields for a deliberate device-save retry", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota exceeded");
+    });
+    writeLocalUserPreferences({ theme: "dark" });
+    writeLocalUserPreferences({ language: "he" });
+    writeLocalUserPreferences({ theme: "light" });
+    expect(readLocalUserPreferences()).toMatchObject({ theme: "light", language: "he" });
+    setItem.mockRestore();
+    writeLocalUserPreferences({});
+    expect(JSON.parse(localStorage.getItem(userPreferencesStorageKey) ?? "{}")).toMatchObject({
+      theme: "light",
+      language: "he",
+    });
+  });
+
   it("does not throw when local storage is unavailable", () => {
     const storage = window.localStorage;
     vi.stubGlobal("localStorage", undefined);

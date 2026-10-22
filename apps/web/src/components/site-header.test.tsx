@@ -11,6 +11,7 @@ const mockCurrentUser = vi.fn();
 
 vi.mock("../features/preferences/language-selector.view", () => ({ LanguageSelector: () => null }));
 vi.mock("../features/preferences/theme-selector.view", () => ({ ThemeSelector: () => null }));
+vi.mock("../features/preferences/preference-feedback.view", () => ({ PreferenceFeedback: () => null }));
 vi.mock("../lib/queries", () => ({
   useAuthMutations: () => ({ logout: { mutateAsync: vi.fn(), isPending: false } }),
   useCurrentUser: () => mockCurrentUser(),

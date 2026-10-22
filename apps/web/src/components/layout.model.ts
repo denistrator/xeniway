@@ -59,11 +59,18 @@ function useRouteTitle() {
 export function useLayout() {
   useUserPreferencesSync();
   useRouteTitle();
+  const welcome = useWelcomeHost();
+  const createDialogOpen = useSelector((state: RootState) => state.ui.drawer.open);
   const createOpenerRef = useRef<HTMLElement | null>(null);
   function handleCreateDialogOpen(opener: HTMLElement) {
     createOpenerRef.current = opener;
   }
-  return { createOpenerRef, handleCreateDialogOpen };
+  return {
+    createOpenerRef,
+    handleCreateDialogOpen,
+    welcome,
+    backgroundPreferenceFeedbackActive: !welcome.visible && !createDialogOpen,
+  };
 }
 
 export function useWelcomeHost() {

@@ -8,7 +8,7 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 - **Plan:** [2026-10-21 UI audit and remediation plan](superpowers/plans/2026-10-21-ui-interaction-audit.md).
 - **Implementation:** [UI fixes task plan](superpowers/plans/2026-10-21-ui-fixes-implementation-plan.md) maps every finding to a testable task and records policy decisions that require approval before execution.
-- **Current checkpoint:** D1, D3 and approved D4/T08 are implemented on `codex/confirmation-dialog-focus`. T05's delegated cleanup policy is implemented with 322 passing offline unit checks and pending production verification; D5/T13 is approved and in progress. Checkpoints 12–13 record frontend unit timing failures and unavailable local browser-test services. Broader device/screen-reader review is not recorded. Other tasks retain the plan's policy/manual gates; this entry does not authorize bypassing them.
+- **Current checkpoint:** D1, D3, approved D4/T08, delegated T05 and D5/T13 are implemented on `codex/confirmation-dialog-focus`. Checkpoint 14 records a passing normal full unit run (762 frontend tests), 19 production offline browser cases and 41 ordinary cases after approved service/fixture startup. T14 is next. Earlier timing failures remain investigation evidence, and broader device/screen-reader review is not recorded. Other tasks retain the plan's policy/manual gates; this entry does not authorize bypassing them.
 - **Evidence:** Source review and targeted browser inspection identified draft-loss paths, incomplete confirmation focus behavior, errors outside active dialogs, weak bulk-action hierarchy, and inconsistent offline/account recovery feedback. The plan records evidence, priorities, acceptance checks, and unverified device/layout candidates separately.
 - **Direction:** Prioritize work preservation and truthful feedback, then navigation and responsive hierarchy. Borrow HIG interaction principles without copying Apple-native UI. The plan is not authorization to implement fixes.
 - **Guardrails:** Preserve owner scoping, CSRF, six statuses, archive/blacklist distinctions, InlineEdit, local-first preferences, and read-only offline behavior. Reuse the existing offline-disclosure, diagnostics, export-association, and measured-bundle entries referenced in the plan instead of duplicating them. Ask before addressing new blockers or broadening scope. No automated style/layout/snapshot tests.
@@ -57,11 +57,19 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 ## Open refactoring tasks
 
+### Investigate the router warning during native skip-link navigation
+
+- **Area:** The native `#main-content` skip link and the shared dirty-departure blocker.
+- **Evidence:** T13's full browser run emitted React Router's warning about a POP destination not created by the router during the passing keyboard skip-link workflow (`tests/e2e/xeniway.spec.ts`). Main-content focus still passed; no draft-loss or failed navigation was demonstrated.
+- **Possible direction:** Reproduce clean versus dirty skip-link/hash navigation and determine whether the warning reflects only fragment-history bookkeeping or an actual guard failure before choosing a scoped fix.
+- **Guardrails:** Preserve the semantic skip link, keyboard focus, native fragment behavior and approved dirty-departure policy. Do not patch browser history, suppress the warning, or remove assertions merely to silence output.
+
 ### Investigate frontend unit-suite timeouts under load
 
 - **Area:** Full `apps/web` Vitest run and its worker/test isolation setup.
 - **Evidence:** T08 verification ran the normal root test command: scripts/shared/API passed, while frontend tests finished with 677 passed and 25 failures across eight unchanged files (Settings, export, create dialog, and workspace contacts/follow-ups/overview/page/preparation). Most failures hit the five-second test limit; subsequent assertions also saw incomplete typed values or pending UI. The focused deletion/Home/confirmation run passed all 41 cases before the full run. No workspace-editor, modal or Vitest configuration implementation changed in T08. System CPU sampling also showed substantial competing application load; that is evidence to investigate, not a confirmed root cause.
 - **Possible direction:** Compare affected files in isolation and the full suite under recorded load, inspect worker concurrency and unfinished user-event work after timeouts, and establish whether failures reflect resource contention, cleanup leakage or a product defect.
+- **Latest evidence:** T13 integration reproduced one unchanged preparation test hitting five seconds during a competing focused run. A subsequent normal root run, without overlapping focused tests, passed all 762 frontend cases. No timeout or worker configuration changed. This supports continued load/isolation investigation, not a confirmed root cause or closure.
 - **Guardrails:** Preserve assertions, owner scoping and interaction coverage. Do not raise timeouts, skip tests, disable isolation or serialize everything merely to obtain green output. This follow-up is separate from the approved board-deletion repair.
 
 ### Investigate intermittent company-research save browser failure

@@ -20,10 +20,16 @@ export function useLanguagePreference() {
   const updatePreferences = useUpdateUserPreferences();
 
   async function selectLanguage(locale: SupportedLocale) {
+    const sameOwner = updatePreferences.captureOwner();
     try {
-      await changeLocale(locale);
+      const applied = await changeLocale(locale, { shouldApply: sameOwner });
+      if (!applied || !sameOwner()) {
+        return false;
+      }
       if (user.data && canMutate) {
         updatePreferences.mutate({ selectedLanguage: locale });
+      } else {
+        updatePreferences.keepLocal({ selectedLanguage: locale });
       }
       return true;
     } catch {
@@ -69,9 +75,8 @@ export function useLanguageSelector() {
   }
 
   async function handleChange(locale: SupportedLocale) {
-    if (await selectLanguage(locale)) {
-      closeMenu(true);
-    }
+    await selectLanguage(locale);
+    closeMenu(true);
   }
 
   function toggleOpen() {

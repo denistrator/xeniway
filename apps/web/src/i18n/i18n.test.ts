@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { readLocalUserPreferences, writeLocalUserPreferences } from "../lib/user-preferences";
+import { initializeTestI18n } from "../test/initialize-test-i18n";
 import { changeLocale, i18n, initializeI18n, languageStorageKey, resolveLocale } from "./i18n";
 
 beforeEach(async () => {
-  await initializeI18n();
+  await initializeTestI18n();
 });
 
 describe("resolveLocale", () => {

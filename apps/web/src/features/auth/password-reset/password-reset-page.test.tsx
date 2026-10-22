@@ -2,8 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { changeLocale, initializeI18n } from "../../../i18n/i18n";
+import { changeLocale } from "../../../i18n/i18n";
 import { ApiRequestError } from "../../../lib/api";
+import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { getResetToken, PasswordResetPage } from "./password-reset-page.view";
 
 const confirm = { error: null as Error | null, isPending: false, mutateAsync: vi.fn() };
@@ -17,8 +18,7 @@ vi.mock("../../../lib/queries", () => ({
 
 describe("password reset page", () => {
   beforeEach(async () => {
-    await initializeI18n();
-    await changeLocale("en");
+    await initializeTestI18n();
     confirm.error = null;
     confirm.mutateAsync.mockReset();
   });

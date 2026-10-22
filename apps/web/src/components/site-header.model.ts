@@ -1,7 +1,7 @@
-import type { MouseEvent } from "react";
+import { type MouseEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 import { useOfflineAccess } from "../features/offline/offline-access.model";
 import { useAuthMutations, useCurrentUser } from "../lib/queries";
 import { closeDrawer, openCreateDrawer } from "../store";
@@ -18,11 +18,15 @@ const navigationLinksPlain = [
   { to: "/about", labelKey: "navigation.about", authOnly: false, end: false },
 ] as const;
 
-export type SiteHeaderProps = { onCreateDialogOpen?: (opener: HTMLElement) => void };
+export type SiteHeaderProps = {
+  onCreateDialogOpen?: (opener: HTMLElement) => void;
+};
 
 export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const preferenceControlsRef = useRef<HTMLFieldSetElement>(null);
+  const onSettings = useMatch("/settings") !== null;
   const { t } = useTranslation();
   const user = useCurrentUser();
   const access = useOfflineAccess();
@@ -44,6 +48,9 @@ export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
   }
   return {
     user,
+    showPreferenceFeedback: !onSettings,
+    preferenceControlsRef,
+    preferenceControlsLabel: t("navigation.settings"),
     access,
     readAccountId,
     logout,

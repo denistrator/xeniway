@@ -1,8 +1,9 @@
 import { useLanguageSelector } from "./language-selector.model";
 import { languageSelectorStyles } from "./language-selector.styles";
+import { PreferenceFeedback } from "./preference-feedback.view";
 
 const styles = languageSelectorStyles();
-export function LanguageSelector() {
+export function LanguageSelector({ showFeedback = true }: { showFeedback?: boolean }) {
   const { open, containerRef, triggerRef, currentOption, label, toggleOpen, handleMenuKeyDown, menuOptions } =
     useLanguageSelector();
   return (
@@ -38,6 +39,7 @@ export function LanguageSelector() {
           ))}
         </div>
       )}
+      {showFeedback && <PreferenceFeedback kind="language" returnFocusRef={triggerRef} />}
     </div>
   );
 }

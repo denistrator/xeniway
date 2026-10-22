@@ -15,6 +15,37 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+test("keeps an offline presentation choice local without silently uploading on reconnect", async () => {
+  let online = false;
+  vi.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
+  const fetchMock = vi.fn();
+  vi.stubGlobal("fetch", fetchMock);
+  const user = userEvent.setup();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(authKeys.me, { data: { user: { id: 1 } } });
+  client.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
+
+  render(
+    <Provider store={store}>
+      <QueryClientProvider client={client}>
+        <JobManager open submitting={false} onSave={() => false} onClose={() => {}} />
+      </QueryClientProvider>
+    </Provider>,
+  );
+
+  await user.click(screen.getByRole("button", { name: "Switch to modal" }));
+  expect(store.getState().ui.jobFormPresentation).toBe("modal");
+  expect(
+    within(screen.getByRole("dialog")).getByText("Applied on this device. Not saved to your account."),
+  ).toBeVisible();
+  expect(fetchMock).not.toHaveBeenCalled();
+  online = true;
+  window.dispatchEvent(new Event("online"));
+  expect(fetchMock).not.toHaveBeenCalled();
+  client.clear();
 });
 
 test("keeps a create-application draft when switching between drawer and modal", async () => {

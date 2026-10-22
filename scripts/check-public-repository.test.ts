@@ -93,6 +93,33 @@ describe("public repository content checks", () => {
     expect(findContentFindings(".env.example", content)).toEqual([]);
   });
 
+  it("allows reviewed translated password labels in canonical locale dictionaries", () => {
+    const content = JSON.stringify({
+      auth: {
+        fields: {
+          password: "Пароль",
+        },
+        forgotPassword: {},
+      },
+    });
+
+    expect(findContentFindings("apps/web/src/i18n/locales/ru.json", content)).toEqual([]);
+  });
+
+  it("detects a credential inserted where a reviewed translated password label belongs", () => {
+    const content = JSON.stringify({
+      auth: {
+        fields: {
+          password: "company-production-token-9472",
+        },
+      },
+    });
+
+    expect(findContentFindings("apps/web/src/i18n/locales/ru.json", content)).toEqual([
+      { path: "apps/web/src/i18n/locales/ru.json", rule: "non-placeholder-credential" },
+    ]);
+  });
+
   it.each([
     "API_TOKEN=prefix-example-production",
     "CLIENT_SECRET=notlocal-but-real",
