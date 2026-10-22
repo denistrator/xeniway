@@ -61,6 +61,20 @@ test("loads the Hebrew dictionary and applies right-to-left direction", async ()
 });
 
 test.each([
+  { locale: "en", label: "Delete all active applications" },
+  { locale: "ru", label: "Удалить все активные вакансии" },
+  { locale: "uk", label: "Видалити всі активні вакансії" },
+  { locale: "he", label: "מחיקת כל המועמדויות הפעילות" },
+] as const)("localizes board-wide deletion scope and its loaded count for $locale", async ({ locale, label }) => {
+  await changeLocale(locale);
+
+  expect(i18n.t("applications.bulkDelete.active")).toBe(label);
+  const scope = i18n.t("applications.bulkDelete.scope", { count: 3 });
+  expect(scope).toContain("3");
+  expect(scope).not.toContain("{{count}}");
+});
+
+test.each([
   { locale: "en", save: "Save changes", discard: "Discard changes", keep: "Keep editing" },
   { locale: "ru", save: "Сохранить изменения", discard: "Отменить изменения", keep: "Продолжить редактирование" },
   { locale: "uk", save: "Зберегти зміни", discard: "Відхилити зміни", keep: "Продовжити редагування" },

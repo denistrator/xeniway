@@ -349,14 +349,15 @@ test("offline reload opens never-visited workspaces from every board without wri
   await expect(page.getByText(/cached applications are read-only/)).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
-  for (const [route, title] of [
-    ["/", "Applications"],
-    ["/archive", "Archive"],
-    ["/blacklist", "Blacklist"],
+  for (const [route, title, action] of [
+    ["/", "Applications", "Delete all active applications"],
+    ["/archive", "Archive", "Delete all archived applications"],
+    ["/blacklist", "Blacklist", "Delete all blacklisted applications"],
   ]) {
     await page.goto(route);
     await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Remove all", exact: true })).toBeDisabled();
+    await page.getByText("Board actions", { exact: true }).click();
+    await expect(page.getByRole("button", { name: action, exact: true })).toBeDisabled();
   }
   await page.goto("/applications/2147483647");
   await expect(page.getByText("This workspace has not been downloaded. Connect to open it.")).toBeVisible();

@@ -18,7 +18,6 @@ export function useBlacklistPagePresentation() {
     [blacklisted.data, search],
   );
   const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
-  const [removeAllOpen, setRemoveAllOpen] = useState(false);
   async function remove() {
     if (!pendingRemoval) {
       return;
@@ -37,8 +36,6 @@ export function useBlacklistPagePresentation() {
   const loadingMessage = t("applications.blacklist.loading");
   const emptyMessage = t("applications.blacklist.empty");
   const noMatchMessage = t("applications.blacklist.noMatch");
-  const removeAllLabel = t("common.actions.removeAll");
-  const openRemoveAll = () => setRemoveAllOpen(true);
   const restoreLabel = t("applications.blacklist.restore");
   const deleteLabel = t("applications.blacklist.delete");
   function restoreJob(job: JobApplication) {
@@ -52,15 +49,6 @@ export function useBlacklistPagePresentation() {
   const yesLabel = t("common.actions.yes");
   const noLabel = t("common.actions.no");
   const cancelRemoval = () => setPendingRemoval(null);
-  const removeAllTitle = t("applications.confirmation.title");
-  const removeAllConfirmation = t("common.actions.deleteAllConfirmation");
-  const removeAllYesLabel = t("common.actions.yes");
-  const removeAllNoLabel = t("common.actions.no");
-  const removeAll = async () => {
-    await mutations.removeAll.mutateAsync("blacklist");
-    setRemoveAllOpen(false);
-  };
-  const cancelRemoveAll = () => setRemoveAllOpen(false);
   function blacklistedDateLabel(job: JobApplication) {
     return t("applications.blacklist.blacklisted", {
       date: job.blacklistedAt ? formatDate(job.blacklistedAt, i18n.resolvedLanguage ?? "en") : "—",
@@ -74,7 +62,8 @@ export function useBlacklistPagePresentation() {
     mutations,
     items,
     pendingRemoval,
-    removeAllOpen,
+    applicationCount: blacklisted.data?.length ?? 0,
+    deleteApplications: mutations.removeAll.mutateAsync,
     remove,
     errorMessage,
     title,
@@ -82,8 +71,6 @@ export function useBlacklistPagePresentation() {
     loadingMessage,
     emptyMessage,
     noMatchMessage,
-    removeAllLabel,
-    openRemoveAll,
     restoreLabel,
     deleteLabel,
     restoreJob,
@@ -93,11 +80,5 @@ export function useBlacklistPagePresentation() {
     yesLabel,
     noLabel,
     cancelRemoval,
-    removeAllTitle,
-    removeAllConfirmation,
-    removeAllYesLabel,
-    removeAllNoLabel,
-    removeAll,
-    cancelRemoveAll,
   };
 }

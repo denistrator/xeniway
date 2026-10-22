@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { useCanMutate } from "../../offline/offline-access.view";
 
 export type ApplicationCollectionProps = {
   title: string;
@@ -12,12 +11,5 @@ export type ApplicationCollectionProps = {
   isEmpty: boolean;
   hasResults: boolean;
   children: ReactNode;
-  removeAllLabel: string;
-  onRemoveAll: () => void;
+  actions: ReactNode;
 };
-
-export function useApplicationCollectionPresentation() {
-  const canMutate = useCanMutate();
-
-  return { canMutate };
-}

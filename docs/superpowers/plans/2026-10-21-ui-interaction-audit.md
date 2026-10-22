@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** The approved automated remediation checkpoints are complete and verified by the full Chromium suites. UI-05, UI-11, UI-18–24, UI-26–27, UI-31, UI-33, and UI-34 remain pending their documented policy decisions; T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
+**Status:** D4/UI-11 is implemented with focused component/browser evidence and independent review. The latest full verification remains limited by frontend unit timing failures and a stopped local container engine; see checkpoint 12. UI-05, UI-18–24, UI-26–27, UI-31, UI-33, and UI-34 remain pending their documented policy decisions; T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
@@ -171,7 +171,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-11 · P2 · Bulk deletion has weak hierarchy and incomplete safety feedback
 
-**Status:** Blocked pending D4. The approved scope, labels, countdown, and placement must be decided together; no destructive-flow behavior has been changed.
+**Status:** D4 approved and implemented. Board actions now appear after results in a native disclosure with board-specific labels, unfiltered loaded count, explicit filter/scope consequences, guarded pending/error/retry behavior and stable completion focus. Existing confirmation stages are preserved for each board. Focused component/browser checks and independent review passed; checkpoint 12 records the broader verification limitations and pending mobile/physical review.
 
 **Evidence — Runtime + Source + Decision:** `pages/home-page.view.tsx:19–29` places Remove all between Search and Filter statuses; `collection/application-collection.view.tsx:27–31` repeats it. `home-page.model.ts:17–23,48–50` adds two confirmations and a five-second wait, but does not gate the final action on deletion pending state or expose deletion errors. Archive/blacklist models likewise omit `removeAll` errors and pending state from `busy`. `i18n/locales/en.ts:67–69` uses generic Yes/No and inconsistent board-wide/every-application wording.
 

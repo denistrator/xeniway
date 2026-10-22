@@ -1,8 +1,8 @@
 import { ApplicationSearch } from "../components/application-search.view";
 import { PageIntro } from "../components/page-intro.view";
 import { Button } from "../components/ui/button.view";
-import { ConfirmationModal } from "../components/ui/confirmation-modal.view";
 import { JobBoard } from "../features/applications/board/job-board.view";
+import { ApplicationBulkDelete } from "../features/applications/collection/application-bulk-delete.view";
 import { StatusFilter } from "../features/applications/filters/status-filter.view";
 import { useHomePage } from "./home-page.model";
 import { homePageStyles } from "./home-page.styles";
@@ -19,14 +19,6 @@ export function HomePage() {
         </div>
         <div className={styles.filters()}>
           <ApplicationSearch />
-          <button
-            disabled={!view.canMutate}
-            type="button"
-            className={styles.removeAllButton()}
-            onClick={view.openRemoveAll}
-          >
-            {view.removeAll}
-          </button>
           <StatusFilter />
         </div>
         {view.applications.isPending && (
@@ -36,7 +28,7 @@ export function HomePage() {
         )}
         {view.applications.error && (
           <div role="alert" className={styles.error()}>
-            <p>{view.errorMessage}</p>
+            <p className={styles.errorMessage()}>{view.errorMessage}</p>
             <div className={styles.errorActions()}>
               <Button variant="outline" size="sm" onClick={view.retryApplications}>
                 {view.retry}
@@ -55,27 +47,13 @@ export function HomePage() {
           operationSuccess={view.boardOperationSuccess ?? undefined}
         />
       )}
-      {view.removeAllOpen && (
-        <ConfirmationModal
-          title={view.title}
-          text={view.deleteAllConfirmation}
-          yesLabel={view.yes}
-          noLabel={view.no}
-          onYes={view.confirmRemoveAll}
-          onNo={view.closeRemoveAll}
+      <div className={styles.boardActions()}>
+        <ApplicationBulkDelete
+          board="active"
+          count={view.applicationCount}
+          deleteApplications={view.deleteApplications}
         />
-      )}
-      {view.dangerOpen && (
-        <ConfirmationModal
-          title={view.dangerTitle}
-          text={view.dangerConfirmation}
-          yesLabel={view.dangerYesLabel}
-          noLabel={view.no}
-          yesDisabled={view.countdown > 0}
-          onYes={view.handleRemoveAll}
-          onNo={view.closeDanger}
-        />
-      )}
+      </div>
     </div>
   );
 }

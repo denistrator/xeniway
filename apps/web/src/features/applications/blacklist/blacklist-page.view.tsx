@@ -1,4 +1,5 @@
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal.view";
+import { ApplicationBulkDelete } from "../collection/application-bulk-delete.view";
 import { ApplicationCollection } from "../collection/application-collection.view";
 import { ApplicationCollectionCard } from "../collection/application-collection-card.view";
 import { useBlacklistPagePresentation } from "./blacklist-page.model";
@@ -14,7 +15,8 @@ export function BlacklistPage() {
     busy,
     items,
     pendingRemoval,
-    removeAllOpen,
+    applicationCount,
+    deleteApplications,
     remove,
     errorMessage,
     title,
@@ -22,8 +24,6 @@ export function BlacklistPage() {
     loadingMessage,
     emptyMessage,
     noMatchMessage,
-    removeAllLabel,
-    openRemoveAll,
     restoreLabel,
     deleteLabel,
     restoreJob,
@@ -33,12 +33,6 @@ export function BlacklistPage() {
     yesLabel,
     noLabel,
     cancelRemoval,
-    removeAllTitle,
-    removeAllConfirmation,
-    removeAllYesLabel,
-    removeAllNoLabel,
-    removeAll,
-    cancelRemoveAll,
   } = useBlacklistPagePresentation();
 
   return (
@@ -53,8 +47,9 @@ export function BlacklistPage() {
         loading={blacklisted.isPending}
         isEmpty={isEmpty}
         hasResults={items.length > 0}
-        removeAllLabel={removeAllLabel}
-        onRemoveAll={openRemoveAll}
+        actions={
+          <ApplicationBulkDelete board="blacklist" count={applicationCount} deleteApplications={deleteApplications} />
+        }
       >
         {items.map((job) => (
           <ApplicationCollectionCard
@@ -82,16 +77,6 @@ export function BlacklistPage() {
           noLabel={noLabel}
           onYes={remove}
           onNo={cancelRemoval}
-        />
-      )}
-      {removeAllOpen && (
-        <ConfirmationModal
-          title={removeAllTitle}
-          text={removeAllConfirmation}
-          yesLabel={removeAllYesLabel}
-          noLabel={removeAllNoLabel}
-          onYes={removeAll}
-          onNo={cancelRemoveAll}
         />
       )}
     </>

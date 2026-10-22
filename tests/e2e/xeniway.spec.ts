@@ -958,6 +958,115 @@ test("logs out and returns to login", async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem("userPreferences"))).toBe(preferences);
 });
 
+for (const config of [
+  { board: "active", path: "/", label: "Delete all active applications", list: "/api/applications" },
+  { board: "archive", path: "/archive", label: "Delete all archived applications", list: "/api/applications/archive" },
+  {
+    board: "blacklist",
+    path: "/blacklist",
+    label: "Delete all blacklisted applications",
+    list: "/api/applications/blacklist",
+  },
+] as const) {
+  test(`deletes the whole ${config.board} board with pending feedback and failure recovery`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const bootstrap = await page.request.get("/api/auth/csrf");
+    const registration = await page.request.post("/api/auth/register", {
+      headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+      data: { email: `bulk-delete-${crypto.randomUUID()}@example.com`, password: "password123" },
+    });
+    expect(registration.ok()).toBe(true);
+    const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+    expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+    for (const company of ["Visible application", "Hidden application", "Other board application"]) {
+      const created = await page.request.post("/api/applications", {
+        headers,
+        data: { company, position: "Engineer", status: "saved" },
+      });
+      expect(created.ok()).toBe(true);
+      const id = ((await created.json()) as ApplicationResponse).data.application.id;
+      let destination = config.board;
+      if (company === "Other board application") {
+        destination = config.board === "active" ? "archive" : "active";
+      }
+      if (destination !== "active") {
+        expect((await page.request.post(`/api/applications/${id}/${destination}`, { headers, data: {} })).ok()).toBe(
+          true,
+        );
+      }
+    }
+
+    let requestStarted!: () => void;
+    const started = new Promise<void>((resolve) => {
+      requestStarted = resolve;
+    });
+    let releaseFailure!: () => void;
+    const failureGate = new Promise<void>((resolve) => {
+      releaseFailure = resolve;
+    });
+    const submittedBoards: string[] = [];
+    await page.route("**/api/applications/remove-all", async (route) => {
+      submittedBoards.push(route.request().postDataJSON().board);
+      if (submittedBoards.length === 1) {
+        requestStarted();
+        await failureGate;
+        await route.fulfill({ status: 409, json: { error: { code: "REQUEST_FAILED" } } });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto(config.path);
+    await page.getByLabel("Search applications").fill("Visible application");
+    await page.getByText("Board actions", { exact: true }).click();
+    const opener = page.getByRole("button", { name: config.label, exact: true });
+    await opener.click();
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toContainText("Applications currently loaded on this board: 2");
+    await expect(dialog).toContainText("Search and status filters do not limit deletion");
+    await page.keyboard.press("Escape");
+    await expect(opener).toBeFocused();
+    expect(submittedBoards).toEqual([]);
+    await opener.click();
+    if (config.board === "active") {
+      await dialog.getByRole("button", { name: "Continue", exact: true }).click();
+      await expect(dialog.getByRole("button", { name: /^Delete all active applications \(/ })).toBeDisabled();
+    }
+    const confirm = dialog.getByRole("button", { name: config.label, exact: true });
+    await expect(confirm).toBeEnabled({ timeout: 7000 });
+    await confirm.click();
+    await started;
+    await expect(dialog).toHaveAttribute("aria-busy", "true");
+    await expect(dialog.getByRole("button", { name: "Deleting…", exact: true })).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(dialog).toBeVisible();
+    expect(submittedBoards).toEqual([config.board]);
+    releaseFailure();
+    await expect(dialog.getByRole("alert")).toHaveText("Something went wrong. Please try again.");
+    await expect(confirm).toBeEnabled();
+    const deleted = page.waitForResponse(
+      (response) => response.url().endsWith("/api/applications/remove-all") && response.ok(),
+    );
+    await confirm.click();
+    await deleted;
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeDisabled();
+    await expect(page.getByRole("status")).toHaveText("Applications deleted.");
+    await expect(page.getByRole("region", { name: "Board actions" })).toBeFocused();
+    expect(submittedBoards).toEqual([config.board, config.board]);
+    const target = await page.request.get(config.list);
+    expect(target.ok()).toBe(true);
+    expect((await target.json()).data.applications).toEqual([]);
+    const other = await page.request.get(config.board === "active" ? "/api/applications/archive" : "/api/applications");
+    expect(other.ok()).toBe(true);
+    expect((await other.json()).data.applications).toHaveLength(1);
+    await page.reload();
+    await page.getByText("Board actions", { exact: true }).click();
+    await expect(opener).toBeDisabled();
+  });
+}
+
 test("permanently deletes a blacklisted application", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@example.com");

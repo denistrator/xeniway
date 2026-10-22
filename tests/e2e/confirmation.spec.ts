@@ -26,12 +26,13 @@ test("contains confirmation focus and restores it without deleting applications"
     }
   });
   await page.goto("/");
-  const opener = page.getByRole("button", { name: "Remove all", exact: true });
+  await page.getByText("Board actions", { exact: true }).click();
+  const opener = page.getByRole("button", { name: "Delete all active applications", exact: true });
   await opener.focus();
   await page.keyboard.press("Enter");
   const dialog = page.getByRole("alertdialog");
-  const cancel = dialog.getByRole("button", { name: "No", exact: true });
-  const confirm = dialog.getByRole("button", { name: "Yes", exact: true });
+  const cancel = dialog.getByRole("button", { name: "Cancel", exact: true });
+  const confirm = dialog.getByRole("button", { name: "Continue", exact: true });
   await expect(cancel).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(confirm).toBeFocused();
@@ -45,7 +46,7 @@ test("contains confirmation focus and restores it without deleting applications"
 
   await opener.click();
   await confirm.click();
-  const countdownConfirm = dialog.getByRole("button", { name: /^Yes \(/ });
+  const countdownConfirm = dialog.getByRole("button", { name: /^Delete all active applications \(/ });
   await expect(countdownConfirm).toBeDisabled();
   await expect(cancel).toBeFocused();
   await page.keyboard.press("Tab");
@@ -54,7 +55,7 @@ test("contains confirmation focus and restores it without deleting applications"
   await expect(cancel).toBeFocused();
   await cancel.click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.locator("#main-content")).toBeFocused();
+  await expect(opener).toBeFocused();
   expect(deletionRequests).toEqual([]);
   await expect(page.getByRole("link", { name: /^Confirmation focus, Engineer,/ })).toBeVisible();
 });

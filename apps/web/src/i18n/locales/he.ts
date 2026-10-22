@@ -63,9 +63,6 @@ const he = {
       retry: "ניסיון חוזר",
       yes: "כן",
       no: "לא",
-      removeAll: "מחיקת הכול",
-      deleteAllConfirmation: "למחוק לצמיתות את כל המועמדויות בלוח הזה?",
-      dangerConfirmation: "פעולה זו תמחק לצמיתות את כל המועמדויות ולא ניתן לבטל אותה.",
       exportCsv: "ייצוא קובץ ZIP",
       exportingCsv: "מייצא…",
       exportCsvFailed: "ייצוא קובץ ה-ZIP נכשל. יש לנסות שוב.",
@@ -82,6 +79,17 @@ const he = {
   accessibility: { skipToMainContent: "דילוג לתוכן הראשי", workspaceNavigation: "ניווט במרחב העבודה" },
   footer: { description: "© {{year}} Xenia Way · נבנה לחיפוש עבודה ממוקד" },
   applications: {
+    bulkDelete: {
+      actions: "פעולות בלוח",
+      active: "מחיקת כל המועמדויות הפעילות",
+      archive: "מחיקת כל המועמדויות מהארכיון",
+      blacklist: "מחיקת כל המועמדויות מהרשימה השחורה",
+      scope:
+        "מחיקה לצמיתות של כל המועמדויות בלוח הזה ונתוני סביבות העבודה שלהן. כרגע טעונות בלוח {{count}} מועמדויות. חיפוש וסינון לפי סטטוס אינם מגבילים את המחיקה. לוחות אחרים לא יושפעו. לא ניתן לבטל פעולה זו.",
+      continue: "המשך",
+      deleting: "מתבצעת מחיקה…",
+      deleted: "המועמדויות נמחקו.",
+    },
     workspace: {
       open: "פתיחת סביבת העבודה",
       backTo: "חזרה אל {{board}}",

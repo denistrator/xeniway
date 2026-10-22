@@ -1,4 +1,5 @@
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal.view";
+import { ApplicationBulkDelete } from "../collection/application-bulk-delete.view";
 import { ApplicationCollection } from "../collection/application-collection.view";
 import { ApplicationCollectionCard } from "../collection/application-collection-card.view";
 import { useArchivePagePresentation } from "./archive-page.model";
@@ -13,7 +14,8 @@ export function ArchivePage() {
     busy,
     items,
     pendingRemoval,
-    removeAllOpen,
+    applicationCount,
+    deleteApplications,
     remove,
     archivedDateLabel,
     errorMessage,
@@ -22,8 +24,6 @@ export function ArchivePage() {
     loadingMessage,
     emptyMessage,
     noMatchMessage,
-    removeAllLabel,
-    openRemoveAll,
     restoreLabel,
     deleteLabel,
     restoreJob,
@@ -33,12 +33,6 @@ export function ArchivePage() {
     yesLabel,
     noLabel,
     cancelRemoval,
-    removeAllTitle,
-    removeAllConfirmation,
-    removeAllYesLabel,
-    removeAllNoLabel,
-    removeAll,
-    cancelRemoveAll,
   } = useArchivePagePresentation();
 
   return (
@@ -53,8 +47,9 @@ export function ArchivePage() {
         loading={archived.isPending}
         isEmpty={isEmpty}
         hasResults={items.length > 0}
-        removeAllLabel={removeAllLabel}
-        onRemoveAll={openRemoveAll}
+        actions={
+          <ApplicationBulkDelete board="archive" count={applicationCount} deleteApplications={deleteApplications} />
+        }
       >
         {items.map((job) => (
           <ApplicationCollectionCard
@@ -77,16 +72,6 @@ export function ArchivePage() {
           noLabel={noLabel}
           onYes={remove}
           onNo={cancelRemoval}
-        />
-      )}
-      {removeAllOpen && (
-        <ConfirmationModal
-          title={removeAllTitle}
-          text={removeAllConfirmation}
-          yesLabel={removeAllYesLabel}
-          noLabel={removeAllNoLabel}
-          onYes={removeAll}
-          onNo={cancelRemoveAll}
         />
       )}
     </>

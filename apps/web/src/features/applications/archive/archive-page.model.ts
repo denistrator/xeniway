@@ -18,7 +18,6 @@ export function useArchivePagePresentation() {
     [archived.data, search],
   );
   const [pendingRemoval, setPendingRemoval] = useState<JobApplication | null>(null);
-  const [removeAllOpen, setRemoveAllOpen] = useState(false);
   async function remove() {
     if (!pendingRemoval) {
       return;
@@ -40,8 +39,6 @@ export function useArchivePagePresentation() {
   const loadingMessage = t("applications.archive.loading");
   const emptyMessage = t("applications.archive.empty");
   const noMatchMessage = t("applications.archive.noMatch");
-  const removeAllLabel = t("common.actions.removeAll");
-  const openRemoveAll = () => setRemoveAllOpen(true);
   const restoreLabel = t("applications.archive.restore");
   const deleteLabel = t("applications.archive.delete");
   function restoreJob(job: JobApplication) {
@@ -55,15 +52,6 @@ export function useArchivePagePresentation() {
   const yesLabel = t("common.actions.yes");
   const noLabel = t("common.actions.no");
   const cancelRemoval = () => setPendingRemoval(null);
-  const removeAllTitle = t("applications.confirmation.title");
-  const removeAllConfirmation = t("common.actions.deleteAllConfirmation");
-  const removeAllYesLabel = t("common.actions.yes");
-  const removeAllNoLabel = t("common.actions.no");
-  const removeAll = async () => {
-    await mutations.removeAll.mutateAsync("archive");
-    setRemoveAllOpen(false);
-  };
-  const cancelRemoveAll = () => setRemoveAllOpen(false);
   function archivedDateLabel(job: JobApplication) {
     return t("applications.archive.archived", {
       date: job.archivedAt ? formatDate(job.archivedAt, i18n.resolvedLanguage ?? "en") : "—",
@@ -76,7 +64,8 @@ export function useArchivePagePresentation() {
     mutations,
     items,
     pendingRemoval,
-    removeAllOpen,
+    applicationCount: archived.data?.length ?? 0,
+    deleteApplications: mutations.removeAll.mutateAsync,
     remove,
     archivedDateLabel,
     errorMessage,
@@ -85,8 +74,6 @@ export function useArchivePagePresentation() {
     loadingMessage,
     emptyMessage,
     noMatchMessage,
-    removeAllLabel,
-    openRemoveAll,
     restoreLabel,
     deleteLabel,
     restoreJob,
@@ -96,11 +83,5 @@ export function useArchivePagePresentation() {
     yesLabel,
     noLabel,
     cancelRemoval,
-    removeAllTitle,
-    removeAllConfirmation,
-    removeAllYesLabel,
-    removeAllNoLabel,
-    removeAll,
-    cancelRemoveAll,
   };
 }

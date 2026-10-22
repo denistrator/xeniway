@@ -68,9 +68,6 @@ export const en = {
       retry: "Retry",
       yes: "Yes",
       no: "No",
-      removeAll: "Remove all",
-      deleteAllConfirmation: "Permanently delete all applications on this board?",
-      dangerConfirmation: "This will permanently delete every application and cannot be undone.",
       exportCsv: "Export package",
       exportingCsv: "Exporting…",
       exportCsvFailed: "Export package failed. Please try again.",
@@ -92,6 +89,17 @@ export const en = {
     description: "© {{year}} Xenia Way · Built for focused job searches",
   },
   applications: {
+    bulkDelete: {
+      actions: "Board actions",
+      active: "Delete all active applications",
+      archive: "Delete all archived applications",
+      blacklist: "Delete all blacklisted applications",
+      scope:
+        "Permanently delete every application on this board and its workspace data. Applications currently loaded on this board: {{count}}. Search and status filters do not limit deletion. Other boards are not affected. This cannot be undone.",
+      continue: "Continue",
+      deleting: "Deleting…",
+      deleted: "Applications deleted.",
+    },
     workspace: {
       open: "Open workspace",
       backTo: "Back to {{board}}",

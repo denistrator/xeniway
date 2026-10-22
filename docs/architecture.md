@@ -24,6 +24,8 @@ React + React Router
 
 Application-board JobCards render as anchors linking to `/applications/:id`. Ordinary clicks and Enter activation retain in-app navigation; modified clicks and browser link actions retain native behavior, including opening a new tab. Drag-and-drop and the existing arrow/Home/End reordering shortcuts remain available only when online mutations are permitted.
 
+Board-wide deletion lives in the shared collection `ApplicationBulkDelete` view/model, under a native Board actions disclosure after each board's results. Each action names its active, archived, or blacklisted scope and shows the unfiltered loaded count. Search and status filters never narrow the owner-scoped deletion endpoint; the loaded count is context, not a server-enforced snapshot. Active-board deletion retains two confirmations and its five-second countdown; archive/blacklist retain one confirmation. A synchronous invocation guard prevents duplicate submissions, keeps the active confirmation open while pending, and preserves sanitized errors for explicit retry or cancellation. Success waits for the existing query invalidation, announces completion, and restores focus to the stable Board actions region. Empty and read-only boards disable deletion.
+
 ### Read-only offline access
 
 PWA metadata lives in `apps/web/pwa-manifest.ts`; Vite generates and links the production manifest. Installation and private offline preparation are independent. Registration is consent-only, with no custom install prompt. See [Operations](operations.md#pwa-installation) for asset/deployment requirements and manual installation checks.

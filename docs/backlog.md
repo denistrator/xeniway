@@ -8,8 +8,7 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 - **Plan:** [2026-10-21 UI audit and remediation plan](superpowers/plans/2026-10-21-ui-interaction-audit.md).
 - **Implementation:** [UI fixes task plan](superpowers/plans/2026-10-21-ui-fixes-implementation-plan.md) maps every finding to a testable task and records policy decisions that require approval before execution.
-- **Current checkpoint:** All currently authorized automated UI-plan tasks are implemented and verified on `codex/confirmation-dialog-focus`, including full offline and ordinary Chromium suites. Broader device/screen-reader review is not recorded.
-- **Current checkpoint:** D1 and D3 are complete. The remaining work is intentionally blocked by the policy gates and physical/manual validation recorded in the implementation plan; do not treat this backlog entry as authorization to bypass them.
+- **Current checkpoint:** D1, D3 and approved D4/T08 are implemented on `codex/confirmation-dialog-focus`. T08 has passing focused component/browser checks and independent review. Checkpoint 12 records frontend unit timing failures and interrupted full browser verification after the local container engine stopped. Broader device/screen-reader review is not recorded. Remaining tasks retain the plan's policy and manual validation gates; this entry does not authorize bypassing them.
 - **Evidence:** Source review and targeted browser inspection identified draft-loss paths, incomplete confirmation focus behavior, errors outside active dialogs, weak bulk-action hierarchy, and inconsistent offline/account recovery feedback. The plan records evidence, priorities, acceptance checks, and unverified device/layout candidates separately.
 - **Direction:** Prioritize work preservation and truthful feedback, then navigation and responsive hierarchy. Borrow HIG interaction principles without copying Apple-native UI. The plan is not authorization to implement fixes.
 - **Guardrails:** Preserve owner scoping, CSRF, six statuses, archive/blacklist distinctions, InlineEdit, local-first preferences, and read-only offline behavior. Reuse the existing offline-disclosure, diagnostics, export-association, and measured-bundle entries referenced in the plan instead of duplicating them. Ask before addressing new blockers or broadening scope. No automated style/layout/snapshot tests.
@@ -57,6 +56,13 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Guardrails:** Never delete unread notifications; test the exact age cutoff and ensure cleanup is safe to run repeatedly. Keep retention cleanup independent from the user-facing notification center workflow.
 
 ## Open refactoring tasks
+
+### Investigate frontend unit-suite timeouts under load
+
+- **Area:** Full `apps/web` Vitest run and its worker/test isolation setup.
+- **Evidence:** T08 verification ran the normal root test command: scripts/shared/API passed, while frontend tests finished with 677 passed and 25 failures across eight unchanged files (Settings, export, create dialog, and workspace contacts/follow-ups/overview/page/preparation). Most failures hit the five-second test limit; subsequent assertions also saw incomplete typed values or pending UI. The focused deletion/Home/confirmation run passed all 41 cases before the full run. No workspace-editor, modal or Vitest configuration implementation changed in T08. System CPU sampling also showed substantial competing application load; that is evidence to investigate, not a confirmed root cause.
+- **Possible direction:** Compare affected files in isolation and the full suite under recorded load, inspect worker concurrency and unfinished user-event work after timeouts, and establish whether failures reflect resource contention, cleanup leakage or a product defect.
+- **Guardrails:** Preserve assertions, owner scoping and interaction coverage. Do not raise timeouts, skip tests, disable isolation or serialize everything merely to obtain green output. This follow-up is separate from the approved board-deletion repair.
 
 ### Investigate intermittent company-research save browser failure
 
