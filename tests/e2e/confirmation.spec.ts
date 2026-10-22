@@ -157,3 +157,38 @@ test("preserves compact drafts on dismissal and requires explicit discard in Eng
   await expect(hebrewLocation).toHaveValue("טיוטה");
   expect(updates).toEqual([{ location: "Saved location" }]);
 });
+
+test("blocks dirty workspace departure until the draft is explicitly discarded", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `departure-${crypto.randomUUID()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company: "Departure guard", position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+  const applicationId = ((await created.json()) as ApplicationResponse).data.application.id;
+
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Departure guard, Engineer,/ }).click();
+  await page.getByRole("button", { name: "Add activity", exact: true }).click();
+  const title = page.getByRole("textbox", { name: "Title", exact: true });
+  await title.fill("Prepare questions");
+  await page.goBack();
+
+  const dialog = page.getByRole("alertdialog", { description: "Save your changes, discard them, or keep editing." });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/applications/${applicationId}$`));
+  await expect(title).toHaveValue("Prepare questions");
+
+  await page.goBack();
+  await dialog.getByRole("button", { name: "Discard changes", exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "Applications" })).toBeVisible();
+});

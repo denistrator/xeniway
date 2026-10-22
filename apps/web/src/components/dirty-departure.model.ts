@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useBlocker } from "react-router-dom";
 import { useDirtyEditors } from "../lib/dirty-editors";
@@ -11,7 +11,18 @@ export function useDirtyDeparture() {
   const { t } = useTranslation();
   const editors = useDirtyEditors();
   const editor = getActiveEditor(editors);
-  const blocker = useBlocker(editor !== null);
+  const editorsRef = useRef(editors);
+  const allowNextNavigation = useRef(false);
+  editorsRef.current = editors;
+  const shouldBlock = useCallback(() => {
+    if (allowNextNavigation.current) {
+      allowNextNavigation.current = false;
+      return false;
+    }
+
+    return getActiveEditor(editorsRef.current) !== null;
+  }, []);
+  const blocker = useBlocker(shouldBlock);
 
   useEffect(() => {
     if (!editor) {
@@ -33,15 +44,28 @@ export function useDirtyDeparture() {
     }
   }
 
+  function captureProceed() {
+    if (blocker.state !== "blocked") {
+      return null;
+    }
+
+    allowNextNavigation.current = true;
+    return blocker.proceed;
+  }
+
   function discardAndProceed() {
     if (!editor) {
       return;
     }
 
-    if (blocker.state === "blocked") {
+    const proceed = captureProceed();
+    if (!proceed) {
       editor.discard();
-      blocker.proceed();
+      return;
     }
+
+    proceed();
+    window.setTimeout(editor.discard, 0);
   }
 
   async function saveAndProceed() {
@@ -49,9 +73,10 @@ export function useDirtyDeparture() {
       return;
     }
 
+    const proceed = captureProceed();
     const saved = await editor.save();
-    if (saved && blocker.state === "blocked") {
-      blocker.proceed();
+    if (saved) {
+      proceed?.();
     }
   }
 

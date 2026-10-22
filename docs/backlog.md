@@ -9,10 +9,17 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Plan:** [2026-10-21 UI audit and remediation plan](superpowers/plans/2026-10-21-ui-interaction-audit.md).
 - **Implementation:** [UI fixes task plan](superpowers/plans/2026-10-21-ui-fixes-implementation-plan.md) maps every finding to a testable task and records policy decisions that require approval before execution.
 - **Current checkpoint:** UI-06 confirmation focus/background isolation and its simplification are accepted by the user on `codex/confirmation-dialog-focus`. Broader device/screen-reader review is not recorded. Other findings remain pending; execute one fix at a time and stop for user verification.
-- **Current checkpoint:** D1 is approved. UI-02 now protects dirty contact, follow-up, and activity editor switches and is awaiting user testing. Pending-save protection (UI-03) and navigation protection (UI-04) remain pending; do not expand this checkpoint to implement them.
+- **Current checkpoint:** D1 is approved. UI-02 protects dirty contact, follow-up, and activity editor switches; UI-03 protects pending saves; UI-04 now uses React Router's supported blocker for dirty create/workspace departures. The remaining browser coverage and device review are recorded in the implementation plan.
 - **Evidence:** Source review and targeted browser inspection identified draft-loss paths, incomplete confirmation focus behavior, errors outside active dialogs, weak bulk-action hierarchy, and inconsistent offline/account recovery feedback. The plan records evidence, priorities, acceptance checks, and unverified device/layout candidates separately.
 - **Direction:** Prioritize work preservation and truthful feedback, then navigation and responsive hierarchy. Borrow HIG interaction principles without copying Apple-native UI. The plan is not authorization to implement fixes.
 - **Guardrails:** Preserve owner scoping, CSRF, six statuses, archive/blacklist distinctions, InlineEdit, local-first preferences, and read-only offline behavior. Reuse the existing offline-disclosure, diagnostics, export-association, and measured-bundle entries referenced in the plan instead of duplicating them. Ask before addressing new blockers or broadening scope. No automated style/layout/snapshot tests.
+
+### Coordinate compact-field blur warnings with route departure
+
+- **Where:** `apps/web/src/features/applications/application-workspace/overview/use-application-fields.ts` and `apps/web/src/components/dirty-departure.view.tsx`.
+- **Evidence:** A dirty compact field followed by browser Back opens both its field-level unsaved warning and the shared route-departure confirmation. The activity editor does not have this blur path, and its Back/Discard route workflow passes.
+- **Possible direction:** Define one explicit transition owner so a route departure either defers the compact warning or carries its confirmed save/discard decision into the pending router transition. Preserve the local warning for field-to-field switches.
+- **Guardrails:** Do not drop drafts, bypass React Router's blocker, patch browser history, or silently turn a Back/Forward action into a new push navigation. Cover link, Back/Forward, Escape/backdrop, save failure, and focus restoration.
 
 ### Make the logout browser workflow independently runnable
 
