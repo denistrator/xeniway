@@ -227,3 +227,34 @@ test("uses the departure dialog instead of stacking a compact-field warning on b
   await departureDialog.getByRole("button", { name: "Discard changes", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
 });
+
+test("saves a compact draft before completing browser Back navigation", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const registration = await page.request.post("/api/auth/register", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: `save-departure-${crypto.randomUUID()}@example.com`, password: "password123" },
+  });
+  expect(registration.ok()).toBe(true);
+  const headers = { "x-csrf-token": ((await registration.json()) as AuthResponse).data.csrfToken };
+  expect((await page.request.post("/api/user/preferences/introduced", { headers })).ok()).toBe(true);
+  const created = await page.request.post("/api/applications", {
+    headers,
+    data: { company: "Save departure", position: "Engineer", status: "saved" },
+  });
+  expect(created.ok()).toBe(true);
+  const applicationId = ((await created.json()) as ApplicationResponse).data.application.id;
+
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Save departure, Engineer,/ }).click();
+  await page.getByRole("button", { name: "Location, Edit", exact: true }).click();
+  await page.getByRole("textbox", { name: "Location", exact: true }).fill("Remote");
+  const updated = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === `/api/applications/${applicationId}`,
+  );
+  await page.goBack();
+
+  const dialog = page.getByRole("alertdialog", { description: "Save your changes, discard them, or keep editing." });
+  await dialog.getByRole("button", { name: "Save changes", exact: true }).click();
+  expect((await updated).ok()).toBe(true);
+  await expect(page).toHaveURL(/\/$/);
+});
