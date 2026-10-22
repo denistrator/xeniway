@@ -45,14 +45,11 @@ export function ApplicationLifecycleActions(props: ApplicationLifecycleActionsPr
           yesLabel={view.labels[view.pendingAction]}
           noLabel={view.noLabel}
           yesDisabled={!view.canMutate || view.lifecycle.pending}
+          pending={view.lifecycle.pending}
+          error={view.actionErrorText ?? undefined}
           onYes={view.confirmAction}
           onNo={view.cancelAction}
         />
-      )}
-      {view.actionErrorKey && (
-        <p role="alert" className={styles.actionError()}>
-          {view.actionErrorText}
-        </p>
       )}
     </>
   );

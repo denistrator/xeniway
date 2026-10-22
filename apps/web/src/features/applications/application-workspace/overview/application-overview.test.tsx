@@ -148,6 +148,9 @@ test("keeps the compact draft after a failed warning save and dismissal", async 
   await waitFor(() => {
     expect(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Save changes" })).toBeEnabled();
   });
+  expect(within(screen.getByRole("alertdialog")).getByRole("alert")).toHaveTextContent(
+    "Something went wrong. Please try again.",
+  );
   await user.keyboard("{Escape}");
 
   expect(input).toHaveValue("Remote draft");

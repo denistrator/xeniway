@@ -153,8 +153,9 @@ test("disables confirmation while pending and retains the dialog after failure",
   expect(fetcher).toHaveBeenCalledTimes(1);
   reject(new Error("offline"));
 
-  expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
-  expect(screen.getByRole("alertdialog")).toBeVisible();
+  const dialog = screen.getByRole("alertdialog");
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  expect(dialog).toBeVisible();
   expect(confirm).toBeEnabled();
   expect(screen.getByTestId("pathname").textContent).toBe("/applications/3");
   await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "No" }));

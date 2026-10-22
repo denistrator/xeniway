@@ -12,6 +12,8 @@ export function ApplicationUnsavedWarning(props: ApplicationUnsavedWarningProps)
     <ConfirmationModal
       title={view.confirmationTitle}
       text={view.warningText}
+      error={view.warningError}
+      pending={view.fields.fields[view.warningField].pending}
       yesLabel={view.saveLabel}
       noLabel={view.discardLabel}
       yesDisabled={!view.canMutate || view.fields.fields[view.warningField].pending}

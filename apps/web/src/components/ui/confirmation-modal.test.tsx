@@ -59,6 +59,27 @@ test("keeps focus on Cancel while confirmation is disabled", async () => {
   expect(cancel).toHaveFocus();
 });
 
+test("keeps a pending confirmation open and announces its error", async () => {
+  const user = userEvent.setup();
+  const onNo = vi.fn();
+  render(
+    <ConfirmationModal
+      {...labels}
+      pending
+      error="Something went wrong. Please try again."
+      onNo={onNo}
+      onYes={vi.fn()}
+    />,
+  );
+
+  const dialog = screen.getByRole("alertdialog");
+  await user.keyboard("{Escape}");
+
+  expect(dialog).toHaveAttribute("aria-busy", "true");
+  expect(within(dialog).getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+  expect(onNo).not.toHaveBeenCalled();
+});
+
 test.each(["Escape", "Cancel", "backdrop", "confirm"])("restores the opener after %s", async (action) => {
   const user = userEvent.setup();
   render(

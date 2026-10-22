@@ -26,6 +26,8 @@ export function useApplicationUnsavedWarning({ fields }: ApplicationUnsavedWarni
   }
 
   const confirmationTitle = t("applications.workspace.unsavedChangesTitle");
+  const warningErrorKey = warningField ? fields.fields[warningField].errorKey : null;
+  const warningError = warningErrorKey ? t(warningErrorKey) : undefined;
   const saveLabel = t("applications.workspace.actions.saveChanges");
   const discardLabel = t("applications.workspace.actions.discardChanges");
   const dismissAction = { label: t("applications.workspace.actions.keepEditing"), onDismiss: keepEditing };
@@ -33,6 +35,7 @@ export function useApplicationUnsavedWarning({ fields }: ApplicationUnsavedWarni
     warningField,
     confirmationTitle,
     warningText,
+    warningError,
     saveLabel,
     discardLabel,
     dismissAction,
