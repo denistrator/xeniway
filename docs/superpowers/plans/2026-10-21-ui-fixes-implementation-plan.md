@@ -78,7 +78,7 @@ Each task ends with its own reviewable, independently tested patch. Where a task
 
 - [x] Confirm the installed Playwright package can launch its default bundled Chromium. This was repaired during the audit; do not introduce a Chrome-channel override.
 - [x] Run `bun run format:check`, `bun run lint`, `bun run typecheck`, `bun run test`, and `bun run build`. Record each outcome. The audit previously found unrelated header indentation; ask before fixing a remaining unrelated failure. The current branch passes all five checks.
-- [ ] After confirming service prerequisites and permission to refresh disposable fixtures, run `bun run test:e2e:offline` then `bun run test:e2e`. Classify existing failures, including the known offline-logout disclosure and isolated logout onboarding dependency. Do not change assertions merely to obtain green output.
+- [x] After confirming service prerequisites and permission to refresh disposable fixtures, run `bun run test:e2e:offline` then `bun run test:e2e`. Classify existing failures, including the known offline-logout disclosure and isolated logout onboarding dependency. Do not change assertions merely to obtain green output.
 - [x] Extend `W/test-support/render-application-workspace.tsx` only where needed to support a query-backed page using `createMemoryRouter` after the routing decision, and real detail-query invalidation. Keep its existing fixed-content helper for tests that do not need query updates.
 - [x] Use manually controlled promises for pending/failure tests, not hard sleeps. Capture request counts and submitted payloads; never log cookies, CSRF tokens, reset links, or private records.
 
@@ -514,3 +514,9 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 - **Coverage:** The focused confirmation suite now covers clean navigation, dirty cancellation, explicit discard, successful and failed save-before-departure, drawer-to-modal draft retention, browser Back, browser Forward, compact-editor overlap, and logout. The Forward regression starts from the board with a real forward history entry, types a create-form draft, verifies Keep editing retains the board and exact draft, then verifies Discard changes completes the original workspace navigation.
 - **Verification:** `bunx playwright test tests/e2e/confirmation.spec.ts` passed: 8 Chromium tests. `bun run format`, `bun run lint`, `bun run typecheck`, and `git diff --check` passed for the preceding create-presentation assertion; the current checkpoint reruns the same formatting/static checks before commit. Browser fixtures are disposable test data only.
 - **Limitations:** The full ordinary and offline browser suites remain an open T01 baseline item. This focused suite does not claim physical-device, assistive-technology, or full-suite verification.
+
+### Checkpoint 11 · Full browser baseline (T01)
+
+- **Authority and scope:** The user authorized autonomous plan completion and disposable fixture refreshes. Both commands use the repository’s configured local services and test-only Redis/database fixtures; no assertion or application behavior was changed to obtain a pass.
+- **Verification:** `bun run test:e2e:offline` completed with exit 0 after its production build/type-check preflight. `bun run test:e2e` completed with exit 0 and its configured 36-test Chromium suite. The offline build reports the pre-existing non-fatal `inlineDynamicImports` deprecation warning; it remains tracked separately and did not affect test results.
+- **Outcome:** The previously recorded offline-logout disclosure and logout onboarding concerns no longer reproduce in the current full browser baseline. T01’s browser-baseline checkpoint is complete.
