@@ -6,19 +6,19 @@ import { JobFormDetailsFields } from "./job-form-details-fields.view";
 
 const styles = jobFormStyles();
 
-export function JobForm({ submitting, form: controller }: JobFormProps) {
-  const { form } = useJobFormPresentation({ submitting, form: controller });
+export function JobForm({ submitting, submitError, form: controller }: JobFormProps) {
+  const { form, error } = useJobFormPresentation({ submitting, submitError, form: controller });
 
   return (
     <form
       className={styles.root()}
       onSubmit={form.handleSubmit}
-      aria-describedby={form.error ? "application-form-error" : undefined}
+      aria-describedby={error ? "application-form-error" : undefined}
       autoComplete="off"
     >
       <JobFormBasicFields form={form.form} update={form.update} />
       <JobFormDetailsFields form={form.form} update={form.update} />
-      {form.error && (
+      {error && (
         <p
           ref={form.errorRef}
           id="application-form-error"
@@ -27,7 +27,7 @@ export function JobForm({ submitting, form: controller }: JobFormProps) {
           tabIndex={-1}
           className={styles.error()}
         >
-          {form.error}
+          {error}
         </p>
       )}
       <JobFormActions submitting={submitting} />

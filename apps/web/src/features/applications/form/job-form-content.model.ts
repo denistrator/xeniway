@@ -6,6 +6,7 @@ import type { JobFormController } from "./use-job-form";
 export type JobFormContentProps = {
   presentation: JobFormPresentation;
   submitting: boolean;
+  submitError?: string;
   form: JobFormController;
   onClose: () => void;
   onSwitchPresentation: () => void;

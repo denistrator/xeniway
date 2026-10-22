@@ -22,10 +22,14 @@ export function useAuthenticatedJobManagerPresentation() {
   const mutationError = mutations.create.error;
   const mutationErrorCode = mutationError instanceof ApiRequestError ? mutationError.code : "REQUEST_FAILED";
   async function handleSave(input: CreateApplicationInput) {
-    await mutations.create.mutateAsync(input);
-    dispatch(closeDrawer());
+    try {
+      await mutations.create.mutateAsync(input);
+      dispatch(closeDrawer());
+    } catch {
+      // The active form renders the translated mutation error from this mutation state.
+    }
   }
   const close = () => dispatch(closeDrawer());
-  const selectionLabel = t(getApiErrorKey(mutationErrorCode));
-  return { isOpen, pending, mutationError, handleSave, close, selectionLabel };
+  const submitError = mutationError ? t(getApiErrorKey(mutationErrorCode)) : undefined;
+  return { isOpen, pending, handleSave, close, submitError };
 }

@@ -11,12 +11,20 @@ import { useJobForm } from "./use-job-form";
 export type JobManagerProps = {
   open: boolean;
   submitting: boolean;
+  submitError?: string;
   onSave: (input: CreateApplicationInput) => void;
   onClose: () => void;
   openerRef?: RefObject<HTMLElement | null>;
 };
 
-export function useJobManagerPresentation({ open, submitting, onSave, onClose, openerRef }: JobManagerProps) {
+export function useJobManagerPresentation({
+  open,
+  submitting,
+  submitError,
+  onSave,
+  onClose,
+  openerRef,
+}: JobManagerProps) {
   const dispatch = useDispatch();
   const presentation = useSelector((state: RootState) => state.ui.jobFormPresentation);
   const dialogRef = useJobDialog(open, onClose, openerRef);
@@ -37,6 +45,7 @@ export function useJobManagerPresentation({ open, submitting, onSave, onClose, o
     presentation,
     dialogRef,
     submitting,
+    submitError,
     form,
     onSave,
     onClose,

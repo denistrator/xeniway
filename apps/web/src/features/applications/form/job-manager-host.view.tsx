@@ -4,9 +4,6 @@ import {
   useAuthenticatedJobManagerPresentation,
   useJobManagerHostPresentation,
 } from "./job-manager-host.model";
-import { jobManagerHostStyles } from "./job-manager-host.styles";
-
-const styles = jobManagerHostStyles();
 
 export function JobManagerHost({ openerRef }: JobManagerHostProps) {
   const { user } = useJobManagerHostPresentation();
@@ -15,14 +12,17 @@ export function JobManagerHost({ openerRef }: JobManagerHostProps) {
 }
 
 function AuthenticatedJobManager({ openerRef }: JobManagerHostProps) {
-  const { isOpen, pending, mutationError, handleSave, close, selectionLabel } =
-    useAuthenticatedJobManagerPresentation();
+  const { isOpen, pending, handleSave, close, submitError } = useAuthenticatedJobManagerPresentation();
 
   return (
-    <>
-      <JobManager open={isOpen} submitting={pending} onSave={handleSave} onClose={close} openerRef={openerRef} />
-      {mutationError && <p className={styles.error()}>{selectionLabel}</p>}
-    </>
+    <JobManager
+      open={isOpen}
+      submitting={pending}
+      submitError={submitError}
+      onSave={handleSave}
+      onClose={close}
+      openerRef={openerRef}
+    />
   );
 }
 
