@@ -37,3 +37,17 @@ export function normalizeApplicationForm(form: ApplicationFormState): CreateAppl
     notes: form.notes || null,
   };
 }
+
+export function isApplicationFormDirty(form: ApplicationFormState) {
+  const initialForm = normalizeApplicationForm(emptyApplicationForm);
+  const currentForm = normalizeApplicationForm(form);
+  const fields = Object.keys(initialForm) as (keyof CreateApplicationInput)[];
+
+  for (const field of fields) {
+    if (initialForm[field] !== currentForm[field]) {
+      return true;
+    }
+  }
+
+  return false;
+}

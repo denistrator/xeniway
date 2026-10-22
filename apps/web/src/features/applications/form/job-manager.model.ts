@@ -1,5 +1,6 @@
 import type { CreateApplicationInput } from "@xeniway/shared";
-import type { RefObject } from "react";
+import { type RefObject, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { useCurrentUser, useUpdateUserPreferences } from "../../../lib/queries";
 import { writeLocalUserPreferences } from "../../../lib/user-preferences";
@@ -12,7 +13,7 @@ export type JobManagerProps = {
   open: boolean;
   submitting: boolean;
   submitError?: string;
-  onSave: (input: CreateApplicationInput) => void;
+  onSave: (input: CreateApplicationInput) => boolean | Promise<boolean>;
   onClose: () => void;
   openerRef?: RefObject<HTMLElement | null>;
 };
@@ -25,13 +26,40 @@ export function useJobManagerPresentation({
   onClose,
   openerRef,
 }: JobManagerProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const presentation = useSelector((state: RootState) => state.ui.jobFormPresentation);
-  const dialogRef = useJobDialog(open, onClose, openerRef);
   const user = useCurrentUser();
   const canMutate = useCanMutate();
   const updatePreferences = useUpdateUserPreferences();
   const form = useJobForm({ onSubmit: onSave });
+  const [closeWarningOpen, setCloseWarningOpen] = useState(false);
+
+  function close() {
+    if (form.dirty && !submitting) {
+      setCloseWarningOpen(true);
+      return;
+    }
+
+    onClose();
+  }
+
+  function keepEditing() {
+    setCloseWarningOpen(false);
+  }
+
+  function discardAndClose() {
+    form.reset();
+    setCloseWarningOpen(false);
+    onClose();
+  }
+
+  async function saveAndClose() {
+    await form.submit();
+    setCloseWarningOpen(false);
+  }
+
+  const dialogRef = useJobDialog(open, close, openerRef);
 
   const switchPresentation = () => {
     const nextPresentation = presentation === "drawer" ? "modal" : "drawer";
@@ -48,9 +76,21 @@ export function useJobManagerPresentation({
     submitError,
     form,
     onSave,
-    onClose,
+    onClose: close,
     onSwitchPresentation: switchPresentation,
   };
 
-  return { presentation, props };
+  const closeWarning = {
+    open: closeWarningOpen,
+    title: t("applications.workspace.unsavedChangesTitle"),
+    text: t("applications.workspace.unsavedRecordChangesText"),
+    saveLabel: t("applications.workspace.actions.saveChanges"),
+    discardLabel: t("applications.workspace.actions.discardChanges"),
+    keepEditingLabel: t("applications.workspace.actions.keepEditing"),
+    pending: submitting,
+    keepEditing,
+    discardAndClose,
+    saveAndClose,
+  };
+  return { presentation, props, closeWarning };
 }

@@ -6,6 +6,7 @@ import {
   type ApplicationFormErrors,
   type ApplicationFormState,
   emptyApplicationForm,
+  isApplicationFormDirty,
   normalizeApplicationForm,
 } from "./application-form";
 
@@ -66,7 +67,7 @@ function getFieldErrors(
   return errors;
 }
 
-export function useJobForm({ onSubmit }: { onSubmit: (input: CreateApplicationInput) => void }) {
+export function useJobForm({ onSubmit }: { onSubmit: (input: CreateApplicationInput) => boolean | Promise<boolean> }) {
   const { t } = useTranslation();
   const [form, setForm] = useState<FormState>(emptyApplicationForm);
   const [error, setError] = useState<string | null>(null);
@@ -99,27 +100,44 @@ export function useJobForm({ onSubmit }: { onSubmit: (input: CreateApplicationIn
     });
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function reset() {
+    setForm(emptyApplicationForm);
+    setError(null);
+    setFieldErrors({});
+  }
+
+  async function submit() {
     const parsed = createApplicationInputSchema.safeParse(normalizeApplicationForm(form));
     if (!parsed.success) {
       const nextErrors = getFieldErrors(parsed.error.issues, form, t);
       const hasFieldErrors = Object.keys(nextErrors).length > 0;
       setFieldErrors(nextErrors);
       setError(hasFieldErrors ? null : t("applications.form.checkDetails"));
-      return;
+      return false;
     }
     setFieldErrors({});
     setError(null);
-    onSubmit(parsed.data);
+    const saved = await onSubmit(parsed.data);
+    if (saved) {
+      reset();
+    }
+    return Boolean(saved);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void submit();
   }
 
   return {
     form,
     update,
+    reset,
+    submit,
     handleSubmit,
     error,
     fieldErrors,
     errorRef,
+    dirty: isApplicationFormDirty(form),
   };
 }

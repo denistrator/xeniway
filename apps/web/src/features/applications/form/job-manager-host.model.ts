@@ -25,8 +25,10 @@ export function useAuthenticatedJobManagerPresentation() {
     try {
       await mutations.create.mutateAsync(input);
       dispatch(closeDrawer());
+      return true;
     } catch {
       // The active form renders the translated mutation error from this mutation state.
+      return false;
     }
   }
   const close = () => dispatch(closeDrawer());

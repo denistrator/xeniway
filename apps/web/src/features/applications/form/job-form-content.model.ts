@@ -12,6 +12,6 @@ export type JobFormContentProps = {
   onSwitchPresentation: () => void;
 };
 export type JobFormDialogProps = JobFormContentProps & {
-  onSave: (input: CreateApplicationInput) => void;
+  onSave: (input: CreateApplicationInput) => boolean | Promise<boolean>;
   dialogRef: RefObject<HTMLElement | null>;
 };

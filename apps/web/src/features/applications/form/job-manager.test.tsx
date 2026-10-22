@@ -27,7 +27,7 @@ test("keeps a create-application draft when switching between drawer and modal",
   render(
     <Provider store={store}>
       <QueryClientProvider client={client}>
-        <JobManager open submitting={false} onSave={() => {}} onClose={() => {}} />
+        <JobManager open submitting={false} onSave={() => false} onClose={() => {}} />
       </QueryClientProvider>
     </Provider>,
   );
@@ -51,7 +51,7 @@ test("announces a failed create inside the active dialog", () => {
           open
           submitting={false}
           submitError="Something went wrong. Please try again."
-          onSave={() => {}}
+          onSave={() => false}
           onClose={() => {}}
         />
       </QueryClientProvider>
@@ -73,7 +73,7 @@ test("contains focus and handles Escape once in the create dialog", async () => 
   render(
     <Provider store={store}>
       <QueryClientProvider client={client}>
-        <JobManager open submitting={false} onSave={() => {}} onClose={onClose} />
+        <JobManager open submitting={false} onSave={() => false} onClose={onClose} />
       </QueryClientProvider>
     </Provider>,
   );
@@ -89,5 +89,63 @@ test("contains focus and handles Escape once in the create dialog", async () => 
 
   await user.keyboard("{Escape}");
   expect(onClose).toHaveBeenCalledTimes(1);
+  client.clear();
+});
+
+test("keeps a create draft until the user explicitly discards it", async () => {
+  const user = userEvent.setup();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const onClose = vi.fn();
+  client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
+  client.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
+
+  render(
+    <Provider store={store}>
+      <QueryClientProvider client={client}>
+        <JobManager open submitting={false} onSave={() => false} onClose={onClose} />
+      </QueryClientProvider>
+    </Provider>,
+  );
+
+  await user.type(screen.getByLabelText(/Company/), "Northwind");
+  await user.click(screen.getByRole("button", { name: "Close" }));
+
+  const warning = await screen.findByRole("alertdialog");
+  await user.click(within(warning).getByRole("button", { name: "Keep editing" }));
+
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.getByLabelText(/Company/)).toHaveValue("Northwind");
+
+  await user.click(screen.getByRole("button", { name: "Close" }));
+  await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Discard changes" }));
+
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(screen.getByLabelText(/Company/)).toHaveValue("");
+  client.clear();
+});
+
+test("retains the draft after a failed save request from the close warning", async () => {
+  const user = userEvent.setup();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const onSave = vi.fn().mockResolvedValue(false);
+  client.setQueryData(authKeys.me, { data: { user: { id: 1, email: "candidate@example.com" } } });
+  client.setQueryData(authKeys.csrf, { data: { csrfToken: "csrf" } });
+
+  render(
+    <Provider store={store}>
+      <QueryClientProvider client={client}>
+        <JobManager open submitting={false} onSave={onSave} onClose={() => {}} />
+      </QueryClientProvider>
+    </Provider>,
+  );
+
+  await user.type(screen.getByLabelText(/Company/), "Northwind");
+  await user.type(screen.getByLabelText(/Position/), "Engineer");
+  await user.click(screen.getByRole("button", { name: "Close" }));
+  await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Save changes" }));
+
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ company: "Northwind", position: "Engineer" }));
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/Company/)).toHaveValue("Northwind");
   client.clear();
 });

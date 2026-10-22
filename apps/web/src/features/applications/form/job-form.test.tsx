@@ -16,7 +16,7 @@ function renderJobForm() {
   render(
     <Provider store={store}>
       <QueryClientProvider client={client}>
-        <JobManager open submitting={false} onSave={() => {}} onClose={() => {}} />
+        <JobManager open submitting={false} onSave={() => false} onClose={() => {}} />
       </QueryClientProvider>
     </Provider>,
   );
