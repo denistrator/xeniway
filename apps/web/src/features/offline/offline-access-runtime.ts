@@ -15,6 +15,14 @@ import {
   userPreferencesKeys,
 } from "../../lib/api";
 import { type AccessEvent, createAccessState, selectAccess, transitionAccess } from "./offline-access-machine";
+import {
+  finishOfflineCleanup,
+  OfflineCleanupPendingError,
+  type OfflineCleanupTarget,
+  offlineCleanupStorageKey,
+  readOfflineCleanup,
+  rememberOfflineCleanup,
+} from "./offline-cleanup";
 import { clearOfflineLogoutNotice, hasOfflineLogoutNotice, saveOfflineLogoutNotice } from "./offline-logout-notice";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
@@ -52,7 +60,7 @@ function isSessionRejected(result: QueryObserverResult<OfflineAuthData>): boolea
   return isRejectedRequest || isSignedOut;
 }
 
-/** One mounted provider owns one runtime. Construction has no subscriptions or I/O. */
+/** One mounted provider owns one runtime. Construction has no subscriptions or writes. */
 export function createOfflineAccessRuntime(client: QueryClient, options: OfflineRuntimeOptions = {}) {
   const authUser = () => client.getQueryData<OfflineAuthData>(offlineAuthKey)?.data.user;
   let state = createAccessState({
@@ -64,6 +72,14 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   });
   if (client.getQueryState(offlineAuthKey)?.error) {
     state = transitionAccess(state, { type: "SESSION_UNAVAILABLE" });
+  }
+  try {
+    const cleanup = readOfflineCleanup();
+    if (cleanup) {
+      state = transitionAccess(state, { type: "DOWNLOAD_CLEANUP_DISCOVERED", ...cleanup });
+    }
+  } catch {
+    state = transitionAccess(state, { type: "DOWNLOAD_CLEANUP_UNAVAILABLE" });
   }
   let snapshot = selectAccess(state, Date.now());
   const listeners = new Set<() => void>();
@@ -122,8 +138,18 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   async function clearDeviceRecords() {
+    const cleanup = state.cleanup;
     try {
       await clearOfflineDevice();
+      if (cleanup.status === "failed" || cleanup.status === "removing") {
+        dispatch({
+          type: "DOWNLOAD_CLEANUP_SUCCEEDED",
+          ownerId: cleanup.ownerId,
+          preparationId: cleanup.preparationId,
+        });
+      } else if (cleanup.status === "unavailable") {
+        dispatch({ type: "DOWNLOAD_CLEANUP_CHECKED" });
+      }
     } catch (error) {
       dispatch({ type: "STORAGE_FAILED" });
       throw error;
@@ -180,41 +206,35 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       dispatch({ type: "DOWNLOAD_REMOVED" });
       return;
     }
-    dispatch({
-      type: "DOWNLOAD_REMOVAL_STARTED",
-      ownerId: account.userId,
-      preparationId: account.preparationId ?? null,
-    });
-    broadcast({ type: "removed", userId: account.userId });
-    try {
-      await clearOfflineAccount(account.userId, account.preparationId ?? null);
-      dispatch({
-        type: "DOWNLOAD_CLEANUP_SUCCEEDED",
-        ownerId: account.userId,
-        preparationId: account.preparationId ?? null,
-      });
-    } catch (error) {
-      dispatch({
-        type: "DOWNLOAD_CLEANUP_FAILED",
-        ownerId: account.userId,
-        preparationId: account.preparationId ?? null,
-      });
-      dispatch({ type: "STORAGE_FAILED" });
-      throw error;
-    }
+    await cleanDownload({ ownerId: account.userId, preparationId: account.preparationId ?? null });
   }
 
   async function retryDownloadCleanup() {
+    if (state.cleanup.status === "unavailable") {
+      synchronizeCleanup();
+    }
     if (state.cleanup.status !== "failed") {
       return;
     }
     const { ownerId, preparationId } = state.cleanup;
-    dispatch({ type: "DOWNLOAD_REMOVAL_STARTED", ownerId, preparationId });
+    await cleanDownload({ ownerId, preparationId });
+  }
+
+  async function cleanDownload(target: OfflineCleanupTarget) {
+    dispatch({ type: "DOWNLOAD_REMOVAL_STARTED", ...target });
     try {
-      await clearOfflineAccount(ownerId, preparationId);
-      dispatch({ type: "DOWNLOAD_CLEANUP_SUCCEEDED", ownerId, preparationId });
+      rememberOfflineCleanup(target);
+    } catch {
+      // A marker write failure must not prevent an attempt to erase private records.
+      dispatch({ type: "STORAGE_FAILED" });
+    }
+    broadcast({ type: "removed", userId: target.ownerId });
+    try {
+      await clearOfflineAccount(target.ownerId, target.preparationId);
+      finishOfflineCleanup(target);
+      dispatch({ type: "DOWNLOAD_CLEANUP_SUCCEEDED", ...target });
     } catch (error) {
-      dispatch({ type: "DOWNLOAD_CLEANUP_FAILED", ownerId, preparationId });
+      dispatch({ type: "DOWNLOAD_CLEANUP_FAILED", ...target });
       dispatch({ type: "STORAGE_FAILED" });
       throw error;
     }
@@ -302,7 +322,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         account.preparationId ?? null,
       );
     } catch (error) {
-      if (!(error instanceof OfflinePreparationChangedError)) {
+      const expectedCancellation =
+        error instanceof OfflinePreparationChangedError || error instanceof OfflineCleanupPendingError;
+      if (!expectedCancellation) {
         dispatch({ type: "STORAGE_FAILED" });
       }
     }
@@ -369,16 +391,19 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       case "session-changed":
         handleRemoteSessionChange(userId);
         break;
-      case "removed":
+      case "removed": {
+        const removedCurrentAccount = userId !== undefined && userId === snapshot.account?.userId;
+        synchronizeCleanup();
         if (userId !== undefined) {
           removedRestorationOwners.add(userId);
         }
-        if (userId !== snapshot.account?.userId) {
+        if (!removedCurrentAccount) {
           return;
         }
         dispatch({ type: "DOWNLOAD_REMOVED" });
         cancelPrivateQueries();
         break;
+      }
       case "logout": {
         const preservePublicCsrf = message.preservePublicCsrf && state.session.status !== "verified";
         dispatch({ type: "SIGNED_OUT" });
@@ -414,7 +439,40 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     const matchesOwner = !ownerId || ownerId === account.userId;
     const isSignedOut = state.session.status === "signed-out";
     const isUnexpired = account.expiresAt > Date.now();
-    return !wasRemoved && matchesOwner && !isSignedOut && isUnexpired;
+    return !wasRemoved && matchesOwner && !isSignedOut && isUnexpired && state.cleanup.status === "idle";
+  }
+
+  function synchronizeCleanup() {
+    try {
+      const cleanup = readOfflineCleanup();
+      if (cleanup) {
+        const current = state.cleanup;
+        const hasTarget = current.status === "removing" || current.status === "failed";
+        const alreadyKnown =
+          hasTarget && current.ownerId === cleanup.ownerId && current.preparationId === cleanup.preparationId;
+        if (!alreadyKnown) {
+          dispatch({ type: "DOWNLOAD_CLEANUP_DISCOVERED", ...cleanup }, "immediate");
+        }
+        void client.cancelQueries({ queryKey: applicationKeys.account(cleanup.ownerId) });
+        client.removeQueries({ queryKey: applicationKeys.account(cleanup.ownerId) });
+        return;
+      }
+      switch (state.cleanup.status) {
+        case "failed":
+        case "removing":
+          dispatch({
+            type: "DOWNLOAD_CLEANUP_SUCCEEDED",
+            ownerId: state.cleanup.ownerId,
+            preparationId: state.cleanup.preparationId,
+          });
+          break;
+        case "unavailable":
+          dispatch({ type: "DOWNLOAD_CLEANUP_CHECKED" });
+          break;
+      }
+    } catch {
+      dispatch({ type: "DOWNLOAD_CLEANUP_UNAVAILABLE" }, "immediate");
+    }
   }
 
   function restoreAccount(restored: OfflineRestoration | null, restorationEpoch: number) {
@@ -437,6 +495,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
 
   function start() {
     active = true;
+    synchronizeCleanup();
     const startedLifetime = ++lifetime;
     channel = typeof BroadcastChannel === "function" ? new BroadcastChannel("xeniway-offline") : null;
     if (channel) {
@@ -513,11 +572,17 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     const expired = () => {
       void signOutLocally().catch(() => {});
     };
+    const cleanupChanged = (event: StorageEvent) => {
+      if (event.key === offlineCleanupStorageKey || event.key === null) {
+        synchronizeCleanup();
+      }
+    };
     window.addEventListener("offline", lost);
     window.addEventListener("online", retry);
     window.addEventListener("xeniway:retry-connection", retry);
     window.addEventListener("xeniway:server-unavailable", unavailable);
     window.addEventListener("xeniway:auth-expired", expired);
+    window.addEventListener("storage", cleanupChanged);
     setAuthenticatedRequestGuard(assertWrite);
     synchronizeDownloadResources();
     const restorationEpoch = state.epoch;
@@ -543,6 +608,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       window.removeEventListener("xeniway:retry-connection", retry);
       window.removeEventListener("xeniway:server-unavailable", unavailable);
       window.removeEventListener("xeniway:auth-expired", expired);
+      window.removeEventListener("storage", cleanupChanged);
       channel?.close();
       channel = null;
       clearTimeout(expiryTimer);

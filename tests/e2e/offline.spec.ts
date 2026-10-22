@@ -567,6 +567,54 @@ test("expired downloads cannot grant access after an offline reload", async ({ p
   await expect(page.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);
 });
 
+test("failed removal stays revoked after an offline reload and cleanup can finish without a session", async ({
+  page,
+  context,
+}) => {
+  await login(page);
+  await prepare(page);
+  await openOfflineSettings(page);
+  await page.evaluate(() => {
+    indexedDB.open = () => {
+      throw new DOMException("Denied", "SecurityError");
+    };
+  });
+  await page.getByRole("button", { name: "Remove offline data", exact: true }).click();
+  await expect(page.getByText(/Offline data removal is unfinished/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry cleanup", exact: true })).toBeVisible();
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText(/Offline data removal is unfinished/)).toBeVisible();
+  await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Retry cleanup", exact: true }).click();
+  await expect(page.getByText(/Offline data removal is unfinished/)).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("offlineDownloadCleanup"))).toBeNull();
+  expect(
+    await page.evaluate(async () => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const open = indexedDB.open("xeniway-offline");
+        open.onsuccess = () => resolve(open.result);
+        open.onerror = () => reject(open.error);
+      });
+      try {
+        return await new Promise<number>((resolve, reject) => {
+          const request = db.transaction("snapshots").objectStore("snapshots").count();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      } finally {
+        db.close();
+      }
+    }),
+  ).toBe(0);
+  await expect(page.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);
+});
+
 test("removing downloads in another tab removes cached-device access", async ({ page, context }) => {
   await login(page);
   await prepare(page);

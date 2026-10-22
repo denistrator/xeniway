@@ -3,6 +3,12 @@ import { defaultScheduler, notifyManager, QueryClient } from "@tanstack/react-qu
 import { afterEach, expect, test, vi } from "vitest";
 import { applicationKeys, assertAuthenticatedWrite } from "../../lib/api";
 import { createOfflineAccessRuntime, type OfflineRestoration, offlineAuthKey } from "./offline-access-runtime";
+import {
+  finishOfflineCleanup,
+  offlineCleanupStorageKey,
+  readOfflineCleanup,
+  rememberOfflineCleanup,
+} from "./offline-cleanup";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineDevice,
@@ -106,13 +112,117 @@ test("failed download cleanup remains retryable without restoring device access"
     await expect(runtime.removeDownload()).rejects.toThrow("Denied");
     window.dispatchEvent(new Event("offline"));
     expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "failed" } });
+    expect(readOfflineCleanup()).toEqual({ ownerId: user.id, preparationId: null });
+    await expect(runtime.retryDownloadCleanup()).rejects.toThrow("Denied");
+    expect(runtime.getSnapshot().cleanup.status).toBe("failed");
+
+    const reloadedClient = new QueryClient();
+    const reloaded = createOfflineAccessRuntime(reloadedClient, { initialAccount: account });
+    expect(reloaded.getSnapshot()).toMatchObject({
+      account: null,
+      readAccountId: null,
+      cleanup: { status: "failed", ownerId: user.id },
+    });
+    reloadedClient.clear();
 
     vi.stubGlobal("indexedDB", originalIndexedDb);
     await runtime.retryDownloadCleanup();
 
     expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "idle" } });
+    expect(readOfflineCleanup()).toBeNull();
   } finally {
     vi.stubGlobal("indexedDB", originalIndexedDb);
+    stop();
+    client.clear();
+  }
+});
+
+test("cross-tab cleanup discovery revokes cached access and completion never restores it", () => {
+  const client = new QueryClient();
+  client.setQueryData(offlineAuthKey, { data: { user } });
+  const now = Date.now();
+  const runtime = createOfflineAccessRuntime(client, {
+    initialAccount: {
+      version: 1,
+      userId: user.id,
+      email: user.email,
+      verifiedAt: now,
+      expiresAt: now + OFFLINE_RETENTION_MS,
+      ready: true,
+      buildId: "test",
+    },
+  });
+  const stop = runtime.start();
+  try {
+    window.dispatchEvent(new Event("offline"));
+    expect(runtime.getSnapshot().readAccountId).toBe(user.id);
+    client.setQueryData(applicationKeys.list(user.id, "active"), { data: { applications: [] } });
+    const target = { ownerId: user.id, preparationId: null };
+    rememberOfflineCleanup(target);
+    window.dispatchEvent(new StorageEvent("storage", { key: offlineCleanupStorageKey }));
+    expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "failed" } });
+    expect(client.getQueryData(applicationKeys.list(user.id, "active"))).toBeUndefined();
+
+    finishOfflineCleanup(target);
+    window.dispatchEvent(new StorageEvent("storage", { key: offlineCleanupStorageKey }));
+    expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "idle" } });
+  } finally {
+    stop();
+    client.clear();
+  }
+});
+
+test("cleanup metadata read failure can recover explicitly without a session or another reload", async () => {
+  const target = { ownerId: user.id, preparationId: null };
+  rememberOfflineCleanup(target);
+  const originalGetItem = Storage.prototype.getItem;
+  const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key) {
+    if (key === offlineCleanupStorageKey) {
+      throw new DOMException("Denied", "SecurityError");
+    }
+    return originalGetItem.call(this, key);
+  });
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Offline")));
+  const client = new QueryClient();
+  const runtime = createOfflineAccessRuntime(client);
+  const stop = runtime.start();
+  try {
+    expect(runtime.getSnapshot()).toMatchObject({ readAccountId: null, cleanup: { status: "unavailable" } });
+    getItem.mockRestore();
+    await runtime.retryDownloadCleanup();
+    expect(readOfflineCleanup()).toBeNull();
+    expect(runtime.getSnapshot()).toMatchObject({ account: null, readAccountId: null, cleanup: { status: "idle" } });
+  } finally {
+    getItem.mockRestore();
+    stop();
+    client.clear();
+  }
+});
+
+test("metadata read failure preserves a known cleanup target and still attempts private deletion", async () => {
+  const target = { ownerId: user.id, preparationId: null };
+  rememberOfflineCleanup(target);
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Offline")));
+  const client = new QueryClient();
+  const runtime = createOfflineAccessRuntime(client);
+  const originalGetItem = Storage.prototype.getItem;
+  const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key) {
+    if (key === offlineCleanupStorageKey) {
+      throw new DOMException("Denied", "SecurityError");
+    }
+    return originalGetItem.call(this, key);
+  });
+  const openDatabase = vi.spyOn(indexedDB, "open");
+  const stop = runtime.start();
+  try {
+    expect(runtime.getSnapshot().cleanup).toMatchObject({ status: "failed", ...target });
+    await expect(runtime.retryDownloadCleanup()).rejects.toThrow("Denied");
+    expect(openDatabase).toHaveBeenCalledOnce();
+    expect(runtime.getSnapshot()).toMatchObject({ readAccountId: null, cleanup: { status: "failed", ...target } });
+  } finally {
+    getItem.mockRestore();
     stop();
     client.clear();
   }

@@ -54,9 +54,7 @@ function OfflineNotices(props: OfflineNoticesProps) {
           {notices.ready} {notices.downloaded}
         </p>
       )}
-      {(notices.failed || (props.access.storageError && props.access.cleanup.status !== "failed")) && (
-        <p className={styles.failureNotice()}>{notices.failure}</p>
-      )}
+      {notices.showFailure && <p className={styles.failureNotice()}>{notices.failure}</p>}
       {notices.busy && <p className={styles.progressNotice()}>{notices.preparing}</p>}
     </div>
   );

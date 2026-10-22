@@ -69,6 +69,7 @@ export function useOfflineNotices({ access, downloadedAt }: OfflineNoticesProps)
   const busy = access.download.status === "preparing";
   const failed = access.download.status === "failed";
   const progress = access.download.status === "preparing" ? access.download.progress : null;
+  const showFailure = failed || (access.storageError && access.cleanup.status === "idle");
   const showReady = Boolean(access.account && !busy && !failed);
   const ready =
     access.account && showReady
@@ -82,6 +83,7 @@ export function useOfflineNotices({ access, downloadedAt }: OfflineNoticesProps)
     busy,
     failed,
     showReady,
+    showFailure,
     ready,
     downloaded,
     readOnly: t("offline.readOnly"),
@@ -111,7 +113,8 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
   const canPrepare = Boolean(user && access.readAccountId === user.id && access.canMutate);
   const hasDownload = Boolean(access.account || refreshing);
   const cleanupPending = access.cleanup.status === "removing";
-  const cleanupFailed = access.cleanup.status === "failed";
+  const cleanupUnavailable = access.cleanup.status === "unavailable";
+  const cleanupFailed = access.cleanup.status === "failed" || cleanupUnavailable;
   const canRefreshDownload = sameOwnerDownload || refreshing;
   const showRefresh = canRefreshDownload && !import.meta.env.DEV;
   const showEnable = access.canMutate && !cleanupPending && !cleanupFailed && !import.meta.env.DEV;
@@ -164,7 +167,7 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
     refreshReplacement: t("offline.refreshReplacement"),
     refreshLabel: t("offline.refresh"),
     removeLabel: t("offline.remove"),
-    cleanupFailedLabel: t("offline.cleanupFailed"),
+    cleanupFailedLabel: t(cleanupUnavailable ? "offline.cleanupUnavailable" : "offline.cleanupFailed"),
     removingLabel: t("offline.removing"),
     retryCleanupLabel: t("offline.retryCleanup"),
     consentLabel: t("offline.consent"),

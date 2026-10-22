@@ -1,6 +1,7 @@
 import type { DehydratedState } from "@tanstack/react-query";
 import { registerInputSchema } from "@xeniway/shared";
 import { type DBSchema, type IDBPTransaction, openDB } from "idb";
+import { assertOfflineCleanupComplete, clearOfflineDeviceCleanup, readOfflineCleanup } from "./offline-cleanup";
 import {
   deriveOfflineSnapshot,
   hasPreparedLists,
@@ -154,6 +155,7 @@ export async function enableOfflineAccount(record: OfflineAccountRecord): Promis
   // A fresh opt-in always starts preparation again, including for the same account.
   const preparationId = crypto.randomUUID();
   await transact(async (tx) => {
+    assertOfflineCleanupComplete();
     await tx.objectStore("accounts").clear();
     await tx.objectStore("snapshots").clear();
     await tx.objectStore("accounts").put({ ...record, ready: false, buildId: null }, "active");
@@ -163,12 +165,16 @@ export async function enableOfflineAccount(record: OfflineAccountRecord): Promis
 }
 export async function assertOfflinePreparation(userId: number, preparationId: string): Promise<void> {
   await transact(async (tx) => {
+    assertOfflineCleanupComplete();
     requireOwner(await activeAccount(tx, Date.now()), userId);
     await requirePreparation(tx, preparationId);
   });
 }
 export async function restoreOfflineAccount(now?: number): Promise<OfflineAccountMetadata | null> {
   return transact(async (tx) => {
+    if (readOfflineCleanup()) {
+      return null;
+    }
     const account = await activeAccount(tx, now);
     if (!account?.ready) {
       return null;
@@ -178,6 +184,9 @@ export async function restoreOfflineAccount(now?: number): Promise<OfflineAccoun
       return null;
     }
     const preparationId = await tx.objectStore("accounts").get("preparation");
+    if (readOfflineCleanup()) {
+      return null;
+    }
     return typeof preparationId === "string" ? { ...account, preparationId } : account;
   });
 }
@@ -187,6 +196,7 @@ export async function saveOfflineSnapshot(
   preparationId?: string | null,
 ): Promise<void> {
   await transact(async (tx) => {
+    assertOfflineCleanupComplete();
     await requirePreparation(tx, preparationId);
     const now = Date.now();
     const account = await activeAccount(tx, now);
@@ -200,12 +210,15 @@ export async function saveOfflineSnapshot(
 }
 export async function loadOfflineSnapshot(userId: number, now?: number): Promise<DehydratedState | null> {
   return transact(async (tx) => {
+    if (readOfflineCleanup()) {
+      return null;
+    }
     const account = await activeAccount(tx, now);
     if (!account?.ready || account.userId !== userId) {
       return null;
     }
     const snapshot = await readSnapshot(tx, account, now);
-    return snapshot && hasPreparedLists(snapshot) ? snapshot : null;
+    return snapshot && hasPreparedLists(snapshot) && !readOfflineCleanup() ? snapshot : null;
   });
 }
 export async function clearOfflineAccount(userId: number, preparationId?: string | null): Promise<boolean> {
@@ -233,6 +246,7 @@ export async function clearOfflineDevice(): Promise<void> {
     await tx.objectStore("accounts").clear();
     await tx.objectStore("snapshots").clear();
   });
+  clearOfflineDeviceCleanup();
 }
 export async function markOfflineReady(
   userId: number,
@@ -243,6 +257,7 @@ export async function markOfflineReady(
     throw new Error("Offline readiness requires a build ID");
   }
   return transact(async (tx) => {
+    assertOfflineCleanupComplete();
     await requirePreparation(tx, preparationId);
     const now = Date.now();
     const account = await activeAccount(tx, now);

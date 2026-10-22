@@ -8,9 +8,11 @@ import {
   workspaceContact,
   workspaceFollowUpTask,
 } from "../applications/application-workspace/test-support/application-workspace-fixtures";
+import { finishOfflineCleanup, readOfflineCleanup, rememberOfflineCleanup } from "./offline-cleanup";
 import { deriveOfflineSnapshot, validateStoredSnapshot } from "./offline-snapshot-validation";
 import {
   clearOfflineAccount,
+  clearOfflineDevice,
   enableOfflineAccount,
   loadOfflineSnapshot,
   markOfflineReady,
@@ -63,6 +65,58 @@ afterEach(() => {
 });
 
 describe("offline durable storage", () => {
+  it("keeps a pending removal unreadable across connections and blocks a new download", async () => {
+    await prepare();
+    const ready = await restoreOfflineAccount(now);
+    const target = { ownerId: 1, preparationId: ready?.preparationId ?? null };
+    rememberOfflineCleanup(target);
+
+    expect(readOfflineCleanup()).toEqual(target);
+    expect(await restoreOfflineAccount(now)).toBeNull();
+    expect(await loadOfflineSnapshot(1, now)).toBeNull();
+    await expect(enableOfflineAccount(account(2))).rejects.toThrow(/cleanup/i);
+    await expect(saveOfflineSnapshot(1, snapshot())).rejects.toThrow(/cleanup/i);
+    await expect(markOfflineReady(1, "build-2")).rejects.toThrow(/cleanup/i);
+
+    await clearOfflineAccount(1, target.preparationId);
+    finishOfflineCleanup(target);
+    expect(readOfflineCleanup()).toBeNull();
+    expect(await restoreOfflineAccount(now)).toBeNull();
+    await expect(enableOfflineAccount(account(2))).resolves.toBeTypeOf("string");
+  });
+
+  it("an old cleanup retry cannot remove a newer owner's download or marker", async () => {
+    await prepare(2);
+    const ready = await restoreOfflineAccount(now);
+    const oldTarget = { ownerId: 1, preparationId: "old-generation" };
+    const newTarget = { ownerId: 2, preparationId: ready?.preparationId ?? null };
+    rememberOfflineCleanup(newTarget);
+
+    expect(await clearOfflineAccount(1, oldTarget.preparationId)).toBe(false);
+    finishOfflineCleanup(oldTarget);
+    expect(readOfflineCleanup()).toEqual(newTarget);
+    finishOfflineCleanup(newTarget);
+    expect(await restoreOfflineAccount(now)).toMatchObject({ userId: 2, ready: true });
+  });
+
+  it("logout removes pending-cleanup metadata together with the private download", async () => {
+    await prepare();
+    rememberOfflineCleanup({ ownerId: 1, preparationId: null });
+    await clearOfflineDevice();
+    expect(readOfflineCleanup()).toBeNull();
+    expect(await restoreOfflineAccount(now)).toBeNull();
+  });
+
+  it("unreadable cleanup metadata cannot block device-wide private-data erasure", async () => {
+    await prepare();
+    const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("Denied", "SecurityError");
+    });
+    await expect(clearOfflineDevice()).resolves.toBeUndefined();
+    getItem.mockRestore();
+    expect(await restoreOfflineAccount(now)).toBeNull();
+  });
+
   it.each([
     "duplicate",
     "foreign-owner",

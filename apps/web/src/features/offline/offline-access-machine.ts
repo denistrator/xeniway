@@ -14,7 +14,7 @@ export type DeviceDownload =
     };
 
 export type DownloadCleanup =
-  | { status: "idle" }
+  | { status: "idle" | "unavailable" }
   | { status: "removing" | "failed"; ownerId: number; preparationId: string | null };
 
 export type AccessState = {
@@ -52,6 +52,8 @@ export type AccessEvent =
   | { type: "RESTORED"; epoch: number; account: OfflineAccountMetadata | null }
   | { type: "DOWNLOAD_EXPIRED"; account: OfflineAccountMetadata }
   | { type: "DOWNLOAD_REMOVAL_STARTED"; ownerId: number; preparationId: string | null }
+  | { type: "DOWNLOAD_CLEANUP_DISCOVERED"; ownerId: number; preparationId: string | null }
+  | { type: "DOWNLOAD_CLEANUP_UNAVAILABLE" | "DOWNLOAD_CLEANUP_CHECKED" }
   | { type: "DOWNLOAD_CLEANUP_SUCCEEDED" | "DOWNLOAD_CLEANUP_FAILED"; ownerId: number; preparationId: string | null }
   | { type: "PREPARATION_STARTED"; operation: number; userId: number; refresh: boolean }
   | { type: "PREPARATION_PROGRESS"; operation: number; progress: OfflinePreparationProgress }
@@ -119,7 +121,7 @@ function finishVerification(
 }
 
 function restoreDownload(state: AccessState, event: Extract<AccessEvent, { type: "RESTORED" }>): AccessState {
-  if (event.epoch !== state.epoch || state.session.status === "signed-out") {
+  if (event.epoch !== state.epoch || state.session.status === "signed-out" || state.cleanup.status !== "idle") {
     return state;
   }
   return { ...state, download: event.account ? { status: "ready", account: event.account } : { status: "absent" } };
@@ -190,17 +192,30 @@ function finishDownloadCleanup(
   state: AccessState,
   event: Extract<AccessEvent, { type: "DOWNLOAD_CLEANUP_SUCCEEDED" | "DOWNLOAD_CLEANUP_FAILED" }>,
 ): AccessState {
-  if (
-    state.cleanup.status !== "removing" ||
-    state.cleanup.ownerId !== event.ownerId ||
-    state.cleanup.preparationId !== event.preparationId
-  ) {
+  if (state.cleanup.status !== "removing" && state.cleanup.status !== "failed") {
+    return state;
+  }
+  if (state.cleanup.ownerId !== event.ownerId || state.cleanup.preparationId !== event.preparationId) {
     return state;
   }
   if (event.type === "DOWNLOAD_CLEANUP_SUCCEEDED") {
     return { ...state, cleanup: { status: "idle" } };
   }
   return { ...state, cleanup: { ...state.cleanup, status: "failed" } };
+}
+
+function unavailableDownloadCleanup(state: AccessState): AccessState {
+  if (state.cleanup.status !== "idle") {
+    return state.storageError ? state : { ...state, storageError: true };
+  }
+  return {
+    ...state,
+    download: { status: "absent" },
+    memoryOwner: null,
+    cleanup: { status: "unavailable" },
+    storageError: true,
+    epoch: state.epoch + 1,
+  };
 }
 
 /** The sole policy entry point. Asynchronous operations stay in the runtime. */
@@ -236,6 +251,16 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
       return signedOut(state);
     case "DOWNLOAD_REMOVAL_STARTED":
       return startDownloadCleanup(state, event.ownerId, event.preparationId);
+    case "DOWNLOAD_CLEANUP_DISCOVERED": {
+      const removed = startDownloadCleanup(state, event.ownerId, event.preparationId);
+      return { ...removed, cleanup: { status: "failed", ownerId: event.ownerId, preparationId: event.preparationId } };
+    }
+    case "DOWNLOAD_CLEANUP_UNAVAILABLE":
+      return unavailableDownloadCleanup(state);
+    case "DOWNLOAD_CLEANUP_CHECKED":
+      return state.cleanup.status === "unavailable"
+        ? { ...state, cleanup: { status: "idle" }, storageError: false }
+        : state;
     case "DOWNLOAD_CLEANUP_SUCCEEDED":
     case "DOWNLOAD_CLEANUP_FAILED":
       return finishDownloadCleanup(state, event);

@@ -14,6 +14,7 @@ import * as offlineAccess from "./offline-access.model";
 import { OfflineAccessProvider, useOfflineAccess } from "./offline-access.view";
 import { createAccessState, selectAccess } from "./offline-access-machine";
 import * as offlineRuntime from "./offline-access-runtime";
+import { offlineCleanupStorageKey, rememberOfflineCleanup } from "./offline-cleanup";
 import { OfflineControls } from "./offline-controls.view";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
@@ -581,7 +582,9 @@ test("a failed removal exposes retry cleanup without restoring offline access", 
     fireEvent.click(screen.getByRole("button", { name: "Remove offline data" }));
 
     expect(
-      await screen.findByText("Offline data could not be removed. Access remains revoked until cleanup succeeds."),
+      await screen.findByText(
+        "Offline data removal is unfinished. Access to this download is revoked. Finish cleanup before starting a new download.",
+      ),
     ).toBeVisible();
     expect(screen.getByRole("button", { name: "Retry cleanup" })).toBeVisible();
     act(() => window.dispatchEvent(new Event("offline")));
@@ -592,13 +595,39 @@ test("a failed removal exposes retry cleanup without restoring offline access", 
 
     await waitFor(() =>
       expect(
-        screen.queryByText("Offline data could not be removed. Access remains revoked until cleanup succeeds."),
+        screen.queryByText(
+          "Offline data removal is unfinished. Access to this download is revoked. Finish cleanup before starting a new download.",
+        ),
       ).toBeNull(),
     );
   } finally {
     vi.stubGlobal("indexedDB", originalIndexedDb);
     onlineManager.setOnline(true);
   }
+});
+
+test("Settings can retry unreadable cleanup metadata after permissions recover without another reload", async () => {
+  rememberOfflineCleanup({ ownerId: 1, preparationId: accountFixture.preparationId ?? null });
+  const originalGetItem = Storage.prototype.getItem;
+  const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key) {
+    if (key === offlineCleanupStorageKey) {
+      throw new DOMException("Denied", "SecurityError");
+    }
+    return originalGetItem.call(this, key);
+  });
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  renderControls();
+
+  expect(
+    screen.getByText("Offline data cleanup status could not be read. Retry cleanup when browser storage is available."),
+  ).toBeVisible();
+  expect(access.readAccountId).toBeNull();
+  expect(screen.queryByText(/Ready offline until/)).not.toBeInTheDocument();
+  getItem.mockRestore();
+  fireEvent.click(screen.getByRole("button", { name: "Retry cleanup" }));
+  await waitFor(() => expect(access.cleanup.status).toBe("idle"));
+  expect(access.readAccountId).toBeNull();
+  expect(await loadOfflineSnapshot(1)).toBeNull();
 });
 
 test.each(["offline", "auth error", "owner mismatch"])(

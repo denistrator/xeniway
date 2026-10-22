@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** D4/UI-11 is implemented with focused component/browser evidence and independent review. The latest full verification remains limited by frontend unit timing failures and a stopped local container engine; see checkpoint 12. UI-05, UI-18–24, UI-26–27, UI-31, UI-33, and UI-34 remain pending their documented policy decisions; T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
+**Status:** D4/UI-11 has focused component/browser evidence. T05/UI-05 has 322 passing offline unit checks, clear independent review and pending production verification; D5/T13 is approved and in progress. The latest full verification remains limited by frontend unit timing failures and stopped local project services; see checkpoints 12–13. Other recorded policy/manual gates remain open. T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
@@ -105,7 +105,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-05 · P1 · A failed device-data removal loses its cleanup retry
 
-**Status:** Blocked pending the durable cleanup-recovery decision documented as T05. No new removal metadata or cross-account cleanup policy has been introduced.
+**Status:** The user delegated the T05 policy decision. Reload-resilient cleanup is implemented with owner/generation recovery metadata, blocked conflicting preparation, scoped retry and no access restoration. All 322 offline unit tests pass, including explicit recovery after metadata becomes readable and retaining known targets during metadata failures. Independent review is clear; the production reload/removal case remains pending stopped local services.
 
 **Evidence — Source:** `apps/web/src/features/offline/offline-access-runtime.ts:172–183` removes the account from runtime state before storage deletion succeeds; failure only sets storage error. `offline-controls.view.tsx:68` gates Remove on a download, and `offline-controls.model.ts:127` suppresses the rejection.
 

@@ -110,6 +110,8 @@ Automated tests do not cover OS installation UI, standalone launch, icon masking
 - Use accessible roles/names and keyboard paths. Manually inspect light/dark/system, Hebrew RTL, narrow layouts, focus visibility, and reduced motion after styling changes. Preserve floating-label, board, and workspace CSS hooks.
 - Workspace/activity tests explicitly call `apps/web/src/test/initialize-test-i18n.ts` to initialize shared i18n and reset English before any per-test locale change. Do not hide initialization in render helpers or impose it on unrelated tests.
 - Browser channels are origin-scoped; provider unit tests disable Node's process-wide BroadcastChannel to prevent unrelated parallel test environments from receiving each other's messages.
+
+- Cleanup regressions retain failed-removal owner/generation metadata across runtime reconstruction, reject snapshot reads/writes and new preparation while cleanup is pending, preserve newer owners/generations on an old retry, and verify cross-tab revocation without re-enabling fallback after success. Device-wide logout must erase private records even if recovery metadata cannot be read. The production removal case rejects IndexedDB opening, then reloads offline and completes cleanup through Settings without a session. It asserts revocation and private-record removal, not styling.
 - Preserve the flat `userPreferences` contract; do not restore deleted legacy keys. Its browser cache is separate from account-scoped IndexedDB downloads.
 - The suite has no coverage threshold. Type safety, focused regressions, real database-backed browser flows, and CI checks provide the verification boundary.
 
