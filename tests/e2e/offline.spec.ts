@@ -527,11 +527,14 @@ test("denied device storage does not break online browsing or claim readiness", 
   );
   await login(page);
   await openOfflineSettings(page);
-  await page
-    .getByRole("checkbox", { name: "I understand and want to store my application data on this device." })
-    .check();
-  await page.getByRole("button", { name: "Make available offline on this device", exact: true }).click();
-  await expect(page.getByText(/Offline data could not be saved or read/)).toBeVisible();
+  await expect(
+    page.getByText("Offline data could not be read. Check browser storage permissions, then retry."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Retry reading offline data", exact: true }).click();
+  await expect(
+    page.getByText("Offline data could not be read. Check browser storage permissions, then retry."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Make available offline on this device", exact: true })).toHaveCount(0);
   await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add job", exact: true })).toBeEnabled();
 });
@@ -613,6 +616,32 @@ test("failed removal stays revoked after an offline reload and cleanup can finis
     }),
   ).toBe(0);
   await expect(page.getByRole("link", { name: "Applications", exact: true })).toHaveCount(0);
+});
+
+test("a failed storage read recovers offline through the Settings restoration retry", async ({ page, context }) => {
+  await login(page);
+  await prepare(page);
+  await context.setOffline(true);
+  await page.addInitScript(() => {
+    const open = indexedDB.open.bind(indexedDB);
+    let denied = true;
+    indexedDB.open = (...args: Parameters<IDBFactory["open"]>) => {
+      if (denied) {
+        denied = false;
+        throw new DOMException("Denied", "SecurityError");
+      }
+      return open(...args);
+    };
+  });
+  await page.goto("/settings");
+  await expect(
+    page.getByText("Offline data could not be read. Check browser storage permissions, then retry."),
+  ).toBeVisible();
+  await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
+  await page.getByRole("button", { name: "Retry reading offline data", exact: true }).click();
+  await expect(page.getByText(/Ready offline until/)).toBeVisible();
+  await page.getByRole("link", { name: "Applications", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Applications", exact: true })).toBeVisible();
 });
 
 test("removing downloads in another tab removes cached-device access", async ({ page, context }) => {

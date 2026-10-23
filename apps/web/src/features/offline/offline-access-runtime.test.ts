@@ -18,6 +18,7 @@ import {
   saveOfflineSnapshot,
 } from "./offline-store";
 import { OFFLINE_RETENTION_MS } from "./offline-types";
+import * as restorationStore from "./restore-offline";
 
 afterEach(async () => {
   notifyManager.setScheduler(defaultScheduler);
@@ -55,6 +56,102 @@ function deferred<T>() {
 function sessionResponse() {
   return new Response(JSON.stringify({ data: { user } }));
 }
+
+test("a rejected restoration exposes recovery without granting device access", async () => {
+  vi.stubGlobal("BroadcastChannel", undefined);
+  const client = new QueryClient();
+  client.setQueryData(offlineAuthKey, { data: { user } });
+  const runtime = createOfflineAccessRuntime(client, { restoration: Promise.reject(new Error("Storage denied")) });
+  const stop = runtime.start();
+  try {
+    await vi.waitFor(() => expect(runtime.getSnapshot().download.status).toBe("restore-failed"));
+    expect(runtime.getSnapshot().account).toBeNull();
+    await runtime.retryRestoration();
+    expect(runtime.getSnapshot().download.status).toBe("absent");
+  } finally {
+    stop();
+    client.clear();
+  }
+});
+
+test("a slow restoration stops blocking after two seconds and ignores its late result", async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("BroadcastChannel", undefined);
+  const client = new QueryClient();
+  client.setQueryData(offlineAuthKey, { data: { user } });
+  const pending = deferred<OfflineRestoration | null>();
+  const runtime = createOfflineAccessRuntime(client, { restoration: pending.promise });
+  const stop = runtime.start();
+  try {
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(runtime.getSnapshot().download.status).toBe("restore-timed-out");
+    pending.resolve({
+      account: {
+        version: 1,
+        userId: user.id,
+        email: user.email,
+        verifiedAt: Date.now(),
+        expiresAt: Date.now() + OFFLINE_RETENTION_MS,
+        ready: true,
+        buildId: "test",
+      },
+      snapshot: { queries: [], mutations: [] },
+    });
+    await pending.promise;
+    expect(runtime.getSnapshot().download.status).toBe("restore-timed-out");
+    expect(runtime.getSnapshot().account).toBeNull();
+  } finally {
+    stop();
+    client.clear();
+    vi.useRealTimers();
+  }
+});
+
+test.each(["sign out", "remove", "switch owner"])(
+  "a restoration retry cannot reopen device access after %s",
+  async (action) => {
+    vi.stubGlobal("BroadcastChannel", undefined);
+    const client = new QueryClient();
+    client.setQueryData(offlineAuthKey, { data: { user } });
+    const runtime = createOfflineAccessRuntime(client, { restoration: Promise.reject(new Error("Denied")) });
+    const stop = runtime.start();
+    const pending = deferred<OfflineRestoration | null>();
+    vi.spyOn(restorationStore, "restoreOfflineData").mockReturnValue(pending.promise);
+    try {
+      await vi.waitFor(() => expect(runtime.getSnapshot().download.status).toBe("restore-failed"));
+      const retry = runtime.retryRestoration();
+      switch (action) {
+        case "sign out":
+          await runtime.signOutLocally();
+          break;
+        case "remove":
+          await runtime.removeDownload();
+          break;
+        case "switch owner":
+          client.setQueryData(offlineAuthKey, { data: { user: otherUser } });
+          await vi.waitFor(() => expect(runtime.getSnapshot().readAccountId).toBe(otherUser.id));
+          break;
+      }
+      pending.resolve({
+        account: {
+          version: 1,
+          userId: user.id,
+          email: user.email,
+          verifiedAt: Date.now(),
+          expiresAt: Date.now() + OFFLINE_RETENTION_MS,
+          ready: true,
+          buildId: "test",
+        },
+        snapshot: { queries: [], mutations: [] },
+      });
+      await retry;
+      expect(runtime.getSnapshot().account).toBeNull();
+    } finally {
+      stop();
+      client.clear();
+    }
+  },
+);
 
 function errorResponse(status: number) {
   return new Response(JSON.stringify({ error: { code: "REQUEST_FAILED", message: "Request failed" } }), { status });

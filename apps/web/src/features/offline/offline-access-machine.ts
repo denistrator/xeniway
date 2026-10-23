@@ -3,7 +3,7 @@ import type { OfflineAccountMetadata, OfflinePreparationProgress } from "./offli
 type Connection = { status: "online" | "offline" | "unavailable" } | { status: "verifying"; operation: number };
 type Session = { status: "checking" | "unavailable" | "signed-out" } | { status: "verified"; userId: number };
 export type DeviceDownload =
-  | { status: "absent" | "restoring" | "failed" }
+  | { status: "absent" | "restoring" | "failed" | "restore-failed" | "restore-timed-out" }
   | { status: "ready"; account: OfflineAccountMetadata }
   | {
       status: "preparing";
@@ -50,6 +50,8 @@ export type AccessEvent =
   | { type: "VERIFY_SUCCEEDED"; operation: number; userId: number }
   | { type: "VERIFY_FAILED"; operation: number; online: boolean }
   | { type: "RESTORED"; epoch: number; account: OfflineAccountMetadata | null }
+  | { type: "RESTORATION_STARTED" }
+  | { type: "RESTORATION_FAILED"; epoch: number; timedOut: boolean }
   | { type: "DOWNLOAD_EXPIRED"; account: OfflineAccountMetadata }
   | { type: "DOWNLOAD_REMOVAL_STARTED"; ownerId: number; preparationId: string | null }
   | { type: "DOWNLOAD_CLEANUP_DISCOVERED"; ownerId: number; preparationId: string | null }
@@ -125,6 +127,13 @@ function restoreDownload(state: AccessState, event: Extract<AccessEvent, { type:
     return state;
   }
   return { ...state, download: event.account ? { status: "ready", account: event.account } : { status: "absent" } };
+}
+
+function failRestoration(state: AccessState, event: Extract<AccessEvent, { type: "RESTORATION_FAILED" }>): AccessState {
+  if (event.epoch !== state.epoch || state.download.status !== "restoring") {
+    return state;
+  }
+  return { ...state, download: { status: event.timedOut ? "restore-timed-out" : "restore-failed" } };
 }
 
 function updatePreparation(
@@ -270,6 +279,10 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
       return { ...state, download: { status: "absent" }, epoch: state.epoch + 1 };
     case "RESTORED":
       return restoreDownload(state, event);
+    case "RESTORATION_STARTED":
+      return { ...state, download: { status: "restoring" }, epoch: state.epoch + 1 };
+    case "RESTORATION_FAILED":
+      return failRestoration(state, event);
     case "DOWNLOAD_EXPIRED":
       return expireDownload(state, event.account);
     case "PREPARATION_STARTED":

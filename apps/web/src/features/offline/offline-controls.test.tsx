@@ -138,6 +138,27 @@ afterEach(async () => {
   vi.unstubAllEnvs();
 });
 
+test("Settings recovers a rejected storage read through an explicit retry", async () => {
+  const client = createClient();
+  render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={["/settings"]}>
+        <OfflineAccessProvider restoration={Promise.reject(new Error("Denied"))}>
+          <OfflineControls />
+          <AccessProbe />
+        </OfflineAccessProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  const retry = await screen.findByRole("button", { name: "Retry reading offline data" });
+  expect(screen.getByText(en.offline.restorationFailed)).toBeVisible();
+  expect(access.account).toBeNull();
+  fireEvent.click(retry);
+  await waitFor(() => expect(access.account?.preparationId).toBe(accountFixture.preparationId));
+  expect(screen.queryByRole("button", { name: "Retry reading offline data" })).not.toBeInTheDocument();
+  expect(screen.getByText(/Ready offline until/)).toBeVisible();
+});
+
 test("development shows a production-build explanation instead of offering preparation", () => {
   vi.stubEnv("DEV", true);
   profile.downloaded = false;

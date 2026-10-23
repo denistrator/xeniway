@@ -305,9 +305,9 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-24 · P2 · Startup cannot distinguish absent downloads from failed restoration
 
-**Status:** Blocked pending T05’s cleanup-recovery decision. The startup/retry model must not introduce unsafe owner or stale-result behavior.
+**Status:** Implemented in T14. Runtime and component regressions, plus the production offline storage-recovery browser case, pass.
 
-**Evidence — Source; slow-storage reproduction required:** `main.model.ts:29` races restoration against two seconds and maps exceptions to null. `offline-access-runtime.ts:372` treats null as no download. Connection Retry does not restart storage restoration.
+**Evidence:** Controlled reads reproduced missing error/timeout states before implementation. Runtime download state now distinguishes absent, restoring, failed restoration and timed-out restoration. Settings offers a separate storage retry; a production offline reload with a denied first IndexedDB read recovers through that action. A late timed-out result is ignored. Fresh reads check readiness, expiry and durable generation; runtime guards reject results after sign-out, removal, preparation, replacement or owner change.
 
 **Plan:** Keep bounded startup, but distinguish absence from a failed/timed-out restore and offer a safe restore retry.
 

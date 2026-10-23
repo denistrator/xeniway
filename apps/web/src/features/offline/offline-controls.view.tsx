@@ -22,6 +22,11 @@ export function OfflineControls() {
       </h2>
       <OfflineNotices access={controls.access} downloadedAt={controls.downloadedAt} notice={controls.notice} />
       <div className={styles.connectionActions()}>
+        {controls.canRetryRestoration && (
+          <Button variant="outline" size="sm" onClick={controls.retryRestoration}>
+            {controls.retryRestorationLabel}
+          </Button>
+        )}
         {controls.canRetry && (
           <Button variant="outline" size="sm" onClick={controls.retry}>
             {controls.retryLabel}
@@ -55,6 +60,7 @@ function OfflineNotices(props: OfflineNoticesProps) {
         </p>
       )}
       {notices.showFailure && <p className={styles.failureNotice()}>{notices.failure}</p>}
+      {notices.showRestorationFailure && <p className={styles.restorationNotice()}>{notices.restorationMessage}</p>}
       {notices.busy && <p className={styles.progressNotice()}>{notices.preparing}</p>}
     </div>
   );

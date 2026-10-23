@@ -47,15 +47,22 @@ export function useOfflineControls() {
   const hasDownloadNotice = Boolean(access.account || failed || access.download.status === "preparing");
   const hasDeviceNotice =
     access.localLogout || access.storageError || access.cleanup.status !== "idle" || access.updateAvailable;
-  const notice = hasDownloadNotice || hasDeviceNotice || readOnly || access.isDisconnected;
+  const restorationFailed =
+    access.download.status === "restore-failed" || access.download.status === "restore-timed-out";
+  const notice = hasDownloadNotice || hasDeviceNotice || readOnly || access.isDisconnected || restorationFailed;
   const canRetry = Boolean(access.readAccountId || failed || access.isDisconnected) && !access.canMutate;
   const retry = () => void access.retryConnection().catch(() => {});
+  const canRetryRestoration = restorationFailed;
+  const retryRestoration = () => void access.retryRestoration().catch(() => {});
   return {
     access,
     downloadedAt,
     notice,
     canRetry,
     retry,
+    canRetryRestoration,
+    retryRestoration,
+    retryRestorationLabel: t("offline.retryRestoration"),
     title: t("offline.title"),
     headingLabel: access.isDisconnected ? `${t("offline.title")} — ${t("offline.disconnected")}` : t("offline.title"),
     loginLabel: t("common.actions.login"),
@@ -91,6 +98,10 @@ export function useOfflineNotices({ access, downloadedAt }: OfflineNoticesProps)
     update: t("offline.update"),
     failure: t("offline.failed"),
     preparing: progress ? t("offline.progress", progress) : t("offline.preparing"),
+    restorationMessage:
+      access.download.status === "restore-timed-out" ? t("offline.restorationSlow") : t("offline.restorationFailed"),
+    showRestorationFailure:
+      access.download.status === "restore-failed" || access.download.status === "restore-timed-out",
   };
 }
 
@@ -117,7 +128,9 @@ export function useOfflineDownloadSettings({ access }: OfflineDownloadSettingsPr
   const cleanupFailed = access.cleanup.status === "failed" || cleanupUnavailable;
   const canRefreshDownload = sameOwnerDownload || refreshing;
   const showRefresh = canRefreshDownload && !import.meta.env.DEV;
-  const showEnable = access.canMutate && !cleanupPending && !cleanupFailed && !import.meta.env.DEV;
+  const restorationUnresolved = ["restoring", "restore-failed", "restore-timed-out"].includes(download.status);
+  const showEnable =
+    access.canMutate && !cleanupPending && !cleanupFailed && !restorationUnresolved && !import.meta.env.DEV;
   let content: OfflineDownloadSettingsContent = "none";
   if (cleanupPending) {
     content = "cleanupPending";

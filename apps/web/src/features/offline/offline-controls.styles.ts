@@ -13,6 +13,7 @@ export const offlineControlsStyles = tv({
     updateNotice: "",
     readyNotice: "",
     failureNotice: "",
+    restorationNotice: "",
     progressNotice: "",
     cleanupNotice: "",
     settings: "space-y-3",

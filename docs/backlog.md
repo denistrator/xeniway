@@ -77,6 +77,7 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Area:** Workspace preparation inline editing and the complete browser workflow.
 - **Why:** During the global control-flow refactor, the serial browser suite once failed to display the company-research text after Save. The unchanged workflow passed immediately in isolation. Preparation editing code was unchanged; the surrounding focus and route-handler changes were verified as braces-only AST-equivalent edits. The underlying cause is not established.
 - **Possible direction:** Capture the input value, preparation request/response, editor transitions, and focus around Save in repeated full-suite runs to distinguish a timing-sensitive test from a persistence defect.
+- **Latest evidence (2026-10-23):** T14 verification reproduced the same missing company-research read view in the ordinary browser suite (40 passed, one failed) and again in its isolated workflow. All 20 production offline cases and all 772 frontend unit tests passed. The symptom can no longer be classified solely as full-suite load sensitivity; root cause remains unconfirmed. No editor/test assertion was changed. Approval was requested for a separate investigation/fix.
 - **Guardrails:** Preserve one-field preparation patches, owner-scoped writes, CSRF, confirm/cancel behavior, and keyboard focus. Do not weaken assertions or add arbitrary delays.
 
 ### Finish the immutable offline/PWA security report

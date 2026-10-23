@@ -1,5 +1,4 @@
 import {
-  type DehydratedState,
   hydrate,
   notifyManager,
   type QueryClient,
@@ -34,10 +33,12 @@ import {
 import { OFFLINE_RETENTION_MS, type OfflineAccountMetadata } from "./offline-types";
 import { prepareOfflineAccount } from "./prepare-offline";
 import { checkOfflineWorkerUpdate, prepareOfflineAssets } from "./register-offline-worker";
+import { type OfflineRestoration, restoreOfflineData } from "./restore-offline";
+
+export type { OfflineRestoration } from "./restore-offline";
 
 export const offlineAuthKey = ["auth", "me"] as const;
 export type OfflineAuthData = CurrentUserResponse | { data: { user: null } };
-export type OfflineRestoration = { account: OfflineAccountMetadata; snapshot: DehydratedState };
 export type OfflineRuntimeOptions = {
   initialAccount?: OfflineAccountMetadata | null;
   restoration?: Promise<OfflineRestoration | null>;
@@ -97,6 +98,8 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   let stopWorkerUpdates: (() => void) | undefined;
   let watchedAccount: OfflineAccountMetadata | null = null;
   let persistenceEnabled = false;
+  let restorationOperation = 0;
+  let restorationTimer: ReturnType<typeof setTimeout> | undefined;
   const removedRestorationOwners = new Set<number>();
   let channel: BroadcastChannel | null = null;
 
@@ -268,6 +271,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       !active ||
       !user ||
       state.cleanup.status !== "idle" ||
+      ["restoring", "restore-failed", "restore-timed-out"].includes(state.download.status) ||
       state.download.status === "preparing" ||
       !snapshot.canMutate ||
       !(refresh ? snapshot.account?.userId === user.id : input.consent)
@@ -493,6 +497,41 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     }
   }
 
+  async function runRestoration(pending: Promise<OfflineRestoration | null>) {
+    const operation = ++restorationOperation;
+    const startedLifetime = lifetime;
+    const epoch = state.epoch;
+    const isCurrent = () => active && lifetime === startedLifetime && operation === restorationOperation;
+    clearTimeout(restorationTimer);
+    restorationTimer = setTimeout(() => {
+      if (isCurrent()) {
+        restorationOperation += 1;
+        dispatch({ type: "RESTORATION_FAILED", epoch, timedOut: true });
+      }
+    }, 2000);
+    try {
+      const restored = await pending;
+      if (isCurrent()) {
+        clearTimeout(restorationTimer);
+        restoreAccount(restored, epoch);
+      }
+    } catch {
+      if (isCurrent()) {
+        clearTimeout(restorationTimer);
+        dispatch({ type: "RESTORATION_FAILED", epoch, timedOut: false });
+      }
+    }
+  }
+
+  async function retryRestoration() {
+    const retryable = state.download.status === "restore-failed" || state.download.status === "restore-timed-out";
+    if (!active || !retryable || state.cleanup.status !== "idle" || state.session.status === "signed-out") {
+      return;
+    }
+    dispatch({ type: "RESTORATION_STARTED" });
+    await runRestoration(restoreOfflineData());
+  }
+
   function start() {
     active = true;
     synchronizeCleanup();
@@ -585,15 +624,14 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     window.addEventListener("storage", cleanupChanged);
     setAuthenticatedRequestGuard(assertWrite);
     synchronizeDownloadResources();
-    const restorationEpoch = state.epoch;
-    void options.restoration?.then((restored) => {
-      if (!active || lifetime !== startedLifetime) {
-        return;
-      }
-      restoreAccount(restored, restorationEpoch);
-    });
+    if (options.restoration && state.download.status === "restoring") {
+      void runRestoration(options.restoration);
+    } else {
+      void options.restoration?.catch(() => {});
+    }
     return () => {
       active = false;
+      clearTimeout(restorationTimer);
       lifetime += 1;
       if (state.connection.status === "verifying") {
         dispatch({ type: "VERIFY_FAILED", operation: state.connection.operation, online: navigator.onLine });
@@ -630,6 +668,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     },
     start,
     retryConnection,
+    retryRestoration,
     removeDownload,
     retryDownloadCleanup,
     signOutLocally,

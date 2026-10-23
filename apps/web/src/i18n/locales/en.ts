@@ -29,6 +29,9 @@ export const en = {
     language: { description: "Choose the language used throughout the application." },
   },
   offline: {
+    retryRestoration: "Retry reading offline data",
+    restorationSlow: "Reading offline data took too long. Retry to check the saved download on this device.",
+    restorationFailed: "Offline data could not be read. Check browser storage permissions, then retry.",
     disconnected: "Offline or server unavailable",
     title: "Offline access on this device",
     productionOnly:

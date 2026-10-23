@@ -22,6 +22,7 @@ type Access = ReturnType<Runtime["getSnapshot"]> &
   Pick<
     Runtime,
     | "retryConnection"
+    | "retryRestoration"
     | "removeDownload"
     | "retryDownloadCleanup"
     | "signOutLocally"
@@ -54,6 +55,7 @@ export function useOfflineAccess(): Access {
       canReadRemote: navigator.onLine,
       checking: false,
       retryConnection: async () => {},
+      retryRestoration: async () => {},
       removeDownload: async () => {},
       retryDownloadCleanup: async () => {},
       signOutLocally: async () => {},
@@ -82,6 +84,7 @@ export function useOfflineAccessProvider(options: OfflineRuntimeOptions) {
     () => ({
       ...snapshot,
       retryConnection: runtime.retryConnection,
+      retryRestoration: runtime.retryRestoration,
       removeDownload: runtime.removeDownload,
       retryDownloadCleanup: runtime.retryDownloadCleanup,
       signOutLocally: runtime.signOutLocally,
