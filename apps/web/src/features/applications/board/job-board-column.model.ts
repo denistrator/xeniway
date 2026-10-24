@@ -86,6 +86,7 @@ export function useJobBoardColumnPresentation({
   const dropHereLabel = t("applications.board.dropHere");
   return {
     columnRef,
+    headingId: `application-column-${status}`,
     columnName,
     statusLabel,
     dropBeforeJob,

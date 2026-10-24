@@ -823,6 +823,13 @@ test("shares collection filters through URLs and restores route context", async 
   await expect(page).toHaveURL(/statuses=saved/);
   await expect(page).toHaveURL(/keep=yes/);
   await expect(page).toHaveURL(/#results$/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await search.fill("");
+  const jumps = page.getByRole("navigation", { name: "Jump to status" });
+  await jumps.getByRole("link", { name: "Saved", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Saved", exact: true })).toBeFocused();
+  await expect(page).toHaveURL(/statuses=saved/);
+  await expect(page).toHaveURL(/keep=yes/);
 });
 
 test("persists drag-and-drop ordering within a status", async ({ page }) => {

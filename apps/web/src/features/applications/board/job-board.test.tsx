@@ -1,10 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { JobApplication } from "@xeniway/shared";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, expect, test } from "vitest";
-import { setAllStatuses, setSearch, store } from "../../../store";
+import { setAllStatuses, setSearch, store, toggleStatus } from "../../../store";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { JobBoard } from "./job-board.view";
 
@@ -49,6 +49,22 @@ test("keeps the board usable while reporting a failed board operation", () => {
 
   expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
   expect(screen.getByRole("link", { name: /Example/ })).toBeVisible();
+});
+
+test("status links focus their named columns and exclude filtered statuses", async () => {
+  const user = userEvent.setup();
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <JobBoard jobs={[job]} onStatusChange={() => {}} onReorder={() => {}} />
+      </MemoryRouter>
+    </Provider>,
+  );
+  const navigation = screen.getByRole("navigation", { name: "Jump to status" });
+  await user.click(within(navigation).getByRole("link", { name: "Offer" }));
+  expect(screen.getByRole("heading", { name: "Offer" })).toHaveFocus();
+  act(() => store.dispatch(toggleStatus("offer")));
+  expect(within(navigation).queryByRole("link", { name: "Offer" })).not.toBeInTheDocument();
 });
 
 test("announces a confirmed board update once", () => {

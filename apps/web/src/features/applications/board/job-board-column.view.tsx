@@ -24,6 +24,7 @@ export function JobBoardColumn({
   const styles = jobBoardColumnStyles({ status });
   const {
     columnRef,
+    headingId,
     columnName,
     statusLabel,
     dropBeforeJob,
@@ -47,7 +48,9 @@ export function JobBoardColumn({
   return (
     <section ref={columnRef} aria-label={columnName} className={styles.column()}>
       <div className={styles.header()}>
-        <h2 className={styles.heading()}>{statusLabel}</h2>
+        <h2 id={headingId} tabIndex={-1} className={styles.heading()}>
+          {statusLabel}
+        </h2>
         <span className={styles.count()}>{columnJobs.length}</span>
       </div>
       <ul className={styles.list()}>

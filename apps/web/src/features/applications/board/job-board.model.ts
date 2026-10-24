@@ -1,7 +1,8 @@
 import type { JobApplication, JobStatus } from "@xeniway/shared";
+import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { type RootState, setAllStatuses, setSearch } from "../../../store";
 import { useJobBoard } from "./use-job-board";
 
@@ -22,11 +23,14 @@ export function useJobBoardPresentation({
 }: JobBoardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const search = useSelector((state: RootState) => state.ui.search);
   const board = useJobBoard({ jobs, onStatusChange, onReorder });
   const columns = board.displayedStatuses.map((status) => ({
     status,
+    label: t(`applications.status.${status}`),
+    href: { search: location.search, hash: `#application-column-${status}` },
     jobs: board.filteredJobs.filter((job) => job.status === status),
   }));
   const moveJob = (
@@ -49,6 +53,12 @@ export function useJobBoardPresentation({
   const emptyLabel = canShowAllStatuses ? t("applications.board.noStatuses") : noMatchLabel;
   const showAllStatuses = () => dispatch(setAllStatuses(true));
   const clearSearch = () => dispatch(setSearch(""));
+  function focusStatus(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    document.getElementById(event.currentTarget.hash.slice(1))?.focus();
+  }
   return {
     board,
     columns,
@@ -61,6 +71,8 @@ export function useJobBoardPresentation({
     clearSearch,
     showAllStatusesLabel: t("applications.board.showAllStatuses"),
     clearSearchLabel: t("applications.clearSearch"),
+    statusNavigationLabel: t("applications.board.jumpToStatus"),
+    focusStatus,
     operationError,
     operationSuccess,
   };

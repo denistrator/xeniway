@@ -337,7 +337,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-27 · P2 · Mobile board structure makes later statuses expensive to reach
 
-**Status:** Blocked pending D7’s approved status-navigation design.
+**Status:** Implemented under approved D7/T18. Mobile links jump to visible, canonically ordered column headings, preserving URL filters and moving keyboard focus. Component and real mobile browser checks pass; status filtering remains separate.
 
 **Evidence — Runtime + Source + Decision:** `board/job-board.styles.ts:6` stacks whole columns below the desktop breakpoint. In the populated mobile view, several Saved cards precede Applied; every additional card increases the distance to later statuses. Existing status filtering is available but not a visible jump mechanism.
 

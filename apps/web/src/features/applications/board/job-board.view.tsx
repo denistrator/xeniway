@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { type JobBoardProps, useJobBoardPresentation } from "./job-board.model";
 import { jobBoardStyles } from "./job-board.styles";
 import { JobBoardColumn } from "./job-board-column.view";
@@ -19,6 +20,8 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError, oper
     clearSearch,
     showAllStatusesLabel,
     clearSearchLabel,
+    statusNavigationLabel,
+    focusStatus,
     operationError: error,
     operationSuccess: success,
   } = useJobBoardPresentation({
@@ -31,6 +34,15 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError, oper
 
   return (
     <div className={styles.root()}>
+      {columns.length > 0 && (
+        <nav aria-label={statusNavigationLabel} className={styles.statusNavigation()}>
+          {columns.map(({ status, label, href }) => (
+            <Link key={status} to={href} onClick={focusStatus} className={styles.statusLink()}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+      )}
       {error && (
         <p role="alert" className={styles.operationError()}>
           {error}
