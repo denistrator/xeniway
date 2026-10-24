@@ -12,14 +12,8 @@ export function useDirtyDeparture() {
   const editors = useDirtyEditors();
   const editor = getActiveEditor(editors);
   const editorsRef = useRef(editors);
-  const allowNextNavigation = useRef(false);
   editorsRef.current = editors;
   const shouldBlock = useCallback(() => {
-    if (allowNextNavigation.current) {
-      allowNextNavigation.current = false;
-      return false;
-    }
-
     return getActiveEditor(editorsRef.current) !== null;
   }, []);
   const blocker = useBlocker(shouldBlock);
@@ -55,7 +49,6 @@ export function useDirtyDeparture() {
       return null;
     }
 
-    allowNextNavigation.current = true;
     return blocker.proceed;
   }
 

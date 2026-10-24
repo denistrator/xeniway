@@ -337,6 +337,11 @@ test("keeps a failed compact save in the departure dialog", async ({ page }) => 
   await expect(dialog.getByRole("alert")).toHaveText("Something went wrong. Please try again.");
   await expect(page).toHaveURL(new RegExp(`/applications/${applicationId}$`));
   await expect(location).toHaveValue("Remote");
+  await dialog.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await page.goBack();
+  await expect(dialog).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/applications/${applicationId}$`));
+  await expect(location).toHaveValue("Remote");
 });
 
 test("does not block logout when a workspace editor is dirty", async ({ page }) => {
