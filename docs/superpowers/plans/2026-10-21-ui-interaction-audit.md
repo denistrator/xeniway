@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** D4/UI-11, delegated T05/UI-05 and approved D5/T13 are implemented with regression evidence and independent review. Fresh verification passed all 762 frontend unit tests, 19 production offline browser cases and 41 ordinary browser cases. Historical unit timing failures remain an investigation item. See checkpoints 12–14 for earlier limits and the approved service/fixture refresh. Other recorded policy/manual gates remain open; T14 is next. T09 and V-01–V-05 remain manual or physical-environment validation work, not confirmed defects. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records the exact gates, checks, and commits.
+**Status:** Approved implementation through T18 is complete, including T15/T16 recovery feedback, T18 hierarchy/URL filters and separately approved reproduced layout repairs. Verification passes 848 frontend unit tests, 22 production offline browser cases and 43 ordinary browser cases; the drag regression additionally passes five repetitions. Desktop observations include four-locale native welcome zoom, English/Hebrew native workspace zoom and a production-preview performance baseline. Physical devices, broader browser/form checks, password managers and assistive technology remain explicit T09/T19 gaps. The extra-small native language select is deferred by the user. Historical failures remain evidence, not current blockers. The [implementation plan](2026-10-21-ui-fixes-implementation-plan.md) records exact gates, checks and commits.
 
 **Goal:** Make Xenia Way predictable, useful, accessible, and forgiving, using Apple's interaction principles without copying native Apple UI.
 
@@ -22,9 +22,9 @@ Use the [fix implementation plan](2026-10-21-ui-fixes-implementation-plan.md) fo
 
 Recommendations below are this audit's application of those principles. They are not quotations or Apple requirements for a web application. Keep browser conventions and semantic HTML. Do not introduce Liquid Glass, native-looking Apple controls, SF Symbols, new fonts, or a platform imitation as part of this work.
 
-## Evidence and coverage
+## Original audit evidence and coverage
 
-The audit combines source review of all route families and shared controls, review of existing behavior tests, and targeted browser inspection. Full source paths are repository-relative. Short paths refer to `apps/web/src` or the feature directory named in that finding: `application-workspace`, `board`, `collection`, `form`, and `filters` are under `apps/web/src/features/applications`; `preferences`, `offline`, `welcome`, and `auth` are under `apps/web/src/features`. Line numbers refer to the audited checkout and will change after edits.
+The following table and baseline limits describe the original 2026-10-21 audit, before remediation. Later verification belongs to each finding's current status and the implementation checkpoints. Full source paths are repository-relative. Short paths refer to `apps/web/src` or the feature directory named in that finding: `application-workspace`, `board`, `collection`, `form`, and `filters` are under `apps/web/src/features/applications`; `preferences`, `offline`, `welcome`, and `auth` are under `apps/web/src/features`. Line numbers refer to the audited checkout and will change after edits.
 
 | Surface | Coverage |
 | --- | --- |
@@ -377,7 +377,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-31 · P3 · Board search/filter context is hidden across routes and lost on reload
 
-**Status:** Blocked pending D8’s route-scoped URL-state policy.
+**Status:** Resolved under approved D8/T18. Each collection owns its `q`; the active board also owns canonical `statuses`. The URL is authoritative, Redux is its projection, typing replaces history and status changes push it. Focused router and real browser cases cover copied links, reload, Back/Forward, clearing, route-local context and preservation of unrelated parameters/hash.
 
 **Evidence — Source + Decision:** `components/application-search.model.ts:8–16` uses the single Redux search value on all three collections. `store.ts:18–28` initializes search/status visibility without URL state. Archive/blacklist filter the same search even after navigation.
 
@@ -423,11 +423,11 @@ The audit combines source review of all route families and shared controls, revi
 
 | ID | Risk and evidence | Required validation before a change |
 | --- | --- | --- |
-| V-01 | **Reproduced and corrected with approval, 2026-10-24:** valid unbroken contact/role, follow-up/activity titles and long URLs widened workspace cards; the enlarged English page heading also overflowed. | English/Hebrew 320 px and 390 px/200% root-text captures show wrapped, complete text and retained actions after the focused corrections. Physical-device/native browser-zoom certification remains open; see checkpoints 25–26. |
-| V-02 | **Reproduced and corrected with approval, 2026-10-24:** the centered welcome dialog clipped title/close/actions at 844×390 with 200–400% root-text scaling. Bounded internal scrolling and a contained language menu preserve the existing welcome flow. | Four-locale diagnostic captures and a native visible Chromium check of Hebrew at 400% text confirm reachable controls, title scrolling, keyboard action access and nested-menu dismissal. Earlier inconsistent captures were not treated as proof. Native browser zoom and physical-device coverage remain open; see checkpoint 28. |
-| V-03 | Small text inputs may trigger iOS zoom; virtual keyboard may obscure submit controls. `components/ui/input.styles.ts:5`, `form/job-modal.styles.ts:10`, `job-drawer.styles.ts:10`. | Use physical Safari/iOS and Android, keyboard open, large text, landscape and installed mode. Do not disable user zoom to conceal a problem. |
-| V-04 | Focus visibility, contrast, error/status color and target accuracy across all states are not certified by screenshots or source. | Review light/dark, Windows classic scrollbars, touch, forced colors, reduced motion, VoiceOver/NVDA and Hebrew. Preserve text/status labels; do not rely on color alone. The existing scrollbar-gutter/Radix accommodation already exists in `index.css:31`; do not reopen it as an unfixed finding without reproduction. |
-| V-05 | Rendering/search/drag performance may degrade for large boards; no current timing measurements support a defect claim. | Measure real route downloads, typing and drag/edit responsiveness on representative low-end devices and larger datasets. Use the existing bundle-cost backlog entry; do not force chunk splits or add virtualization without evidence. |
+| V-01 | **Reproduced and corrected with approval, 2026-10-24:** valid unbroken contact/role, follow-up/activity titles and long URLs widened workspace cards; the enlarged English page heading also overflowed. | English/Hebrew 320 px and 390 px/200% root-text captures show wrapping and retained actions. Native Chromium 400% from 1280×900 (~320 CSS px) also confirms wrapped workspace content and visible keyboard action access. Physical/other-browser coverage remains open; see checkpoints 25–26 and 30. |
+| V-02 | **Approved dialog correction validated on desktop, 2026-10-24:** bounded scrolling fixes the reproduced 844×390 clipping. Four-locale root-text captures and native Chromium 200%/400% zoom confirm reachable Close/completion controls; Hebrew 400% text also has native scrolling/menu evidence. | At native 400% from 844 px (~211 CSS px), language labels require horizontal menu scrolling. The user explicitly deferred a native select for extra-small screens to a later backlog task; no further menu fix is authorized now. Physical-device coverage remains open. See checkpoints 28 and 30. |
+| V-03 | **Not validated:** physical iOS/Android keyboards and installed-mode behavior are unavailable in this checkout. Small inputs/keyboard occlusion remain risks, not reproduced defects. | Test physical Safari/iOS and Android, keyboard open, large text, landscape and installed mode. Do not disable zoom or substitute desktop emulation. |
+| V-04 | **Partially inspected:** desktop Chromium four-locale forced-colors/reduced-motion and native focus, plus light/dark/RTL samples. No complete contrast, physical touch or AT certification. | Windows classic scrollbars, touch, VoiceOver/NVDA and full contrast/state coverage remain open. Preserve text/status labels and existing scrollbar-gutter/Radix accommodation; do not reopen it as an unfixed finding without reproduction. |
+| V-05 | **Desktop baseline recorded, no performance defect established:** three local production-preview samples each at 100/1,000 cards, route resource bodies, search and editor response. | See implementation checkpoint 29 for exact measurements and limits. Low-end hardware, real deployment caching/compression and drag latency remain unmeasured. Use the existing bundle-cost backlog; no speculative splitting/virtualization. |
 
 ## Strengths to preserve
 
@@ -465,7 +465,7 @@ Work one independently verifiable task at a time. Reproduce before changing code
 
 **Regression starting points:** `components/layout.test.tsx`, `pages/about-page.test.tsx`, `features/preferences/*test.tsx`, `features/auth/**/**test.tsx`, `features/applications/application-workspace/**/**test.tsx`, `features/applications/activity/*test.tsx`, `features/offline/*test.ts*`, and `tests/e2e/xeniway.spec.ts`, `export.spec.ts`, `offline.spec.ts`. Add a focused `components/ui/confirmation-modal.test.tsx` for shared modal behavior; do not rely solely on feature tests.
 
-For completed implementation stages, use the [repository verification sequence](../../testing.md#commands). Browser suites run sequentially because they share disposable fixtures and Redis database 15. Existing offline-logout and isolated-logout test issues remain documented; do not bypass them or claim full-suite success based on smoke tests. The two passing smoke tests during this audit establish browser readiness and their specific public-page behavior only.
+For completed implementation stages, use the [repository verification sequence](../../testing.md#commands). Browser suites run sequentially because they share disposable fixtures and Redis database 15. The final full suites pass, including the repaired offline-logout disclosure; the separately tracked isolated-logout onboarding dependency remains a backlog task. Historical smoke tests establish only their original checks, not the later complete verification or physical-device coverage.
 
 ## Completion criteria
 

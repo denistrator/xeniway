@@ -8,7 +8,7 @@
 
 **Tech stack:** React 19, TypeScript, React Router, Redux Toolkit, TanStack Query, i18next, Tailwind Variants, Radix Select, Atlaskit InlineEdit, Vitest, and Playwright. No new dependency is planned.
 
-**Status:** T01–T15 and T17 implementation is complete, subject to the explicitly retained manual T09 checks. The company-research Save regression is fixed and verified. Approved T18 route-owned filters are committed; header, status jumps and cursor changes are under final verification. All 20 production offline cases pass, including destination logout disclosure; 65 focused logout/runtime cases pass. The latest ordinary suite passed 30 cases, failed Forward dirty protection and drag ordering, and skipped 10 after the serial failure; these are being investigated without weakening expectations. T16 is next. T09/T19 retain manual/device validation. The audit remains the evidence register; this document owns task order and execution tracking.
+**Status:** Approved T01–T18 implementation and the separately approved layout corrections are complete on `codex/confirmation-dialog-focus`. All 22 production offline cases, 43 ordinary browser cases and 848 frontend tests pass; the drag regression also passes five consecutive repetitions. Follow-up repairs cover current multiline drafts, subsequent dirty departures and stationary drag targets. T19 has desktop layout/accessibility observations and a measured performance baseline, not device or assistive-technology certification. T09 and T19 retain the explicit native/device checks below. The audit remains the evidence register; this document owns execution tracking. Historical checkpoint failures are preserved as evidence, not current blockers.
 
 ## Global constraints
 
@@ -23,7 +23,7 @@
 - Preserve lazy route and click-only create-form boundaries. Do not eager-load all editors to support a guard.
 - Stop and ask when a tool fails, a new bug blocks progress, or a task needs broader authority. Do not substitute tools or weaken tests to get past a failure.
 - Run browser suites sequentially. Their setup refreshes disposable fixtures and uses Redis database 15; announce that before execution.
-- Do not automatically commit or merge. Update the audit, backlog, and current documentation as tasks are verified.
+- Follow the user's later authorization to commit each verified task autonomously. Do not merge or push without a separate request. Update the audit, backlog, and current documentation as tasks are verified.
 
 ## Policy decisions for approval
 
@@ -42,15 +42,15 @@ The recommendations below make the plan concrete; they are not existing product 
 
 ## Execution gate status
 
-- **2026-10-24 approvals:** The user approved D6 for T15 and both D7/D8 for T18, and authorized a separate investigation/fix of the company-research Save failure. T16 can proceed after T15 is verified. Older checkpoint gate statements record historical status.
+- **2026-10-24 approvals:** The user approved D6 for T15 and both D7/D8 for T18, the separate company-research Save repair, narrow search/page-title/workspace wrapping and short-viewport welcome scrolling. All are implemented. Older checkpoint gate statements record historical status.
 
 - **T05 reload-resilient cleanup recovery:** the user authorized the implementation decision. A minimal owner/generation removal marker blocks conflicting preparation and recovers an explicit cleanup action across reloads without granting read access. Offline unit checks, independent review and the production reload/removal regression pass; all T05 items are complete.
 - **T08:** D4 approved and implemented; focused checks and independent review passed. Checkpoint 12 retains historical verification failures; checkpoint 14 records the subsequent passing full unit/browser baseline.
 - **T13:** D5 and lazy JSON packaging were approved by the user. Local-first changes, owner-scoped retry and distinct dictionary/storage/account feedback are implemented and independently reviewed. Real development/production failure/retry checks, all-four-locale offline preparation/reload, and the full authenticated browser suite pass.
-- **T15:** D6 approved and implemented. The login destination retains a non-private tab-scoped notice until confirmed logout or an explicit new-session transition. Controlled regressions cover late checks and local/cross-tab session changes; the production offline workflow passes. T16 is unblocked.
-- **T18:** D7/D8 approved. Route-owned filters are committed; mobile hierarchy, jump links and cursor changes are being verified in separate patches. The user also approved a separately reproduced 320 px search-field overflow fix.
+- **T15/T16:** Implemented and independently reviewed. Destination logout disclosure, owner/session races, preparation failure categories, persistence readiness and contextual read-only/checking feedback have focused coverage; all 22 production offline workflows pass.
+- **T18:** D7/D8 approved and implemented in separate commits: route-owned filters, mobile hierarchy, status links and native text-entry cursors. Desktop Chromium checks cover four-locale narrow layouts, dark theme, RTL and enlarged root text. Physical touch remains T19 validation, not an implementation blocker.
 - **T09:** its automated behavior checks are complete, but native password-manager, paste, autocomplete, and four-locale visual validation require an interactive user/browser session; they are not inferred from the browser suite.
-- **T19 V-01/V-02/V-05:** require deliberate visual or performance inspection with representative content, viewport/zoom, and hardware. The automated suite is not a substitute for those observations.
+- **T19 V-01/V-02/V-05:** Approved layout fixes have desktop root-text evidence, four-locale native welcome zoom at 200%/400%, and English/Hebrew long-workspace inspection at native 400%. Performance has a local desktop/public-fixture baseline. Physical devices, broader target-browser coverage, representative low-end hardware and unmeasured drag latency remain open. The extra-small language-select improvement is explicitly deferred by the user.
 - **T19 V-03/V-04:** require physical devices and assistive-technology environments that are not available to this autonomous checkout.
 
 ## Sequence and dependencies
@@ -240,7 +240,8 @@ type DownloadCleanup =
 - [x] Map actual schema issue paths to field-specific translated errors. Explain the existing password requirements before submit; never invent a rule absent from the shared schema.
 - [x] Associate errors with their inputs and set `aria-invalid` only when appropriate. Focus the first invalid control or a summary whose links reach each correction. Preserve all entered values.
 - [x] Clear obsolete errors on correction/new validation. Verify repeated invalid submission is discoverable even when the error string is unchanged; do not rely solely on an effect keyed by that string.
-- [ ] Run field/component and shared-contract tests. Check labels, native autocomplete, paste, password-manager generation and all four languages manually where needed.
+- [x] Run field/component and shared-contract tests; focused regressions and the final complete unit/browser runs pass.
+- [ ] Complete native autocomplete, paste, password-manager generation and remaining four-locale form inspection in representative browsers. Automated control labels/dictionary checks are not password-manager or visual certification.
 
 **Exit:** Users can identify and correct the rejected input without guessing or losing the rest of the form.
 
@@ -413,7 +414,8 @@ type RestoreOutcome<T> =
 - [x] Under approved D8, implement route-local `q` and canonical active-board `statuses` with missing/empty/unknown semantics, unrelated parameter/hash preservation, replace-on-typing and push-on-status selection. A single layout route adapter projects into Redux; Archive/Blacklist use only their search parameter.
 - [x] Focused router tests cover canonical/empty/unknown values, search clearing, status history and board navigation. The browser case verifies copied query/filter URLs, reload, route-local search, Back and unrelated parameter/hash preservation. Full-suite integration remains part of the final verification checkpoint.
 - [x] Narrow the global pointer cursor to controls where it denotes an action. Leave ordinary text input and textarea selection natural, preserving all native keyboard/paste/autofill behavior.
-- [ ] Manually verify hierarchy, translated wrapping, touch reach, dark theme, RTL and enlarged text. Check meaningful state/navigation behavior automatically, not pixel placement.
+- [x] Inspect desktop Chromium hierarchy, translated wrapping, dark theme, RTL and enlarged root text at the recorded viewports. Meaningful state/navigation tests pass without pixel-placement assertions.
+- [ ] Complete physical touch/reach and native zoom checks as part of T19. Desktop viewport inspection does not establish those results.
 
 **Exit:** Primary tasks stay near the content; later mobile statuses are reachable; search context follows the approved policy; primitive affordances remain familiar web behavior.
 
@@ -423,13 +425,18 @@ type RestoreOutcome<T> =
 
 **Read/inspect:** `features/applications/activity/application-activity-event.styles.ts`, `W/shared/workspace-text-field.styles.ts`, `W/contacts/contacts-section.styles.ts`, `features/welcome/welcome-modal*.styles.ts`, `components/ui/input.styles.ts`, `F/job-modal.styles.ts`, `F/job-drawer.styles.ts`, theme/focus tokens and current bundle outputs.
 
-- [ ] V-01: Use realistic maximum-length content, long URLs/unbroken identifiers, mixed-direction text and long translated actions. Inspect at 320/390 px and enlarged text. If overflow occurs, record its exact screen/content and ask before the scoped wrapping/layout fix.
-- [ ] V-02: Inspect welcome in landscape and 200–400% zoom in four locales. All actions and exits must remain reachable. Confirm a clipping failure before changing height/scroll treatment.
+- [x] V-01 desktop reproduction/repair: valid maximum-length content, long URLs/unbroken identifiers and mixed-direction text reproduced overflow. With user approval, focused wrapping corrects English/Hebrew 320 px and 390 px/200% root-text cases without hiding text/actions; four-locale header/search samples are also inspected.
+- [x] V-02 desktop reproduction/repair: four-locale 844×390 captures at 200–400% root text reproduced clipping. Approved internal scrolling/menu containment is source-reviewed; native visible Hebrew 400% inspection verifies scrolling and keyboard/menu access. See checkpoint 28.
+- [x] V-02 native desktop zoom: the production preview's welcome Close/completion controls are reachable in all four locales at native 200% and 400% Chromium zoom. The starting viewport is 844×390; screenshots show the browser's actual zoom indicator, not CSS scaling. The ~211 CSS-pixel menu-label edge case is explicitly deferred: the user wants a native select on extra-small screens later, with no fix now. It is recorded in the backlog.
+- [x] V-01 native desktop zoom: at 400% from a 1280×900 viewport (~320 CSS px), English/Hebrew maximum-length contact/role/follow-up/activity content and long mixed-direction URLs wrap within their cards. Native Tab reaches their visible edit/removal/completion actions. No mutation is performed.
+- [ ] Remaining V-01/V-02 coverage: physical-device and broader target-browser validation. The recorded Chromium checks do not certify every route, browser or device.
 - [ ] V-03: Test physical iOS Safari and Android with the virtual keyboard open, landscape and installed mode. Record unavailable devices explicitly. Do not substitute desktop emulation for a physical keyboard claim, and do not disable zoom.
-- [ ] V-04: Inspect keyboard focus, contrast, forced colors, reduced motion, touch and Windows classic scrollbars. Conduct VoiceOver/NVDA checks where available. Record the actual browser/AT combination and gaps, not a general compliance claim.
-- [ ] V-05: Measure typing, route downloads, edit/drag responsiveness and large-board rendering on representative devices/data. Preserve baseline measurements. Use the existing bundle-cost backlog; do not add virtualization or force chunk splitting on intuition.
-- [ ] Update each candidate as reproduced, disproved within its tested conditions, or not yet validated. New implementation work needs its own approved task and behavioral guardrails.
-- [ ] Run the full verification sequence below. Review each UI-ID's acceptance checks and update the audit/backlog, rather than marking the whole plan done because one smoke test passed.
+- [x] V-04 desktop observations: four-locale Chromium forced-colors/reduced-motion captures and native keyboard focus were inspected; light/dark and RTL samples are recorded. This is not a complete contrast or screen-reader audit.
+- [ ] V-04: Complete physical touch, Windows classic scrollbars, VoiceOver/NVDA and remaining contrast/state review. Those environments are not available in this checkout; do not substitute desktop emulation or claim general compliance.
+- [x] V-05 desktop baseline: record three production-preview samples each for 100/1,000 public-fixture cards, board/search readiness, workspace resource bodies, editor opening and sequential typing. See checkpoint 29 and the existing measured-bundle backlog.
+- [ ] V-05: Measure deployment compression/cache behavior, drag latency and representative low-end devices. The local unthrottled baseline does not establish a performance defect or authorize virtualization/chunk changes.
+- [x] Classify each candidate with its tested conditions and remaining gaps in the audit. No candidate is globally disproved from desktop samples. New implementation work needs its own approved task and behavioral guardrails.
+- [x] Run the full automated verification sequence below and reconcile each UI-ID/candidate with the audit/backlog. Exact outcomes and manual limits are recorded in checkpoint 30; this checkbox does not close unavailable physical/manual checks.
 
 **Exit:** Every finding has a verified resolution, explicit deferral/decision, or evidence-backed rejection; every candidate has a truthful validation status.
 
@@ -630,3 +637,24 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 - **Evidence and authority:** The user approved bounded height/internal scrolling after 844×390 landscape captures reproduced clipping with 200–400% root-text scaling. The dialog now scrolls internally, limits vertical padding on short viewports and wraps its title. Welcome alone selects a contained, scrollable language-menu placement; the header default is unchanged. Completion decisions and focus behavior are unchanged.
 - **Manual verification:** Captured four locales at ordinary, 200% and 400% root text. Because earlier extreme Hebrew captures were inconsistent, the user approved a native visible check. Selecting the actual Google Chrome for Testing app, restarting the inspection connection and enabling Chromium's documented accessibility-inspection flag in the temporary fixture allowed direct inspection. At Hebrew 400%, Close is visible, native scrolling reaches the title, keyboard Tab reaches the primary action and wraps to language, the last menu option is visible, and Escape dismisses the menu without completing welcome. No project browser configuration was changed. Root-text scaling is not native browser zoom or physical-device certification.
 - **Verification:** Independent source review is clear. The final 848-test frontend run and 43-case ordinary browser suite include welcome/language behavior and pass; all 22 production offline cases pass. Fresh formatting, lint and complete type checks pass. No automated style, geometry or screenshot assertion was added. Native zoom and device/AT checks remain explicit T19 gates.
+
+### Checkpoint 29 · Desktop accessibility observations and performance baseline (T19)
+
+- **Accessibility conditions:** Desktop Chromium captures cover forced colors and reduced motion in all four locales at 390 px, plus the recorded narrow/light/dark/RTL states. Native keyboard inspection verifies visible focus and the extreme Hebrew welcome controls/menu. No Windows classic-scrollbar, physical touch, VoiceOver/NVDA or complete contrast audit was available. These observations do not certify WCAG/HIG compliance.
+- **Performance conditions:** Local built production preview, bundled headless Chromium on this macOS host, 1280×900, no CPU/network throttling, public mocked API data, three fresh browser contexts for each board size within one browser process. Workspace navigation is a second document in the same context, not a fresh browser process. Host elapsed times include automation/navigation overhead; sequential typing sends the 16-character public text `Research fixture` without a per-key delay. No private records, real account writes or credentials are measured/logged.
+
+| Public fixture cards | Board ready | Filter to one card | Workspace ready | Open preparation editor | Type 16 characters |
+| --- | --- | --- | --- | --- | --- |
+| 100 | 143–156 ms | 31–51 ms | 119–138 ms | 33–41 ms | 65–86 ms |
+| 1,000 | 171–185 ms | 48–49 ms | 132–136 ms | 37–41 ms | 59–90 ms |
+
+- **Resource bodies:** Each board document reports 11 JavaScript Resource Timing entries and 226,533 encoded body bytes; each workspace document reports 13 and 317,303 bytes, including shared resources. These are resource-body totals, not header-inclusive transfer totals, incremental route savings or a deployment compression/cache measurement. The local fixture run cannot attribute all bytes to a particular dependency.
+- **Classification and guardrails:** No performance defect is established by these desktop samples. Drag latency, low-end hardware and real deployment compression/cache behavior remain open V-05 checks; do not add virtualization or force chunk splitting from this baseline. The existing measured-bundle backlog entry is updated rather than duplicated. Candidate statuses now distinguish reproduced/repaired desktop issues from partial or unavailable validation.
+
+### Checkpoint 30 · Native zoom and final automated verification
+
+- **Additional native checks:** On the built production preview, native Chromium keyboard zoom reaches the browser-reported 200% and 400% levels from an 844×390 window. Close and completion actions remain visible when focused in English, Russian, Ukrainian and Hebrew. At native 400% from 1280×900 (~320 CSS px), English/Hebrew maximum-length workspace content/URLs wrap and native Tab reaches visible contact/follow-up/activity actions without mutations. These are separate observations from root-text scaling, not general target-browser certification.
+- **Explicit deferral:** At the approximately 211 CSS-pixel width produced by the welcome's 400% test, the contained language menu needs horizontal scrolling to read a full label. The user chose a native select for extra-small screens in a later task and explicitly said not to fix it now. The [native-select backlog entry](../../backlog.md#use-a-native-language-select-on-extra-small-screens) records evidence, future scope questions and behavior guardrails; the current menu remains unchanged.
+- **Final automated outcomes:** Fresh formatting, lint, complete browser/Node/worker/API/shared/E2E type checks, the root unit command, production build and whitespace checks pass. Unit totals: 78 repository/script, 25 shared, 144 API with nine existing skips, and 848 frontend across 82 files. The complete browser runs on the same production source pass sequentially: 22 production offline cases, then 43 ordinary cases. The independent before-card/tail-append regression also passes five consecutive repetitions; the final welcome/language focused run passes all 15 cases.
+- **Review and hygiene:** Independent source reviews are clear for the implementation patches. Documentation review confirms that current statuses, measured resource-body totals and partial validation claims agree. Staged public-repository checks and all 25 local Markdown link targets pass; final documentation staging is rechecked before commit. The existing worker-bundler deprecation and native skip-link router warning remain separately tracked, not suppressed or claimed fixed.
+- **Remaining work:** T09 native/password-manager inspection, broader target-browser/device coverage, physical iOS/Android keyboards/installed mode, Windows classic scrollbars, VoiceOver/NVDA/full contrast review and low-end/deployment/drag performance measurement remain explicit gates. The plan is retained for those pending checks and the separately deferred extra-small native select; a green automated baseline does not mark the entire plan complete.
