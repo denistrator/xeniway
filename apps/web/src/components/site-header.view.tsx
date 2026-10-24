@@ -17,6 +17,22 @@ export function SiteHeader(props: SiteHeaderProps) {
         <Link to="/" className={styles.brand()}>
           Xenia Way
         </Link>
+        {view.readAccountId && (
+          <div className={styles.account()}>
+            <span dir="ltr" title={view.email} className={styles.email()}>
+              {view.email}
+            </span>
+            <button
+              type="button"
+              className={styles.logoutButton()}
+              onClick={view.handleLogout}
+              disabled={view.logout.isPending}
+            >
+              <div className={styles.logoutText()}>{view.logoutLabel}</div>
+              <LogOut aria-hidden="true" size={15} strokeWidth={2} />
+            </button>
+          </div>
+        )}
         <nav className={styles.navigation()} aria-label={view.navigationLabel}>
           {view.navigationLinks.map(({ to, label, end }) => (
             <NavLink key={to} to={to} end={end} className={view.navigationLinkClassName}>
@@ -25,20 +41,6 @@ export function SiteHeader(props: SiteHeaderProps) {
           ))}
         </nav>
         <div className={styles.controls()}>
-          {view.readAccountId && (
-            <div className={styles.account()}>
-              <span className={styles.email()}>{view.email}</span>
-              <button
-                type="button"
-                className={styles.logoutButton()}
-                onClick={view.handleLogout}
-                disabled={view.logout.isPending}
-              >
-                <div className={styles.logoutText()}>{view.logoutLabel}</div>
-                <LogOut aria-hidden="true" size={15} strokeWidth={2} />
-              </button>
-            </div>
-          )}
           <div className={styles.actions()}>
             {view.user.data && (
               <Button

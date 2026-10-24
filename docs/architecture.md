@@ -66,6 +66,8 @@ Shared `styles/shared/field-styles.ts` and `surface-styles.ts` recipes cover val
 
 Header Logout also uses the shared compact-control recipe through a native button. Its `logout` variant has no background or border, including on hover; it retains the shared responsive sizing, visible keyboard focus, disabled state, and localized accessible label.
 
+The authenticated header groups email and Logout beside the brand at narrow widths, keeping account context visible without an isolated Logout row. Email uses left-to-right text direction independently of the interface locale. Navigation, Add job and preference shortcuts remain exposed; their groups wrap at narrow widths and enlarged text. Desktop ordering places account context after navigation.
+
 The colocated `foo.view.tsx` / `foo.model.ts` / `foo.styles.ts` / `foo.test.tsx` convention is defined in [AGENTS.md](../AGENTS.md#coding-conventions). Model means view model: hooks, behavioral adapters, state/effects, translations, formatting, and prepared presentation data. Views wire those models and render conditions, maps, slots, refs, and JSX-only third-party callbacks. Optional focused logic tests use `foo.model.test.ts`. Static components need no empty model module; shared support hooks, contracts, and test-support helpers retain descriptive filenames. Do not move rendering into `createElement` calls just to avoid TSX.
 
 CSS owns theme tokens, floating-label child/peer selectors, board scrolling, reduced motion, and Atlaskit's edit targets. Keep these DOM hooks intact. Status decoration follows saved application status, not archive/blacklist state; shared recipes and logical dimensions support all six hues, light/dark, and Hebrew RTL. Existing UI state—not new styling state—drives variants.

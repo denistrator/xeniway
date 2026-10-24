@@ -325,7 +325,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-26 · P2 · The mobile header gives low-priority controls too much space
 
-**Status:** Blocked pending D7’s approved mobile hierarchy.
+**Status:** Implemented under approved D7/T18. Before/after 320/360/390 px views in all four locales show account context beside the brand, with navigation and Add job still exposed. Desktop, mobile dark theme and enlarged root-text header wrapping were inspected in Chromium; physical-device/AT coverage is not claimed. See implementation checkpoint 19.
 
 **Evidence — Runtime + Source + Decision:** At 360 px, the signed-in header occupied about 280 px, with Logout alone on a mostly empty row before Add job/Settings/theme/language. `components/site-header.styles.ts:8–16` and `site-header.view.tsx:26–43` explain the account/action grouping. The email is hidden while its separate group remains.
 
