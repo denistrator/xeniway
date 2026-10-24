@@ -24,7 +24,10 @@ async function login(page: Page) {
 }
 
 async function openOfflineSettings(page: Page) {
-  await page.getByRole("link", { name: /^Settings(?: —|$)/ }).click();
+  await page
+    .getByRole("banner")
+    .getByRole("link", { name: /^Settings(?: —|$)/ })
+    .click();
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Offline access on this device", exact: true })).toBeVisible();
 }
@@ -138,6 +141,7 @@ test("a transient server error without a download stays on the requested board a
   await expect(page).toHaveURL(/\/archive$/);
   await expect(page.getByRole("link", { name: "Settings — Offline or server unavailable", exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
+  await expect(page.getByRole("complementary").getByRole("link", { name: "Settings", exact: true })).toBeVisible();
   await openOfflineSettings(page);
   await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
   await expect(page.getByText(/cached applications are read-only/)).toBeVisible();
@@ -150,7 +154,30 @@ test("a transient server error without a download stays on the requested board a
     }
   });
   await page.unroute("**/api/applications/archive");
+  let releaseCheck!: () => void;
+  const pendingCheck = new Promise<void>((resolve) => {
+    releaseCheck = resolve;
+  });
+  await page.route("**/api/auth/me", async (route) => {
+    await pendingCheck;
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: { code: "INTERNAL_SERVER_ERROR" } }),
+    });
+  });
   await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Checking connection…", exact: true })).toBeDisabled();
+  const connectionNotice = page.getByRole("region", { name: "Offline access on this device" }).getByRole("status");
+  await expect(connectionNotice).toContainText("Checking connection…");
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  expect(checks).toBe(1);
+  releaseCheck();
+  await expect(connectionNotice).toContainText("Connection could not be confirmed");
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.unroute("**/api/auth/me");
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await expect(connectionNotice).toContainText("Connection confirmed. You can make changes.");
   await expect(page.getByRole("button", { name: "Add job", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Retry", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Settings", exact: true })).toBeVisible();
@@ -159,7 +186,7 @@ test("a transient server error without a download stays on the requested board a
     .getByRole("link", { name: "Archive", exact: true })
     .click();
   await expect(page.getByRole("button", { name: "Restore", exact: true }).first()).toBeVisible();
-  expect(checks).toBeGreaterThan(0);
+  expect(checks).toBe(2);
   await expect(page).toHaveURL(/\/archive$/);
 });
 
@@ -438,7 +465,7 @@ test("a failed workspace download does not leave a partial ready snapshot", asyn
     .getByRole("checkbox", { name: "I understand and want to store my application data on this device." })
     .check();
   await page.getByRole("button", { name: "Make available offline on this device", exact: true }).click();
-  await expect(page.getByText(/Offline data could not be saved or read/)).toBeVisible();
+  await expect(page.getByText(/Application data could not be downloaded/)).toBeVisible();
   await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
   expect(
     await page.evaluate(async () => {
@@ -457,6 +484,46 @@ test("a failed workspace download does not leave a partial ready snapshot", asyn
     }),
   ).toBe(0);
 });
+
+for (const failure of ["resources", "storage"] as const) {
+  test(`preparation explains a ${failure} failure without claiming readiness`, async ({ page, context }) => {
+    await login(page);
+    let failedResources = 0;
+    switch (failure) {
+      case "resources":
+        // Public asset fetches belong to the worker, not to the page.
+        await context.route("**/assets/ru-*.json", (route) => {
+          failedResources += 1;
+          return route.abort();
+        });
+        break;
+      case "storage":
+        await page.evaluate(() => {
+          const put = IDBObjectStore.prototype.put;
+          IDBObjectStore.prototype.put = function (...args) {
+            if (this.name === "snapshots") {
+              throw new DOMException("Fixture quota failure", "QuotaExceededError");
+            }
+            return put.apply(this, args);
+          };
+        });
+        break;
+    }
+    await openOfflineSettings(page);
+    await page
+      .getByRole("checkbox", { name: "I understand and want to store my application data on this device." })
+      .check();
+    await page.getByRole("button", { name: "Make available offline on this device", exact: true }).click();
+    const message =
+      failure === "resources" ? /Offline app files could not be downloaded/ : /Offline data could not be saved or read/;
+    await expect(page.getByText(message)).toBeVisible();
+    if (failure === "resources") {
+      expect(failedResources).toBeGreaterThan(0);
+    }
+    await expect(page.getByText(/Ready offline until/)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Add job", exact: true })).toBeEnabled();
+  });
+}
 
 test("all lazy locales and RTL survive offline reload", async ({ page, context }) => {
   await login(page);

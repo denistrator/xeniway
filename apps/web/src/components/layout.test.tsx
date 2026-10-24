@@ -6,6 +6,9 @@ import { StrictMode } from "react";
 import { Provider } from "react-redux";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, expect, test, vi } from "vitest";
+import { OfflineContext } from "../features/offline/offline-access.model";
+import { createAccessState, selectAccess } from "../features/offline/offline-access-machine";
+import { createOfflineAccessRuntime } from "../features/offline/offline-access-runtime";
 import { closeDrawer, closeWelcome, openCreateDrawer, store } from "../store";
 import { initializeTestI18n } from "../test/initialize-test-i18n";
 import { Layout } from "./layout.view";
@@ -59,6 +62,54 @@ beforeEach(async () => {
   store.dispatch(closeWelcome());
   await initializeTestI18n();
 });
+
+test.each(["/", "/applications/3"])(
+  "read-only %s explains disabled tasks with one Settings recovery link",
+  async (path) => {
+    const client = new QueryClient();
+    const runtime = createOfflineAccessRuntime(client);
+    const access = { ...runtime, ...selectAccess(createAccessState({ online: false, userId: 1 }), Date.now()) };
+    const router = createMemoryRouter(
+      [
+        {
+          element: <Layout />,
+          children: [
+            {
+              path,
+              element: (
+                <>
+                  <p>Readable application content</p>
+                  <button type="button" disabled>
+                    Save task
+                  </button>
+                </>
+              ),
+            },
+          ],
+        },
+      ],
+      { initialEntries: [path] },
+    );
+    render(
+      <QueryClientProvider client={client}>
+        <Provider store={store}>
+          <OfflineContext.Provider value={access}>
+            <RouterProvider router={router} />
+          </OfflineContext.Provider>
+        </Provider>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "You are offline. Changes are unavailable until your connection is confirmed.",
+    );
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
+    expect(screen.getByRole("button", { name: "Save task" })).toBeDisabled();
+    expect(screen.getByText("Readable application content")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove offline data" })).not.toBeInTheDocument();
+    client.clear();
+  },
+);
 
 test("does not mount the form host before the first authenticated open", async () => {
   let releaseHostImport: () => void = () => undefined;

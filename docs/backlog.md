@@ -8,7 +8,7 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 
 - **Plan:** [2026-10-21 UI audit and remediation plan](superpowers/plans/2026-10-21-ui-interaction-audit.md).
 - **Implementation:** [UI fixes task plan](superpowers/plans/2026-10-21-ui-fixes-implementation-plan.md) maps every finding to a testable task and records policy decisions that require approval before execution.
-- **Current checkpoint:** D1, D3, approved D4/T08, delegated T05 and D5/T13 are implemented on `codex/confirmation-dialog-focus`. Checkpoint 14 records a passing normal full unit run (762 frontend tests), 19 production offline browser cases and 41 ordinary cases after approved service/fixture startup. T14 is next. Earlier timing failures remain investigation evidence, and broader device/screen-reader review is not recorded. Other tasks retain the plan's policy/manual gates; this entry does not authorize bypassing them.
+- **Current checkpoint:** Approved T15–T18 product changes and the separately approved narrow-layout corrections are implemented on `codex/confirmation-dialog-focus`. T16 source review and the complete production offline suite pass. The implementation plan records exact verification and the dirty-departure/drag follow-ups; T09/T19 retain explicit manual/device checks. Do not infer device or assistive-technology certification from desktop browser tests.
 - **Evidence:** Source review and targeted browser inspection identified draft-loss paths, incomplete confirmation focus behavior, errors outside active dialogs, weak bulk-action hierarchy, and inconsistent offline/account recovery feedback. The plan records evidence, priorities, acceptance checks, and unverified device/layout candidates separately.
 - **Direction:** Prioritize work preservation and truthful feedback, then navigation and responsive hierarchy. Borrow HIG interaction principles without copying Apple-native UI. The plan is not authorization to implement fixes.
 - **Guardrails:** Preserve owner scoping, CSRF, six statuses, archive/blacklist distinctions, InlineEdit, local-first preferences, and read-only offline behavior. Reuse the existing offline-disclosure, diagnostics, export-association, and measured-bundle entries referenced in the plan instead of duplicating them. Ask before addressing new blockers or broadening scope. No automated style/layout/snapshot tests.
@@ -120,13 +120,6 @@ This document tracks worthwhile future tasks across product features, bugs, docu
 - **Why:** It covers row mapping, application-history transactions, password resets, and user preferences in one test file.
 - **Possible direction:** Split by independently understandable workflow only if ongoing changes make navigation or ownership difficult. Its current `describe` groups may be sufficient, so this is not urgent.
 - **Guardrails:** Keep database setup shared where that improves clarity; do not split solely to meet a line-count target.
-
-### Make offline preparation failures diagnosable without exposing private data
-
-- **Where:** `apps/web/src/features/offline/offline-access-runtime.ts`, `prepare-offline.ts`, and the worker preparation message boundary.
-- **Why:** Preparation discards the caught exception and shows the same storage-oriented message for API failures, worker activation/MIME/revision failures, ownership changes, and IndexedDB/Cache Storage errors. A reported failure currently requires caught-exception breakpoints or worker inspection to identify its stage.
-- **Possible direction:** Add a bounded, sanitized diagnostic stage/error code for local troubleshooting while retaining translated user-facing copy. Do not log complete API responses, application content, email addresses, cookies, CSRF tokens, or raw persisted snapshots.
-- **Guardrails:** Preserve failure cleanup, no partial readiness, generation/ownership checks, and read-only offline behavior. Cover asset, API, storage, and superseded-run failures; distinguish deliberately superseded work from actionable failures.
 
 ### Review server error observability separately
 

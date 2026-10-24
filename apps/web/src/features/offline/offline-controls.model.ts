@@ -1,44 +1,22 @@
-import { notifyManager, type QueryKey, useQueryClient } from "@tanstack/react-query";
+import { notifyManager, useQueryClient } from "@tanstack/react-query";
 import { type ChangeEvent, useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
 import { applicationKeys } from "../../lib/api";
 import { useOfflineAccess, useVerifiedUser } from "./offline-access.model";
+import { connectionMessageKey } from "./offline-messages";
 
 type OfflineAccess = ReturnType<typeof useOfflineAccess>;
-
-function getRouteQueryKey(pathname: string, owner: number | null): QueryKey | null {
-  if (!owner) {
-    return null;
-  }
-  const detailId = /^\/applications\/(\d+)\/?$/.exec(pathname)?.[1];
-  if (detailId) {
-    return applicationKeys.detail(owner, Number(detailId));
-  }
-  switch (pathname) {
-    case "/settings":
-    case "/":
-      return applicationKeys.list(owner, "active");
-    case "/archive":
-      return applicationKeys.list(owner, "archive");
-    case "/blacklist":
-      return applicationKeys.list(owner, "blacklist");
-    default:
-      return null;
-  }
-}
 
 export function useOfflineControls() {
   const { t } = useTranslation();
   const access = useOfflineAccess();
   const client = useQueryClient();
-  const { pathname } = useLocation();
-  const queryKey = getRouteQueryKey(pathname, access.readAccountId);
+  const queryKey = access.readAccountId ? applicationKeys.list(access.readAccountId, "active") : null;
   const subscribe = useCallback(
     (listener: () => void) => client.getQueryCache().subscribe(notifyManager.batchCalls(listener)),
     [client],
   );
-  const downloadedAt = useSyncExternalStore(subscribe, () =>
+  const activeBoardFetchedAt = useSyncExternalStore(subscribe, () =>
     queryKey ? (client.getQueryState(queryKey)?.dataUpdatedAt ?? 0) : 0,
   );
 
@@ -49,14 +27,22 @@ export function useOfflineControls() {
     access.localLogout || access.storageError || access.cleanup.status !== "idle" || access.updateAvailable;
   const restorationFailed =
     access.download.status === "restore-failed" || access.download.status === "restore-timed-out";
-  const notice = hasDownloadNotice || hasDeviceNotice || readOnly || access.isDisconnected || restorationFailed;
+  const checking = access.verification === "checking";
+  const notice =
+    hasDownloadNotice ||
+    hasDeviceNotice ||
+    readOnly ||
+    access.isDisconnected ||
+    restorationFailed ||
+    access.verification !== "idle";
   const canRetry = Boolean(access.readAccountId || failed || access.isDisconnected) && !access.canMutate;
   const retry = () => void access.retryConnection().catch(() => {});
   const canRetryRestoration = restorationFailed;
   const retryRestoration = () => void access.retryRestoration().catch(() => {});
   return {
     access,
-    downloadedAt,
+    activeBoardFetchedAt,
+    checking,
     notice,
     canRetry,
     retry,
@@ -66,37 +52,54 @@ export function useOfflineControls() {
     title: t("offline.title"),
     headingLabel: access.isDisconnected ? `${t("offline.title")} — ${t("offline.disconnected")}` : t("offline.title"),
     loginLabel: t("common.actions.login"),
-    retryLabel: t("common.actions.retry"),
+    retryLabel: checking ? t("offline.checkingConnection") : t("common.actions.retry"),
   };
 }
 
-export type OfflineNoticesProps = { access: OfflineAccess; downloadedAt: number; notice: boolean };
-export function useOfflineNotices({ access, downloadedAt }: OfflineNoticesProps) {
+export type OfflineNoticesProps = { access: OfflineAccess; activeBoardFetchedAt: number; notice: boolean };
+
+function preparationFailureKey(access: OfflineAccess) {
+  if (access.download.status !== "failed") {
+    return "offline.failed";
+  }
+  switch (access.download.category) {
+    case "resources":
+      return "offline.preparationResourcesFailed";
+    case "connection":
+      return "offline.preparationConnectionFailed";
+    default:
+      return "offline.failed";
+  }
+}
+
+export function useOfflineNotices({ access, activeBoardFetchedAt }: OfflineNoticesProps) {
   const { t, i18n } = useTranslation();
   const busy = access.download.status === "preparing";
   const failed = access.download.status === "failed";
   const progress = access.download.status === "preparing" ? access.download.progress : null;
   const showFailure = failed || (access.storageError && access.cleanup.status === "idle");
-  const showReady = Boolean(access.account && !busy && !failed);
+  const showReady = Boolean(access.account && !busy && !failed && !access.storageError);
   const ready =
     access.account && showReady
       ? t("offline.ready", { date: new Date(access.account.expiresAt).toLocaleString(i18n.resolvedLanguage) })
       : null;
-  const downloaded =
-    showReady && downloadedAt > 0
-      ? t("offline.downloaded", { date: new Date(downloadedAt).toLocaleString(i18n.resolvedLanguage) })
+  const fetched =
+    activeBoardFetchedAt > 0
+      ? t("offline.downloaded", { date: new Date(activeBoardFetchedAt).toLocaleString(i18n.resolvedLanguage) })
       : null;
+  const verificationKey = connectionMessageKey(access.verification);
   return {
     busy,
     failed,
     showReady,
     showFailure,
     ready,
-    downloaded,
+    fetched,
+    verificationMessage: verificationKey ? t(verificationKey) : null,
     readOnly: t("offline.readOnly"),
     localLogout: t("offline.localLogout"),
     update: t("offline.update"),
-    failure: t("offline.failed"),
+    failure: t(preparationFailureKey(access)),
     preparing: progress ? t("offline.progress", progress) : t("offline.preparing"),
     restorationMessage:
       access.download.status === "restore-timed-out" ? t("offline.restorationSlow") : t("offline.restorationFailed"),

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { CreateApplicationLoader } from "../features/applications/form/create-application-loader.view";
+import { OfflineTaskNotice } from "../features/offline/offline-task-notice.view";
 import { BackgroundPreferenceFeedbackContext } from "../features/preferences/preference-feedback.model";
 import { WelcomeModal } from "../features/welcome/welcome-modal.view";
 import { DirtyEditorsProvider } from "../lib/dirty-editors";
@@ -21,6 +22,7 @@ export function Layout() {
         <div className={styles.root()}>
           <SiteHeader onCreateDialogOpen={view.handleCreateDialogOpen} />
           <main id="main-content" tabIndex={-1} className={styles.main()}>
+            <OfflineTaskNotice />
             <Suspense fallback={<LoadingScreen />}>
               <Outlet />
             </Suspense>

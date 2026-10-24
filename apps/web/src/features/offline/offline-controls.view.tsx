@@ -20,7 +20,11 @@ export function OfflineControls() {
         {controls.title}
         {controls.access.isDisconnected && <WifiOff aria-hidden="true" size={18} className={styles.connectionIcon()} />}
       </h2>
-      <OfflineNotices access={controls.access} downloadedAt={controls.downloadedAt} notice={controls.notice} />
+      <OfflineNotices
+        access={controls.access}
+        activeBoardFetchedAt={controls.activeBoardFetchedAt}
+        notice={controls.notice}
+      />
       <div className={styles.connectionActions()}>
         {controls.canRetryRestoration && (
           <Button variant="outline" size="sm" onClick={controls.retryRestoration}>
@@ -28,7 +32,7 @@ export function OfflineControls() {
           </Button>
         )}
         {controls.canRetry && (
-          <Button variant="outline" size="sm" onClick={controls.retry}>
+          <Button variant="outline" size="sm" onClick={controls.retry} disabled={controls.checking}>
             {controls.retryLabel}
           </Button>
         )}
@@ -54,11 +58,9 @@ function OfflineNotices(props: OfflineNoticesProps) {
       )}
       {props.access.localLogout && <p className={styles.localLogoutNotice()}>{notices.localLogout}</p>}
       {props.access.updateAvailable && <p className={styles.updateNotice()}>{notices.update}</p>}
-      {notices.showReady && (
-        <p className={styles.readyNotice()}>
-          {notices.ready} {notices.downloaded}
-        </p>
-      )}
+      {notices.showReady && <p className={styles.readyNotice()}>{notices.ready}</p>}
+      {notices.fetched && <p className={styles.fetchedNotice()}>{notices.fetched}</p>}
+      {notices.verificationMessage && <p className={styles.verificationNotice()}>{notices.verificationMessage}</p>}
       {notices.showFailure && <p className={styles.failureNotice()}>{notices.failure}</p>}
       {notices.showRestorationFailure && <p className={styles.restorationNotice()}>{notices.restorationMessage}</p>}
       {notices.busy && <p className={styles.progressNotice()}>{notices.preparing}</p>}

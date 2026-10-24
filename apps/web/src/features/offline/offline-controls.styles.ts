@@ -12,6 +12,8 @@ export const offlineControlsStyles = tv({
     localLogoutNotice: "",
     updateNotice: "",
     readyNotice: "",
+    fetchedNotice: "",
+    verificationNotice: "",
     failureNotice: "",
     restorationNotice: "",
     progressNotice: "",

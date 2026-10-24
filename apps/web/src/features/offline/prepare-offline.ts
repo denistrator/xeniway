@@ -6,6 +6,7 @@ import {
   listArchivedApplications,
   listBlacklistedApplications,
 } from "../../lib/api";
+import { preparationStage } from "./offline-preparation-failure";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   assertOfflinePreparation,
@@ -43,13 +44,15 @@ export async function prepareOfflineAccount(
 ) {
   assertOwner();
   const now = Date.now();
-  const preparationId = await enableOfflineAccount({
-    version: 1,
-    userId: user.id,
-    email: user.email,
-    verifiedAt: now,
-    expiresAt: now + OFFLINE_RETENTION_MS,
-  });
+  const preparationId = await preparationStage("storage", () =>
+    enableOfflineAccount({
+      version: 1,
+      userId: user.id,
+      email: user.email,
+      verifiedAt: now,
+      expiresAt: now + OFFLINE_RETENTION_MS,
+    }),
+  );
   let stopped = false;
   let preparationFailure: unknown;
   const stopPreparation = (error: unknown) => {
@@ -60,7 +63,7 @@ export async function prepareOfflineAccount(
   };
   const assertCurrent = async () => {
     assertOwner();
-    await assertOfflinePreparation(user.id, preparationId);
+    await preparationStage("storage", () => assertOfflinePreparation(user.id, preparationId));
     assertOwner();
     if (stopped) {
       throw preparationFailure;
@@ -69,19 +72,21 @@ export async function prepareOfflineAccount(
   client.setQueryDefaults(applicationKeys.account(user.id), { gcTime: OFFLINE_RETENTION_MS });
   async function fetchCurrent<T>(queryKey: readonly unknown[], request: () => Promise<T>): Promise<T> {
     try {
-      return await client.fetchQuery({
-        queryKey,
-        queryFn: async () => {
-          await assertCurrent();
-          const response = await request();
-          await assertCurrent();
-          return response;
-        },
-        staleTime: 0,
-        gcTime: OFFLINE_RETENTION_MS,
-        retry: false,
-        networkMode: "always",
-      });
+      return await preparationStage("connection", () =>
+        client.fetchQuery({
+          queryKey,
+          queryFn: async () => {
+            await assertCurrent();
+            const response = await request();
+            await assertCurrent();
+            return response;
+          },
+          staleTime: 0,
+          gcTime: OFFLINE_RETENTION_MS,
+          retry: false,
+          networkMode: "always",
+        }),
+      );
     } catch (error) {
       stopPreparation(error);
       throw error;
@@ -141,23 +146,25 @@ export async function prepareOfflineAccount(
       predicate: (query) =>
         query.queryKey[2] === "detail" && (typeof query.queryKey[3] !== "number" || !currentIds.has(query.queryKey[3])),
     });
-    await saveOfflineSnapshot(user.id, offlineQuerySnapshot(client, user.id), preparationId);
+    await preparationStage("storage", () =>
+      saveOfflineSnapshot(user.id, offlineQuerySnapshot(client, user.id), preparationId),
+    );
     await assertCurrent();
-    const account = await markOfflineReady(user.id, buildId, preparationId);
+    const account = await preparationStage("storage", () => markOfflineReady(user.id, buildId, preparationId));
     await assertCurrent();
     return account;
   }
   try {
     await assertCurrent();
     notifyReplacement(user.id);
-    const buildId = await prepareAssets();
+    const buildId = await preparationStage("resources", prepareAssets);
     await assertCurrent();
     const ids = await loadCollections();
     await loadWorkspaces(ids);
     return await persistPreparedAccount(ids, buildId);
   } catch (error) {
     stopPreparation(error);
-    await clearOfflineAccount(user.id, preparationId);
+    await preparationStage("storage", () => clearOfflineAccount(user.id, preparationId));
     throw error;
   }
 }

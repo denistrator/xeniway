@@ -25,6 +25,7 @@ import {
   rememberOfflineCleanup,
 } from "./offline-cleanup";
 import { clearOfflineLogoutNotice, readOfflineLogoutNotice, saveOfflineLogoutNotice } from "./offline-logout-notice";
+import { isPreparationCancelled, OfflinePreparationFailure } from "./offline-preparation-failure";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineAccount,
@@ -111,6 +112,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   let active = false;
   let lifetime = 0;
   let nextOperation = 0;
+  let verification: Promise<void> | null = null;
   let logoutOperation = 0;
   let expiryTimer: ReturnType<typeof setTimeout> | undefined;
   let persistTimer: ReturnType<typeof setTimeout> | undefined;
@@ -195,7 +197,20 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     }
   }
 
-  async function retryConnection() {
+  function retryConnection(): Promise<void> {
+    if (verification) {
+      return verification;
+    }
+    const pending = checkConnection().finally(() => {
+      if (verification === pending) {
+        verification = null;
+      }
+    });
+    verification = pending;
+    return pending;
+  }
+
+  async function checkConnection() {
     if (!active) {
       return;
     }
@@ -205,7 +220,13 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     // Invalidation alone can reuse a cold in-flight check from the previous session.
     void client.cancelQueries({ queryKey: offlineAuthKey, exact: true }, { silent: true, revert: false });
     await client.invalidateQueries({ queryKey: offlineAuthKey });
-    if (!active || startedLifetime !== lifetime) {
+    const currentVerification = state.verification;
+    if (
+      !active ||
+      startedLifetime !== lifetime ||
+      currentVerification.status !== "checking" ||
+      currentVerification.operation !== operation
+    ) {
       return;
     }
     const result = client.getQueryState<OfflineAuthData>(offlineAuthKey);
@@ -335,7 +356,6 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     const startedLifetime = lifetime;
     dispatch({ type: "PREPARATION_STARTED", operation, userId: user.id, refresh });
     const assertPreparationOwner = () => {
-      assertWrite();
       if (
         !active ||
         startedLifetime !== lifetime ||
@@ -344,6 +364,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
         state.download.operation !== operation
       ) {
         throw new OfflinePreparationChangedError();
+      }
+      if (!snapshot.canMutate || !navigator.onLine) {
+        throw new OfflinePreparationFailure("connection");
       }
     };
     try {
@@ -360,11 +383,21 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       );
       assertPreparationOwner();
       dispatch({ type: "PREPARATION_SUCCEEDED", operation, account });
-    } catch {
-      if (active && startedLifetime === lifetime) {
-        dispatch({ type: "PREPARATION_FAILED", operation });
-      }
+    } catch (error) {
+      finishPreparationFailure(error, operation, startedLifetime);
     }
+  }
+
+  function finishPreparationFailure(error: unknown, operation: number, startedLifetime: number) {
+    if (!active || startedLifetime !== lifetime) {
+      return;
+    }
+    if (isPreparationCancelled(error)) {
+      dispatch({ type: "PREPARATION_CANCELLED", operation });
+      return;
+    }
+    const category = error instanceof OfflinePreparationFailure ? error.category : "storage";
+    dispatch({ type: "PREPARATION_FAILED", operation, category });
   }
 
   async function persist(account: OfflineAccountMetadata) {
@@ -431,6 +464,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
       dispatch({ type: "DOWNLOAD_REPLACED" });
       cancelPrivateQueries();
     }
+    // A new cookie session requires fresh proof, not a check started for the old one.
+    // checkConnection cancels the superseded auth query before starting its replacement.
+    verification = null;
     void retryConnection();
   }
 
@@ -693,10 +729,11 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     }
     return () => {
       active = false;
+      verification = null;
       clearTimeout(restorationTimer);
       lifetime += 1;
-      if (state.connection.status === "verifying") {
-        dispatch({ type: "VERIFY_FAILED", operation: state.connection.operation, online: navigator.onLine });
+      if (state.verification.status === "checking") {
+        dispatch({ type: "VERIFY_FAILED", operation: state.verification.operation, online: navigator.onLine });
       }
       if (state.download.status === "preparing") {
         dispatch({ type: "PREPARATION_CANCELLED", operation: state.download.operation });

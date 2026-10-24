@@ -1,9 +1,12 @@
+import type { OfflinePreparationCategory } from "./offline-preparation-failure";
 import type { OfflineAccountMetadata, OfflinePreparationProgress } from "./offline-types";
 
 type Connection = { status: "online" | "offline" | "unavailable" } | { status: "verifying"; operation: number };
 type Session = { status: "checking" | "unavailable" | "signed-out" } | { status: "verified"; userId: number };
+type Verification = { status: "idle" | "succeeded" | "failed" } | { status: "checking"; operation: number };
 export type DeviceDownload =
-  | { status: "absent" | "restoring" | "failed" | "restore-failed" | "restore-timed-out" }
+  | { status: "absent" | "restoring" | "restore-failed" | "restore-timed-out" }
+  | { status: "failed"; category?: OfflinePreparationCategory }
   | { status: "ready"; account: OfflineAccountMetadata }
   | {
       status: "preparing";
@@ -20,6 +23,7 @@ export type DownloadCleanup =
 export type AccessState = {
   connection: Connection;
   session: Session;
+  verification: Verification;
   download: DeviceDownload;
   cleanup: DownloadCleanup;
   memoryOwner: number | null;
@@ -63,7 +67,8 @@ export type AccessEvent =
   | { type: "PREPARATION_STARTED"; operation: number; userId: number; refresh: boolean }
   | { type: "PREPARATION_PROGRESS"; operation: number; progress: OfflinePreparationProgress }
   | { type: "PREPARATION_SUCCEEDED"; operation: number; account: OfflineAccountMetadata }
-  | { type: "PREPARATION_FAILED" | "PREPARATION_CANCELLED"; operation: number };
+  | { type: "PREPARATION_FAILED"; operation: number; category?: OfflinePreparationCategory }
+  | { type: "PREPARATION_CANCELLED"; operation: number };
 
 export function createAccessState(input: {
   online: boolean;
@@ -76,6 +81,7 @@ export function createAccessState(input: {
   const state: AccessState = {
     connection: { status: input.online ? "online" : "offline" },
     session: input.userId ? { status: "verified", userId: input.userId } : { status: "checking" },
+    verification: { status: "idle" },
     download: input.account
       ? { status: "ready", account: input.account }
       : { status: input.restoring ? "restoring" : "absent" },
@@ -110,9 +116,11 @@ function verifiedSession(state: AccessState, userId: number): AccessState {
     memoryOwner = null;
   }
   const wrongDownload = downloadOwner !== null && downloadOwner !== userId;
+  const clearPreviousFeedback = switched && state.verification.status !== "checking";
   return {
     ...state,
     session: { status: "verified", userId },
+    verification: clearPreviousFeedback ? { status: "idle" } : state.verification,
     memoryOwner,
     download: switched || wrongDownload ? { status: "absent" } : state.download,
     epoch: switched || wrongDownload ? state.epoch + 1 : state.epoch,
@@ -123,13 +131,21 @@ function finishVerification(
   state: AccessState,
   event: Extract<AccessEvent, { type: "VERIFY_SUCCEEDED" | "VERIFY_FAILED" }>,
 ): AccessState {
-  if (state.connection.status !== "verifying" || state.connection.operation !== event.operation) {
+  if (state.verification.status !== "checking" || state.verification.operation !== event.operation) {
     return state;
   }
   if (event.type === "VERIFY_SUCCEEDED") {
-    return { ...verifiedSession(state, event.userId), connection: { status: "online" } };
+    return {
+      ...verifiedSession(state, event.userId),
+      connection: { status: "online" },
+      verification: { status: state.localLogout ? "failed" : "succeeded" },
+    };
   }
-  return { ...state, connection: { status: event.online ? "unavailable" : "offline" } };
+  return {
+    ...state,
+    connection: { status: event.online ? "unavailable" : "offline" },
+    verification: { status: "failed" },
+  };
 }
 
 function restoreDownload(state: AccessState, event: Extract<AccessEvent, { type: "RESTORED" }>): AccessState {
@@ -162,9 +178,9 @@ function updatePreparation(
     case "PREPARATION_PROGRESS":
       return { ...state, download: { ...state.download, progress: event.progress } };
     case "PREPARATION_SUCCEEDED":
-      return { ...state, download: { status: "ready", account: event.account } };
+      return { ...state, download: { status: "ready", account: event.account }, storageError: false };
     case "PREPARATION_FAILED":
-      return { ...state, download: { status: "failed" } };
+      return { ...state, download: { status: "failed", category: event.category ?? "storage" } };
   }
 }
 
@@ -172,6 +188,7 @@ function signedOut(state: AccessState): AccessState {
   return {
     ...state,
     session: { status: "signed-out" },
+    verification: { status: "idle" },
     connection: state.connection.status === "offline" ? state.connection : { status: "online" },
     download: { status: "absent" },
     memoryOwner: null,
@@ -245,19 +262,37 @@ function unavailableDownloadCleanup(state: AccessState): AccessState {
   };
 }
 
+function unavailableConnection(state: AccessState, status: "offline" | "unavailable"): AccessState {
+  return {
+    ...state,
+    connection: { status },
+    verification: state.verification.status === "checking" ? state.verification : { status: "idle" },
+  };
+}
+
+function unavailableSession(state: AccessState): AccessState {
+  return {
+    ...unavailableConnection(state, state.connection.status === "offline" ? "offline" : "unavailable"),
+    session: state.session.status === "checking" ? { status: "unavailable" } : state.session,
+  };
+}
+
+function rejectSession(state: AccessState): AccessState {
+  return {
+    ...signedOut(state),
+    verification: { status: state.verification.status === "checking" ? "failed" : "idle" },
+  };
+}
+
 /** The sole policy entry point. Asynchronous operations stay in the runtime. */
 export function transitionAccess(state: AccessState, event: AccessEvent): AccessState {
   switch (event.type) {
     case "CONNECTION_LOST":
-      return { ...state, connection: { status: "offline" } };
+      return unavailableConnection(state, "offline");
     case "SERVER_UNAVAILABLE":
-      return { ...state, connection: { status: "unavailable" } };
+      return unavailableConnection(state, "unavailable");
     case "SESSION_UNAVAILABLE":
-      return {
-        ...state,
-        connection: state.connection.status === "offline" ? state.connection : { status: "unavailable" },
-        session: state.session.status === "checking" ? { status: "unavailable" } : state.session,
-      };
+      return unavailableSession(state);
     case "RESTORATION_CANCELLED":
       return {
         ...state,
@@ -267,15 +302,23 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
     case "SESSION_VERIFIED":
       return verifiedSession(state, event.userId);
     case "SIGN_IN_SUCCEEDED":
-      return verifiedSession({ ...state, connection: { status: event.online ? "online" : "offline" } }, event.userId);
+      return verifiedSession(
+        { ...state, connection: { status: event.online ? "online" : "offline" }, verification: { status: "idle" } },
+        event.userId,
+      );
     case "VERIFY_STARTED":
-      return { ...state, connection: { status: "verifying", operation: event.operation } };
+      return {
+        ...state,
+        connection: { status: "verifying", operation: event.operation },
+        verification: { status: "checking", operation: event.operation },
+      };
     case "VERIFY_SUCCEEDED":
     case "VERIFY_FAILED":
       return finishVerification(state, event);
     case "SIGNED_OUT":
-    case "SESSION_REJECTED":
       return signedOut(state);
+    case "SESSION_REJECTED":
+      return rejectSession(state);
     case "DOWNLOAD_REMOVAL_STARTED":
       return startDownloadCleanup(state, event.ownerId, event.preparationId);
     case "DOWNLOAD_CLEANUP_DISCOVERED": {
@@ -338,11 +381,14 @@ export function selectAccess(state: AccessState, now: number) {
   const verifiedOwner = state.session.status === "verified" ? state.session.userId : null;
   const awaitingAccess =
     state.session.status === "checking" ||
-    state.connection.status === "verifying" ||
+    state.verification.status === "checking" ||
     state.download.status === "restoring";
   return {
     account,
     isDisconnected: state.connection.status !== "online",
+    verification: state.verification.status,
+    connectionStatus: state.connection.status,
+    sessionStatus: state.session.status,
     readAccountId: canMutate ? verifiedOwner : (account?.userId ?? state.memoryOwner),
     canMutate,
     canReadRemote: canMutate,

@@ -15,6 +15,17 @@ const account = {
 };
 const verified = () => createAccessState({ online: true, userId: 1 });
 
+test("connection verification exposes a scoped checking and outcome status without granting pending writes", () => {
+  const state = transitionAccess(verified(), { type: "VERIFY_STARTED", operation: 7 });
+  expect(selectAccess(state, now)).toMatchObject({ verification: "checking", canMutate: false, readAccountId: 1 });
+  const failed = transitionAccess(state, { type: "VERIFY_FAILED", operation: 7, online: true });
+  expect(selectAccess(failed, now)).toMatchObject({ verification: "failed", canMutate: false });
+  const pending = transitionAccess(failed, { type: "VERIFY_STARTED", operation: 8 });
+  const success = transitionAccess(pending, { type: "VERIFY_SUCCEEDED", operation: 8, userId: 1 });
+  expect(selectAccess(success, now)).toMatchObject({ verification: "succeeded", canMutate: true });
+  expect(transitionAccess(success, { type: "VERIFY_FAILED", operation: 7, online: true })).toBe(success);
+});
+
 test.each(["CONNECTION_LOST", "SERVER_UNAVAILABLE"] as const)("%s exposes a disconnected indicator", (type) => {
   const state = transitionAccess(verified(), { type });
   expect(selectAccess(state, now)).toMatchObject({ isDisconnected: true, canMutate: false });

@@ -39,7 +39,17 @@ export const en = {
     readOnly:
       "Offline or server unavailable — cached applications are read-only. Reconnect or retry to verify your session before editing.",
     ready: "Ready offline until {{date}}.",
-    downloaded: "Data last downloaded: {{date}}.",
+    downloaded: "Active board last fetched: {{date}}.",
+    preparationResourcesFailed:
+      "Offline app files could not be downloaded. Check your connection and try preparing offline access again.",
+    preparationConnectionFailed:
+      "Application data could not be downloaded. Check your connection and sign-in, then try again.",
+    checkingConnection: "Checking connection…",
+    connectionConfirmed: "Connection confirmed. You can make changes.",
+    connectionFailed: "Connection could not be confirmed. Check your connection or sign in again.",
+    readOnlyOffline: "You are offline. Changes are unavailable until your connection is confirmed.",
+    readOnlyUnavailable: "The server is unavailable. You can view cached content, but changes are unavailable.",
+    readOnlySession: "Sign in again to make changes. Cached content may still be available.",
     refresh: "Refresh offline data",
     progress: "Downloaded {{completed}} of {{total}} workspaces…",
     coverage:

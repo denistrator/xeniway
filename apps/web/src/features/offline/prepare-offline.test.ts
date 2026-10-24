@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { IDBObjectStore } from "fake-indexeddb";
 import { openDB } from "idb";
 import { afterEach, expect, test, vi } from "vitest";
-import { applicationKeys } from "../../lib/api";
+import { applicationKeys, getApplicationDetail, listApplications } from "../../lib/api";
 import {
   createApplicationWorkspaceData,
   workspaceContact,
@@ -49,6 +49,55 @@ function path(input: RequestInfo | URL) {
 function json(value: unknown) {
   return new Response(JSON.stringify(value), { headers: { "content-type": "application/json" } });
 }
+
+test.each(["list", "detail"] as const)(
+  "classifies an ordinary in-flight %s request joined by preparation",
+  async (resource) => {
+    let rejectRequest!: (error: Error) => void;
+    const pending = new Promise<Response>((_resolve, reject) => {
+      rejectRequest = reject;
+    });
+    const ordinaryPath = resource === "list" ? "/api/applications" : "/api/applications/3";
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      if (path(input) === ordinaryPath) {
+        return pending;
+      }
+      return json({ data: { applications: [workspace(3).data.application] } });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryKey = resource === "list" ? applicationKeys.list(1, "active") : applicationKeys.detail(1, 3);
+    const request = async () => (resource === "list" ? listApplications() : getApplicationDetail(3));
+    // This ordinary request has no preparation-specific error wrapper.
+    const ordinary = client.fetchQuery({ queryKey, queryFn: request }).catch((error: unknown) => error);
+    const fetchQuery = vi.spyOn(client, "fetchQuery");
+    const prepared = prepareOfflineAccount(
+      client,
+      { id: 1, email: "candidate@example.com" },
+      async () => "build",
+      () => {},
+    ).catch((error: unknown) => error);
+    try {
+      await vi.waitFor(() =>
+        expect(
+          fetchQuery.mock.calls.some(([options]) => JSON.stringify(options.queryKey) === JSON.stringify(queryKey)),
+        ).toBe(true),
+      );
+      expect(fetchMock.mock.calls.filter(([input]) => path(input) === ordinaryPath)).toHaveLength(1);
+      const raw = new TypeError("private request details");
+      rejectRequest(raw);
+      expect(await ordinary).toBe(raw);
+      const failure = await prepared;
+      expect(failure).toMatchObject({ category: "connection", message: "Offline preparation could not be completed" });
+      expect(String(failure)).not.toContain(raw.message);
+      expect(await restoreOfflineAccount()).toBeNull();
+    } finally {
+      rejectRequest(new TypeError("Stopped"));
+      await Promise.allSettled([ordinary, prepared]);
+      client.clear();
+    }
+  },
+);
 
 test("preloads unique workspaces from all boards, persists their complete data, and reports progress", async () => {
   const ids = [3, 4, 5];
@@ -163,7 +212,10 @@ test.each(["active", "archive", "blacklist"] as const)(
       for (const release of pending) {
         release();
       }
-      expect(await preparation).toMatchObject({ message: "Collection failed" });
+      expect(await preparation).toMatchObject({
+        category: "connection",
+        message: "Offline preparation could not be completed",
+      });
       expect(await restoreOfflineAccount()).toBeNull();
     } finally {
       failActive?.();
@@ -246,7 +298,7 @@ test("does not mark offline ready when assets fail", async () => {
       },
       () => {},
     ),
-  ).rejects.toThrow("Assets failed");
+  ).rejects.toMatchObject({ category: "resources", message: "Offline preparation could not be completed" });
   expect(await restoreOfflineAccount(Date.now())).toBeNull();
   client.clear();
 });
@@ -291,7 +343,10 @@ test("settles all workspace workers before failure cleanup and suppresses late p
     for (const release of pending.values()) {
       release();
     }
-    expect(await preparation).toMatchObject({ message: "Workspace failed" });
+    expect(await preparation).toMatchObject({
+      category: "connection",
+      message: "Offline preparation could not be completed",
+    });
     expect(requested).toHaveLength(4);
     expect(progress.mock.calls).toEqual([[{ completed: 0, total: 5 }]]);
     expect(await restoreOfflineAccount()).toBeNull();
@@ -395,7 +450,7 @@ test("a snapshot quota failure never claims readiness", async () => {
         async () => "build",
         () => {},
       ),
-    ).rejects.toThrow("Full");
+    ).rejects.toMatchObject({ category: "storage", message: "Offline preparation could not be completed" });
     expect(await restoreOfflineAccount(Date.now())).toBeNull();
   } finally {
     client.clear();

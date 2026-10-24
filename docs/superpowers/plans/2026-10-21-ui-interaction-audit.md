@@ -275,7 +275,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-21 · P2 · Offline preparation errors recommend the wrong kind of repair
 
-**Status:** Blocked pending T05, T14, and T15 because remediation depends on the approved cleanup/restoration/logout state model.
+**Status:** Resolved in T16. Resource, connection/API and storage failures have bounded categories and relevant translated advice. Joined ordinary queries retain classification; supersession remains cancellation. Focused regressions and the production resource/API/storage browser cases pass.
 
 **Evidence — Source, already tracked:** `offline/prepare-offline.ts:150` covers resources, API, and persistence; `offline-access-runtime.ts:239` discards failure detail; `i18n/locales/en.ts:40` always recommends storage permissions/space.
 
@@ -285,7 +285,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-22 · P2 · “Data last downloaded” overstates its timestamp
 
-**Status:** Blocked with UI-21 pending the offline state-model work; no unsupported download-wide timestamp has been introduced.
+**Status:** Resolved in T16. Settings labels the active-board response time “Active board last fetched,” independent of the current route. It makes no durable download-wide freshness claim and suppresses readiness after known persistence failure.
 
 **Evidence — Source:** `offline-controls.model.ts:19–21,41–43,77` uses the active-board query's `dataUpdatedAt` on Settings. This is not a complete all-workspaces persistence timestamp; persistence can fail later in `offline-access-runtime.ts:246`. Operations documentation already describes the limited measurement.
 
@@ -295,7 +295,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-23 · P2 · Retry does not explain checking or another failure
 
-**Status:** Blocked with UI-21 pending the offline state-model work.
+**Status:** Resolved in T16. Pending verification, failed verification and confirmed editing have explicit announcements. Current-session triggers deduplicate; explicit session changes supersede old checks. The production delayed-failure/retry workflow passes with exact request counts and unchanged route.
 
 **Evidence — Source:** `offline-access-runtime.ts:148–168` distinguishes verification states; `offline-controls.model.ts:50–61` exposes one unchanged Retry label; `offline-controls.view.tsx:25` does not show a verification-specific pending/result state.
 
@@ -409,7 +409,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-34 · P2 · Read-only controls have limited in-context explanation
 
-**Status:** Blocked pending the offline state-model tasks T05, T14, and T15.
+**Status:** Resolved in T16. Task routes show a short read-only reason or connection result and Settings link. Detailed preparation/removal/Retry controls remain in Settings; accepted case/trailing-slash routes and four locales have focused coverage.
 
 **Evidence — Source + Decision:** `site-header.view.tsx:46–49`, `home-page.view.tsx:21–25`, and workspace/form controls disable mutation based on `canMutate`. Detailed recovery state is intentionally confined to Settings, while the header exposes only a small disconnected notice.
 

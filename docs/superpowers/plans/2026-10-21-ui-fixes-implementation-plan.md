@@ -376,12 +376,12 @@ type RestoreOutcome<T> =
 
 **Tests:** `prepare-offline.test.ts`, offline machine/runtime/controls tests, `components/layout.test.tsx`, affected form tests, and production preparation/reconnect tests.
 
-- [ ] Add distinct resource, connection/session and storage failure cases. Introduce a small safe category, not raw exceptions or serialized responses. Keep cancellation/supersession out of actionable failure notices.
-- [ ] Present the relevant next step for each category. A resource or API failure must not instruct users only to alter storage permissions.
-- [ ] Rename the current query timestamp to what it measures: Active board last fetched. Do not claim a complete persisted download timestamp from `dataUpdatedAt`. A new durable download-wide timestamp is out of scope unless separately approved.
-- [ ] Expose Checking connection… during verification and a specific success/failure announcement afterward. Avoid duplicating checks; preserve cached access and the current route while verifying.
-- [ ] Provide a short read-only reason near the affected task and a link to Settings. Keep detailed preparation/removal/Retry controls only on Settings, as required. Disabled controls need not become focusable for a tooltip.
-- [ ] Exercise disconnected browser, unavailable API, pending verification, expired session, failed persistence and successful reconnect. Verify no partial preparation is called ready and no stale status appears as confirmed saved data.
+- [x] Add distinct resource, connection/session and storage failure cases. Introduce a small safe category, not raw exceptions or serialized responses. Keep cancellation/supersession out of actionable failure notices.
+- [x] Present the relevant next step for each category. A resource or API failure must not instruct users only to alter storage permissions.
+- [x] Rename the current query timestamp to what it measures: Active board last fetched. Do not claim a complete persisted download timestamp from `dataUpdatedAt`. A new durable download-wide timestamp is out of scope unless separately approved.
+- [x] Expose Checking connection… during verification and a specific success/failure announcement afterward. Avoid duplicating checks; preserve cached access and the current route while verifying.
+- [x] Provide a short read-only reason near the affected task and a link to Settings. Keep detailed preparation/removal/Retry controls only on Settings, as required. Disabled controls need not become focusable for a tooltip.
+- [x] Exercise disconnected browser, unavailable API, pending verification, expired session, failed persistence and successful reconnect. Verify no partial preparation is called ready and no stale status appears as confirmed saved data.
 
 **Exit:** State descriptions and recovery actions reflect actual capability, resource delivery and persistence outcomes.
 
@@ -618,3 +618,9 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 
 - **Evidence and authority:** Valid 255-character unbroken contact names/roles, follow-up titles and activity titles, with long public URLs, expanded workspace cards well beyond 320 px. The user approved focused wrapping with all text/actions preserved.
 - **Change and verification:** Grid children can shrink; text values allow emergency wrapping. Narrow contact/follow-up/activity action groups use their own row instead of reducing long text to a few characters per line. English/Hebrew public-fixture captures at 320 px and 390 px/200% text show contained cards, complete text and retained actions. Independent source review is clear; current lint, types and relevant behavior checks pass. No truncation, hidden action, geometry assertion or visual snapshot was introduced.
+
+### Checkpoint 27 · Contextual offline feedback and safe preparation categories (T16)
+
+- **Implementation:** Resource, API/connection and storage failures have distinct safe categories and matching translated advice. Cancellation/ownership guards run first; preparation joining an ordinary in-flight query still classifies its outer rejection correctly. Settings names the active-board fetch timestamp accurately and suppresses readiness after known persistence failure. Task routes expose a concise capability/result notice and Settings link; detailed controls remain in Settings.
+- **Review:** Current-session checks deduplicate repeated Retry/online events, while an explicit cross-tab session change supersedes/cancels the previous check. Review regressions cover late old-owner success/401, joined ordinary list/detail failures and accepted case/trailing-slash task routes. Independent T16 source review is clear after these corrections.
+- **Verification:** All 425 focused cases across 18 files pass, plus format, lint and complete type checks. The rebuilt production offline suite passes all 22 cases, including controlled checking → failure → explicit recovery with exactly two session requests, real worker-resource abort, API download failure, snapshot-write denial, expiry and account cleanup. Semantic selectors target the offline region or header rather than assuming Settings has only one link/status. The ordinary suite is running separately; no assertion or security boundary was relaxed.

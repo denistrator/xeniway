@@ -409,14 +409,12 @@ test("a queued 401 observation cannot erase a newer successful sign-in", async (
   }
 });
 
-test("repeated Retry with a prior auth error waits for the newest verification", async () => {
+test("repeated Retry with a prior auth error shares the current verification", async () => {
   const flush = controlNotifications();
-  const supersededResponse = deferred<Response>();
   const currentResponse = deferred<Response>();
   const fetchMock = vi
     .fn()
     .mockResolvedValueOnce(errorResponse(500))
-    .mockImplementationOnce(() => supersededResponse.promise)
     .mockImplementationOnce(() => currentResponse.promise);
   vi.stubGlobal("fetch", fetchMock);
   const { runtime, cleanup } = setup();
@@ -433,12 +431,10 @@ test("repeated Retry with a prior auth error waits for the newest verification",
     expect(runtime.getSnapshot()).toMatchObject({ canMutate: false, checking: true });
     currentRetry = runtime.retryConnection();
     flush();
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(currentRetry).toBe(supersededRetry);
     expect(runtime.getSnapshot()).toMatchObject({ canMutate: false, checking: true });
 
-    supersededResponse.resolve(sessionResponse());
-    await supersededResponse.promise;
-    flush();
     expect(runtime.getSnapshot()).toMatchObject({ canMutate: false, canReadRemote: false, checking: true });
     expect(assertAuthenticatedWrite).toThrow();
 
@@ -449,13 +445,102 @@ test("repeated Retry with a prior auth error waits for the newest verification",
     expect(runtime.getSnapshot()).toMatchObject({ canMutate: true, canReadRemote: true, checking: false });
     expect(assertAuthenticatedWrite).not.toThrow();
   } finally {
-    supersededResponse.resolve(sessionResponse());
     currentResponse.resolve(sessionResponse());
     await supersededRetry;
     await currentRetry;
     cleanup();
   }
 });
+
+test("a current connection check completes when the server confirms a different owner", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ data: { user: otherUser } }))),
+  );
+  const { runtime, cleanup } = setup();
+  try {
+    window.dispatchEvent(new Event("xeniway:server-unavailable"));
+    await runtime.retryConnection();
+    expect(runtime.getSnapshot()).toMatchObject({
+      readAccountId: otherUser.id,
+      canMutate: true,
+      checking: false,
+      verification: "succeeded",
+    });
+  } finally {
+    cleanup();
+  }
+});
+
+test.each([
+  ["success", "before"],
+  ["401", "before"],
+  ["success", "after"],
+  ["401", "after"],
+] as const)(
+  "a session-change broadcast supersedes old %s arriving %s the new owner's verification",
+  async (result, timing) => {
+    let receive!: (event: MessageEvent) => void;
+    vi.stubGlobal(
+      "BroadcastChannel",
+      class {
+        set onmessage(handler: (event: MessageEvent) => void) {
+          receive = handler;
+        }
+        postMessage() {}
+        close() {}
+      },
+    );
+    const previous = deferred<Response>();
+    const current = deferred<Response>();
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(() => previous.promise)
+      .mockImplementationOnce(() => current.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new QueryClient();
+    client.setQueryData(offlineAuthKey, { data: { user } });
+    const runtime = createOfflineAccessRuntime(client);
+    const stop = runtime.start();
+    const oldRetry = runtime.retryConnection();
+    let newRetry: Promise<void> | undefined;
+    const oldResponse = () => (result === "401" ? errorResponse(401) : sessionResponse());
+    try {
+      expect(fetchMock).toHaveBeenCalledOnce();
+      receive(new MessageEvent("message", { data: { type: "session-changed", userId: otherUser.id } }));
+      newRetry = runtime.retryConnection();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(newRetry).not.toBe(oldRetry);
+      expect(runtime.getSnapshot()).toMatchObject({ canMutate: false, verification: "checking" });
+      if (timing === "before") {
+        const delivered = oldResponse();
+        previous.resolve(delivered);
+        await vi.waitFor(() => expect(delivered.bodyUsed).toBe(true));
+        expect(runtime.getSnapshot()).toMatchObject({ canMutate: false, verification: "checking" });
+        expect(runtime.retryConnection()).toBe(newRetry);
+        window.dispatchEvent(new Event("online"));
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      }
+      current.resolve(new Response(JSON.stringify({ data: { user: otherUser } })));
+      await newRetry;
+      previous.resolve(oldResponse());
+      await oldRetry;
+      expect(client.getQueryData(offlineAuthKey)).toEqual({ data: { user: otherUser } });
+      expect(runtime.getSnapshot()).toMatchObject({
+        readAccountId: otherUser.id,
+        canMutate: true,
+        verification: "succeeded",
+      });
+      expect(assertAuthenticatedWrite).not.toThrow();
+    } finally {
+      previous.resolve(oldResponse());
+      current.resolve(new Response(JSON.stringify({ data: { user: otherUser } })));
+      await Promise.allSettled([oldRetry, newRetry]);
+      stop();
+      client.clear();
+    }
+  },
+);
 
 test.each(["transport", "server"] as const)(
   "a background /me %s failure revokes selector permissions as well as the write guard",

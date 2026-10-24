@@ -16,12 +16,14 @@ import { createAccessState, selectAccess } from "./offline-access-machine";
 import * as offlineRuntime from "./offline-access-runtime";
 import { offlineCleanupStorageKey, rememberOfflineCleanup } from "./offline-cleanup";
 import { OfflineControls } from "./offline-controls.view";
+import { OfflinePreparationFailure } from "./offline-preparation-failure";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineDevice,
   enableOfflineAccount,
   loadOfflineSnapshot,
   markOfflineReady,
+  OfflinePreparationChangedError,
   saveOfflineSnapshot,
 } from "./offline-store";
 import { OFFLINE_RETENTION_MS, type OfflineAccountMetadata } from "./offline-types";
@@ -202,31 +204,23 @@ test("query creation during rendering does not synchronously update the download
   );
   const view = render(element(false));
   view.rerender(element(true));
-  await screen.findByText(/Data last downloaded:/);
+  await screen.findByText(/Active board last fetched:/);
   expect(errors.mock.calls.filter(([message]) => String(message).includes("Cannot update a component"))).toEqual([]);
   view.unmount();
   client.clear();
 });
 
 test.each(["/settings", "/", "/archive", "/blacklist", "/applications/3"])(
-  "shows the current %s download timestamp and reacts to refresh",
+  "always labels the active board fetch time on %s, independently of other route caches",
   async (route) => {
     const client = createClient();
-    let key: readonly unknown[] = applicationKeys.list(1, "active");
-    switch (route) {
-      case "/applications/3":
-        key = applicationKeys.detail(1, 3);
-        break;
-      case "/archive":
-        key = applicationKeys.list(1, "archive");
-        break;
-      case "/blacklist":
-        key = applicationKeys.list(1, "blacklist");
-        break;
-    }
+    const key = applicationKeys.list(1, "active");
     const first = new Date("2026-10-01T12:00:00Z").getTime();
     const next = first + 60_000;
     client.setQueryData(key, { data: {} }, { updatedAt: first });
+    client.setQueryData(applicationKeys.list(1, "archive"), { data: {} }, { updatedAt: first + 20_000 });
+    client.setQueryData(applicationKeys.list(1, "blacklist"), { data: {} }, { updatedAt: first + 30_000 });
+    client.setQueryData(applicationKeys.detail(1, 3), { data: {} }, { updatedAt: first + 40_000 });
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[route]}>
@@ -234,10 +228,10 @@ test.each(["/settings", "/", "/archive", "/blacklist", "/applications/3"])(
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    expect(screen.getByText(/Data last downloaded:/).textContent).toContain(new Date(first).toLocaleString("en"));
+    expect(screen.getByText(/Active board last fetched:/).textContent).toContain(new Date(first).toLocaleString("en"));
     act(() => client.setQueryData(key, { data: {} }, { updatedAt: next }));
     await waitFor(() =>
-      expect(screen.getByText(/Data last downloaded:/).textContent).toContain(new Date(next).toLocaleString("en")),
+      expect(screen.getByText(/Active board last fetched:/).textContent).toContain(new Date(next).toLocaleString("en")),
     );
     client.clear();
   },
@@ -338,6 +332,68 @@ test("failed refresh leaves no ready download and allows retry with retained con
   expect(screen.getByRole("button", { name: "Make available offline on this device" })).toBeEnabled();
 });
 
+test.each([
+  [
+    "resources",
+    "Offline app files could not be downloaded. Check your connection and try preparing offline access again.",
+  ],
+  ["connection", "Application data could not be downloaded. Check your connection and sign-in, then try again."],
+  ["storage", en.offline.failed],
+] as const)("preparation %s failure gives its relevant recovery step", async (category, message) => {
+  preparation.mockRejectedValue(new OfflinePreparationFailure(category));
+  renderControls();
+  fireEvent.click(screen.getByRole("button", { name: "Refresh offline data" }));
+  await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(message));
+  expect(screen.queryByText(/Ready offline until/)).not.toBeInTheDocument();
+  if (category !== "storage") {
+    expect(screen.queryByText(en.offline.failed)).not.toBeInTheDocument();
+  }
+});
+
+test("superseded preparation is not presented as a storage failure", async () => {
+  preparation.mockRejectedValue(new OfflinePreparationChangedError());
+  renderControls();
+  fireEvent.click(screen.getByRole("button", { name: "Refresh offline data" }));
+  await waitFor(() => expect(access.download.status).not.toBe("preparing"));
+  expect(access.download.status).not.toBe("failed");
+  expect(screen.queryByText(en.offline.failed)).not.toBeInTheDocument();
+});
+
+test("connection Retry announces checking, failure and recovery while sharing duplicate clicks", async () => {
+  let complete!: (response: Response) => void;
+  const pending = new Promise<Response>((resolve) => {
+    complete = resolve;
+  });
+  const fetcher = vi.fn().mockReturnValue(pending);
+  vi.stubGlobal("fetch", fetcher);
+  profile.canMutate = false;
+  renderControls();
+  const retry = screen.getByRole("button", { name: "Retry" });
+  act(() => {
+    retry.click();
+    retry.click();
+  });
+  expect(await screen.findByRole("button", { name: "Checking connection…" })).toBeDisabled();
+  expect(screen.getByRole("status")).toHaveTextContent("Checking connection…");
+  expect(fetcher).toHaveBeenCalledOnce();
+  await act(async () =>
+    complete(new Response(JSON.stringify({ error: { code: "FAILED", message: "private failure" } }), { status: 503 })),
+  );
+  expect(
+    await screen.findByText("Connection could not be confirmed. Check your connection or sign in again."),
+  ).toBeVisible();
+  expect(access.readAccountId).toBe(1);
+  expect(access.canMutate).toBe(false);
+  fetcher.mockResolvedValue(
+    new Response(JSON.stringify({ data: { user: { id: 1, email: "candidate@example.com" } } })),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("Connection confirmed. You can make changes.")).toBeVisible();
+  expect(access.canMutate).toBe(true);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(document.body).not.toHaveTextContent("private failure");
+});
+
 test("provider worker-update feedback is announced without a controls observer", async () => {
   const view = renderControls();
   expect(observeWorkerUpdate).toHaveBeenCalledTimes(1);
@@ -392,10 +448,12 @@ test.each(["initial", "refresh"])(
     const auth = view.client.getQueryData(["auth", "me"]);
     act(() => window.dispatchEvent(new Event("xeniway:server-unavailable")));
     const assertOwner = preparation.mock.calls[0][3] as () => void;
-    expect(assertOwner).toThrow("Verified online access is required");
-    await act(async () => pending.reject(new Error("workspace request failed with 500")));
+    const failure = new OfflinePreparationFailure("connection");
+    expect(assertOwner).toThrow(failure);
+    await act(async () => pending.reject(failure));
     expect(view.client.getQueryData(["auth", "me"])).toBe(auth);
-    expect(screen.getByRole("status")).toHaveTextContent("Offline data could not be saved or read.");
+    expect(screen.getByRole("status")).toHaveTextContent(en.offline.preparationConnectionFailed);
+    expect(screen.queryByText(en.offline.failed)).not.toBeInTheDocument();
     expect(screen.queryByText(/Ready offline until/)).not.toBeInTheDocument();
     expect(screen.queryByText("Downloading applications and public assets…")).not.toBeInTheDocument();
     expect(access.account).toBeNull();
