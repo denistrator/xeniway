@@ -148,7 +148,10 @@ export function useAuthMutations() {
             )
           : Promise.resolve(false);
         dispatch(closeWelcome());
-        await access.signOutLocally({ discloseRemoteLimit: !access.canMutate });
+        const isCurrentLogout = await access.signOutLocally({ discloseRemoteLimit: true });
+        if (!isCurrentLogout()) {
+          return false;
+        }
         const currentId = queryClient.getQueryData<CurrentUserQueryData>(authKeys.me)?.data.user?.id;
         if (currentId === undefined || currentId === originId) {
           queryClient.setQueryData<CurrentUserQueryData>(authKeys.me, { data: { user: null } });
@@ -156,11 +159,19 @@ export function useAuthMutations() {
           queryClient.removeQueries({ queryKey: applicationKeys.all });
           queryClient.removeQueries({ queryKey: userPreferencesKeys.all });
         }
-        if (await remote) {
+        const confirmed = await remote;
+        if (!isCurrentLogout()) {
+          return false;
+        }
+        if (confirmed) {
+          // A reconnect may have started another check while logout was pending.
+          void queryClient.cancelQueries({ queryKey: authKeys.me, exact: true });
+          queryClient.setQueryData<CurrentUserQueryData>(authKeys.me, { data: { user: null } });
           access.clearLocalLogout();
         } else {
           access.reportLocalLogout();
         }
+        return true;
       },
     }),
   };

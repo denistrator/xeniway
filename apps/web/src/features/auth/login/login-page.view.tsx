@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { AuthCard } from "../../../components/auth-card.view";
+import { LogoutDestinationNotice } from "../../offline/logout-destination-notice.view";
 import { LoginForm } from "./login-form.view";
 import { useLoginPage } from "./login-page.model";
 import { loginPageStyles } from "./login-page.styles";
@@ -10,6 +11,7 @@ export function LoginPage() {
   const { labels, errorRef, email, setEmail, password, setPassword, login, handleSubmit, pending } = useLoginPage();
   return (
     <AuthCard title={labels.title} description={labels.description}>
+      <LogoutDestinationNotice />
       <LoginForm
         email={email}
         password={password}

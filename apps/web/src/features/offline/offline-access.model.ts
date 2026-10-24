@@ -25,6 +25,7 @@ type Access = ReturnType<Runtime["getSnapshot"]> &
     | "retryRestoration"
     | "removeDownload"
     | "retryDownloadCleanup"
+    | "finishRemoteLogout"
     | "signOutLocally"
     | "prepareDownload"
     | "reportLocalLogout"
@@ -58,7 +59,8 @@ export function useOfflineAccess(): Access {
       retryRestoration: async () => {},
       removeDownload: async () => {},
       retryDownloadCleanup: async () => {},
-      signOutLocally: async () => {},
+      finishRemoteLogout: async () => {},
+      signOutLocally: async () => () => true,
       prepareDownload: async () => {},
       reportLocalLogout: () => {},
       clearLocalLogout: () => {},
@@ -87,6 +89,7 @@ export function useOfflineAccessProvider(options: OfflineRuntimeOptions) {
       retryRestoration: runtime.retryRestoration,
       removeDownload: runtime.removeDownload,
       retryDownloadCleanup: runtime.retryDownloadCleanup,
+      finishRemoteLogout: runtime.finishRemoteLogout,
       signOutLocally: runtime.signOutLocally,
       prepareDownload: runtime.prepareDownload,
       reportLocalLogout: runtime.reportLocalLogout,

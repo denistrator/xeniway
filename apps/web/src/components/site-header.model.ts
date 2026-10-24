@@ -37,7 +37,10 @@ export function useSiteHeader({ onCreateDialogOpen }: SiteHeaderProps) {
     .map(({ labelKey, ...link }) => ({ ...link, label: t(labelKey) }));
 
   async function handleLogout() {
-    await logout.mutateAsync();
+    const completed = await logout.mutateAsync();
+    if (completed === false) {
+      return;
+    }
     dispatch(closeDrawer());
     navigate("/login");
   }

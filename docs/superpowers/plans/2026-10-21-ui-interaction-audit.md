@@ -265,11 +265,11 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-20 · P2 · Offline logout hides the remote-session limitation
 
-**Status:** Blocked pending D6. The proposed tab-scoped non-private notice needs an approved lifetime and new-session clearing rule.
+**Status:** Resolved under approved D6/T15. Login retains a non-private tab-scoped notice through reload and offers explicit Finish sign out. Confirmed logout or explicit local/cross-tab sign-in supersedes the previous notice and pending Finish operation. Storage failures cannot prevent private cleanup. Controlled race regressions and the production offline destination/reload workflow pass.
 
 **Evidence — Source, already tracked:** `components/site-header.model.ts:35–38` navigates to login. `offline/offline-controls.view.tsx:48` contains the disclosure only in Settings; the Settings link disappears after logout. `offline-access-machine.ts:69` resets the flag on reload.
 
-**Plan:** Extend the existing [offline-logout disclosure backlog entry](../../backlog.md#preserve-or-relocate-the-offline-logout-disclosure), rather than create a parallel implementation. Show non-private recovery guidance on the logout destination and define its reload lifetime.
+**Resolution:** The previous backlog entry is retired. Current [Operations](../../operations.md#offline-browsing-and-deployment) documents the login notice, tab lifetime, storage limitations and explicit recovery action. No identity or tokens are persisted in the notice.
 
 **Acceptance:** Private local data is cleared, login explains that remote revocation could not be confirmed, and reconnect offers an approved way to finish logout. Never imply server revocation succeeded offline.
 

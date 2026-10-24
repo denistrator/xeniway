@@ -1,21 +1,31 @@
 const offlineLogoutNoticeKey = "xeniway.offline-logout-notice";
 
-function getSessionStorage(): Storage | null {
+export function readOfflineLogoutNotice() {
   try {
-    return window.sessionStorage;
+    return { pending: window.sessionStorage.getItem(offlineLogoutNoticeKey) === "true", storageFailed: false };
   } catch {
-    return null;
+    return { pending: false, storageFailed: true };
   }
 }
 
 export function hasOfflineLogoutNotice(): boolean {
-  return getSessionStorage()?.getItem(offlineLogoutNoticeKey) === "true";
+  return readOfflineLogoutNotice().pending;
 }
 
 export function saveOfflineLogoutNotice() {
-  getSessionStorage()?.setItem(offlineLogoutNoticeKey, "true");
+  try {
+    window.sessionStorage.setItem(offlineLogoutNoticeKey, "true");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function clearOfflineLogoutNotice() {
-  getSessionStorage()?.removeItem(offlineLogoutNoticeKey);
+  try {
+    window.sessionStorage.removeItem(offlineLogoutNoticeKey);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -9,7 +9,9 @@ import type { CurrentUserResponse } from "@xeniway/shared";
 import {
   ApiRequestError,
   applicationKeys,
+  getCsrfToken,
   getCurrentUser,
+  logout,
   setAuthenticatedRequestGuard,
   userPreferencesKeys,
 } from "../../lib/api";
@@ -22,7 +24,7 @@ import {
   readOfflineCleanup,
   rememberOfflineCleanup,
 } from "./offline-cleanup";
-import { clearOfflineLogoutNotice, hasOfflineLogoutNotice, saveOfflineLogoutNotice } from "./offline-logout-notice";
+import { clearOfflineLogoutNotice, readOfflineLogoutNotice, saveOfflineLogoutNotice } from "./offline-logout-notice";
 import { offlineQuerySnapshot } from "./offline-query-cache";
 import {
   clearOfflineAccount,
@@ -61,15 +63,31 @@ function isSessionRejected(result: QueryObserverResult<OfflineAuthData>): boolea
   return isRejectedRequest || isSignedOut;
 }
 
+async function requestRemoteLogout(isCurrent: () => boolean) {
+  const csrf = await getCsrfToken();
+  if (!isCurrent()) {
+    return false;
+  }
+  const token = csrf?.data?.csrfToken;
+  if (typeof token !== "string" || token.length === 0) {
+    return false;
+  }
+  const response = await logout(token);
+  const message = response?.data?.message;
+  return typeof message === "string" && message.trim().length > 0;
+}
+
 /** One mounted provider owns one runtime. Construction has no subscriptions or writes. */
 export function createOfflineAccessRuntime(client: QueryClient, options: OfflineRuntimeOptions = {}) {
   const authUser = () => client.getQueryData<OfflineAuthData>(offlineAuthKey)?.data.user;
+  const logoutNotice = readOfflineLogoutNotice();
   let state = createAccessState({
     online: navigator.onLine,
     userId: authUser()?.id,
     account: options.initialAccount,
     restoring: Boolean(options.restoration),
-    localLogout: hasOfflineLogoutNotice(),
+    localLogout: logoutNotice.pending,
+    logoutNoticeStorageFailed: logoutNotice.storageFailed,
   });
   if (client.getQueryState(offlineAuthKey)?.error) {
     state = transitionAccess(state, { type: "SESSION_UNAVAILABLE" });
@@ -93,6 +111,7 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   let active = false;
   let lifetime = 0;
   let nextOperation = 0;
+  let logoutOperation = 0;
   let expiryTimer: ReturnType<typeof setTimeout> | undefined;
   let persistTimer: ReturnType<typeof setTimeout> | undefined;
   let stopWorkerUpdates: (() => void) | undefined;
@@ -244,23 +263,56 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   async function signOutLocally(input: { discloseRemoteLimit?: boolean } = {}) {
+    const operation = ++logoutOperation;
+    const startedLifetime = lifetime;
     dispatch({ type: "SIGNED_OUT" });
     clearSessionCache(false);
     broadcast({ type: "logout" });
-    await clearDeviceRecords();
     if (input.discloseRemoteLimit) {
       reportLocalLogout();
     }
+    await clearDeviceRecords();
+    return () =>
+      active && lifetime === startedLifetime && logoutOperation === operation && state.session.status === "signed-out";
   }
 
   function reportLocalLogout() {
-    saveOfflineLogoutNotice();
-    dispatch({ type: "LOCAL_LOGOUT_REPORTED", localLogout: true });
+    const persisted = saveOfflineLogoutNotice();
+    dispatch({ type: "LOCAL_LOGOUT_REPORTED", localLogout: true, storageFailed: !persisted });
   }
 
   function clearLocalLogout() {
-    clearOfflineLogoutNotice();
-    dispatch({ type: "LOCAL_LOGOUT_REPORTED", localLogout: false });
+    logoutOperation += 1;
+    const cleared = clearOfflineLogoutNotice();
+    dispatch({ type: "LOCAL_LOGOUT_REPORTED", localLogout: false, storageFailed: !cleared });
+  }
+
+  async function finishRemoteLogout() {
+    if (!active || !state.localLogout || state.logoutFinish === "pending") {
+      return;
+    }
+    const operation = ++logoutOperation;
+    const startedLifetime = lifetime;
+    const isCurrent = () =>
+      active && lifetime === startedLifetime && operation === logoutOperation && state.localLogout;
+    dispatch({ type: "LOGOUT_FINISH_CHANGED", status: "pending" });
+    try {
+      const confirmed = await requestRemoteLogout(isCurrent);
+      if (!isCurrent()) {
+        return;
+      }
+      if (!confirmed) {
+        throw new Error("Invalid logout response");
+      }
+      dispatch({ type: "SIGNED_OUT" });
+      clearSessionCache(false);
+      clearLocalLogout();
+      broadcast({ type: "logout", preservePublicCsrf: true });
+    } catch {
+      if (isCurrent()) {
+        dispatch({ type: "LOGOUT_FINISH_CHANGED", status: "failed" });
+      }
+    }
   }
 
   async function prepareDownload(input: { consent: boolean; refresh?: boolean }) {
@@ -371,6 +423,9 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   function handleRemoteSessionChange(userId: number | undefined) {
+    // An explicit sign-in in another tab replaces the shared cookie session.
+    // An older Finish request must not revoke that new session.
+    clearLocalLogout();
     dispatch({ type: "RESTORATION_CANCELLED" });
     if (snapshot.account && snapshot.account.userId !== userId) {
       dispatch({ type: "DOWNLOAD_REPLACED" });
@@ -418,6 +473,13 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
   }
 
   function acceptVerifiedSession(userId: number) {
+    if (state.localLogout) {
+      return;
+    }
+    const changedSession = state.session.status !== "verified" || state.session.userId !== userId;
+    if (changedSession) {
+      logoutOperation += 1;
+    }
     const previousOwner = state.session.status === "verified" ? state.session.userId : snapshot.account?.userId;
     const oldAccount = snapshot.account;
     dispatch({ type: "SESSION_VERIFIED", userId });
@@ -671,10 +733,12 @@ export function createOfflineAccessRuntime(client: QueryClient, options: Offline
     retryRestoration,
     removeDownload,
     retryDownloadCleanup,
+    finishRemoteLogout,
     signOutLocally,
     prepareDownload,
     confirmSignIn: (userId: number) => {
       if (active && authUser()?.id === userId) {
+        logoutOperation += 1;
         dispatch({ type: "SIGN_IN_SUCCEEDED", userId, online: navigator.onLine });
       }
     },

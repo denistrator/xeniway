@@ -43,6 +43,8 @@ CI pins Bun 1.4.0 and matches Compose's PostgreSQL 16.15 and Redis 7.4.9. Servic
 
 Offline restoration regressions distinguish absent records, rejected storage and the two-second read bound using controlled promises and fake timers. They cover download-generation changes during reads, late results, explicit Settings recovery, and sign-out/removal/owner changes during retry. The production offline suite also denies the initial IndexedDB read and verifies recovery from Settings while disconnected.
 
+Logout regressions use controlled promises to cover pending online logout versus passive verification, deferred Finish CSRF/response versus explicit local or cross-tab sign-in, and pre-revocation session checks settling after Finish. The login notice is tested through runtime reconstruction and denied session-storage access, without retaining identity or credentials. The production offline logout case verifies private-data removal, the login destination and reload disclosure, explicit Finish after reconnect, and continued signed-out state.
+
 `apps/web/src/pages/about-page.test.tsx` covers the public product guide, six canonical status labels, data-access limits, localized headings, and aligned About dictionaries. Browser coverage checks anonymous access, keyboard opening/closing of the technology disclosure, and Hebrew language/direction after reload at a mobile viewport. Do not add layout or class assertions; inspect the page visually in both directions.
 
 | Layer | Location | Main coverage |

@@ -61,7 +61,13 @@ export const en = {
     preparing: "Downloading applications and public assets…",
     failed: "Offline data could not be saved or read. Check storage permissions and space, then try again online.",
     localLogout:
-      "Offline data was cleared on this device. Your remote session could not be revoked; reconnect to sign out on the server.",
+      "You are signed out on this device. Remote sign-out has not been confirmed. Connect to the internet, then choose Finish sign out.",
+    logoutNoticeTitle: "Sign-out status",
+    finishLogout: "Finish sign out",
+    finishingLogout: "Finishing sign out…",
+    finishLogoutFailed: "Remote sign-out could not be confirmed. Check your connection and try again.",
+    logoutNoticePersistenceFailed:
+      "This sign-out notice could not be updated in this tab. It may be missing or out of date after a reload.",
     update: "A new version is available. Finish any edits, then close all app tabs and reopen online to update.",
   },
   common: {
@@ -342,6 +348,7 @@ export const en = {
       switchToDrawer: "Switch to drawer",
     },
     board: {
+      jumpToStatus: "Jump to status",
       openDetails: "Activate to open application workspace",
       cardLabel: "{{company}}, {{position}}, {{status}}",
       dropHere: "Drop applications here",

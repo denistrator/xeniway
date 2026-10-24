@@ -509,11 +509,26 @@ test("offline logout clears private device data and explains the remote-session 
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("region", { name: "Offline access on this device" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /^Settings/ })).toHaveCount(0);
-  await page.goto("/settings");
-  await expect(page.getByText(/Your remote session could not be revoked/)).toBeVisible();
-  await page.goto("/login");
+  const notice = page.getByRole("region", { name: "Sign-out status" });
+  await expect(notice).toContainText("Remote sign-out has not been confirmed");
   await page.reload();
   await expect(page).toHaveURL(/\/login$/);
+  await expect(notice).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Applications", exact: true })).toHaveCount(0);
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await expect(notice).toBeVisible();
+  await context.setOffline(false);
+  await expect(notice).toBeVisible();
+  const confirmed = page.waitForResponse(
+    (response) => response.url().endsWith("/api/auth/logout") && response.request().method() === "POST",
+  );
+  await notice.getByRole("button", { name: "Finish sign out", exact: true }).click();
+  expect((await confirmed).ok()).toBe(true);
+  await expect(notice).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+  await expect(notice).toHaveCount(0);
 });
 
 test("denied device storage does not break online browsing or claim readiness", async ({ page }) => {

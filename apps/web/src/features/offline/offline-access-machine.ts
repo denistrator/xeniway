@@ -26,6 +26,8 @@ export type AccessState = {
   epoch: number;
   storageError: boolean;
   localLogout: boolean;
+  logoutNoticeStorageFailed: boolean;
+  logoutFinish: "idle" | "pending" | "failed";
   updateAvailable: boolean;
 };
 
@@ -43,7 +45,8 @@ export type AccessEvent =
         | "STORAGE_FAILED"
         | "WORKER_UPDATE_AVAILABLE";
     }
-  | { type: "LOCAL_LOGOUT_REPORTED"; localLogout: boolean }
+  | { type: "LOCAL_LOGOUT_REPORTED"; localLogout: boolean; storageFailed?: boolean }
+  | { type: "LOGOUT_FINISH_CHANGED"; status: AccessState["logoutFinish"] }
   | { type: "SESSION_VERIFIED"; userId: number }
   | { type: "SIGN_IN_SUCCEEDED"; userId: number; online: boolean }
   | { type: "VERIFY_STARTED"; operation: number }
@@ -68,8 +71,9 @@ export function createAccessState(input: {
   account?: OfflineAccountMetadata | null;
   restoring?: boolean;
   localLogout?: boolean;
+  logoutNoticeStorageFailed?: boolean;
 }): AccessState {
-  return {
+  const state: AccessState = {
     connection: { status: input.online ? "online" : "offline" },
     session: input.userId ? { status: "verified", userId: input.userId } : { status: "checking" },
     download: input.account
@@ -80,11 +84,17 @@ export function createAccessState(input: {
     epoch: 0,
     storageError: false,
     localLogout: input.localLogout ?? false,
+    logoutNoticeStorageFailed: input.logoutNoticeStorageFailed ?? false,
+    logoutFinish: "idle",
     updateAvailable: false,
   };
+  return input.localLogout ? signedOut(state) : state;
 }
 
 function verifiedSession(state: AccessState, userId: number): AccessState {
+  if (state.localLogout) {
+    return state;
+  }
   const switched = state.session.status === "verified" && state.session.userId !== userId;
   let downloadOwner: number | null = null;
   switch (state.download.status) {
@@ -176,11 +186,19 @@ function expireDownload(state: AccessState, account: OfflineAccountMetadata): Ac
   return { ...state, download: { status: "absent" }, epoch: state.epoch + 1 };
 }
 
-function updateLocalLogout(state: AccessState, localLogout: boolean): AccessState {
-  if (state.localLogout === localLogout) {
+function updateLocalLogout(
+  state: AccessState,
+  event: Extract<AccessEvent, { type: "LOCAL_LOGOUT_REPORTED" }>,
+): AccessState {
+  const storageFailed = event.storageFailed ?? false;
+  if (
+    state.localLogout === event.localLogout &&
+    state.logoutNoticeStorageFailed === storageFailed &&
+    state.logoutFinish === "idle"
+  ) {
     return state;
   }
-  return { ...state, localLogout };
+  return { ...state, localLogout: event.localLogout, logoutNoticeStorageFailed: storageFailed, logoutFinish: "idle" };
 }
 
 function startDownloadCleanup(state: AccessState, ownerId: number, preparationId: string | null): AccessState {
@@ -305,7 +323,9 @@ export function transitionAccess(state: AccessState, event: AccessEvent): Access
     case "STORAGE_FAILED":
       return state.storageError ? state : { ...state, storageError: true };
     case "LOCAL_LOGOUT_REPORTED":
-      return updateLocalLogout(state, event.localLogout);
+      return updateLocalLogout(state, event);
+    case "LOGOUT_FINISH_CHANGED":
+      return { ...state, logoutFinish: event.status };
     case "WORKER_UPDATE_AVAILABLE":
       return state.updateAvailable ? state : { ...state, updateAvailable: true };
   }
@@ -331,6 +351,8 @@ export function selectAccess(state: AccessState, now: number) {
     cleanup: state.cleanup,
     storageError: state.storageError,
     localLogout: state.localLogout,
+    logoutNoticeStorageFailed: state.logoutNoticeStorageFailed,
+    logoutFinish: state.logoutFinish,
     updateAvailable: state.updateAvailable,
   };
 }

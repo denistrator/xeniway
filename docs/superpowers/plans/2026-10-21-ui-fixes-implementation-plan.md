@@ -8,7 +8,7 @@
 
 **Tech stack:** React 19, TypeScript, React Router, Redux Toolkit, TanStack Query, i18next, Tailwind Variants, Radix Select, Atlaskit InlineEdit, Vitest, and Playwright. No new dependency is planned.
 
-**Status:** D1, D3, D4/T08, delegated T05 and approved D5/T13 are implemented. The approved T13 hygiene correction passes. T14 implementation, focused checks and all 20 production offline cases pass. The current root unit run passes 772 frontend tests. Ordinary browsers pass 40 of 41; the existing company-research Save case also fails in isolation and is recorded for separate investigation. Local services were restarted under the user's existing approval. T15/T16 and T18 retain their dependency/policy gates, and T09/T19 retain manual/device validation. The audit remains the evidence register; this document owns task order and execution tracking.
+**Status:** T01–T15 and T17 implementation is complete, subject to the explicitly retained manual T09 checks. The company-research Save regression is fixed and verified. Approved T18 route-owned filters are committed; header, status jumps and cursor changes are under final verification. All 20 production offline cases pass, including destination logout disclosure; 65 focused logout/runtime cases pass. The latest ordinary suite passed 30 cases, failed Forward dirty protection and drag ordering, and skipped 10 after the serial failure; these are being investigated without weakening expectations. T16 is next. T09/T19 retain manual/device validation. The audit remains the evidence register; this document owns task order and execution tracking.
 
 ## Global constraints
 
@@ -47,8 +47,8 @@ The recommendations below make the plan concrete; they are not existing product 
 - **T05 reload-resilient cleanup recovery:** the user authorized the implementation decision. A minimal owner/generation removal marker blocks conflicting preparation and recovers an explicit cleanup action across reloads without granting read access. Offline unit checks, independent review and the production reload/removal regression pass; all T05 items are complete.
 - **T08:** D4 approved and implemented; focused checks and independent review passed. Checkpoint 12 retains historical verification failures; checkpoint 14 records the subsequent passing full unit/browser baseline.
 - **T13:** D5 and lazy JSON packaging were approved by the user. Local-first changes, owner-scoped retry and distinct dictionary/storage/account feedback are implemented and independently reviewed. Real development/production failure/retry checks, all-four-locale offline preparation/reload, and the full authenticated browser suite pass.
-- **T15:** blocked pending D6. Persisting the remote-logout limitation across reloads requires the approved non-private notice lifetime.
-- **T18:** blocked pending D7 and D8. Mobile navigation hierarchy and route-scoped search/status URL state are product behavior changes.
+- **T15:** D6 approved and implemented. The login destination retains a non-private tab-scoped notice until confirmed logout or an explicit new-session transition. Controlled regressions cover late checks and local/cross-tab session changes; the production offline workflow passes. T16 is unblocked.
+- **T18:** D7/D8 approved. Route-owned filters are committed; mobile hierarchy, jump links and cursor changes are being verified in separate patches. The user also approved a separately reproduced 320 px search-field overflow fix.
 - **T09:** its automated behavior checks are complete, but native password-manager, paste, autocomplete, and four-locale visual validation require an interactive user/browser session; they are not inferred from the browser suite.
 - **T19 V-01/V-02/V-05:** require deliberate visual or performance inspection with representative content, viewport/zoom, and hardware. The automated suite is not a substitute for those observations.
 - **T19 V-03/V-04:** require physical devices and assistive-technology environments that are not available to this autonomous checkout.
@@ -360,11 +360,11 @@ type RestoreOutcome<T> =
 
 **Tests:** Offline runtime/controls, login tests, and `tests/e2e/offline.spec.ts`'s existing logout-disclosure workflow.
 
-- [ ] Reproduce local logout → login → reload. Assert private data is unavailable throughout and the truthful remote-session notice remains visible on the destination.
-- [ ] Store only the D6 non-private tab-scoped notice. Storage failure cannot block local private-data cleanup; explain a persistence failure without pretending the notice survived reload.
-- [ ] Define a deliberate Finish sign out action using the existing logout/CSRF route. Verify its response before clearing the remote-limit notice; merely observing `navigator.onLine` is insufficient.
-- [ ] Clear/replace notices on the approved confirmed logout/new-session transitions and test another account signing in. Do not carry a misleading previous-session notice forever.
-- [ ] Update the known backlog item and offline browser assertion to the approved destination/lifetime. Do not remove the disclosure expectation to make the suite pass.
+- [x] Reproduce local logout → login → reload. Assert private data is unavailable throughout and the truthful remote-session notice remains visible on the destination.
+- [x] Store only the D6 non-private tab-scoped notice. Storage failure cannot block local private-data cleanup; explain a persistence failure without pretending the notice survived reload.
+- [x] Define a deliberate Finish sign out action using the existing logout/CSRF route. Verify its response before clearing the remote-limit notice; merely observing `navigator.onLine` is insufficient.
+- [x] Clear/replace notices on the approved confirmed logout/new-session transitions and test another account signing in. Do not carry a misleading previous-session notice forever.
+- [x] Update the known backlog item and offline browser assertion to the approved destination/lifetime. Do not remove the disclosure expectation to make the suite pass. The old disclosure backlog entry was already retired; current Operations and regression guidance now describe D6.
 
 **Exit:** The person sees the actual local-versus-remote logout outcome where they arrive, including the documented reload lifetime.
 
@@ -570,3 +570,9 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 - **Implementation:** One layout adapter reads `q` and active-board `statuses`, projects them atomically into Redux and maps existing filter actions to router navigation. Typing replaces history; status changes push it. Recognized statuses retain workflow order, missing/empty/unknown selections have the approved semantics, and unrelated parameters/hash survive. Accepted case/trailing-slash routes use the same matching rules as the router.
 - **Review and regression:** Review exposed stale subscription writes during external navigation and lost consecutive changes after the adapter's own navigation. Both reproduced in tests before their fixes. The adapter reads the existing data router's live location/navigation state and tracks its own navigation key; no browser-history patch is used. Nine focused adapter tests cover Back/Forward, consecutive actions and overlapping route changes. The real browser verifies copied URLs, reload, route-local search and Back; the repaired workspace case passes alongside it.
 - **Verification:** Formatting, lint and complete types pass. The integrated root run passes 78 script, 25 shared, 144 API (nine existing skips) and 798 frontend tests, including the concurrent T15 work. Browser suites are being rerun sequentially before those tasks are closed. Header/status-jump/pointer subchanges remain separately reviewable patches.
+
+### Checkpoint 18 · Logout destination and session-lifetime guards (T15 / approved D6)
+
+- **Implementation:** Login explains unconfirmed remote logout and offers explicit Finish with fresh public CSRF and validated success. A boolean-only session-storage marker survives reload. Storage failures are separate feedback and do not prevent private cleanup. Ordinary logout establishes this barrier immediately; passive verification cannot silently reopen the old session. Explicit local/cross-tab sign-in supersedes old logout/Finish work, including same-account sign-in in another tab. Both confirmed logout paths cancel session checks started during their pending phase before clearing the marker.
+- **Review and regression:** Controlled tests reproduced pending verification bypass, cross-tab Finish revocation, and late session responses after ordinary/Finish confirmation before their corrections. All 65 focused logout/runtime cases pass, along with format, lint and complete type checks. The production offline suite passes all 20 cases including local logout → login → reload → explicit Finish. A final integrated run follows the remaining T16/T18 work.
+- **Browser baseline:** The current ordinary full run passed 30, failed Forward dirty protection and drag ordering, then skipped 10 serial cases. Both failures passed three isolated repetitions without assertion changes and remain under investigation. Mobile language switching passed five isolated repetitions and this full run; no speculative fix was applied.
