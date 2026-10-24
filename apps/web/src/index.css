@@ -107,8 +107,11 @@ body {
 }
 
 :where(a, button, input, select, textarea) {
-  cursor: pointer;
   touch-action: manipulation;
+}
+
+:where(a, button, select, summary, input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"]) {
+  cursor: pointer;
 }
 
 :where(a:not([class*="bg-"])):hover {

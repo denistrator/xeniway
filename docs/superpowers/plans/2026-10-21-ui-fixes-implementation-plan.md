@@ -412,7 +412,7 @@ type RestoreOutcome<T> =
 - [x] Under D7, provide native status jump links for visible mobile columns with stable IDs, named destinations and appropriate focus/scroll behavior. Do not make hidden columns silently visible or change status order. Existing checkboxes remain filters, not a competing status-navigation mode.
 - [x] Under approved D8, implement route-local `q` and canonical active-board `statuses` with missing/empty/unknown semantics, unrelated parameter/hash preservation, replace-on-typing and push-on-status selection. A single layout route adapter projects into Redux; Archive/Blacklist use only their search parameter.
 - [x] Focused router tests cover canonical/empty/unknown values, search clearing, status history and board navigation. The browser case verifies copied query/filter URLs, reload, route-local search, Back and unrelated parameter/hash preservation. Full-suite integration remains part of the final verification checkpoint.
-- [ ] Narrow the global pointer cursor to controls where it denotes an action. Leave ordinary text input and textarea selection natural, preserving all native keyboard/paste/autofill behavior.
+- [x] Narrow the global pointer cursor to controls where it denotes an action. Leave ordinary text input and textarea selection natural, preserving all native keyboard/paste/autofill behavior.
 - [ ] Manually verify hierarchy, translated wrapping, touch reach, dark theme, RTL and enlarged text. Check meaningful state/navigation behavior automatically, not pixel placement.
 
 **Exit:** Primary tasks stay near the content; later mobile statuses are reachable; search context follows the approved policy; primitive affordances remain familiar web behavior.
@@ -587,3 +587,8 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 
 - **Implementation:** The mobile board exposes native links to named focusable headings, only for selected statuses and in canonical workflow order. Router links preserve query filters and native modified-click behavior without adding out-of-router history entries.
 - **Verification:** Component coverage checks heading focus and removal of a filtered status link. The real mobile URL workflow checks focused Saved heading and preserved `statuses`/unrelated parameters; it passes in the latest full ordinary run. The integrated 803-frontend-test run, formatting, lint and complete types pass. No geometry or style assertion was added.
+
+### Checkpoint 21 · Native text-entry affordance (T18)
+
+- **Implementation:** Global pointer styling now applies to links, buttons, selects, disclosure summaries and action-like input types. Ordinary editable inputs and textareas retain native cursor behavior. The separate touch-action rule is unchanged.
+- **Verification:** This patch changes only cursor targeting, not focus/selection/event behavior. The integrated unit checks and real authentication/workspace/validation workflows retain native entry and keyboard semantics. No automated CSS or style assertions were introduced. Physical password-manager/autofill inspection remains T09's explicit manual gate.

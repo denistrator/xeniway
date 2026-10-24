@@ -399,7 +399,7 @@ The audit combines source review of all route families and shared controls, revi
 
 ### UI-33 · P3 · Global pointer styling weakens text-entry affordance
 
-**Status:** Blocked pending D7/D8’s mobile and input-affordance review; no speculative CSS change is authorized.
+**Status:** Implemented in T18 after D7/D8 approval. Pointer targeting is limited to action controls; ordinary input/textarea entry uses native cursor behavior. Event handling and touch-action remain unchanged. Physical autofill/password-manager validation remains explicitly outside the automated evidence.
 
 **Evidence — Source:** `apps/web/src/index.css:109–111` applies `cursor: pointer` to inputs and textareas as well as buttons/selects. The effect is an action cursor on ordinary editable text.
 
