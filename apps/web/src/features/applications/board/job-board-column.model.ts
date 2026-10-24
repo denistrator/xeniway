@@ -27,20 +27,18 @@ export type DropTargetItemProps = {
   jobs: JobApplication[];
   onDrop: (id: number, status: JobStatus, targetId: number, jobs: JobApplication[]) => void;
   onDragEnter: () => void;
+  showInsertionMarker: boolean;
   children: ReactNode;
 };
 
 export type DropPlaceholderProps = {
   status: JobStatus;
-  targetId?: number;
-  onDrop?: (id: number) => void;
 };
 
 export function useJobBoardColumnPresentation({
   status,
   columnJobs,
   onDrop,
-  onJobDrop,
   onDragStart,
   setDropTarget,
   onKeyboardMove,
@@ -67,9 +65,6 @@ export function useJobBoardColumnPresentation({
   }, [columnJobs, onDrop, setDropTarget, status]);
   const columnName = `${getStatusLabel(t, status)} applications`;
   const statusLabel = getStatusLabel(t, status);
-  function dropBeforeJob(job: JobApplication) {
-    return (id: number) => onJobDrop(id, status, job.id, columnJobs);
-  }
   function enterDropTarget(index: number) {
     return () => setDropTarget({ status, index });
   }
@@ -89,7 +84,6 @@ export function useJobBoardColumnPresentation({
     headingId: `application-column-${status}`,
     columnName,
     statusLabel,
-    dropBeforeJob,
     enterDropTarget,
     openJob,
     moveJob,
@@ -120,20 +114,4 @@ export function useDropTargetItemPresentation({
   }, [index, jobs, onDragEnter, onDrop, status, targetId]);
 
   return { itemRef };
-}
-export function useDropPlaceholderPresentation({ status, targetId, onDrop }: DropPlaceholderProps) {
-  const placeholderRef = useRef<HTMLLIElement>(null);
-  useEffect(() => {
-    if (!placeholderRef.current || targetId === undefined || !onDrop) {
-      return;
-    }
-    return dropTargetForElements({
-      element: placeholderRef.current,
-      canDrop: ({ source }) => source.data.type === "job-application",
-      getData: () => ({ status, targetId }),
-      onDrop: ({ source }) => onDrop(Number(source.data.applicationId)),
-    });
-  }, [onDrop, status, targetId]);
-
-  return { placeholderRef };
 }

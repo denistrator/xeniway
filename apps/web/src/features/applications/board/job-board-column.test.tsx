@@ -160,15 +160,16 @@ test("maps horizontal status movement to the visual direction", () => {
   expect(getKeyboardMove("ArrowRight", true, "rtl")).toBe("previousStatus");
 });
 
-test("preserves the hovered insertion point when dropping on the placeholder", () => {
+test.each(["card", "column"])("keeps %s drop routing independent while an insertion is indicated", (destination) => {
   const onJobDrop = vi.fn();
+  const onColumnDrop = vi.fn();
   const followingJob = { ...job, id: 2, company: "Following" };
   const draggedJob = { ...job, id: 3, company: "Dragged" };
-  const { container } = render(
+  render(
     <JobBoardColumn
       status="saved"
       columnJobs={[job, followingJob, draggedJob]}
-      onDrop={vi.fn()}
+      onDrop={onColumnDrop}
       onJobDrop={onJobDrop}
       onDragStart={vi.fn()}
       dropTarget={{ status: "saved", index: 1 }}
@@ -178,14 +179,21 @@ test("preserves the hovered insertion point when dropping on the placeholder", (
     />,
   );
 
-  const placeholder = container.querySelector("li[aria-hidden='true']");
-  expect(placeholder).not.toBeNull();
-  const placeholderTarget = dropTargets.find((target) => target.element === placeholder);
-  expect(placeholderTarget).toBeDefined();
-
-  placeholderTarget?.onDrop({
+  const column = screen.getByRole("region", { name: "Saved applications" });
+  const following = screen.getByRole("link", { name: "Following, Engineer, Saved" }).closest("li");
+  const element = destination === "card" ? following : column;
+  const target = dropTargets.find((registered) => registered.element === element);
+  expect(target).toBeDefined();
+  target?.onDrop({
     source: { data: { type: "job-application", applicationId: draggedJob.id } },
+    self: { element },
+    location: { current: { dropTargets: [{ element }] } },
   } as never);
-
-  expect(onJobDrop).toHaveBeenCalledWith(draggedJob.id, "saved", followingJob.id, [job, followingJob, draggedJob]);
+  if (destination === "card") {
+    expect(onJobDrop).toHaveBeenCalledWith(draggedJob.id, "saved", followingJob.id, [job, followingJob, draggedJob]);
+    expect(onColumnDrop).not.toHaveBeenCalled();
+  } else {
+    expect(onColumnDrop).toHaveBeenCalledWith(draggedJob.id, "saved", [job, followingJob, draggedJob]);
+    expect(onJobDrop).not.toHaveBeenCalled();
+  }
 });

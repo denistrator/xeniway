@@ -11,7 +11,8 @@ export const jobBoardColumnStyles = tv({
     list: "list-none space-y-3 p-0",
     emptyItem: "",
     emptyMessage: "rounded-xl border border-dashed border-line px-3 py-8 text-center text-sm leading-6 text-muted",
-    dropItem: "",
+    dropItem: "relative",
+    insertionMarker: "pointer-events-none absolute inset-x-0 top-0 h-1 rounded-full bg-accent",
     placeholder: "h-20 rounded-xl border-2 border-dashed border-accent bg-accent-soft",
   },
 });

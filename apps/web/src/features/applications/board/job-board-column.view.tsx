@@ -1,9 +1,7 @@
-import { Fragment } from "react";
 import {
   type DropPlaceholderProps,
   type DropTargetItemProps,
   type JobBoardColumnProps,
-  useDropPlaceholderPresentation,
   useDropTargetItemPresentation,
   useJobBoardColumnPresentation,
 } from "./job-board-column.model";
@@ -27,7 +25,6 @@ export function JobBoardColumn({
     headingId,
     columnName,
     statusLabel,
-    dropBeforeJob,
     enterDropTarget,
     openJob,
     moveJob,
@@ -55,28 +52,25 @@ export function JobBoardColumn({
       </div>
       <ul className={styles.list()}>
         {columnJobs.map((job, index) => (
-          <Fragment key={job.id}>
-            {dropTarget?.status === status && dropTarget.index === index && (
-              <DropPlaceholder status={status} targetId={job.id} onDrop={dropBeforeJob(job)} />
-            )}
-            <DropTargetItem
-              status={status}
-              index={index}
-              targetId={job.id}
-              onDrop={onJobDrop}
-              onDragEnter={enterDropTarget(index)}
-              jobs={columnJobs}
-            >
-              <JobCard
-                job={job}
-                position={index + 1}
-                total={columnJobs.length}
-                onOpen={openJob(job)}
-                onKeyboardMove={moveJob(job)}
-                onDragStart={startDraggingJob(job)}
-              />
-            </DropTargetItem>
-          </Fragment>
+          <DropTargetItem
+            key={job.id}
+            status={status}
+            index={index}
+            targetId={job.id}
+            onDrop={onJobDrop}
+            onDragEnter={enterDropTarget(index)}
+            showInsertionMarker={dropTarget?.status === status && dropTarget.index === index}
+            jobs={columnJobs}
+          >
+            <JobCard
+              job={job}
+              position={index + 1}
+              total={columnJobs.length}
+              onOpen={openJob(job)}
+              onKeyboardMove={moveJob(job)}
+              onDragStart={startDraggingJob(job)}
+            />
+          </DropTargetItem>
         ))}
         {dropTarget?.status === status && dropTarget.index === columnJobs.length && <DropPlaceholder status={status} />}
         {!columnJobs.length && (
@@ -89,20 +83,37 @@ export function JobBoardColumn({
   );
 }
 
-function DropTargetItem({ status, index, targetId, jobs, onDrop, onDragEnter, children }: DropTargetItemProps) {
+function DropTargetItem({
+  status,
+  index,
+  targetId,
+  jobs,
+  onDrop,
+  onDragEnter,
+  showInsertionMarker,
+  children,
+}: DropTargetItemProps) {
   const styles = jobBoardColumnStyles({ status });
-  const { itemRef } = useDropTargetItemPresentation({ status, index, targetId, jobs, onDrop, onDragEnter, children });
+  const { itemRef } = useDropTargetItemPresentation({
+    status,
+    index,
+    targetId,
+    jobs,
+    onDrop,
+    onDragEnter,
+    showInsertionMarker,
+    children,
+  });
 
   return (
     <li className={styles.dropItem()} ref={itemRef}>
+      {showInsertionMarker && <span aria-hidden="true" className={styles.insertionMarker()} />}
       {children}
     </li>
   );
 }
 
-function DropPlaceholder({ status, targetId, onDrop }: DropPlaceholderProps) {
+function DropPlaceholder({ status }: DropPlaceholderProps) {
   const styles = jobBoardColumnStyles({ status });
-  const { placeholderRef } = useDropPlaceholderPresentation({ status, targetId, onDrop });
-
-  return <li ref={placeholderRef} aria-hidden="true" className={styles.placeholder()} />;
+  return <li aria-hidden="true" className={styles.placeholder()} />;
 }

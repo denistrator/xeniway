@@ -852,12 +852,18 @@ test("persists drag-and-drop ordering within a status", async ({ page }) => {
   if (!secondCompany) {
     throw new Error("Unable to locate the second saved application");
   }
+  const originalIds = await cards.evaluateAll((links) =>
+    links.map((link) => Number(new URL((link as HTMLAnchorElement).href).pathname.split("/").at(-1))),
+  );
+  const expectedIds = [originalIds[1], originalIds[0], ...originalIds.slice(2)];
 
   const reorderResponse = page.waitForResponse(
     (response) => response.url().endsWith("/api/applications/reorder") && response.request().method() === "POST",
   );
   await cards.nth(1).dragTo(cardTargets.nth(0));
-  expect((await reorderResponse).ok()).toBe(true);
+  const reordered = await reorderResponse;
+  expect(reordered.ok()).toBe(true);
+  expect(reordered.request().postDataJSON()).toEqual({ status: "saved", applicationIds: expectedIds });
   await expect(savedColumn.getByRole("link").first()).toContainText(secondCompany);
 
   await page.reload();
