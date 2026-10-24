@@ -10,4 +10,10 @@ export const languageSelectorStyles = tv({
     flag: "",
     optionLabel: "",
   },
+  variants: {
+    menuPlacement: {
+      default: {},
+      contained: { menu: "start-0 end-auto max-h-[50dvh] w-max min-w-0 max-w-[calc(100dvw-6rem)] overflow-y-auto" },
+    },
+  },
 });

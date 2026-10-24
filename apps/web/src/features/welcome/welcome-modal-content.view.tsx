@@ -20,7 +20,7 @@ export function WelcomeModalContent({ t, closeRef, complete }: WelcomeModalConte
       className={styles.dialog()}
     >
       <div className={styles.header()}>
-        <LanguageSelector />
+        <LanguageSelector menuPlacement="contained" />
         <button
           ref={closeRef}
           type="button"

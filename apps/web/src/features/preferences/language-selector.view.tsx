@@ -1,9 +1,9 @@
-import { useLanguageSelector } from "./language-selector.model";
+import { type LanguageSelectorProps, useLanguageSelector } from "./language-selector.model";
 import { languageSelectorStyles } from "./language-selector.styles";
 import { PreferenceFeedback } from "./preference-feedback.view";
 
-const styles = languageSelectorStyles();
-export function LanguageSelector({ showFeedback = true }: { showFeedback?: boolean }) {
+export function LanguageSelector({ showFeedback = true, menuPlacement = "default" }: LanguageSelectorProps) {
+  const styles = languageSelectorStyles({ menuPlacement });
   const { open, containerRef, triggerRef, currentOption, label, toggleOpen, handleMenuKeyDown, menuOptions } =
     useLanguageSelector();
   return (

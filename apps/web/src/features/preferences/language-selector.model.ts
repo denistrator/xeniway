@@ -4,6 +4,11 @@ import { changeLocale, type SupportedLocale, supportedLocales } from "../../i18n
 import { useCurrentUser, useUpdateUserPreferences } from "../../lib/queries";
 import { useCanMutate } from "../offline/offline-access.model";
 
+export type LanguageSelectorProps = {
+  showFeedback?: boolean;
+  menuPlacement?: "default" | "contained";
+};
+
 export const languageOptions: { value: SupportedLocale; label: string; flag: string }[] = [
   { value: "en", label: "EN", flag: "🇬🇧" },
   { value: "ru", label: "RU", flag: "🇷🇺" },
