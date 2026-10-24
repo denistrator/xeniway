@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useCollectionRouteFilters } from "../features/applications/filters/collection-route-filters.model";
 import { useUserPreferencesSync } from "../features/preferences/user-preferences-sync.model";
 import type { WelcomeAction } from "../features/welcome/welcome-modal.view";
 import { useCompleteIntroduction, useCurrentUser, useUserPreferences } from "../lib/queries";
@@ -57,6 +58,7 @@ function useRouteTitle() {
 }
 
 export function useLayout() {
+  useCollectionRouteFilters();
   useUserPreferencesSync();
   useRouteTitle();
   const welcome = useWelcomeHost();

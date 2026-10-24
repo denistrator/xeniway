@@ -798,6 +798,33 @@ test("shows only the statuses selected in the filter menu", async ({ page }) => 
   await expect(page.getByRole("button", { name: /Filter statuses/ })).toBeFocused();
 });
 
+test("shares collection filters through URLs and restores route context", async ({ page }) => {
+  const bootstrap = await page.request.get("/api/auth/csrf");
+  const response = await page.request.post("/api/auth/login", {
+    headers: { "x-csrf-token": ((await bootstrap.json()) as CsrfResponse).data.csrfToken },
+    data: { email: "admin@example.com", password: "password" },
+  });
+  expect(response.ok()).toBe(true);
+  await page.goto("/?statuses=saved&keep=yes#results");
+  await expect(page.getByRole("region", { name: "Saved applications" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Offer applications" })).toHaveCount(0);
+  const search = page.getByRole("textbox", { name: "Search applications", exact: true });
+  await search.fill("route-local query");
+  await expect(page).toHaveURL(/q=route-local\+query/);
+  await page.reload();
+  await expect(search).toHaveValue("route-local query");
+  await page
+    .getByRole("navigation", { name: "Workspace navigation" })
+    .getByRole("link", { name: "Archive", exact: true })
+    .click();
+  await expect(search).toHaveValue("");
+  await page.goBack();
+  await expect(search).toHaveValue("route-local query");
+  await expect(page).toHaveURL(/statuses=saved/);
+  await expect(page).toHaveURL(/keep=yes/);
+  await expect(page).toHaveURL(/#results$/);
+});
+
 test("persists drag-and-drop ordering within a status", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill("test_user@example.com");

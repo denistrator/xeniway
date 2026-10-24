@@ -39,6 +39,12 @@ const uiSlice = createSlice({
     setSearch: (state, action: PayloadAction<string>) => {
       state.search = action.payload;
     },
+    projectCollectionFilters: (state, action: PayloadAction<{ search: string; visibleStatuses?: JobStatus[] }>) => {
+      state.search = action.payload.search;
+      if (action.payload.visibleStatuses) {
+        state.visibleStatuses = action.payload.visibleStatuses;
+      }
+    },
     toggleStatus: (state, action: PayloadAction<JobStatus>) => {
       state.visibleStatuses = state.visibleStatuses.includes(action.payload)
         ? state.visibleStatuses.filter((status) => status !== action.payload)
@@ -66,6 +72,7 @@ export const {
   setTheme,
   setJobFormPresentation,
   setSearch,
+  projectCollectionFilters,
   toggleStatus,
   setAllStatuses,
   openCreateDrawer,

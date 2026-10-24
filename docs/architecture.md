@@ -78,6 +78,8 @@ The root `tsconfig.json` supplies shared compiler defaults, not a project-refere
 
 ### API and frontend composition
 
+Collection filters are owned by their route URL. `q` stores each board's search text; typing replaces the current history entry and clearing omits `q`. The active board additionally uses `statuses` in canonical workflow order: an absent parameter means all statuses, an empty value means none, recognized values are deduplicated, and an entirely unknown nonempty value falls back to all. Explicit status changes create history entries. Archive and Blacklist use their own `q` and do not filter by active-board statuses. One layout-mounted adapter projects URL filters into Redux and reflects existing filter actions back through router navigation, preserving unrelated parameters and fragments. Reload, copied links and Back/Forward restore the route filters.
+
 Multiline workspace editors submit the current draft held by their field controller. Atlaskit's internal submitted value may lag behind a rapid input change; it must not replace the controller's draft when confirming a save. The existing field hook remains responsible for validation, one-field persistence and saved-value updates.
 
 `packages/shared` is the contract boundary. It defines the six-status enum, registration/login schemas, application and manual-event input schemas, and public response types. The web and API packages import these definitions instead of duplicating validation or JSON shapes.
