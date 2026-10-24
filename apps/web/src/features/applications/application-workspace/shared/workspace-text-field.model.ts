@@ -64,9 +64,9 @@ export function useWorkspaceTextField({
       controller.beginEdit();
     }
   }
-  function confirmEdit(value: string) {
+  function confirmEdit() {
     if (canMutate) {
-      void controller.save(value);
+      void controller.save();
     }
   }
   function cancelEdit() {

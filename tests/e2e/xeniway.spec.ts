@@ -1127,7 +1127,15 @@ test("logs in, filters the board, moves, archives, and deletes an application", 
   await page.getByRole("heading", { name: "Interview preparation" }).waitFor();
   await page.getByRole("button", { name: "Company research, Edit" }).click();
   await page.getByRole("textbox", { name: "Company research" }).fill("Recent product launches and team structure");
+  const preparationResponse = page.waitForResponse(
+    (response) => response.url().endsWith("/preparation") && response.request().method() === "PUT",
+  );
   await page.getByRole("button", { name: "Save company research" }).click();
+  const savedPreparation = await preparationResponse;
+  expect(savedPreparation.status()).toBe(200);
+  expect(savedPreparation.request().postDataJSON()).toEqual({
+    companyResearch: "Recent product launches and team structure",
+  });
   await expect(page.getByText("Recent product launches and team structure")).toBeVisible();
 
   await page.getByRole("button", { name: "Add contact" }).click();

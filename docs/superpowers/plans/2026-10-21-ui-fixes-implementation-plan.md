@@ -42,6 +42,8 @@ The recommendations below make the plan concrete; they are not existing product 
 
 ## Execution gate status
 
+- **2026-10-24 approvals:** The user approved D6 for T15 and both D7/D8 for T18, and authorized a separate investigation/fix of the company-research Save failure. T16 can proceed after T15 is verified. Older checkpoint gate statements record historical status.
+
 - **T05 reload-resilient cleanup recovery:** the user authorized the implementation decision. A minimal owner/generation removal marker blocks conflicting preparation and recovers an explicit cleanup action across reloads without granting read access. Offline unit checks, independent review and the production reload/removal regression pass; all T05 items are complete.
 - **T08:** D4 approved and implemented; focused checks and independent review passed. Checkpoint 12 retains historical verification failures; checkpoint 14 records the subsequent passing full unit/browser baseline.
 - **T13:** D5 and lazy JSON packaging were approved by the user. Local-first changes, owner-scoped retry and distinct dictionary/storage/account feedback are implemented and independently reviewed. Real development/production failure/retry checks, all-four-locale offline preparation/reload, and the full authenticated browser suite pass.
@@ -556,3 +558,9 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 - **Regression evidence:** Tests first reproduced rejected restoration remaining pending and the missing timeout state. Current focused offline/startup coverage passes 336 cases, including absence, storage rejection, valid late completion, replacement generation and retry revocation. Settings recovers a genuine saved IndexedDB fixture; the production browser case recovers while disconnected after a denied initial read. Copy is translated in all four dictionaries.
 - **Verification:** Formatting, lint, type checks and the normal root unit command pass (78 script, 25 shared, 144 API with nine existing skips, 772 frontend). The rebuilt production offline suite passes all 20 cases. Ordinary browsers pass 40 of 41; the existing company-research Save failure repeats in isolation. Its backlog entry records the evidence and a separate fix request. No assertion was weakened. The passing skip-link test still emits its previously tracked router warning.
 - **Remaining gates:** D6 for T15, T15 before T16, and D7/D8 for T18 remain pending user answers. T09/T19 retain their interactive/device validation requirements. These checks do not mark the full plan complete.
+
+### Checkpoint 16 · Company-research draft submission repair
+
+- **Authority:** The user approved investigating and fixing the browser failure separately, alongside D6/D7/D8.
+- **Cause and change:** A browser request assertion reproduced a successful preparation PUT containing `companyResearch: null` after text entry. The shared multiline adapter submitted Atlaskit's internal form value, which could lag behind the controller draft. Confirmation now delegates to the existing controller's current draft. Validation, one-field updates, saved values and ownership checks remain in their existing hooks.
+- **Verification:** The strengthened browser workflow failed on the wrong payload before the fix, then passed once and in three consecutive repetitions after it. All 61 related preparation/overview/page tests pass, along with formatting, lint and complete type checks. The earlier full-suite failure is historical evidence; the separate backlog entry is resolved. No delay or timeout was added.
