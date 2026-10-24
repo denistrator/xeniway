@@ -592,3 +592,8 @@ Start with T01, then T02. For every task record: approved policy gates, reproduc
 
 - **Implementation:** Global pointer styling now applies to links, buttons, selects, disclosure summaries and action-like input types. Ordinary editable inputs and textareas retain native cursor behavior. The separate touch-action rule is unchanged.
 - **Verification:** This patch changes only cursor targeting, not focus/selection/event behavior. The integrated unit checks and real authentication/workspace/validation workflows retain native entry and keyboard semantics. No automated CSS or style assertions were introduced. Physical password-manager/autofill inspection remains T09's explicit manual gate.
+
+### Checkpoint 22 · Approved narrow search-field overflow correction
+
+- **Evidence and authority:** The before views reproduced a search field extending outside its panel at 320 px in English, Russian and Ukrainian. The user approved this focused correction separately from the header work.
+- **Change and verification:** The search label can shrink within narrow flex layouts while retaining its existing minimum width from the small-screen breakpoint upward. Inspected all four corrected 320 px views plus 360/390 px, desktop and dark-theme samples. The search field stays inside its panel at ordinary text size; search behavior is unchanged. The URL/clear/reload browser case and integrated unit run pass. No style assertions or visual snapshots were added.
