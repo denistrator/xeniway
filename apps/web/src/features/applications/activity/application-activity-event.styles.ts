@@ -3,8 +3,8 @@ import { tv } from "tailwind-variants";
 export const applicationActivityEventStyles = tv({
   slots: {
     root: "rounded-xl border border-line p-4",
-    layout: "flex items-start justify-between gap-3",
-    content: "",
+    layout: "flex flex-wrap items-start justify-between gap-3",
+    content: "min-w-0 basis-full wrap-anywhere sm:basis-0 sm:flex-1",
     type: "text-xs font-semibold uppercase tracking-wide text-muted",
     title: "mt-1 font-medium text-ink break-words",
     statusChange: "mt-1 text-sm text-muted",

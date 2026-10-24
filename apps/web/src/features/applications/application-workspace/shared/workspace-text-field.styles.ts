@@ -4,7 +4,7 @@ import { textAreaStyles } from "../../../../styles/shared/field-styles";
 export const workspaceTextFieldStyles = tv({
   slots: {
     readView: "flex items-start justify-between gap-3",
-    value: "whitespace-pre-wrap text-sm leading-6 text-muted",
+    value: "min-w-0 wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted",
     editLabel: "shrink-0 rounded-lg border border-line px-2 py-1 text-sm font-medium text-ink",
     root: "workspace-inline-edit focus-visible:outline-2",
     heading: "",

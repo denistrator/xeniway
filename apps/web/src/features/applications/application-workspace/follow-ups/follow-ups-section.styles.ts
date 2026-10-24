@@ -16,11 +16,11 @@ export const followUpsSectionStyles = tv({
     year: "text-[0.65rem] text-muted",
     content: "min-w-0 flex-1",
     header: "flex flex-wrap items-start justify-between gap-2",
-    identity: "",
+    identity: "min-w-0 basis-full wrap-anywhere sm:basis-0 sm:flex-1",
     title: "font-display text-lg text-ink",
     status: "text-xs font-semibold text-muted",
     actions: "flex flex-wrap gap-1",
-    notes: "mt-2 whitespace-pre-wrap text-sm leading-6 text-muted",
+    notes: "mt-2 wrap-anywhere whitespace-pre-wrap text-sm leading-6 text-muted",
     complete: "mt-3",
   },
 });
