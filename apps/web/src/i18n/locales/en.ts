@@ -95,6 +95,7 @@ export const en = {
     actions: {
       addJob: "Add job",
       close: "Close",
+      closeMessage: "Close message",
       closeDialog: "Close dialog",
       login: "Log in",
       logout: "Logout",

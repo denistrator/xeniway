@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { InfoMessage } from "../../../components/ui/info-message.view";
 import { type JobBoardProps, useJobBoardPresentation } from "./job-board.model";
 import { jobBoardStyles } from "./job-board.styles";
 import { JobBoardColumn } from "./job-board-column.view";
@@ -7,7 +8,14 @@ export { jobStatuses } from "./job-status";
 
 const styles = jobBoardStyles();
 
-export function JobBoard({ jobs, onStatusChange, onReorder, operationError, operationSuccess }: JobBoardProps) {
+export function JobBoard({
+  jobs,
+  onStatusChange,
+  onReorder,
+  operationError,
+  operationSuccess,
+  operationSuccessId,
+}: JobBoardProps) {
   const {
     board,
     columns,
@@ -24,12 +32,14 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError, oper
     focusStatus,
     operationError: error,
     operationSuccess: success,
+    operationSuccessId: successId,
   } = useJobBoardPresentation({
     jobs,
     onStatusChange,
     onReorder,
     operationError,
     operationSuccess,
+    operationSuccessId,
   });
 
   return (
@@ -49,9 +59,9 @@ export function JobBoard({ jobs, onStatusChange, onReorder, operationError, oper
         </p>
       )}
       {success && (
-        <p role="status" className={styles.operationSuccess()}>
+        <InfoMessage messageId={successId ?? success} className={styles.operationSuccess()}>
           {success}
-        </p>
+        </InfoMessage>
       )}
       <div className={styles.columns()}>
         {columns.map(({ status, jobs: columnJobs }) => (

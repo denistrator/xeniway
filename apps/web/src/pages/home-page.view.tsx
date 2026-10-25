@@ -45,6 +45,7 @@ export function HomePage() {
           onReorder={view.handleReorder}
           operationError={view.boardOperationError ?? undefined}
           operationSuccess={view.boardOperationSuccess ?? undefined}
+          operationSuccessId={view.boardOperationSuccessId ?? undefined}
         />
       )}
       <div className={styles.boardActions()}>

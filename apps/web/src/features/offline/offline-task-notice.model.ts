@@ -24,6 +24,8 @@ export function useOfflineTaskNotice() {
   return {
     visible: isTaskRoute(pathname) && Boolean(messageKey),
     message: messageKey ? t(messageKey) : null,
+    informational: access.verification === "succeeded",
+    messageId: access.verificationResult,
     settingsLabel: t("navigation.settings"),
   };
 }

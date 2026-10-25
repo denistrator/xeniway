@@ -1,6 +1,7 @@
 import { WifiOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/button.view";
+import { InfoMessage } from "../../components/ui/info-message.view";
 import {
   type OfflineDownloadSettingsProps,
   type OfflineNoticesProps,
@@ -52,19 +53,28 @@ export function OfflineControls() {
 function OfflineNotices(props: OfflineNoticesProps) {
   const notices = useOfflineNotices(props);
   return (
-    <div role={props.notice ? "status" : undefined} aria-live="polite" className={styles.notices()}>
-      {props.access.readAccountId && !props.access.canMutate && (
-        <p className={styles.readOnlyNotice()}>{notices.readOnly}</p>
+    <>
+      <div role={notices.persistentRole} aria-live="polite" className={styles.notices()}>
+        {props.access.readAccountId && !props.access.canMutate && (
+          <p className={styles.readOnlyNotice()}>{notices.readOnly}</p>
+        )}
+        {props.access.localLogout && <p className={styles.localLogoutNotice()}>{notices.localLogout}</p>}
+        {props.access.updateAvailable && <p className={styles.updateNotice()}>{notices.update}</p>}
+        {notices.showReady && <p className={styles.readyNotice()}>{notices.ready}</p>}
+        {notices.fetched && <p className={styles.fetchedNotice()}>{notices.fetched}</p>}
+        {notices.verificationMessage && !notices.informational && (
+          <p className={styles.verificationNotice()}>{notices.verificationMessage}</p>
+        )}
+        {notices.showFailure && <p className={styles.failureNotice()}>{notices.failure}</p>}
+        {notices.showRestorationFailure && <p className={styles.restorationNotice()}>{notices.restorationMessage}</p>}
+        {notices.busy && <p className={styles.progressNotice()}>{notices.preparing}</p>}
+      </div>
+      {notices.informational && (
+        <InfoMessage messageId={notices.messageId} className={styles.verificationNotice()}>
+          {notices.verificationMessage}
+        </InfoMessage>
       )}
-      {props.access.localLogout && <p className={styles.localLogoutNotice()}>{notices.localLogout}</p>}
-      {props.access.updateAvailable && <p className={styles.updateNotice()}>{notices.update}</p>}
-      {notices.showReady && <p className={styles.readyNotice()}>{notices.ready}</p>}
-      {notices.fetched && <p className={styles.fetchedNotice()}>{notices.fetched}</p>}
-      {notices.verificationMessage && <p className={styles.verificationNotice()}>{notices.verificationMessage}</p>}
-      {notices.showFailure && <p className={styles.failureNotice()}>{notices.failure}</p>}
-      {notices.showRestorationFailure && <p className={styles.restorationNotice()}>{notices.restorationMessage}</p>}
-      {notices.busy && <p className={styles.progressNotice()}>{notices.preparing}</p>}
-    </div>
+    </>
   );
 }
 

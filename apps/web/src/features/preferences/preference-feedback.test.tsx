@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes } from "react-router-dom";
@@ -10,6 +10,7 @@ import { userPreferencesKeys } from "../../lib/api";
 import { authKeys } from "../../lib/queries";
 import { closeDrawer, closeWelcome, openWelcome, setJobFormPresentation, setTheme, store } from "../../store";
 import { initializeTestI18n } from "../../test/initialize-test-i18n";
+import { choiceMade, preferenceFeedbackStore } from "./preference-feedback-state";
 import { SettingsPreferences } from "./settings-preferences.view";
 
 const { save } = vi.hoisted(() => ({ save: vi.fn() }));
@@ -33,6 +34,47 @@ beforeEach(async () => {
 
 afterEach(() => {
   client.clear();
+  vi.useRealTimers();
+});
+
+test("successful preference feedback expires, while a later explicit choice has its own lifetime", async () => {
+  vi.useFakeTimers();
+  save.mockResolvedValue({ data: { preferences: {} } });
+  renderPage("/settings");
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Theme: System. Change theme" }));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(screen.getByRole("status")).toHaveTextContent("Saved to your account.");
+  act(() => vi.advanceTimersByTime(10_000));
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  act(() => preferenceFeedbackStore.dispatch(choiceMade("language")));
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Theme: Dark. Change theme" }));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(screen.getByRole("status")).toHaveTextContent("Saved to your account.");
+  expect(save).toHaveBeenCalledTimes(2);
+});
+
+test("failed preference saves keep their retry and outstanding values after ten seconds", async () => {
+  vi.useFakeTimers();
+  save.mockRejectedValue(new Error("account unavailable"));
+  renderPage("/settings");
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Theme: System. Change theme" }));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  act(() => vi.advanceTimersByTime(20_000));
+  expect(screen.getByRole("button", { name: "Retry account save" })).toBeVisible();
+  expect(save).toHaveBeenCalledTimes(1);
+  save.mockResolvedValue({ data: { preferences: {} } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Retry account save" }));
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(save.mock.calls[1][0]).toEqual({ selectedTheme: "dark" });
 });
 
 function renderPage(path: string) {

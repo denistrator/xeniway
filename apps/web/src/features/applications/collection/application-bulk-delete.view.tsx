@@ -1,5 +1,6 @@
 import { Button } from "../../../components/ui/button.view";
 import { ConfirmationModal } from "../../../components/ui/confirmation-modal.view";
+import { InfoMessage } from "../../../components/ui/info-message.view";
 import { type ApplicationBulkDeleteProps, useApplicationBulkDelete } from "./application-bulk-delete.model";
 import { applicationBulkDeleteStyles } from "./application-bulk-delete.styles";
 
@@ -25,9 +26,9 @@ export function ApplicationBulkDelete(props: ApplicationBulkDeleteProps) {
         </Button>
       </details>
       {view.successMessage && (
-        <p role="status" className={styles.success()}>
+        <InfoMessage messageId="bulk-deleted" returnFocusRef={view.regionRef} className={styles.success()}>
           {view.successMessage}
-        </p>
+        </InfoMessage>
       )}
       {view.stage === "scope" && (
         <ConfirmationModal

@@ -105,6 +105,7 @@ export const FollowUpsSection = memo(function FollowUpsSection(props: FollowUpsS
             pendingText={view.savingLabel}
             text={view.controller.status ? view.statusLabel : null}
             isError={view.statusIsError}
+            returnFocusRef={view.controller.addButtonRef}
           />
         </CardContent>
       </Card>

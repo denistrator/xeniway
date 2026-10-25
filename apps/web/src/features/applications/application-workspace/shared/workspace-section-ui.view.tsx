@@ -1,5 +1,6 @@
 import { Button } from "../../../../components/ui/button.view";
 import { CardHeader, CardTitle } from "../../../../components/ui/card.view";
+import { InfoMessage } from "../../../../components/ui/info-message.view";
 import {
   createWorkspaceSectionAction,
   useWorkspaceFormActions,
@@ -33,7 +34,20 @@ export function WorkspaceSectionHeader({
   );
 }
 
-export function WorkspaceMutationStatus({ pending, pendingText, text, isError }: WorkspaceMutationStatusProps) {
+export function WorkspaceMutationStatus({
+  pending,
+  pendingText,
+  text,
+  isError,
+  returnFocusRef,
+}: WorkspaceMutationStatusProps) {
+  if (!pending && text && !isError) {
+    return (
+      <InfoMessage messageId="workspace-result" returnFocusRef={returnFocusRef} className={styles.status()}>
+        {text}
+      </InfoMessage>
+    );
+  }
   return (
     <p role={isError ? "alert" : undefined} aria-live="polite" className={styles.status({ error: isError })}>
       {pending ? pendingText : text}

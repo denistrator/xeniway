@@ -12,6 +12,7 @@ export type JobBoardProps = {
   onReorder: (status: JobStatus, applicationIds: number[]) => void;
   operationError?: string;
   operationSuccess?: string;
+  operationSuccessId?: string | number | object;
 };
 
 export function useJobBoardPresentation({
@@ -20,6 +21,7 @@ export function useJobBoardPresentation({
   onReorder,
   operationError,
   operationSuccess,
+  operationSuccessId,
 }: JobBoardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -75,5 +77,6 @@ export function useJobBoardPresentation({
     focusStatus,
     operationError,
     operationSuccess,
+    operationSuccessId,
   };
 }

@@ -85,6 +85,7 @@
     "actions": {
       "addJob": "הוספת משרה",
       "close": "סגירה",
+      "closeMessage": "סגירת הודעה",
       "closeDialog": "סגירת החלון",
       "login": "התחברות",
       "logout": "יציאה",

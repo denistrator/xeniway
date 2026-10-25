@@ -85,6 +85,7 @@
     "actions": {
       "addJob": "Добавить вакансию",
       "close": "Закрыть",
+      "closeMessage": "Закрыть сообщение",
       "closeDialog": "Закрыть диалог",
       "login": "Войти",
       "logout": "Выйти",

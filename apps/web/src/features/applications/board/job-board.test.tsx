@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { JobApplication } from "@xeniway/shared";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { setAllStatuses, setSearch, store, toggleStatus } from "../../../store";
 import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { JobBoard } from "./job-board.view";
@@ -31,6 +31,35 @@ beforeEach(async () => {
   await initializeTestI18n();
   store.dispatch(setAllStatuses(true));
   store.dispatch(setSearch(""));
+});
+
+afterEach(() => vi.useRealTimers());
+
+test("new board results get a full timeout even when their copy is unchanged", () => {
+  vi.useFakeTimers();
+  const content = (id: object) => (
+    <Provider store={store}>
+      <MemoryRouter>
+        <JobBoard
+          jobs={[job]}
+          operationSuccess="Application updated."
+          operationSuccessId={id}
+          onStatusChange={() => {}}
+          onReorder={() => {}}
+        />
+      </MemoryRouter>
+    </Provider>
+  );
+  const first = {};
+  const second = {};
+  const view = render(content(first));
+  act(() => vi.advanceTimersByTime(9000));
+  view.rerender(content(second));
+  act(() => vi.advanceTimersByTime(1000));
+  expect(screen.getByRole("status")).toHaveTextContent("Application updated.");
+  act(() => vi.advanceTimersByTime(9000));
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Example/ })).toBeVisible();
 });
 
 test("keeps the board usable while reporting a failed board operation", () => {

@@ -12,6 +12,7 @@ import { initializeTestI18n } from "../../../test/initialize-test-i18n";
 import { ArchivePage } from "../archive/archive-page.view";
 import { BlacklistPage } from "../blacklist/blacklist-page.view";
 import { useApplicationBulkDelete } from "./application-bulk-delete.model";
+import { ApplicationBulkDelete } from "./application-bulk-delete.view";
 
 const boards = [
   { board: "active", Page: HomePage, label: "Delete all active applications" },
@@ -61,6 +62,28 @@ afterEach(() => {
   for (const client of clients.splice(0)) {
     client.clear();
   }
+});
+
+test("bulk deletion confirmation expires without affecting its persistent board actions", async () => {
+  vi.useFakeTimers();
+  const deleteApplications = vi.fn().mockResolvedValue(undefined);
+  render(
+    <main id="main-content" tabIndex={-1}>
+      <ApplicationBulkDelete board="archive" count={2} deleteApplications={deleteApplications} />
+    </main>,
+  );
+  fireEvent.click(screen.getByText("Board actions", { selector: "summary" }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete all archived applications" }));
+  await act(async () => {
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete all archived applications" }),
+    );
+  });
+  expect(screen.getByRole("status")).toHaveTextContent("Applications deleted.");
+  act(() => vi.advanceTimersByTime(10_000));
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Delete all archived applications" })).toBeVisible();
+  expect(deleteApplications).toHaveBeenCalledExactlyOnceWith("archive");
 });
 
 function renderBoard({ board, Page }: (typeof boards)[number], empty = false) {

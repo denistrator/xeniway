@@ -103,6 +103,7 @@ export const ContactsSection = memo(function ContactsSection(props: ContactsSect
             pendingText={view.savingLabel}
             text={view.controller.status ? view.statusLabel : null}
             isError={view.statusIsError}
+            returnFocusRef={view.controller.addButtonRef}
           />
         </CardContent>
       </Card>

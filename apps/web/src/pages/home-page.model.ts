@@ -10,13 +10,13 @@ export function useHomePage() {
   const applications = useApplications();
   const mutations = useApplicationMutations();
   const [boardOperationError, setBoardOperationError] = useState<string | null>(null);
-  const [boardOperationSuccess, setBoardOperationSuccess] = useState<string | null>(null);
+  const [boardOperationSuccess, setBoardOperationSuccess] = useState<{ message: string } | null>(null);
   async function handleStatusChange(id: number, status: JobStatus) {
     setBoardOperationError(null);
     setBoardOperationSuccess(null);
     try {
       await mutations.update.mutateAsync({ id, input: { status } });
-      setBoardOperationSuccess(t("applications.board.updated"));
+      setBoardOperationSuccess({ message: t("applications.board.updated") });
     } catch (error) {
       const errorCode = error instanceof ApiRequestError ? error.code : "REQUEST_FAILED";
       setBoardOperationError(t(getApiErrorKey(errorCode)));
@@ -28,7 +28,7 @@ export function useHomePage() {
     setBoardOperationSuccess(null);
     try {
       await mutations.reorder.mutateAsync({ status, applicationIds });
-      setBoardOperationSuccess(t("applications.board.updated"));
+      setBoardOperationSuccess({ message: t("applications.board.updated") });
     } catch (error) {
       const errorCode = error instanceof ApiRequestError ? error.code : "REQUEST_FAILED";
       setBoardOperationError(t(getApiErrorKey(errorCode)));
@@ -45,7 +45,8 @@ export function useHomePage() {
     applicationCount: applications.data?.length ?? 0,
     deleteApplications: mutations.removeAll.mutateAsync,
     boardOperationError,
-    boardOperationSuccess,
+    boardOperationSuccess: boardOperationSuccess?.message,
+    boardOperationSuccessId: boardOperationSuccess,
     handleStatusChange,
     handleReorder,
     retryApplications,

@@ -15,6 +15,7 @@ export type WorkspaceMutationStatusProps = {
   pendingText: string;
   text: string | null;
   isError: boolean;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 };
 
 export type WorkspaceFormActionsProps = {

@@ -72,7 +72,7 @@ function preparationFailureKey(access: OfflineAccess) {
   }
 }
 
-export function useOfflineNotices({ access, activeBoardFetchedAt }: OfflineNoticesProps) {
+export function useOfflineNotices({ access, activeBoardFetchedAt, notice }: OfflineNoticesProps) {
   const { t, i18n } = useTranslation();
   const busy = access.download.status === "preparing";
   const failed = access.download.status === "failed";
@@ -96,6 +96,9 @@ export function useOfflineNotices({ access, activeBoardFetchedAt }: OfflineNotic
     ready,
     fetched,
     verificationMessage: verificationKey ? t(verificationKey) : null,
+    informational: access.verification === "succeeded",
+    messageId: access.verificationResult,
+    persistentRole: notice && access.verification !== "succeeded" ? ("status" as const) : undefined,
     readOnly: t("offline.readOnly"),
     localLogout: t("offline.localLogout"),
     update: t("offline.update"),

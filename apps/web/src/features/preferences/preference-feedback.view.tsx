@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { InfoMessage } from "../../components/ui/info-message.view";
 import { type PreferenceFeedbackProps, usePreferenceFeedback } from "./preference-feedback.model";
 import { preferenceFeedbackStyles } from "./preference-feedback.styles";
 
@@ -8,6 +9,19 @@ export function PreferenceFeedback(props: PreferenceFeedbackProps) {
   const view = usePreferenceFeedback(props);
   if (!view.visible) {
     return null;
+  }
+  if (view.informational) {
+    return (
+      <InfoMessage
+        messageId={view.messageId}
+        className={styles.root({ compact: view.compact })}
+        closeLabel={view.dismissLabel}
+        returnFocusRef={props.returnFocusRef}
+        onDismiss={view.dismissInfo}
+      >
+        {view.accountText}
+      </InfoMessage>
+    );
   }
   return (
     <div className={styles.root({ compact: view.compact })} role="status" aria-live="polite" aria-atomic="true">

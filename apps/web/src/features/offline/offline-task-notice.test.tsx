@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { changeLocale } from "../../i18n/i18n";
 import { en } from "../../i18n/locales/en";
 import he from "../../i18n/locales/he";
@@ -16,6 +16,8 @@ import { OfflineTaskNotice } from "./offline-task-notice.view";
 beforeEach(async () => {
   await initializeTestI18n();
 });
+
+afterEach(() => vi.useRealTimers());
 
 function renderNotice(state: AccessState, path = "/applications/3") {
   const client = new QueryClient();
@@ -93,4 +95,41 @@ test("server unavailability and a rejected session have distinct task recovery e
   state = transitionAccess(state, { type: "SESSION_REJECTED" });
   view.update(state);
   expect(screen.getByRole("status")).toHaveTextContent(en.offline.readOnlySession);
+});
+
+test("confirmed connection feedback expires without changing access or restarting on unrelated updates", () => {
+  vi.useFakeTimers();
+  let state = createAccessState({ online: true, userId: 1 });
+  state = transitionAccess(state, { type: "VERIFY_STARTED", operation: 1 });
+  state = transitionAccess(state, { type: "VERIFY_SUCCEEDED", operation: 1, userId: 1 });
+  const view = renderNotice(state);
+  act(() => vi.advanceTimersByTime(9000));
+  view.update({ ...state, updateAvailable: true });
+  act(() => vi.advanceTimersByTime(1000));
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(selectAccess(state, Date.now()).canMutate).toBe(true);
+  state = transitionAccess(state, { type: "VERIFY_STARTED", operation: 2 });
+  state = transitionAccess(state, { type: "VERIFY_SUCCEEDED", operation: 2, userId: 1 });
+  view.update(state);
+  expect(screen.getByRole("status")).toHaveTextContent(en.offline.connectionConfirmed);
+  act(() => vi.advanceTimersByTime(9999));
+  expect(screen.getByRole("status")).toBeVisible();
+  act(() => vi.advanceTimersByTime(1));
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+});
+
+test("offline, pending and failed checks remain visible beyond the info timeout", () => {
+  vi.useFakeTimers();
+  let state = createAccessState({ online: false, userId: 1 });
+  const view = renderNotice(state);
+  act(() => vi.advanceTimersByTime(20_000));
+  expect(screen.getByRole("status")).toHaveTextContent(en.offline.readOnlyOffline);
+  state = transitionAccess(state, { type: "VERIFY_STARTED", operation: 1 });
+  view.update(state);
+  act(() => vi.advanceTimersByTime(20_000));
+  expect(screen.getByRole("status")).toHaveTextContent(en.offline.checkingConnection);
+  state = transitionAccess(state, { type: "VERIFY_FAILED", operation: 1, online: true });
+  view.update(state);
+  act(() => vi.advanceTimersByTime(20_000));
+  expect(screen.getByRole("status")).toHaveTextContent(en.offline.connectionFailed);
 });

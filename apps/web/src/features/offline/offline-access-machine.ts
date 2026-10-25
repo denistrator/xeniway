@@ -387,6 +387,7 @@ export function selectAccess(state: AccessState, now: number) {
     account,
     isDisconnected: state.connection.status !== "online",
     verification: state.verification.status,
+    verificationResult: state.verification,
     connectionStatus: state.connection.status,
     sessionStatus: state.session.status,
     readAccountId: canMutate ? verifiedOwner : (account?.userId ?? state.memoryOwner),
